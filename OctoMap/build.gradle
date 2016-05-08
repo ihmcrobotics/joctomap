@@ -19,7 +19,19 @@ version = '1.0'
 repositories ihmc.ihmcDefaultArtifactProxies()
 
 repositories {
+    maven {
+        url "https://bengal.ihmc.us/nexus/content/repositories/thirdparty/"
+    }
+}
+
+repositories {
+    mavenLocal()
+    jcenter()
+    mavenCentral()
 }
 
 dependencies {
+    compile group: 'javax.vecmath', name: 'vecmath', version: '1.5.2'
+    compile ihmc.getProjectDependency(":IHMCRoboticsToolkit")
+    compile ihmc.getProjectDependency(":IHMCJavaToolkit")
 }
