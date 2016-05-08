@@ -7,7 +7,7 @@ import javax.vecmath.Point3d;
 
 import us.ihmc.robotics.MathTools;
 
-public abstract class AbstractOccupancyOcTree
+public abstract class AbstractOccupancyOcTree<V, NODE extends OcTreeDataNode<V, NODE>> extends OcTreeBaseImpl<V, NODE>
 {
    // occupancy parameters of tree, stored in logodds:
    private float clamping_thres_min;
@@ -16,7 +16,31 @@ public abstract class AbstractOccupancyOcTree
    private float prob_miss_log;
    private float occ_prob_thres_log;
 
-   public AbstractOccupancyOcTree()
+   public AbstractOccupancyOcTree(double resolution)
+   {
+      super(resolution);
+      setDefaultParameters();
+   }
+
+   /// Constructor to enable derived classes to change tree constants.
+   /// This usually requires a re-implementation of some core tree-traversal functions as well!
+   protected AbstractOccupancyOcTree(double resolution, int tree_depth, int tree_max_val)
+   {
+      super(resolution, tree_depth, tree_max_val);
+      setDefaultParameters();
+   }
+
+   public AbstractOccupancyOcTree(AbstractOccupancyOcTree<V, NODE> other)
+   {
+      super(other);
+      clamping_thres_min = other.clamping_thres_min;
+      clamping_thres_max = other.clamping_thres_max;
+      prob_hit_log = other.prob_hit_log;
+      prob_miss_log = other.prob_miss_log;
+      occ_prob_thres_log = other.occ_prob_thres_log;
+   }
+
+   public void setDefaultParameters()
    {
       // some sane default values:
       setOccupancyThres(0.5);   // = 0.0 in logodds
