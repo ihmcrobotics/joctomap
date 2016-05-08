@@ -1,5 +1,7 @@
 package us.ihmc.octoMap;
 
+import static us.ihmc.octoMap.OcTreeKey.computeChildIdx;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +12,7 @@ import us.ihmc.octoMap.OcTreeIterator.LeafIterator;
 import us.ihmc.octoMap.OcTreeIterator.TreeIterator;
 import us.ihmc.octoMap.OcTreeKey.KeyRay;
 import us.ihmc.robotics.MathTools;
+import us.ihmc.tools.io.printing.PrintTools;
 
 /**
  * OcTree base class, to be used with with any kind of OcTreeDataNode.
@@ -371,7 +374,17 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
       return search(x, y, z, 0);
    }
 
-   public NODE search(double x, double y, double z, int depth);
+   public NODE search(double x, double y, double z, int depth)
+   {
+      OcTreeKey key = new OcTreeKey();
+      if (!coordToKeyChecked(x, y, z, key)){
+        PrintTools.error(this, "Error in search: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
+        return null;
+      }
+      else {
+        return search(key, depth);
+      }
+   }
 
    /**
     *  Search node at specified depth given a 3d point (depth=0: search full tree depth)
@@ -385,9 +398,9 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
 
    public NODE search(Point3d value, int depth)
    {
-      OcTreeKey key;
+      OcTreeKey key = new OcTreeKey();
       if (!coordToKeyChecked(value, key)){
-        PrintTools.err(this, "Error in search: [" +  value + "] is out of OcTree bounds!");
+        PrintTools.error(this, "Error in search: [" +  value + "] is out of OcTree bounds!");
         return null;
       }
       else {
@@ -406,7 +419,45 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
       return search(key, 0);
    }
 
-   public NODE search(OcTreeKey key, int depth);
+   public NODE search(OcTreeKey key, int depth)
+   {
+      MathTools.checkIfLessOrEqual(depth, tree_depth);
+      if (root == null)
+        return null;
+
+      if (depth == 0)
+        depth = tree_depth;
+
+
+
+      // generate appropriate key_at_depth for queried depth
+      OcTreeKey key_at_depth = new OcTreeKey(key);
+      if (depth != tree_depth)
+        key_at_depth = adjustKeyAtDepth(key, depth);
+
+      NODE curNode = root;
+
+      int diff = tree_depth - depth;
+
+      // follow nodes down to requested level (for diff = 0 it's the last level)
+      for (int i=(tree_depth-1); i>=diff; --i) {
+        int pos = computeChildIdx(key_at_depth, i);
+        if (nodeChildExists(curNode, pos)) {
+          // cast needed: (nodes need to ensure it's the right pointer)
+          curNode = getNodeChild(curNode, pos);
+        } else {
+          // we expected a child but did not get it
+          // is the current node a leaf already?
+          if (!nodeHasChildren(curNode)) { // TODO similar check to nodeChildExists?
+            return curNode;
+          } else {
+            // it is not, search failed
+            return null;
+          }
+        }
+      } // end for
+      return curNode;
+    }
 
    /**
     *  Delete a node (if exists) given a 3d point. Will always
@@ -430,7 +481,18 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
       return deleteNode(value, 0);
    }
 
-   public boolean deleteNode(Point3d value, int depth);
+   public boolean deleteNode(Point3d value, int depth)
+   {
+      OcTreeKey key = new OcTreeKey();
+      if (!coordToKeyChecked(value, key)){
+        PrintTools.error("Error in deleteNode: [" + value + "] is out of OcTree bounds!");
+        return false;
+      }
+      else {
+        return deleteNode(key, depth);
+      }
+
+    }
 
    /** 
     *  Delete a node (if exists) given an addressing key. Will always
@@ -632,7 +694,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
 
    /// Converts from a 3D coordinate into a 3D addressing key
    public OcTreeKey coordToKey(Point3d coord) {
-     return new OcTreeKey(coordToKey(coord(0)), coordToKey(coord(1)), coordToKey(coord(2)));
+     return new OcTreeKey(coordToKey(coord.x), coordToKey(coord.y), coordToKey(coord.z));
    }
 
    /// Converts from a 3D coordinate into a 3D addressing key
@@ -645,7 +707,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
      if (depth == tree_depth)
        return coordToKey(coord);
      else
-       return new OcTreeKey(coordToKey(coord(0), depth), coordToKey(coord(1), depth), coordToKey(coord(2), depth));
+       return new OcTreeKey(coordToKey(coord.x, depth), coordToKey(coord.y, depth), coordToKey(coord.z, depth));
    }
 
    /// Converts from a 3D coordinate into a 3D addressing key at a given depth
@@ -669,7 +731,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
        return key;
 
      assert(depth <= tree_depth);
-     return new OcTreeKey(adjustKeyAtDepth(key[0], depth), adjustKeyAtDepth(key[1], depth), adjustKeyAtDepth(key[2], depth));
+     return new OcTreeKey(adjustKeyAtDepth(key.k[0], depth), adjustKeyAtDepth(key.k[1], depth), adjustKeyAtDepth(key.k[2], depth));
    }
 
    /**
