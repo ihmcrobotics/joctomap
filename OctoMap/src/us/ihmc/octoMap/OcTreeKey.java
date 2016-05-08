@@ -1,6 +1,9 @@
 package us.ihmc.octoMap;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 public class OcTreeKey
 {
@@ -97,8 +100,53 @@ public class OcTreeKey
       return Arrays.equals(k, other.k);
    }
 
-   public static class KeyRay
+   @Override
+   public int hashCode()
    {
+      // a simple hashing function 
+      // explicit casts to size_t to operate on the complete range
+      // constanst will be promoted according to C++ standard
+      return (int) ((long) (k[0]) + 1447L * (long) (k[1]) + 345637L * (long) (k[2]));
+   }
+
+   public static class KeyRay implements Iterable<OcTreeKey>
+   {
+      private static final int maxSize = 100000;
+      private final List<OcTreeKey> ray = new ArrayList<>();
+
+      public KeyRay()
+      {
+         reset();
+      }
+
+      public KeyRay(KeyRay other)
+      {
+         ray.clear();
+         ray.addAll(other.ray);
+      }
+
+      public void addKey(OcTreeKey key)
+      {
+         ray.add(key);
+      }
+
+      public void reset();
       public void clear();
+
+      public int size()
+      {
+         return ray.size();
+      }
+
+      public int sizeMax()
+      {
+         return maxSize;
+      }
+
+      @Override
+      public Iterator<OcTreeKey> iterator()
+      {
+         return ray.iterator();
+      }
    }
 }

@@ -30,10 +30,17 @@ public abstract class OcTreeDataNode<V, N extends OcTreeDataNode<V, N>>
       this.value = value;
    }
 
+   public V getValue()
+   {
+      return value;
+   }
+
    public void copyData(OcTreeDataNode<V, N> other)
    {
       value = other.value;
    }
+
+   public abstract void updateOccupancyChildren();
 
    abstract void allocateChildren();
 
