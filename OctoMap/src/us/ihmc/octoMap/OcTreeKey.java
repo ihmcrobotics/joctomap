@@ -2,6 +2,8 @@ package us.ihmc.octoMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -148,5 +150,26 @@ public class OcTreeKey
       {
          return ray.iterator();
       }
+   }
+
+   /**
+    * Data structure to efficiently compute the nodes to update from a scan
+    * insertion using a hash set.
+    * @note you need to use boost::unordered_set instead if your compiler does not
+    * yet support tr1!
+    */
+   public static class KeySet extends HashSet<OcTreeKey>
+   {
+      private static final long serialVersionUID = 2780317356917541560L;
+   }
+
+   /**
+    * Data structrure to efficiently track changed nodes as a combination of
+    * OcTreeKeys and a bool flag (to denote newly created nodes)
+    *
+    */
+   public static class KeyBoolMap extends HashMap<OcTreeKey, Boolean>
+   {
+      private static final long serialVersionUID = 2656234567169415329L;
    }
 }
