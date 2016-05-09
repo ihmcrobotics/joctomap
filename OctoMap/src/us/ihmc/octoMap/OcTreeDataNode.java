@@ -1,9 +1,9 @@
 package us.ihmc.octoMap;
 
-public abstract class OcTreeDataNode<V, N extends OcTreeDataNode<V, N>>
+public abstract class OcTreeDataNode<V>
 {
    protected V value;
-   protected N[] children;
+   protected OcTreeDataNode<V>[] children;
 
    public OcTreeDataNode()
    {
@@ -14,7 +14,7 @@ public abstract class OcTreeDataNode<V, N extends OcTreeDataNode<V, N>>
       value = initialValue;
    }
 
-   public OcTreeDataNode(N other)
+   public OcTreeDataNode(OcTreeDataNode<V> other)
    {
       value = other.value;
 
@@ -35,7 +35,7 @@ public abstract class OcTreeDataNode<V, N extends OcTreeDataNode<V, N>>
       return value;
    }
 
-   public void copyData(OcTreeDataNode<V, N> other)
+   public void copyData(OcTreeDataNode<V> other)
    {
       value = other.value;
    }
@@ -44,9 +44,9 @@ public abstract class OcTreeDataNode<V, N extends OcTreeDataNode<V, N>>
 
    abstract void allocateChildren();
 
-   public abstract N clone();
+   public abstract OcTreeDataNode<V> clone();
 
-   public abstract N create();
+   public abstract OcTreeDataNode<V> create();
 
    public boolean hasChildren()
    {
@@ -61,7 +61,7 @@ public abstract class OcTreeDataNode<V, N extends OcTreeDataNode<V, N>>
       return false;
    }
 
-   public boolean equals(N other)
+   public boolean equals(OcTreeDataNode<V> other)
    {
       return value == other.value;
    }

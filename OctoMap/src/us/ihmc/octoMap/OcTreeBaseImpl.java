@@ -34,7 +34,7 @@ import us.ihmc.tools.io.printing.PrintTools;
  * \tparam INTERFACE Interface to be derived from, should be either
  *    AbstractOcTree or AbstractOccupancyOcTree
  */
-public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
+public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
 {
    protected NODE root; ///< root NODE, null for empty tree
 
@@ -81,6 +81,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
       // no longer create an empty root node - only on demand
    }
 
+   @SuppressWarnings("unchecked")
    public OcTreeBaseImpl(OcTreeBaseImpl<V, NODE> other)
    {
       resolution = other.resolution;
@@ -88,7 +89,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
       tree_max_val = other.tree_max_val;
       init();
       if (other.root != null)
-         root = other.root.clone();
+         root = (NODE) other.root.clone();
    }
 
    /**
@@ -194,6 +195,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
    // -- Tree structure operations formerly contained in the nodes ---
 
    /// Creates (allocates) the i-th child of the node. @return ptr to newly create NODE
+   @SuppressWarnings("unchecked")
    public NODE createNodeChild(NODE node, int childIdx)
    {
       checkChildIndex(childIdx);
@@ -203,7 +205,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
       }
       if (node.children[childIdx] != null)
          throw new RuntimeException("Something went wrong.");
-      NODE newNode = node.create();
+      NODE newNode = (NODE) node.create();
       node.children[childIdx] = newNode;
 
       tree_size++;
@@ -244,12 +246,13 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
    }
 
    /// @return ptr to child number childIdx of node
+   @SuppressWarnings("unchecked")
    public NODE getNodeChild(NODE node, int childIdx)
    {
       checkChildIndex(childIdx);
       checkNodeHasChildren(node);
       checkNodeChildNotNull(node, childIdx);
-      return node.children[childIdx];
+      return (NODE) node.children[childIdx];
    }
 
    /// A node is collapsible if all children exist, don't have children of their own
@@ -1277,6 +1280,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
    }
 
    /// recursive delete of node and all children (deallocates memory)
+   @SuppressWarnings("unchecked")
    protected void deleteNodeRecurs(NODE node)
    {
       if (node == null)
@@ -1288,7 +1292,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V, NODE>>
          for (int i = 0; i < 8; i++)
          {
             if (node.children[i] != null)
-               deleteNodeRecurs(node.children[i]);
+               deleteNodeRecurs((NODE) node.children[i]);
          }
          node.children = null;
       } // else: node has no children

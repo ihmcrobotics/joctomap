@@ -1,6 +1,6 @@
 package us.ihmc.octoMap;
 
-public class OcTreeNode extends OcTreeDataNode<Float, OcTreeNode>
+public class OcTreeNode extends OcTreeDataNode<Float>
 {
 
    public OcTreeNode()
@@ -54,7 +54,7 @@ public class OcTreeNode extends OcTreeDataNode<Float, OcTreeNode>
          {
             if (children[i] != null)
             {
-               mean += children[i].getOccupancy(); // TODO check if works generally
+               mean += ((OcTreeNode) children[i]).getOccupancy(); // TODO check if works generally
                ++c;
             }
          }
@@ -79,7 +79,7 @@ public class OcTreeNode extends OcTreeDataNode<Float, OcTreeNode>
          {
             if (children[i] != null)
             {
-               float l = children[i].getLogOdds(); // TODO check if works generally
+               float l = ((OcTreeNode) children[i]).getLogOdds(); // TODO check if works generally
                if (l > max)
                   max = l;
             }

@@ -1,6 +1,6 @@
 package us.ihmc.octoMap;
 
-public abstract class AbstractOcTree<V, NODE extends OcTreeDataNode<V, NODE>> extends OcTreeBaseImpl<V, NODE>
+public abstract class AbstractOcTree<V, NODE extends OcTreeDataNode<V>> extends OcTreeBaseImpl<V, NODE>
 {
    public AbstractOcTree(double resolution)
    {

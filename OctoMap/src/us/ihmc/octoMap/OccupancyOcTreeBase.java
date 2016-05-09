@@ -1,16 +1,24 @@
 package us.ihmc.octoMap;
 
+import static us.ihmc.octoMap.MCTables.edgeTable;
+import static us.ihmc.octoMap.MCTables.triTable;
+import static us.ihmc.octoMap.MCTables.vertexList;
+import static us.ihmc.octoMap.OcTreeKey.computeChildIdx;
+
 import java.util.List;
+import java.util.ListIterator;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.OcTreeKey.KeyBoolMap;
+import us.ihmc.octoMap.OcTreeKey.KeyRay;
 import us.ihmc.octoMap.OcTreeKey.KeySet;
 import us.ihmc.octoMap.ScanGraph.ScanNode;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
+import us.ihmc.tools.io.printing.PrintTools;
 
-public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extends AbstractOccupancyOcTree<V, NODE>
+public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends AbstractOccupancyOcTree<NODE>
 {
    protected boolean use_bbx_limit;  ///< use bounding box for queries (needs to be set)?
    protected Point3d bbx_min = new Point3d();
@@ -39,7 +47,7 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
    }
 
 
-   public OccupancyOcTreeBase(OccupancyOcTreeBase<V, NODE> other)
+   public OccupancyOcTreeBase(OccupancyOcTreeBase<NODE> other)
    {
       super(other);
       use_bbx_limit = other.use_bbx_limit;
@@ -79,7 +87,25 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     * @param discretize whether the scan is discretized first into octree key cells (default: false).
     *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.*
     */
-   public void insertPointCloud(Pointcloud scan, Point3d sensor_origin, double maxrange, boolean lazy_eval, boolean discretize);
+   public void insertPointCloud(Pointcloud scan, Point3d sensor_origin, double maxrange, boolean lazy_eval, boolean discretize)
+   {
+      KeySet free_cells = new KeySet();
+      KeySet occupied_cells = new KeySet();
+      if (discretize)
+         computeDiscreteUpdate(scan, sensor_origin, free_cells, occupied_cells, maxrange);
+      else
+         computeUpdate(scan, sensor_origin, free_cells, occupied_cells, maxrange);
+
+      // insert data into tree  -----------------------
+      for (OcTreeKey key : free_cells)
+      {
+         updateNode(key, false, lazy_eval);
+      }
+      for (OcTreeKey key : occupied_cells)
+      {
+         updateNode(key, true, lazy_eval);
+      }
+   }
 
    public void insertPointCloud(Pointcloud scan, Point3d sensor_origin, RigidBodyTransform frame_origin)
    {
@@ -105,7 +131,15 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
    *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.*
    */
    public void insertPointCloud(Pointcloud scan, Point3d sensor_origin, RigidBodyTransform frame_origin, double maxrange, boolean lazy_eval,
-         boolean discretize);
+         boolean discretize)
+   {
+      // performs transformation to data and sensor origin first
+      Pointcloud transformed_scan = new Pointcloud(scan);
+      transformed_scan.transform(frame_origin);
+      Point3d transformed_sensor_origin = new Point3d(sensor_origin);
+      frame_origin.transform(transformed_sensor_origin);
+      insertPointCloud(transformed_scan, transformed_sensor_origin, maxrange, lazy_eval, discretize);
+   }
 
    public void insertPointCloud(ScanNode scan)
    {
@@ -132,7 +166,7 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
       frame_origin.invert();
       Vector3d tempVector = new Vector3d();
       scan.pose.get(tempVector);
-      Point3d sensor_origin = new Point3d(tempVector);//frame_origin.inv().transform(scan.pose.trans());
+      Point3d sensor_origin = new Point3d(tempVector);//frame_origin.inv().transform(scan.pose.trans()); // TODO Sylvain Double-check this transformation
       frame_origin.transform(sensor_origin);
       insertPointCloud(cloud, sensor_origin, frame_origin, maxrange, lazy_eval, discretize);
    }
@@ -154,7 +188,25 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     * @param lazy_eval whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     */
-   public void insertPointCloudRays(Pointcloud scan, Point3d sensor_origin, double maxrange, boolean lazy_eval);
+   public void insertPointCloudRays(Pointcloud scan, Point3d sensor_origin, double maxrange, boolean lazy_eval)
+   {
+      if (scan.size() < 1)
+         return;
+
+      for (int i = 0; i < scan.size(); i++)
+      {
+         Point3d p = scan.getPoint(i);
+         KeyRay keyRay = keyrays.get(0);
+         if (computeRayKeys(sensor_origin, p, keyRay))
+         {
+            for (OcTreeKey key : keyRay)
+            {
+               updateNode(key, false, lazy_eval); // insert freespace measurement
+            }
+            updateNode(p, true, lazy_eval); // update endpoint to be occupied
+         }
+      }
+   }
 
    public NODE setNodeValue(OcTreeKey key, float log_odds_value)
    {
@@ -171,7 +223,19 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE setNodeValue(OcTreeKey key, float log_odds_value, boolean lazy_eval);
+   public NODE setNodeValue(OcTreeKey key, float log_odds_value, boolean lazy_eval)
+   {
+      // clamp log odds within range:
+      log_odds_value = Math.min(Math.max(log_odds_value, clamping_thres_min), clamping_thres_max);
+
+      boolean createdRoot = false;
+      if (root == null){
+        root = createRootNode();
+        tree_size++;
+        createdRoot = true;
+      }
+      return setNodeValueRecurs(root, createdRoot, key, 0, log_odds_value, lazy_eval);
+   }
 
    public NODE setNodeValue(Point3d value, float log_odds_value)
    {
@@ -188,7 +252,14 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE setNodeValue(Point3d value, float log_odds_value, boolean lazy_eval);
+   public NODE setNodeValue(Point3d value, float log_odds_value, boolean lazy_eval)
+   {
+      OcTreeKey key = new OcTreeKey();
+      if (!coordToKeyChecked(value, key))
+        return null;
+
+      return setNodeValue(key, log_odds_value, lazy_eval);
+   }
 
    public NODE setNodeValue(double x, double y, double z, float log_odds_value)
    {
@@ -207,7 +278,14 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE setNodeValue(double x, double y, double z, float log_odds_value, boolean lazy_eval);
+   public NODE setNodeValue(double x, double y, double z, float log_odds_value, boolean lazy_eval)
+   {
+      OcTreeKey key = new OcTreeKey();
+      if (!coordToKeyChecked(x, y, z, key))
+        return null;
+
+      return setNodeValue(key, log_odds_value, lazy_eval);
+   }
 
    public NODE updateNode(OcTreeKey key, float log_odds_update)
    {
@@ -224,7 +302,28 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(OcTreeKey key, float log_odds_update, boolean lazy_eval);
+   public NODE updateNode(OcTreeKey key, float log_odds_update, boolean lazy_eval)
+   {
+      // early abort (no change will happen).
+      // may cause an overhead in some configuration, but more often helps
+      NODE leaf = search(key);
+      // no change: node already at threshold
+      if (leaf != null
+          && ((log_odds_update >= 0 && leaf.getValue() >= clamping_thres_max)
+          || ( log_odds_update <= 0 && leaf.getValue() <= clamping_thres_min)))
+      {
+        return leaf;
+      }
+
+      boolean createdRoot = false;
+      if (root == null){
+        root = createRootNode();
+        tree_size++;
+        createdRoot = true;
+      }
+
+      return updateNodeRecurs(root, createdRoot, key, 0, log_odds_update, lazy_eval);
+   }
 
    public NODE updateNode(Point3d value, float log_odds_update)
    {
@@ -241,7 +340,14 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(Point3d value, float log_odds_update, boolean lazy_eval);
+   public NODE updateNode(Point3d value, float log_odds_update, boolean lazy_eval)
+   {
+      OcTreeKey key = new OcTreeKey();
+      if (!coordToKeyChecked(value, key))
+        return null;
+
+      return updateNode(key, log_odds_update, lazy_eval);
+   }
 
    public NODE updateNode(double x, double y, double z, float log_odds_update)
    {
@@ -260,7 +366,14 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(double x, double y, double z, float log_odds_update, boolean lazy_eval);
+   public NODE updateNode(double x, double y, double z, float log_odds_update, boolean lazy_eval)
+   {
+      OcTreeKey key = new OcTreeKey();
+      if (!coordToKeyChecked(x, y, z, key))
+        return null;
+
+      return updateNode(key, log_odds_update, lazy_eval);
+   }
 
    public NODE updateNode(OcTreeKey key, boolean occupied)
    {
@@ -276,7 +389,14 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(OcTreeKey key, boolean occupied, boolean lazy_eval);
+   public NODE updateNode(OcTreeKey key, boolean occupied, boolean lazy_eval)
+   {
+      float logOdds = prob_miss_log;
+      if (occupied)
+        logOdds = prob_hit_log;
+
+      return updateNode(key, logOdds, lazy_eval);
+   }
 
    public NODE updateNode(Point3d value, boolean occupied)
    {
@@ -293,7 +413,13 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(Point3d value, boolean occupied, boolean lazy_eval);
+   public NODE updateNode(Point3d value, boolean occupied, boolean lazy_eval)
+   {
+      OcTreeKey key = new OcTreeKey();
+      if (!coordToKeyChecked(value, key))
+        return null;
+      return updateNode(key, occupied, lazy_eval);
+   }
 
    public NODE updateNode(double x, double y, double z, boolean occupied)
    {
@@ -312,14 +438,32 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(double x, double y, double z, boolean occupied, boolean lazy_eval);
+   public NODE updateNode(double x, double y, double z, boolean occupied, boolean lazy_eval)
+   {
+      OcTreeKey key = new OcTreeKey();
+      if (!coordToKeyChecked(x, y, z, key))
+        return null;
+      return updateNode(key, occupied, lazy_eval);
+   }
 
    /**
     * Creates the maximum likelihood map by calling toMaxLikelihood on all
     * tree nodes, setting their occupancy to the corresponding occupancy thresholds.
     * This enables a very efficient compression if you call prune() afterwards.
     */
-   public void toMaxLikelihood();
+   public void toMaxLikelihood()
+   {
+      if (root == null)
+        return;
+
+      // convert bottom up
+      for (int depth=tree_depth; depth>0; depth--) {
+        toMaxLikelihoodRecurs(root, 0, depth);
+      }
+
+      // convert root
+      nodeToMaxLikelihood(root);
+   }
 
    public boolean insertRay(Point3d origin, Point3d end)
    {
@@ -399,7 +543,92 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
       * @param[in] unknownStatus consider unknown cells as free (false) or occupied (default, true).
       * @return True if the input voxel is known in the occupancy grid, and false if it is unknown.
       */
-   public boolean getNormals(Point3d point, List<Point3d> normals, boolean unknownStatus);
+   public boolean getNormals(Point3d point, List<Point3d> normals, boolean unknownStatus)
+   {
+      normals.clear();
+
+      OcTreeKey init_key = new OcTreeKey();
+      if ( !coordToKeyChecked(point, init_key) ) {
+        PrintTools.error(this, "Voxel out of bounds");
+        return false;
+      }
+
+      // OCTOMAP_WARNING("Normal for %f, %f, %f\n", point.x(), point.y(), point.z());
+
+      int[] vertex_values = new int[8];
+
+      OcTreeKey current_key = new OcTreeKey();
+      NODE current_node;
+
+      // There is 8 neighbouring sets
+      // The current cube can be at any of the 8 vertex
+      int[][] x_index = new int[][]{{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0 -1, -1}, {0, 0 -1, -1}};
+      int[][] y_index = new int[][]{{1, 0, 0, 1}, {0, -1, -1, 0}, {0, -1, -1, 0}, {1, 0, 0, 1}};
+      int[][] z_index = new int[][]{{0, 1}, {-1, 0}};
+
+      // Iterate over the 8 neighboring sets
+      for(int m = 0; m < 2; ++m){
+        for(int l = 0; l < 4; ++l){
+          
+          int k = 0;
+          // Iterate over the cubes
+          for(int j = 0; j < 2; ++j){
+            for(int i = 0; i < 4; ++i){
+              current_key.k[0] = init_key.k[0] + x_index[l][i];
+              current_key.k[1] = init_key.k[1] + y_index[l][i];
+              current_key.k[2] = init_key.k[2] + z_index[m][j];
+              current_node = search(current_key);
+
+              if(current_node != null){
+                vertex_values[k] = isNodeOccupied(current_node) ? 1 : 0;
+
+                // point3d coord = this->keyToCoord(current_key);
+                // OCTOMAP_WARNING_STR("vertex " << k << " at " << coord << "; value " << vertex_values[k]);
+              }else{
+                // Occupancy of unknown cells
+                vertex_values[k] = unknownStatus ? 1 : 0;
+              }
+              ++k;
+            }
+          }
+
+          int cube_index = 0;
+          if (vertex_values[0] != 0) cube_index |= 1;
+          if (vertex_values[1] != 0) cube_index |= 2;
+          if (vertex_values[2] != 0) cube_index |= 4;
+          if (vertex_values[3] != 0) cube_index |= 8;
+          if (vertex_values[4] != 0) cube_index |= 16;
+          if (vertex_values[5] != 0) cube_index |= 32;
+          if (vertex_values[6] != 0) cube_index |= 64;
+          if (vertex_values[7] != 0) cube_index |= 128;
+
+          // OCTOMAP_WARNING_STR("cubde_index: " << cube_index);
+
+          // All vertices are occupied or free resulting in no normal
+          if (edgeTable[cube_index] == 0)
+            return true;
+
+          // No interpolation is done yet, we use vertexList in <MCTables.h>.
+          for(int i = 0; triTable[cube_index][i] != -1; i += 3){
+            Point3d p1 = new Point3d(vertexList[triTable[cube_index][i  ]]);
+            Point3d p2 = new Point3d(vertexList[triTable[cube_index][i+1]]);
+            Point3d p3 = new Point3d(vertexList[triTable[cube_index][i+2]]);
+            Point3d v1 = //p2 - p1;
+            Point3d v2 = p3 - p1;
+
+            // OCTOMAP_WARNING("Vertex p1 %f, %f, %f\n", p1.x(), p1.y(), p1.z());
+            // OCTOMAP_WARNING("Vertex p2 %f, %f, %f\n", p2.x(), p2.y(), p2.z());
+            // OCTOMAP_WARNING("Vertex p3 %f, %f, %f\n", p3.x(), p3.y(), p3.z());
+
+            // Right hand side cross product to retrieve the normal in the good
+            // direction (pointing to the free nodes).
+            normals.push_back(v1.cross(v2).normalize());
+          }
+        }
+      }
+
+      return true;
+   }
 
    //-- set BBX limit (limits tree updates to this bounding box)
 
@@ -477,7 +706,90 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     * @param occupied_cells keys of nodes to be marked occupied
     * @param maxrange maximum range for raycasting (-1: unlimited)
     */
-   public void computeUpdate(Pointcloud scan, Point3d origin, KeySet free_cells, KeySet occupied_cells, double maxrange);
+   public void computeUpdate(Pointcloud scan, Point3d origin, KeySet free_cells, KeySet occupied_cells, double maxrange)
+   {
+      for (int i = 0; i < scan.size(); ++i)
+      {
+         Point3d p = scan.getPoint(i);
+         KeyRay keyray = keyrays.get(0);
+
+         Vector3d direction = new Vector3d();
+         direction.sub(p, origin);
+         double length = direction.length();
+
+         if (!use_bbx_limit)
+         { // no BBX specified
+            if ((maxrange < 0.0) || (length <= maxrange))
+            { // is not maxrange meas.
+               // free cells
+               if (computeRayKeys(origin, p, keyray))
+               {
+                  {
+                     free_cells.add(keyray.getFirst());
+                     free_cells.add(keyray.getLast());
+                  }
+               }
+               // occupied endpoint
+               OcTreeKey key = new OcTreeKey();
+               if (coordToKeyChecked(p, key))
+               {
+                  {
+                     occupied_cells.add(key);
+                  }
+               }
+            }
+            else
+            { // user set a maxrange and length is above
+               Point3d new_end = new Point3d();
+               new_end.scaleAdd(maxrange / length, direction, origin);
+               if (computeRayKeys(origin, new_end, keyray))
+               {
+                  {
+                     free_cells.add(keyray.getFirst());
+                     free_cells.add(keyray.getLast());
+                  }
+               }
+            } // end if maxrange
+         }
+         else
+         { // BBX was set
+            // endpoint in bbx and not maxrange?
+            if (inBBX(p) && ((maxrange < 0.0) || (length <= maxrange)))
+            {
+               // occupied endpoint
+               OcTreeKey key = new OcTreeKey();
+               if (coordToKeyChecked(p, key))
+               {
+                  {
+                     occupied_cells.add(key);
+                  }
+               }
+
+               // update freespace, break as soon as bbx limit is reached
+               if (computeRayKeys(origin, p, keyray))
+               {
+                  ListIterator<OcTreeKey> reverseIterator = keyray.reverseIterator();
+                  while (reverseIterator.hasPrevious())
+                  {
+                     OcTreeKey currentKey = reverseIterator.previous();
+                     if (inBBX(currentKey))
+                     {
+                        {
+                           free_cells.add(currentKey);
+                        }
+                     }
+                     else
+                        break;
+                  }
+               } // end if compute ray
+            } // end if in BBX and not maxrange
+         } // end bbx case
+
+      } // end for all points, end of parallel OMP loop
+
+      // prefer occupied cells over free ones (and make sets disjunct)
+      free_cells.removeAll(occupied_cells);
+   }
 
    /**
     * Helper for insertPointCloud(). Computes all octree nodes affected by the point cloud
@@ -491,21 +803,41 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
     * @param occupied_cells keys of nodes to be marked occupied
     * @param maxrange maximum range for raycasting (-1: unlimited)
     */
-   public void computeDiscreteUpdate(Pointcloud scan, Point3d origin, KeySet free_cells, KeySet occupied_cells, double maxrange);
+   public void computeDiscreteUpdate(Pointcloud scan, Point3d origin, KeySet free_cells, KeySet occupied_cells, double maxrange)
+   {
+      Pointcloud discretePC = new Pointcloud();
+      KeySet endpoints = new KeySet();
+
+      for (int i = 0; i < scan.size(); ++i)
+      {
+         OcTreeKey k = coordToKey(scan.getPoint(i));
+         boolean ret = endpoints.add(k);
+         if (ret)
+         { // insertion took place => k was not in set
+            discretePC.push_back(keyToCoord(k));
+         }
+      }
+
+      computeUpdate(discretePC, origin, free_cells, occupied_cells, maxrange);
+   }
 
    /**
     * Updates the occupancy of all inner nodes to reflect their children's occupancy.
     * If you performed batch-updates with lazy evaluation enabled, you must call this
     * before any queries to ensure correct multi-resolution behavior.
     **/
-   public void updateInnerOccupancy();
+   public void updateInnerOccupancy()
+   {
+      if (root != null)
+        updateInnerOccupancyRecurs(root, 0);
+   }
 
    /// integrate a "hit" measurement according to the tree's sensor model
    public void integrateHit(NODE occupancyNode);
    /// integrate a "miss" measurement according to the tree's sensor model
    public void integrateMiss(NODE occupancyNode);
    /// update logodds value of node by adding to the current value.
-   public void updateNodeLogOdds(NODE occupancyNode, float& update);
+   public void updateNodeLogOdds(NODE occupancyNode, float update);
 
    /// converts the node to the maximum likelihood value according to the tree's parameter for "occupancy"
    public void nodeToMaxLikelihood(NODE occupancyNode);
@@ -524,13 +856,74 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
    // recursive calls ----------------------------
 
    protected NODE updateNodeRecurs(NODE node, boolean node_just_created, OcTreeKey key,
-         int depth, float& log_odds_update)
+         int depth, float log_odds_update)
    {
       return updateNodeRecurs(node, node_just_created, key, depth, log_odds_update, false);
    }
 
    protected NODE updateNodeRecurs(NODE node, boolean node_just_created, OcTreeKey key,
-                          int depth, float& log_odds_update, boolean lazy_eval = false);
+                          int depth, float log_odds_update, boolean lazy_eval)
+   {
+      boolean created_node = false;
+
+      if (node == null)
+         throw new RuntimeException("The given node is null.");
+
+      // follow down to last level
+      if (depth < tree_depth) {
+        int pos = computeChildIdx(key, tree_depth -1 - depth);
+        if (!nodeChildExists(node, pos)) {
+          // child does not exist, but maybe it's a pruned node?
+          if (!nodeHasChildren(node) && !node_just_created ) {
+            // current node does not have children AND it is not a new node 
+            // -> expand pruned node
+            expandNode(node);
+          }
+          else {
+            // not a pruned node, create requested child
+            createNodeChild(node, pos);
+            created_node = true;
+          }
+        }
+
+        if (lazy_eval)
+          return updateNodeRecurs(getNodeChild(node, pos), created_node, key, depth+1, log_odds_update, lazy_eval);
+        else {
+          NODE retval = updateNodeRecurs(getNodeChild(node, pos), created_node, key, depth+1, log_odds_update, lazy_eval);
+          // prune node if possible, otherwise set own probability
+          // note: combining both did not lead to a speedup!
+          if (pruneNode(node)){
+            // return pointer to current parent (pruned), the just updated node no longer exists
+            retval = node;
+          } else{
+            node.updateOccupancyChildren();
+          }
+
+          return retval;
+        }
+      }
+
+      // at last level, update node, end of recursion
+      else {
+        if (use_change_detection) {
+          boolean occBefore = isNodeOccupied(node);
+          updateNodeLogOdds(node, log_odds_update); 
+
+          if (node_just_created){  // new node
+            changed_keys.put(key, true);
+          } else if (occBefore != isNodeOccupied(node)) {  // occupancy changed, track it
+             Boolean changedKeyValue = changed_keys.get(key);
+             if (changedKeyValue == null)
+                changed_keys.put(key, false);
+             else if (changedKeyValue == false)
+                changed_keys.remove(key);
+          }
+        } else {
+          updateNodeLogOdds(node, log_odds_update); 
+        }
+        return node;
+      }
+   }
    
    protected NODE setNodeValueRecurs(NODE node, boolean node_just_created, OcTreeKey key,
          int depth, float log_odds_value)
@@ -539,10 +932,105 @@ public class OccupancyOcTreeBase<V, NODE extends OcTreeDataNode<V, NODE>> extend
    }
 
    protected NODE setNodeValueRecurs(NODE node, boolean node_just_created, OcTreeKey key,
-                          int depth, float log_odds_value, boolean lazy_eval);
+                          int depth, float log_odds_value, boolean lazy_eval)
+   {
+      boolean created_node = false;
 
-   protected void updateInnerOccupancyRecurs(NODE node, int depth);
+      if (node == null)
+         throw new RuntimeException("The given node is null.");
+
+      // follow down to last level
+      if (depth < tree_depth) {
+        int pos = computeChildIdx(key, tree_depth -1 - depth);
+        if (!nodeChildExists(node, pos)) {
+          // child does not exist, but maybe it's a pruned node?
+          if (!nodeHasChildren(node) && !node_just_created ) {
+            // current node does not have children AND it is not a new node
+            // -> expand pruned node
+            expandNode(node);
+          }
+          else {
+            // not a pruned node, create requested child
+            createNodeChild(node, pos);
+            created_node = true;
+          }
+        }
+
+        if (lazy_eval)
+          return setNodeValueRecurs(getNodeChild(node, pos), created_node, key, depth+1, log_odds_value, lazy_eval);
+        else {
+          NODE retval = setNodeValueRecurs(getNodeChild(node, pos), created_node, key, depth+1, log_odds_value, lazy_eval);
+          // prune node if possible, otherwise set own probability
+          // note: combining both did not lead to a speedup!
+          if (pruneNode(node)){
+            // return pointer to current parent (pruned), the just updated node no longer exists
+            retval = node;
+          } else{
+            node.updateOccupancyChildren();
+          }
+
+          return retval;
+        }
+      }
+
+      // at last level, update node, end of recursion
+      else {
+        if (use_change_detection) {
+          boolean occBefore = isNodeOccupied(node);
+          node.setLogOdds(log_odds_value);
+
+          if (node_just_created){  // new node
+            changed_keys.put(key, true);;
+          } else if (occBefore != isNodeOccupied(node)) {  // occupancy changed, track it
+             Boolean keyChangedValue = changed_keys.get(key);
+             if (keyChangedValue == null)
+                changed_keys.put(key, false);
+             else if (keyChangedValue == false)
+                changed_keys.remove(key);
+          }
+        } else {
+          node.setLogOdds(log_odds_value);
+        }
+        return node;
+      }
+   }
+
+   protected void updateInnerOccupancyRecurs(NODE node, int depth)
+   {
+      if (node == null)
+         throw new RuntimeException("The given node is null.");
+
+      // only recurse and update for inner nodes:
+      if (nodeHasChildren(node)){
+        // return early for last level:
+        if (depth < tree_depth){
+          for (int i=0; i<8; i++) {
+            if (nodeChildExists(node, i)) {
+              updateInnerOccupancyRecurs(getNodeChild(node, i), depth+1);
+            }
+          }
+        }
+        node.updateOccupancyChildren();
+      }
+   }
    
-   protected void toMaxLikelihoodRecurs(NODE node, int depth, int max_depth);
+   protected void toMaxLikelihoodRecurs(NODE node, int depth, int max_depth)
+   {
+      if (node == null)
+         throw new RuntimeException("The given node is null.");
 
+      if (depth < max_depth) {
+        for (int i=0; i<8; i++) {
+          if (nodeChildExists(node, i)) {
+            toMaxLikelihoodRecurs(getNodeChild(node, i), depth+1, max_depth);
+          }
+        }
+      }
+      else { // max level reached
+        nodeToMaxLikelihood(node);
+      }
+   }
+
+   
+   protected abstract NODE createRootNode();
 }

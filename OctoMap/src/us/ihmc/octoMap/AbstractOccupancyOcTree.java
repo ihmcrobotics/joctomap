@@ -7,13 +7,13 @@ import javax.vecmath.Point3d;
 
 import us.ihmc.robotics.MathTools;
 
-public abstract class AbstractOccupancyOcTree<V, NODE extends OcTreeDataNode<V, NODE>> extends OcTreeBaseImpl<V, NODE>
+public abstract class AbstractOccupancyOcTree<NODE extends OcTreeNode> extends OcTreeBaseImpl<Float, NODE>
 {
    // occupancy parameters of tree, stored in logodds:
-   private float clamping_thres_min;
-   private float clamping_thres_max;
-   private float prob_hit_log;
-   private float prob_miss_log;
+   protected float clamping_thres_min;
+   protected float clamping_thres_max;
+   protected float prob_hit_log;
+   protected float prob_miss_log;
    private float occ_prob_thres_log;
 
    public AbstractOccupancyOcTree(double resolution)
@@ -30,7 +30,7 @@ public abstract class AbstractOccupancyOcTree<V, NODE extends OcTreeDataNode<V, 
       setDefaultParameters();
    }
 
-   public AbstractOccupancyOcTree(AbstractOccupancyOcTree<V, NODE> other)
+   public AbstractOccupancyOcTree(AbstractOccupancyOcTree<NODE> other)
    {
       super(other);
       clamping_thres_min = other.clamping_thres_min;
@@ -52,13 +52,13 @@ public abstract class AbstractOccupancyOcTree<V, NODE extends OcTreeDataNode<V, 
    }
 
    /// queries whether a node is occupied according to the tree's parameter for "occupancy"
-   public boolean isNodeOccupied(final OcTreeNode occupancyNode)
+   public boolean isNodeOccupied(NODE occupancyNode)
    {
       return (occupancyNode.getLogOdds() >= this.occ_prob_thres_log);
    }
 
    /// queries whether a node is at the clamping threshold according to the tree's parameter
-   public boolean isNodeAtThreshold(OcTreeNode occupancyNode)
+   public boolean isNodeAtThreshold(NODE occupancyNode)
    {
       return (occupancyNode.getLogOdds() >= this.clamping_thres_max || occupancyNode.getLogOdds() <= this.clamping_thres_min);
    }
@@ -72,12 +72,12 @@ public abstract class AbstractOccupancyOcTree<V, NODE extends OcTreeDataNode<V, 
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public OcTreeNode updateNode(OcTreeKey key, float log_odds_update)
+   public NODE updateNode(OcTreeKey key, float log_odds_update)
    {
       return updateNode(key, log_odds_update, false);
    }
 
-   public abstract OcTreeNode updateNode(OcTreeKey key, float log_odds_update, boolean lazy_eval);
+   public abstract NODE updateNode(OcTreeKey key, float log_odds_update, boolean lazy_eval);
 
    /**
     * Manipulate log_odds value of voxel directly.
@@ -89,12 +89,12 @@ public abstract class AbstractOccupancyOcTree<V, NODE extends OcTreeDataNode<V, 
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public OcTreeNode updateNode(Point3d value, float log_odds_update)
+   public NODE updateNode(Point3d value, float log_odds_update)
    {
       return updateNode(value, log_odds_update, false);
    }
 
-   public abstract OcTreeNode updateNode(Point3d value, float log_odds_update, boolean lazy_eval);
+   public abstract NODE updateNode(Point3d value, float log_odds_update, boolean lazy_eval);
 
    /**
     * Integrate occupancy measurement.
@@ -105,12 +105,12 @@ public abstract class AbstractOccupancyOcTree<V, NODE extends OcTreeDataNode<V, 
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public OcTreeNode updateNode(OcTreeKey key, boolean occupied)
+   public NODE updateNode(OcTreeKey key, boolean occupied)
    {
       return updateNode(key, occupied, false);
    }
 
-   public abstract OcTreeNode updateNode(OcTreeKey key, boolean occupied, boolean lazy_eval);
+   public abstract NODE updateNode(OcTreeKey key, boolean occupied, boolean lazy_eval);
 
    /**
     * Integrate occupancy measurement.
@@ -122,12 +122,12 @@ public abstract class AbstractOccupancyOcTree<V, NODE extends OcTreeDataNode<V, 
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public OcTreeNode updateNode(Point3d value, boolean occupied)
+   public NODE updateNode(Point3d value, boolean occupied)
    {
       return updateNode(value, occupied, false);
    }
 
-   public abstract OcTreeNode updateNode(Point3d value, boolean occupied, boolean lazy_eval);
+   public abstract NODE updateNode(Point3d value, boolean occupied, boolean lazy_eval);
 
    public abstract void toMaxLikelihood();
 

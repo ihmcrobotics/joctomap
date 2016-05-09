@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 public class OcTreeKey
 {
@@ -132,6 +133,16 @@ public class OcTreeKey
          ray.add(key);
       }
 
+      public OcTreeKey getFirst()
+      {
+         return ray.get(0);
+      }
+
+      public OcTreeKey getLast()
+      {
+         return ray.get(ray.size() - 1);
+      }
+
       public void reset();
       public void clear();
 
@@ -149,6 +160,11 @@ public class OcTreeKey
       public Iterator<OcTreeKey> iterator()
       {
          return ray.iterator();
+      }
+
+      public ListIterator<OcTreeKey> reverseIterator()
+      {
+         return ray.listIterator(ray.size() - 1);
       }
    }
 
