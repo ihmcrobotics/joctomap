@@ -21,10 +21,10 @@ import us.ihmc.tools.io.printing.PrintTools;
 public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends AbstractOccupancyOcTree<NODE>
 {
    protected boolean use_bbx_limit;  ///< use bounding box for queries (needs to be set)?
-   protected Point3d bbx_min = new Point3d();
-   protected Point3d bbx_max = new Point3d();
-   protected OcTreeKey bbx_min_key = new OcTreeKey();
-   protected OcTreeKey bbx_max_key = new OcTreeKey();
+   protected final Point3d bbx_min = new Point3d();
+   protected final Point3d bbx_max = new Point3d();
+   protected final OcTreeKey bbx_min_key = new OcTreeKey();
+   protected final OcTreeKey bbx_max_key = new OcTreeKey();
 
    protected boolean use_change_detection;
    /// Set of leaf keys (lowest level) which changed since last resetChangeDetection
@@ -59,7 +59,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       use_change_detection = other.use_change_detection;
    }
 
-   public void insertPointCloud(Pointcloud scan, Point3d sensor_origin);
+   public void insertPointCloud(Pointcloud scan, Point3d sensor_origin)
 
    {
       insertPointCloud(scan, sensor_origin, -1.0, false, false);
@@ -483,9 +483,31 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return success of operation
     */
-   public boolean insertRay(Point3d origin, Point3d end, double maxrange, boolean lazy_eval);
+   public boolean insertRay(Point3d origin, Point3d end, double maxrange, boolean lazy_eval)
+   {
+      Vector3d direction = new Vector3d();
+      direction.sub(end, origin);
+      double length = direction.length();
 
-   public boolean castRay(Point3d origin, Point3d direction, Point3d end)
+      // cut ray at maxrange
+      if ((maxrange > 0) && (length > maxrange))
+      {
+         direction.scale(1.0 / length);
+         Point3d new_end = new Point3d();
+         new_end.scaleAdd(maxrange, direction, origin);
+         return integrateMissOnRay(origin, new_end, lazy_eval);
+      }
+      // insert complete ray
+      else
+      {
+         if (!integrateMissOnRay(origin, end, lazy_eval))
+            return false;
+         updateNode(end, true, lazy_eval); // insert hit cell
+         return true;
+      }
+   }
+
+   public boolean castRay(Point3d origin, Vector3d direction, Point3d end)
    {
       return castRay(origin, direction, end, false, -1.0);
    }
@@ -508,9 +530,158 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     * @param[in] maxRange Maximum range after which the raycast is aborted (<= 0: no limit, default)
     * @return true if an occupied cell was hit, false if the maximum range or octree bounds are reached, or if an unknown node was hit.
     */
-   public boolean castRay(Point3d origin, Point3d direction, Point3d end, boolean ignoreUnknownCells, double maxRange);
+   public boolean castRay(Point3d origin, Vector3d direction, Point3d end, boolean ignoreUnknownCells, double maxRange)
+   {
+      /// ----------  see OcTreeBase::computeRayKeys  -----------
 
-   public boolean getRayIntersection(Point3d origin, Point3d direction, Point3d center, Point3d intersection)
+      // Initialization phase -------------------------------------------------------
+      OcTreeKey current_key = new OcTreeKey();
+      if (!coordToKeyChecked(origin, current_key))
+      {
+         PrintTools.warn(this, "Coordinates out of bounds during ray casting");
+         return false;
+      }
+
+      NODE startingNode = search(current_key);
+      if (startingNode != null)
+      {
+         if (isNodeOccupied(startingNode))
+         {
+            // Occupied node found at origin 
+            // (need to convert from key, since origin does not need to be a voxel center)
+            end = keyToCoord(current_key);
+            return true;
+         }
+      }
+      else if (!ignoreUnknownCells)
+      {
+         end = keyToCoord(current_key);
+         return false;
+      }
+
+      direction = new Vector3d(direction);
+      direction.normalize();
+      boolean max_range_set = (maxRange > 0.0);
+
+      double[] originArray = new double[3];
+      origin.get(originArray);
+      double[] endArray = new double[3];
+      end.get(endArray);
+      double[] directionArray = new double[3];
+      direction.get(directionArray);
+      int[] step = new int[3];
+      double[] tMax = new double[3];
+      double[] tDelta = new double[3];
+
+      for (int i = 0; i < 3; ++i)
+      {
+         // compute step direction
+         if (directionArray[i] > 0.0)
+            step[i] = 1;
+         else if (directionArray[i] < 0.0)
+            step[i] = -1;
+         else
+            step[i] = 0;
+
+         // compute tMax, tDelta
+         if (step[i] != 0)
+         {
+            // corner point of voxel (in direction of ray)
+            double voxelBorder = keyToCoord(current_key.k[i]);
+            voxelBorder += (double) (step[i] * resolution * 0.5);
+
+            tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
+            tDelta[i] = resolution / Math.abs(directionArray[i]);
+         }
+         else
+         {
+            tMax[i] = Double.POSITIVE_INFINITY;
+            tDelta[i] = Double.POSITIVE_INFINITY;
+         }
+      }
+
+      if (step[0] == 0 && step[1] == 0 && step[2] == 0)
+      {
+         PrintTools.error(this, "Raycasting in direction (0,0,0) is not possible!");
+         return false;
+      }
+
+      // for speedup:
+      double maxrange_sq = maxRange * maxRange;
+
+      // Incremental phase  ---------------------------------------------------------
+
+      boolean done = false;
+
+      while (!done)
+      {
+         int dim;
+
+         // find minimum tMax:
+         if (tMax[0] < tMax[1])
+         {
+            if (tMax[0] < tMax[2])
+               dim = 0;
+            else
+               dim = 2;
+         }
+         else
+         {
+            if (tMax[1] < tMax[2])
+               dim = 1;
+            else
+               dim = 2;
+         }
+
+         // check for overflow:
+         if ((step[dim] < 0 && current_key.k[dim] == 0) || (step[dim] > 0 && current_key.k[dim] == 2 * tree_max_val - 1))
+         {
+            PrintTools.warn(this, "Coordinate hit bounds in dim " + dim + ", aborting raycast");
+            // return border point nevertheless:
+            end = keyToCoord(current_key);
+            return false;
+         }
+
+         // advance in direction "dim"
+         current_key.k[dim] += step[dim];
+         tMax[dim] += tDelta[dim];
+
+         // generate world coords from key
+         end = keyToCoord(current_key);
+
+         // check for maxrange:
+         if (max_range_set)
+         {
+            double dist_from_origin_sq = 0.0;
+            for (int j = 0; j < 3; j++)
+            {
+               dist_from_origin_sq += ((endArray[j] - originArray[j]) * (endArray[j] - originArray[j]));
+            }
+            if (dist_from_origin_sq > maxrange_sq)
+               return false;
+
+         }
+
+         NODE currentNode = search(current_key);
+         if (currentNode != null)
+         {
+            if (isNodeOccupied(currentNode))
+            {
+               done = true;
+               break;
+            }
+            // otherwise: node is free and valid, raycasting continues
+         }
+         else if (!ignoreUnknownCells)
+         { // no node found, this usually means we are in "unknown" areas
+            return false;
+         }
+      } // end while
+
+      return true;
+   }
+
+   public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersection)
    {
       return getRayIntersection(origin, direction, center, intersection, 0.0);
    }
@@ -526,9 +697,103 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     * @param[in] delta A small increment to avoid ambiguity of beeing exactly on a voxel surface. A positive value will get the point out of the hit voxel, while a negative valuewill get it inside.
     * @return Whether or not an intesection point has been found. Either, the ray never cross the voxel or the ray is exactly parallel to the only surface it intersect.
     */
-   public boolean getRayIntersection(Point3d origin, Point3d direction, Point3d center, Point3d intersection, double delta);
+   public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersection, double delta)
+   {
+      // We only need three normals for the six planes
+      Vector3d normalX = new Vector3d(1, 0, 0);
+      Vector3d normalY = new Vector3d(0, 1, 0);
+      Vector3d normalZ = new Vector3d(0, 0, 1);
 
-   public boolean getNormals(Point3d point, List<Point3d> normals)
+      // One point on each plane, let them be the center for simplicity
+      Vector3d pointXNeg = new Vector3d(center.getX() - resolution / 2.0, center.getY(), center.getZ());
+      Vector3d pointXPos = new Vector3d(center.getX() + resolution / 2.0, center.getY(), center.getZ());
+      Vector3d pointYNeg = new Vector3d(center.getX(), center.getY() - resolution / 2.0, center.getZ());
+      Vector3d pointYPos = new Vector3d(center.getX(), center.getY() + resolution / 2.0, center.getZ());
+      Vector3d pointZNeg = new Vector3d(center.getX(), center.getY(), center.getZ() - resolution / 2.0);
+      Vector3d pointZPos = new Vector3d(center.getX(), center.getY(), center.getZ() + resolution / 2.0);
+
+      double lineDotNormal = 0.0;
+      double d = 0.0;
+      double outD = Double.POSITIVE_INFINITY;
+      Point3d intersect = new Point3d();
+      boolean found = false;
+
+      Vector3d tempVector = new Vector3d();
+
+      // Find the intersection (if any) with each place
+      // Line dot normal will be zero if they are parallel, in which case no intersection can be the entry one
+      // if there is an intersection does it occur in the bounded plane of the voxel
+      // if yes keep only the closest (smallest distance to sensor origin).
+      if((lineDotNormal = normalX.dot(direction)) != 0.0)
+      {
+         tempVector.sub(pointXNeg, origin);
+        d = tempVector.dot(normalX) / lineDotNormal;
+        intersect.scaleAdd(d, direction, origin);
+        if(!(intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6) ||
+           intersect.getZ() < (pointZNeg.getZ() - 1e-6) || intersect.getZ() > (pointZPos.getZ() + 1e-6))){
+          outD = Math.min(outD, d);
+          found = true;
+        }
+
+        tempVector.sub(pointXPos, origin);
+        d = tempVector.dot(normalX) / lineDotNormal;
+        intersect.scaleAdd(d, direction, origin);
+        if(!(intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6) ||
+           intersect.getZ() < (pointZNeg.getZ() - 1e-6) || intersect.getZ() > (pointZPos.getZ() + 1e-6))){
+          outD = Math.min(outD, d);
+          found = true;
+        }
+      }
+
+      if((lineDotNormal = normalY.dot(direction)) != 0.0){
+         tempVector.sub(pointYNeg, origin);
+        d = tempVector.dot(normalY) / lineDotNormal;
+        intersect.scaleAdd(d, direction, origin);
+        if(!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) ||
+           intersect.getZ() < (pointZNeg.getZ() - 1e-6) || intersect.getZ() > (pointZPos.getZ() + 1e-6))){
+          outD = Math.min(outD, d);
+          found = true;
+        }
+
+        tempVector.sub(pointYPos, origin);
+        d = tempVector.dot(normalY) / lineDotNormal;
+        intersect.scaleAdd(d, direction, origin);
+        if(!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) ||
+           intersect.getZ() < (pointZNeg.getZ() - 1e-6) || intersect.getZ() > (pointZPos.getZ() + 1e-6))){
+          outD = Math.min(outD, d);
+          found = true;
+        }
+      }
+
+      if((lineDotNormal = normalZ.dot(direction)) != 0.0){
+         tempVector.sub(pointZNeg, origin);
+        d = tempVector.dot(normalZ) / lineDotNormal;
+        intersect.scaleAdd(d, direction, origin);
+        if(!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) ||
+           intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6))){
+          outD = Math.min(outD, d);
+          found = true;
+        }
+
+        tempVector.sub(pointZPos, origin);
+        d = tempVector.dot(normalZ) / lineDotNormal;
+        intersect.scaleAdd(d, direction, origin);
+        if(!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) ||
+           intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6))){
+          outD = Math.min(outD, d);
+          found = true;
+        }
+      }
+
+      // Substract (add) a fraction to ensure no ambiguity on the starting voxel
+      // Don't start on a bondary.
+      if(found)
+         intersection.scaleAdd(outD + delta, direction, origin);
+      
+      return found;
+   }
+
+   public boolean getNormals(Point3d point, List<Vector3d> normals)
    {
       return getNormals(point, normals, true);
    }
@@ -543,7 +808,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       * @param[in] unknownStatus consider unknown cells as free (false) or occupied (default, true).
       * @return True if the input voxel is known in the occupancy grid, and false if it is unknown.
       */
-   public boolean getNormals(Point3d point, List<Point3d> normals, boolean unknownStatus)
+   public boolean getNormals(Point3d point, List<Vector3d> normals, boolean unknownStatus)
    {
       normals.clear();
 
@@ -613,8 +878,13 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
             Point3d p1 = new Point3d(vertexList[triTable[cube_index][i  ]]);
             Point3d p2 = new Point3d(vertexList[triTable[cube_index][i+1]]);
             Point3d p3 = new Point3d(vertexList[triTable[cube_index][i+2]]);
-            Point3d v1 = //p2 - p1;
-            Point3d v2 = p3 - p1;
+            Vector3d v1 = new Vector3d(); //p2 - p1;
+            Vector3d v2 = new Vector3d(); //p3 - p1;
+            Vector3d v3 = new Vector3d();
+            v1.sub(p2, p1);
+            v2.sub(p3, p1);
+            v3.cross(v1, v2);
+            v3.normalize();
 
             // OCTOMAP_WARNING("Vertex p1 %f, %f, %f\n", p1.x(), p1.y(), p1.z());
             // OCTOMAP_WARNING("Vertex p2 %f, %f, %f\n", p2.x(), p2.y(), p2.z());
@@ -622,7 +892,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
 
             // Right hand side cross product to retrieve the normal in the good
             // direction (pointing to the free nodes).
-            normals.push_back(v1.cross(v2).normalize());
+            normals.add(v3);
           }
         }
       }
@@ -644,10 +914,24 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    }
 
    /// sets the minimum for a query bounding box to use
-   public void setBBXMin(Point3d min);
+   public void setBBXMin(Point3d min)
+   {
+      bbx_min.set(min);
+      if (!coordToKeyChecked(bbx_min, bbx_min_key))
+      {
+         PrintTools.error(this, "ERROR while generating bbx min key.");
+      }
+   }
 
    /// sets the maximum for a query bounding box to use
-   public void setBBXMax(Point3d max);
+   public void setBBXMax(Point3d max)
+   {
+      bbx_max.set(max);
+      if (!coordToKeyChecked(bbx_max, bbx_max_key))
+      {
+         PrintTools.error(this, "ERROR while generating bbx max key.");
+      }
+   }
 
    /// @return the currently set minimum for bounding box queries, if set
    public Point3d getBBXMin()
@@ -661,15 +945,34 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       return bbx_max;
    }
 
-   public Point3d getBBXBounds();
+   public Point3d getBBXBounds()
+   {
+      Point3d obj_bounds = new Point3d();
+      obj_bounds.sub(bbx_max, bbx_min);
+      obj_bounds.scale(0.5);
+      return obj_bounds;
+    }
 
-   public Point3d getBBXCenter();
+   public Point3d getBBXCenter()
+   {
+      Point3d center = getBBXBounds();
+      center.add(bbx_min);
+      return center;
+    }
 
    /// @return true if point is in the currently set bounding box
-   public boolean inBBX(Point3d p);
+   public boolean inBBX(Point3d p)
+   {
+      return ((p.getX() >= bbx_min.getX()) && (p.getY() >= bbx_min.getY()) && (p.getZ() >= bbx_min.getZ()) &&
+              (p.getX() <= bbx_max.getX()) && (p.getY() <= bbx_max.getY()) && (p.getZ() <= bbx_max.getZ()) );
+    }
 
    /// @return true if key is in the currently set bounding box
-   public boolean inBBX(OcTreeKey key);
+   public boolean inBBX(OcTreeKey key)
+   {
+      return ((key.k[0] >= bbx_min_key.k[0]) && (key.k[1] >= bbx_min_key.k[1]) && (key.k[2] >= bbx_min_key.k[2]) &&
+              (key.k[0] <= bbx_max_key.k[0]) && (key.k[1] <= bbx_max_key.k[1]) && (key.k[2] <= bbx_max_key.k[2]) );
+    }
 
    //-- change detection on occupancy:
    /// track or ignore changes while inserting scans (default: ignore)
@@ -829,18 +1132,44 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    public void updateInnerOccupancy()
    {
       if (root != null)
-        updateInnerOccupancyRecurs(root, 0);
+         updateInnerOccupancyRecurs(root, 0);
    }
 
    /// integrate a "hit" measurement according to the tree's sensor model
-   public void integrateHit(NODE occupancyNode);
+   public void integrateHit(NODE occupancyNode)
+   {
+      updateNodeLogOdds(occupancyNode, prob_hit_log);
+   }
+
    /// integrate a "miss" measurement according to the tree's sensor model
-   public void integrateMiss(NODE occupancyNode);
+   public void integrateMiss(NODE occupancyNode)
+   {
+      updateNodeLogOdds(occupancyNode, prob_miss_log);
+   }
+
    /// update logodds value of node by adding to the current value.
-   public void updateNodeLogOdds(NODE occupancyNode, float update);
+   public void updateNodeLogOdds(NODE occupancyNode, float update)
+   {
+      occupancyNode.addValue(update);
+      if (occupancyNode.getLogOdds() < clamping_thres_min)
+      {
+         occupancyNode.setLogOdds(clamping_thres_min);
+         return;
+      }
+      if (occupancyNode.getLogOdds() > clamping_thres_max)
+      {
+         occupancyNode.setLogOdds(clamping_thres_max);
+      }
+   }
 
    /// converts the node to the maximum likelihood value according to the tree's parameter for "occupancy"
-   public void nodeToMaxLikelihood(NODE occupancyNode);
+   public void nodeToMaxLikelihood(NODE occupancyNode)
+   {
+      if (isNodeOccupied(occupancyNode))
+         occupancyNode.setLogOdds(clamping_thres_max);
+      else
+         occupancyNode.setLogOdds(clamping_thres_min);
+   }
 
    protected boolean integrateMissOnRay(Point3d origin, Point3d end)
    {
@@ -851,7 +1180,21 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     * Traces a ray from origin to end and updates all voxels on the
     *  way as free.  The volume containing "end" is not updated.
     */
-   protected boolean integrateMissOnRay(Point3d origin, Point3d end, boolean lazy_eval);
+   protected boolean integrateMissOnRay(Point3d origin, Point3d end, boolean lazy_eval)
+   {
+      KeyRay keyRay = keyrays.get(0);
+      if (!computeRayKeys(origin, end, keyRay))
+      {
+         return false;
+      }
+
+      for (OcTreeKey key : keyRay)
+      {
+         updateNode(key, false, lazy_eval); // insert freespace measurement
+      }
+
+      return true;
+   }
 
    // recursive calls ----------------------------
 

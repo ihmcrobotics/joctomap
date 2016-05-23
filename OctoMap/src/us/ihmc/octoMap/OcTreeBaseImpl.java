@@ -786,8 +786,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
          }
          else
          {
-            tMax[i] = Double.MAX_VALUE;
-            tDelta[i] = Double.MAX_VALUE;
+            tMax[i] = Double.POSITIVE_INFINITY;
+            tDelta[i] = Double.POSITIVE_INFINITY;
          }
       }
 
@@ -1204,8 +1204,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
       setResolution(resolution);
       for (int i = 0; i < 3; i++)
       {
-         max_value[i] = -Double.MAX_VALUE;
-         min_value[i] = Double.MAX_VALUE;
+         max_value[i] = Double.NEGATIVE_INFINITY;
+         min_value[i] = Double.POSITIVE_INFINITY;
       }
       size_changed = true;
 
@@ -1229,8 +1229,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
 
       for (int i = 0; i < 3; i++)
       {
-         max_value[i] = -Double.MAX_VALUE;
-         min_value[i] = Double.MAX_VALUE;
+         max_value[i] = Double.NEGATIVE_INFINITY;
+         min_value[i] = Double.POSITIVE_INFINITY;
       }
 
       for (LeafIterator<V, NODE> it = begin(), end = end(); !(it.equals(end)); it.next())
