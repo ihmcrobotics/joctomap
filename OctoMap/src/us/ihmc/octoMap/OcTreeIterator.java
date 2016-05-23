@@ -9,7 +9,7 @@ import us.ihmc.robotics.MathTools;
 public class OcTreeIterator
 {
 
-   private static abstract class IteratorBase<V, NODE extends OcTreeDataNode<V, NODE>> // implements Iterator<NODE>
+   private static abstract class IteratorBase<V, NODE extends OcTreeDataNode<V>> // implements Iterator<NODE>
    {
       protected OcTreeBaseImpl<V, NODE> tree; ///< Octree this iterator is working on
       protected int maxDepth; ///< Maximum depth for depth-limited queries
@@ -184,7 +184,7 @@ public class OcTreeIterator
     * }
     * @endcode
     */
-   public static class TreeIterator<V, NODE extends OcTreeDataNode<V, NODE>> extends IteratorBase<V, NODE>
+   public static class TreeIterator<V, NODE extends OcTreeDataNode<V>> extends IteratorBase<V, NODE>
    {
 
       public TreeIterator()
@@ -261,7 +261,7 @@ public class OcTreeIterator
     * @endcode
     *
     */
-   public static class LeafIterator<V, NODE extends OcTreeDataNode<V, NODE>> extends IteratorBase<V, NODE>
+   public static class LeafIterator<V, NODE extends OcTreeDataNode<V>> extends IteratorBase<V, NODE>
    {
 
       public LeafIterator()
@@ -354,7 +354,7 @@ public class OcTreeIterator
     * }
     * @endcode
     */
-   public static class LeafBoundingBoxIterator<V, NODE extends OcTreeDataNode<V, NODE>> extends IteratorBase<V, NODE>
+   public static class LeafBoundingBoxIterator<V, NODE extends OcTreeDataNode<V>> extends IteratorBase<V, NODE>
    {
       OcTreeKey minKey = new OcTreeKey();
       OcTreeKey maxKey = new OcTreeKey();
@@ -512,7 +512,7 @@ public class OcTreeIterator
    }
 
    /// Element on the internal recursion stack of the iterator
-   static class StackElement<V, NODE extends OcTreeDataNode<V, NODE>>
+   static class StackElement<V, NODE extends OcTreeDataNode<V>>
    {
       NODE node;
       OcTreeKey key;
