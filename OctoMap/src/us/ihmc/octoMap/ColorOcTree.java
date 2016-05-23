@@ -163,7 +163,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
    protected void updateInnerOccupancyRecurs(ColorOcTreeNode node, int depth)
    {
       // only recurse and update for inner nodes:
-      if (nodeHasChildren(node))
+      if (node != null && nodeHasChildren(node))
       {
          // return early for last level:
          if (depth < tree_depth)
@@ -262,6 +262,18 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
          { // no child had a color other than white
             return new Color(255, 255, 255);
          }
+      }
+
+      @Override
+      public ColorOcTreeNode create()
+      {
+         return new ColorOcTreeNode();
+      }
+
+      @Override
+      public ColorOcTreeNode clone()
+      {
+         return new ColorOcTreeNode(this);
       }
    }
 

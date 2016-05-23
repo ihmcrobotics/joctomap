@@ -113,7 +113,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    /// nodes, and the structure must be identical
    public boolean equals(OcTreeBaseImpl<V, NODE> other)
    {
-
       if (tree_depth != other.tree_depth || tree_max_val != other.tree_max_val || resolution != other.resolution || tree_size != other.tree_size)
       {
          return false;
@@ -270,10 +269,12 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
 
       for (int i = 1; i < 8; i++)
       {
+         if (!nodeChildExists(node, i))
+            return false;
          // comparison via getChild so that casts of derived classes ensure
          // that the right == operator gets called
          NODE currentChild = getNodeChild(node, i);
-         if (!nodeChildExists(node, i) || nodeHasChildren(currentChild) || !(currentChild.equals(firstChild)))
+         if (nodeHasChildren(currentChild) || !(currentChild.equals(firstChild)))
             return false;
       }
 
@@ -337,7 +338,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
     */
    public boolean pruneNode(NODE node)
    {
-
       if (!isNodeCollapsible(node))
          return false;
 
@@ -638,13 +638,12 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    }
 
    /// Traverses the tree to calculate the total number of nodes
-   public int calcNumNodes()
+   public int calculateNumberOfNodes()
    {
       int retval = 0; // root node
       if (root != null)
       {
-         retval++;
-         calcNumNodesRecurs(root, retval);
+         retval = calculateNumberOfNodesRecursively(root, 1);
       }
       return retval;
    }
@@ -1261,21 +1260,24 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
       size_changed = false;
    }
 
-   protected void calcNumNodesRecurs(NODE node, int num_nodes)
+   protected int calculateNumberOfNodesRecursively(NODE node, int currentNumberOfNodes)
    {
       if (node == null)
          throw new RuntimeException("The given node is null");
+
       if (nodeHasChildren(node))
       {
-         for (int i = 0; i < 8; ++i)
+         for (int i = 0; i < 8; i++)
          {
             if (nodeChildExists(node, i))
             {
-               num_nodes++;
-               calcNumNodesRecurs(getNodeChild(node, i), num_nodes);
+               currentNumberOfNodes++;
+               currentNumberOfNodes = calculateNumberOfNodesRecursively(getNodeChild(node, i), currentNumberOfNodes);
             }
          }
       }
+
+      return currentNumberOfNodes;
    }
 
    /// recursive delete of node and all children (deallocates memory)
@@ -1315,8 +1317,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
          // child does not exist, but maybe it's a pruned node?
          if ((!nodeHasChildren(node)) && (node != root))
          { // TODO double check for exists / root exception?
-            // current node does not have children AND it's not the root node
-            // -> expand pruned node
+              // current node does not have children AND it's not the root node
+           // -> expand pruned node
             expandNode(node);
             // tree_size and size_changed adjusted in createNodeChild(...)
          }
@@ -1421,4 +1423,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
       // TODO NODE*
       node.allocateChildren();
    }
+
+   protected abstract NODE createRootNode();
 }

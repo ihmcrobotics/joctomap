@@ -20,7 +20,7 @@ import us.ihmc.tools.io.printing.PrintTools;
 
 public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends AbstractOccupancyOcTree<NODE>
 {
-   protected boolean use_bbx_limit;  ///< use bounding box for queries (needs to be set)?
+   protected boolean use_bbx_limit; ///< use bounding box for queries (needs to be set)?
    protected final Point3d bbx_min = new Point3d();
    protected final Point3d bbx_max = new Point3d();
    protected final OcTreeKey bbx_min_key = new OcTreeKey();
@@ -45,7 +45,6 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       use_bbx_limit = false;
       use_change_detection = false;
    }
-
 
    public OccupancyOcTreeBase(OccupancyOcTreeBase<NODE> other)
    {
@@ -109,7 +108,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
 
    public void insertPointCloud(Pointcloud scan, Point3d sensor_origin, RigidBodyTransform frame_origin)
    {
-      insertPointCloud(scan, sensor_origin, -1.0, false, false);
+      insertPointCloud(scan, sensor_origin, frame_origin, -1.0, false, false);
    }
 
    /**
@@ -130,8 +129,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    * @param discretize whether the scan is discretized first into octree key cells (default: false).
    *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.*
    */
-   public void insertPointCloud(Pointcloud scan, Point3d sensor_origin, RigidBodyTransform frame_origin, double maxrange, boolean lazy_eval,
-         boolean discretize)
+   public void insertPointCloud(Pointcloud scan, Point3d sensor_origin, RigidBodyTransform frame_origin, double maxrange, boolean lazy_eval, boolean discretize)
    {
       // performs transformation to data and sensor origin first
       Pointcloud transformed_scan = new Pointcloud(scan);
@@ -229,10 +227,11 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       log_odds_value = Math.min(Math.max(log_odds_value, clamping_thres_min), clamping_thres_max);
 
       boolean createdRoot = false;
-      if (root == null){
-        root = createRootNode();
-        tree_size++;
-        createdRoot = true;
+      if (root == null)
+      {
+         root = createRootNode();
+         tree_size++;
+         createdRoot = true;
       }
       return setNodeValueRecurs(root, createdRoot, key, 0, log_odds_value, lazy_eval);
    }
@@ -256,7 +255,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    {
       OcTreeKey key = new OcTreeKey();
       if (!coordToKeyChecked(value, key))
-        return null;
+         return null;
 
       return setNodeValue(key, log_odds_value, lazy_eval);
    }
@@ -282,7 +281,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    {
       OcTreeKey key = new OcTreeKey();
       if (!coordToKeyChecked(x, y, z, key))
-        return null;
+         return null;
 
       return setNodeValue(key, log_odds_value, lazy_eval);
    }
@@ -308,18 +307,17 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       // may cause an overhead in some configuration, but more often helps
       NODE leaf = search(key);
       // no change: node already at threshold
-      if (leaf != null
-          && ((log_odds_update >= 0 && leaf.getValue() >= clamping_thres_max)
-          || ( log_odds_update <= 0 && leaf.getValue() <= clamping_thres_min)))
+      if (leaf != null && ((log_odds_update >= 0 && leaf.getValue() >= clamping_thres_max) || (log_odds_update <= 0 && leaf.getValue() <= clamping_thres_min)))
       {
-        return leaf;
+         return leaf;
       }
 
       boolean createdRoot = false;
-      if (root == null){
-        root = createRootNode();
-        tree_size++;
-        createdRoot = true;
+      if (root == null)
+      {
+         root = createRootNode();
+         tree_size++;
+         createdRoot = true;
       }
 
       return updateNodeRecurs(root, createdRoot, key, 0, log_odds_update, lazy_eval);
@@ -344,7 +342,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    {
       OcTreeKey key = new OcTreeKey();
       if (!coordToKeyChecked(value, key))
-        return null;
+         return null;
 
       return updateNode(key, log_odds_update, lazy_eval);
    }
@@ -370,7 +368,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    {
       OcTreeKey key = new OcTreeKey();
       if (!coordToKeyChecked(x, y, z, key))
-        return null;
+         return null;
 
       return updateNode(key, log_odds_update, lazy_eval);
    }
@@ -393,7 +391,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    {
       float logOdds = prob_miss_log;
       if (occupied)
-        logOdds = prob_hit_log;
+         logOdds = prob_hit_log;
 
       return updateNode(key, logOdds, lazy_eval);
    }
@@ -417,7 +415,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    {
       OcTreeKey key = new OcTreeKey();
       if (!coordToKeyChecked(value, key))
-        return null;
+         return null;
       return updateNode(key, occupied, lazy_eval);
    }
 
@@ -442,7 +440,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    {
       OcTreeKey key = new OcTreeKey();
       if (!coordToKeyChecked(x, y, z, key))
-        return null;
+         return null;
       return updateNode(key, occupied, lazy_eval);
    }
 
@@ -454,11 +452,12 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    public void toMaxLikelihood()
    {
       if (root == null)
-        return;
+         return;
 
       // convert bottom up
-      for (int depth=tree_depth; depth>0; depth--) {
-        toMaxLikelihoodRecurs(root, 0, depth);
+      for (int depth = tree_depth; depth > 0; depth--)
+      {
+         toMaxLikelihoodRecurs(root, 0, depth);
       }
 
       // convert root
@@ -724,72 +723,80 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       // Line dot normal will be zero if they are parallel, in which case no intersection can be the entry one
       // if there is an intersection does it occur in the bounded plane of the voxel
       // if yes keep only the closest (smallest distance to sensor origin).
-      if((lineDotNormal = normalX.dot(direction)) != 0.0)
+      if ((lineDotNormal = normalX.dot(direction)) != 0.0)
       {
          tempVector.sub(pointXNeg, origin);
-        d = tempVector.dot(normalX) / lineDotNormal;
-        intersect.scaleAdd(d, direction, origin);
-        if(!(intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6) ||
-           intersect.getZ() < (pointZNeg.getZ() - 1e-6) || intersect.getZ() > (pointZPos.getZ() + 1e-6))){
-          outD = Math.min(outD, d);
-          found = true;
-        }
+         d = tempVector.dot(normalX) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6) || intersect.getZ() < (pointZNeg.getZ() - 1e-6)
+               || intersect.getZ() > (pointZPos.getZ() + 1e-6)))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
 
-        tempVector.sub(pointXPos, origin);
-        d = tempVector.dot(normalX) / lineDotNormal;
-        intersect.scaleAdd(d, direction, origin);
-        if(!(intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6) ||
-           intersect.getZ() < (pointZNeg.getZ() - 1e-6) || intersect.getZ() > (pointZPos.getZ() + 1e-6))){
-          outD = Math.min(outD, d);
-          found = true;
-        }
+         tempVector.sub(pointXPos, origin);
+         d = tempVector.dot(normalX) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6) || intersect.getZ() < (pointZNeg.getZ() - 1e-6)
+               || intersect.getZ() > (pointZPos.getZ() + 1e-6)))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
       }
 
-      if((lineDotNormal = normalY.dot(direction)) != 0.0){
+      if ((lineDotNormal = normalY.dot(direction)) != 0.0)
+      {
          tempVector.sub(pointYNeg, origin);
-        d = tempVector.dot(normalY) / lineDotNormal;
-        intersect.scaleAdd(d, direction, origin);
-        if(!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) ||
-           intersect.getZ() < (pointZNeg.getZ() - 1e-6) || intersect.getZ() > (pointZPos.getZ() + 1e-6))){
-          outD = Math.min(outD, d);
-          found = true;
-        }
+         d = tempVector.dot(normalY) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) || intersect.getZ() < (pointZNeg.getZ() - 1e-6)
+               || intersect.getZ() > (pointZPos.getZ() + 1e-6)))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
 
-        tempVector.sub(pointYPos, origin);
-        d = tempVector.dot(normalY) / lineDotNormal;
-        intersect.scaleAdd(d, direction, origin);
-        if(!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) ||
-           intersect.getZ() < (pointZNeg.getZ() - 1e-6) || intersect.getZ() > (pointZPos.getZ() + 1e-6))){
-          outD = Math.min(outD, d);
-          found = true;
-        }
+         tempVector.sub(pointYPos, origin);
+         d = tempVector.dot(normalY) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) || intersect.getZ() < (pointZNeg.getZ() - 1e-6)
+               || intersect.getZ() > (pointZPos.getZ() + 1e-6)))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
       }
 
-      if((lineDotNormal = normalZ.dot(direction)) != 0.0){
+      if ((lineDotNormal = normalZ.dot(direction)) != 0.0)
+      {
          tempVector.sub(pointZNeg, origin);
-        d = tempVector.dot(normalZ) / lineDotNormal;
-        intersect.scaleAdd(d, direction, origin);
-        if(!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) ||
-           intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6))){
-          outD = Math.min(outD, d);
-          found = true;
-        }
+         d = tempVector.dot(normalZ) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) || intersect.getY() < (pointYNeg.getY() - 1e-6)
+               || intersect.getY() > (pointYPos.getY() + 1e-6)))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
 
-        tempVector.sub(pointZPos, origin);
-        d = tempVector.dot(normalZ) / lineDotNormal;
-        intersect.scaleAdd(d, direction, origin);
-        if(!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) ||
-           intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6))){
-          outD = Math.min(outD, d);
-          found = true;
-        }
+         tempVector.sub(pointZPos, origin);
+         d = tempVector.dot(normalZ) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) || intersect.getY() < (pointYNeg.getY() - 1e-6)
+               || intersect.getY() > (pointYPos.getY() + 1e-6)))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
       }
 
       // Substract (add) a fraction to ensure no ambiguity on the starting voxel
       // Don't start on a bondary.
-      if(found)
+      if (found)
          intersection.scaleAdd(outD + delta, direction, origin);
-      
+
       return found;
    }
 
@@ -813,9 +820,10 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       normals.clear();
 
       OcTreeKey init_key = new OcTreeKey();
-      if ( !coordToKeyChecked(point, init_key) ) {
-        PrintTools.error(this, "Voxel out of bounds");
-        return false;
+      if (!coordToKeyChecked(point, init_key))
+      {
+         PrintTools.error(this, "Voxel out of bounds");
+         return false;
       }
 
       // OCTOMAP_WARNING("Normal for %f, %f, %f\n", point.x(), point.y(), point.z());
@@ -827,74 +835,90 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
 
       // There is 8 neighbouring sets
       // The current cube can be at any of the 8 vertex
-      int[][] x_index = new int[][]{{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0 -1, -1}, {0, 0 -1, -1}};
-      int[][] y_index = new int[][]{{1, 0, 0, 1}, {0, -1, -1, 0}, {0, -1, -1, 0}, {1, 0, 0, 1}};
-      int[][] z_index = new int[][]{{0, 1}, {-1, 0}};
+      int[][] x_index = new int[][] {{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0 - 1, -1}, {0, 0 - 1, -1}};
+      int[][] y_index = new int[][] {{1, 0, 0, 1}, {0, -1, -1, 0}, {0, -1, -1, 0}, {1, 0, 0, 1}};
+      int[][] z_index = new int[][] {{0, 1}, {-1, 0}};
 
       // Iterate over the 8 neighboring sets
-      for(int m = 0; m < 2; ++m){
-        for(int l = 0; l < 4; ++l){
-          
-          int k = 0;
-          // Iterate over the cubes
-          for(int j = 0; j < 2; ++j){
-            for(int i = 0; i < 4; ++i){
-              current_key.k[0] = init_key.k[0] + x_index[l][i];
-              current_key.k[1] = init_key.k[1] + y_index[l][i];
-              current_key.k[2] = init_key.k[2] + z_index[m][j];
-              current_node = search(current_key);
+      for (int m = 0; m < 2; ++m)
+      {
+         for (int l = 0; l < 4; ++l)
+         {
 
-              if(current_node != null){
-                vertex_values[k] = isNodeOccupied(current_node) ? 1 : 0;
+            int k = 0;
+            // Iterate over the cubes
+            for (int j = 0; j < 2; ++j)
+            {
+               for (int i = 0; i < 4; ++i)
+               {
+                  current_key.k[0] = init_key.k[0] + x_index[l][i];
+                  current_key.k[1] = init_key.k[1] + y_index[l][i];
+                  current_key.k[2] = init_key.k[2] + z_index[m][j];
+                  current_node = search(current_key);
 
-                // point3d coord = this->keyToCoord(current_key);
-                // OCTOMAP_WARNING_STR("vertex " << k << " at " << coord << "; value " << vertex_values[k]);
-              }else{
-                // Occupancy of unknown cells
-                vertex_values[k] = unknownStatus ? 1 : 0;
-              }
-              ++k;
+                  if (current_node != null)
+                  {
+                     vertex_values[k] = isNodeOccupied(current_node) ? 1 : 0;
+
+                     // point3d coord = this->keyToCoord(current_key);
+                     // OCTOMAP_WARNING_STR("vertex " << k << " at " << coord << "; value " << vertex_values[k]);
+                  }
+                  else
+                  {
+                     // Occupancy of unknown cells
+                     vertex_values[k] = unknownStatus ? 1 : 0;
+                  }
+                  ++k;
+               }
             }
-          }
 
-          int cube_index = 0;
-          if (vertex_values[0] != 0) cube_index |= 1;
-          if (vertex_values[1] != 0) cube_index |= 2;
-          if (vertex_values[2] != 0) cube_index |= 4;
-          if (vertex_values[3] != 0) cube_index |= 8;
-          if (vertex_values[4] != 0) cube_index |= 16;
-          if (vertex_values[5] != 0) cube_index |= 32;
-          if (vertex_values[6] != 0) cube_index |= 64;
-          if (vertex_values[7] != 0) cube_index |= 128;
+            int cube_index = 0;
+            if (vertex_values[0] != 0)
+               cube_index |= 1;
+            if (vertex_values[1] != 0)
+               cube_index |= 2;
+            if (vertex_values[2] != 0)
+               cube_index |= 4;
+            if (vertex_values[3] != 0)
+               cube_index |= 8;
+            if (vertex_values[4] != 0)
+               cube_index |= 16;
+            if (vertex_values[5] != 0)
+               cube_index |= 32;
+            if (vertex_values[6] != 0)
+               cube_index |= 64;
+            if (vertex_values[7] != 0)
+               cube_index |= 128;
 
-          // OCTOMAP_WARNING_STR("cubde_index: " << cube_index);
+            // OCTOMAP_WARNING_STR("cubde_index: " << cube_index);
 
-          // All vertices are occupied or free resulting in no normal
-          if (edgeTable[cube_index] == 0)
-            return true;
+            // All vertices are occupied or free resulting in no normal
+            if (edgeTable[cube_index] == 0)
+               return true;
 
-          // No interpolation is done yet, we use vertexList in <MCTables.h>.
-          for(int i = 0; triTable[cube_index][i] != -1; i += 3){
-            Point3d p1 = new Point3d(vertexList[triTable[cube_index][i  ]]);
-            Point3d p2 = new Point3d(vertexList[triTable[cube_index][i+1]]);
-            Point3d p3 = new Point3d(vertexList[triTable[cube_index][i+2]]);
-            Vector3d v1 = new Vector3d(); //p2 - p1;
-            Vector3d v2 = new Vector3d(); //p3 - p1;
-            Vector3d v3 = new Vector3d();
-            v1.sub(p2, p1);
-            v2.sub(p3, p1);
-            v3.cross(v1, v2);
-            v3.normalize();
+            // No interpolation is done yet, we use vertexList in <MCTables.h>.
+            for (int i = 0; triTable[cube_index][i] != -1; i += 3)
+            {
+               Point3d p1 = new Point3d(vertexList[triTable[cube_index][i]]);
+               Point3d p2 = new Point3d(vertexList[triTable[cube_index][i + 1]]);
+               Point3d p3 = new Point3d(vertexList[triTable[cube_index][i + 2]]);
+               Vector3d v1 = new Vector3d(); //p2 - p1;
+               Vector3d v2 = new Vector3d(); //p3 - p1;
+               Vector3d v3 = new Vector3d();
+               v1.sub(p2, p1);
+               v2.sub(p3, p1);
+               v3.cross(v1, v2);
+               v3.normalize();
 
-            // OCTOMAP_WARNING("Vertex p1 %f, %f, %f\n", p1.x(), p1.y(), p1.z());
-            // OCTOMAP_WARNING("Vertex p2 %f, %f, %f\n", p2.x(), p2.y(), p2.z());
-            // OCTOMAP_WARNING("Vertex p3 %f, %f, %f\n", p3.x(), p3.y(), p3.z());
+               // OCTOMAP_WARNING("Vertex p1 %f, %f, %f\n", p1.x(), p1.y(), p1.z());
+               // OCTOMAP_WARNING("Vertex p2 %f, %f, %f\n", p2.x(), p2.y(), p2.z());
+               // OCTOMAP_WARNING("Vertex p3 %f, %f, %f\n", p3.x(), p3.y(), p3.z());
 
-            // Right hand side cross product to retrieve the normal in the good
-            // direction (pointing to the free nodes).
-            normals.add(v3);
-          }
-        }
+               // Right hand side cross product to retrieve the normal in the good
+               // direction (pointing to the free nodes).
+               normals.add(v3);
+            }
+         }
       }
 
       return true;
@@ -951,28 +975,28 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       obj_bounds.sub(bbx_max, bbx_min);
       obj_bounds.scale(0.5);
       return obj_bounds;
-    }
+   }
 
    public Point3d getBBXCenter()
    {
       Point3d center = getBBXBounds();
       center.add(bbx_min);
       return center;
-    }
+   }
 
    /// @return true if point is in the currently set bounding box
    public boolean inBBX(Point3d p)
    {
-      return ((p.getX() >= bbx_min.getX()) && (p.getY() >= bbx_min.getY()) && (p.getZ() >= bbx_min.getZ()) &&
-              (p.getX() <= bbx_max.getX()) && (p.getY() <= bbx_max.getY()) && (p.getZ() <= bbx_max.getZ()) );
-    }
+      return ((p.getX() >= bbx_min.getX()) && (p.getY() >= bbx_min.getY()) && (p.getZ() >= bbx_min.getZ()) && (p.getX() <= bbx_max.getX())
+            && (p.getY() <= bbx_max.getY()) && (p.getZ() <= bbx_max.getZ()));
+   }
 
    /// @return true if key is in the currently set bounding box
    public boolean inBBX(OcTreeKey key)
    {
-      return ((key.k[0] >= bbx_min_key.k[0]) && (key.k[1] >= bbx_min_key.k[1]) && (key.k[2] >= bbx_min_key.k[2]) &&
-              (key.k[0] <= bbx_max_key.k[0]) && (key.k[1] <= bbx_max_key.k[1]) && (key.k[2] <= bbx_max_key.k[2]) );
-    }
+      return ((key.k[0] >= bbx_min_key.k[0]) && (key.k[1] >= bbx_min_key.k[1]) && (key.k[2] >= bbx_min_key.k[2]) && (key.k[0] <= bbx_max_key.k[0])
+            && (key.k[1] <= bbx_max_key.k[1]) && (key.k[2] <= bbx_max_key.k[2]));
+   }
 
    //-- change detection on occupancy:
    /// track or ignore changes while inserting scans (default: ignore)
@@ -1024,7 +1048,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          { // no BBX specified
             if ((maxrange < 0.0) || (length <= maxrange))
             { // is not maxrange meas.
-               // free cells
+                 // free cells
                if (computeRayKeys(origin, p, keyray))
                {
                   {
@@ -1056,7 +1080,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          }
          else
          { // BBX was set
-            // endpoint in bbx and not maxrange?
+              // endpoint in bbx and not maxrange?
             if (inBBX(p) && ((maxrange < 0.0) || (length <= maxrange)))
             {
                // occupied endpoint
@@ -1175,7 +1199,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    {
       return integrateMissOnRay(origin, end, false);
    }
-   
+
    /**
     * Traces a ray from origin to end and updates all voxels on the
     *  way as free.  The volume containing "end" is not updated.
@@ -1198,14 +1222,12 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
 
    // recursive calls ----------------------------
 
-   protected NODE updateNodeRecurs(NODE node, boolean node_just_created, OcTreeKey key,
-         int depth, float log_odds_update)
+   protected NODE updateNodeRecurs(NODE node, boolean node_just_created, OcTreeKey key, int depth, float log_odds_update)
    {
       return updateNodeRecurs(node, node_just_created, key, depth, log_odds_update, false);
    }
 
-   protected NODE updateNodeRecurs(NODE node, boolean node_just_created, OcTreeKey key,
-                          int depth, float log_odds_update, boolean lazy_eval)
+   protected NODE updateNodeRecurs(NODE node, boolean node_just_created, OcTreeKey key, int depth, float log_odds_update, boolean lazy_eval)
    {
       boolean created_node = false;
 
@@ -1213,69 +1235,82 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          throw new RuntimeException("The given node is null.");
 
       // follow down to last level
-      if (depth < tree_depth) {
-        int pos = computeChildIdx(key, tree_depth -1 - depth);
-        if (!nodeChildExists(node, pos)) {
-          // child does not exist, but maybe it's a pruned node?
-          if (!nodeHasChildren(node) && !node_just_created ) {
-            // current node does not have children AND it is not a new node 
-            // -> expand pruned node
-            expandNode(node);
-          }
-          else {
-            // not a pruned node, create requested child
-            createNodeChild(node, pos);
-            created_node = true;
-          }
-        }
+      if (depth < tree_depth)
+      {
+         int pos = computeChildIdx(key, tree_depth - 1 - depth);
+         if (!nodeChildExists(node, pos))
+         {
+            // child does not exist, but maybe it's a pruned node?
+            if (!nodeHasChildren(node) && !node_just_created)
+            {
+               // current node does not have children AND it is not a new node 
+               // -> expand pruned node
+               expandNode(node);
+            }
+            else
+            {
+               // not a pruned node, create requested child
+               createNodeChild(node, pos);
+               created_node = true;
+            }
+         }
 
-        if (lazy_eval)
-          return updateNodeRecurs(getNodeChild(node, pos), created_node, key, depth+1, log_odds_update, lazy_eval);
-        else {
-          NODE retval = updateNodeRecurs(getNodeChild(node, pos), created_node, key, depth+1, log_odds_update, lazy_eval);
-          // prune node if possible, otherwise set own probability
-          // note: combining both did not lead to a speedup!
-          if (pruneNode(node)){
-            // return pointer to current parent (pruned), the just updated node no longer exists
-            retval = node;
-          } else{
-            node.updateOccupancyChildren();
-          }
+         if (lazy_eval)
+            return updateNodeRecurs(getNodeChild(node, pos), created_node, key, depth + 1, log_odds_update, lazy_eval);
+         else
+         {
+            NODE retval = updateNodeRecurs(getNodeChild(node, pos), created_node, key, depth + 1, log_odds_update, lazy_eval);
+            // prune node if possible, otherwise set own probability
+            // note: combining both did not lead to a speedup!
+            if (pruneNode(node))
+            {
+               // return pointer to current parent (pruned), the just updated node no longer exists
+               retval = node;
+            }
+            else
+            {
+               node.updateOccupancyChildren();
+            }
 
-          return retval;
-        }
+            return retval;
+         }
       }
 
       // at last level, update node, end of recursion
-      else {
-        if (use_change_detection) {
-          boolean occBefore = isNodeOccupied(node);
-          updateNodeLogOdds(node, log_odds_update); 
+      else
+      {
+         if (use_change_detection)
+         {
+            boolean occBefore = isNodeOccupied(node);
+            updateNodeLogOdds(node, log_odds_update);
 
-          if (node_just_created){  // new node
-            changed_keys.put(key, true);
-          } else if (occBefore != isNodeOccupied(node)) {  // occupancy changed, track it
-             Boolean changedKeyValue = changed_keys.get(key);
-             if (changedKeyValue == null)
-                changed_keys.put(key, false);
-             else if (changedKeyValue == false)
-                changed_keys.remove(key);
-          }
-        } else {
-          updateNodeLogOdds(node, log_odds_update); 
-        }
-        return node;
+            if (node_just_created)
+            { // new node
+               changed_keys.put(key, true);
+            }
+            else if (occBefore != isNodeOccupied(node))
+            { // occupancy changed, track it
+               Boolean changedKeyValue = changed_keys.get(key);
+               if (changedKeyValue == null)
+                  changed_keys.put(key, false);
+               else if (changedKeyValue == false)
+                  changed_keys.remove(key);
+            }
+         }
+         else
+         {
+            updateNodeLogOdds(node, log_odds_update);
+         }
+         return node;
       }
    }
-   
-   protected NODE setNodeValueRecurs(NODE node, boolean node_just_created, OcTreeKey key,
-         int depth, float log_odds_value)
+
+   protected NODE setNodeValueRecurs(NODE node, boolean node_just_created, OcTreeKey key, int depth, float log_odds_value)
    {
       return setNodeValueRecurs(node, node_just_created, key, depth, log_odds_value, false);
    }
 
-   protected NODE setNodeValueRecurs(NODE node, boolean node_just_created, OcTreeKey key,
-                          int depth, float log_odds_value, boolean lazy_eval)
+   protected NODE setNodeValueRecurs(NODE node, boolean node_just_created, OcTreeKey key, int depth, float log_odds_value, boolean lazy_eval)
    {
       boolean created_node = false;
 
@@ -1283,58 +1318,74 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          throw new RuntimeException("The given node is null.");
 
       // follow down to last level
-      if (depth < tree_depth) {
-        int pos = computeChildIdx(key, tree_depth -1 - depth);
-        if (!nodeChildExists(node, pos)) {
-          // child does not exist, but maybe it's a pruned node?
-          if (!nodeHasChildren(node) && !node_just_created ) {
-            // current node does not have children AND it is not a new node
-            // -> expand pruned node
-            expandNode(node);
-          }
-          else {
-            // not a pruned node, create requested child
-            createNodeChild(node, pos);
-            created_node = true;
-          }
-        }
+      if (depth < tree_depth)
+      {
+         int pos = computeChildIdx(key, tree_depth - 1 - depth);
+         if (!nodeChildExists(node, pos))
+         {
+            // child does not exist, but maybe it's a pruned node?
+            if (!nodeHasChildren(node) && !node_just_created)
+            {
+               // current node does not have children AND it is not a new node
+               // -> expand pruned node
+               expandNode(node);
+            }
+            else
+            {
+               // not a pruned node, create requested child
+               createNodeChild(node, pos);
+               created_node = true;
+            }
+         }
 
-        if (lazy_eval)
-          return setNodeValueRecurs(getNodeChild(node, pos), created_node, key, depth+1, log_odds_value, lazy_eval);
-        else {
-          NODE retval = setNodeValueRecurs(getNodeChild(node, pos), created_node, key, depth+1, log_odds_value, lazy_eval);
-          // prune node if possible, otherwise set own probability
-          // note: combining both did not lead to a speedup!
-          if (pruneNode(node)){
-            // return pointer to current parent (pruned), the just updated node no longer exists
-            retval = node;
-          } else{
-            node.updateOccupancyChildren();
-          }
+         if (lazy_eval)
+            return setNodeValueRecurs(getNodeChild(node, pos), created_node, key, depth + 1, log_odds_value, lazy_eval);
+         else
+         {
+            NODE retval = setNodeValueRecurs(getNodeChild(node, pos), created_node, key, depth + 1, log_odds_value, lazy_eval);
+            // prune node if possible, otherwise set own probability
+            // note: combining both did not lead to a speedup!
+            if (pruneNode(node))
+            {
+               // return pointer to current parent (pruned), the just updated node no longer exists
+               retval = node;
+            }
+            else
+            {
+               node.updateOccupancyChildren();
+            }
 
-          return retval;
-        }
+            return retval;
+         }
       }
 
       // at last level, update node, end of recursion
-      else {
-        if (use_change_detection) {
-          boolean occBefore = isNodeOccupied(node);
-          node.setLogOdds(log_odds_value);
+      else
+      {
+         if (use_change_detection)
+         {
+            boolean occBefore = isNodeOccupied(node);
+            node.setLogOdds(log_odds_value);
 
-          if (node_just_created){  // new node
-            changed_keys.put(key, true);;
-          } else if (occBefore != isNodeOccupied(node)) {  // occupancy changed, track it
-             Boolean keyChangedValue = changed_keys.get(key);
-             if (keyChangedValue == null)
-                changed_keys.put(key, false);
-             else if (keyChangedValue == false)
-                changed_keys.remove(key);
-          }
-        } else {
-          node.setLogOdds(log_odds_value);
-        }
-        return node;
+            if (node_just_created)
+            { // new node
+               changed_keys.put(key, true);
+               ;
+            }
+            else if (occBefore != isNodeOccupied(node))
+            { // occupancy changed, track it
+               Boolean keyChangedValue = changed_keys.get(key);
+               if (keyChangedValue == null)
+                  changed_keys.put(key, false);
+               else if (keyChangedValue == false)
+                  changed_keys.remove(key);
+            }
+         }
+         else
+         {
+            node.setLogOdds(log_odds_value);
+         }
+         return node;
       }
    }
 
@@ -1344,36 +1395,41 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          throw new RuntimeException("The given node is null.");
 
       // only recurse and update for inner nodes:
-      if (nodeHasChildren(node)){
-        // return early for last level:
-        if (depth < tree_depth){
-          for (int i=0; i<8; i++) {
-            if (nodeChildExists(node, i)) {
-              updateInnerOccupancyRecurs(getNodeChild(node, i), depth+1);
+      if (nodeHasChildren(node))
+      {
+         // return early for last level:
+         if (depth < tree_depth)
+         {
+            for (int i = 0; i < 8; i++)
+            {
+               if (nodeChildExists(node, i))
+               {
+                  updateInnerOccupancyRecurs(getNodeChild(node, i), depth + 1);
+               }
             }
-          }
-        }
-        node.updateOccupancyChildren();
+         }
+         node.updateOccupancyChildren();
       }
    }
-   
+
    protected void toMaxLikelihoodRecurs(NODE node, int depth, int max_depth)
    {
       if (node == null)
          throw new RuntimeException("The given node is null.");
 
-      if (depth < max_depth) {
-        for (int i=0; i<8; i++) {
-          if (nodeChildExists(node, i)) {
-            toMaxLikelihoodRecurs(getNodeChild(node, i), depth+1, max_depth);
-          }
-        }
+      if (depth < max_depth)
+      {
+         for (int i = 0; i < 8; i++)
+         {
+            if (nodeChildExists(node, i))
+            {
+               toMaxLikelihoodRecurs(getNodeChild(node, i), depth + 1, max_depth);
+            }
+         }
       }
-      else { // max level reached
-        nodeToMaxLikelihood(node);
+      else
+      { // max level reached
+         nodeToMaxLikelihood(node);
       }
    }
-
-   
-   protected abstract NODE createRootNode();
 }

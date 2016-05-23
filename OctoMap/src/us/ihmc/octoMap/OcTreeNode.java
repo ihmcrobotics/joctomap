@@ -5,6 +5,7 @@ public class OcTreeNode extends OcTreeDataNode<Float>
 
    public OcTreeNode()
    {
+      this(0f);
    }
 
    public OcTreeNode(float initialValue)

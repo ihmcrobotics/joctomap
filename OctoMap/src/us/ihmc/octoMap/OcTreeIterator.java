@@ -70,7 +70,11 @@ public class OcTreeIterator
       /// Comparison between iterators. First compares the tree, then stack size and top element of stack.
       public boolean equals(IteratorBase<V, NODE> other)
       {
-         if (!tree.equals(other.tree))
+         if (tree == null && other.tree != null)
+            return false;
+         if (tree != null && other.tree == null)
+            return false;
+         if (tree != null && !tree.equals(other.tree))
             return false;
          if (stack.size() != other.stack.size())
             return false;
@@ -125,12 +129,12 @@ public class OcTreeIterator
       /// @return the OcTreeKey of the current node
       public OcTreeKey getKey()
       {
-         return stack.peekLast().key;
+         return stack.isEmpty() ? null : stack.peekLast().key;
       }
 
       public NODE getNode()
       {
-         return stack.peekLast().node;
+         return stack.isEmpty() ? null : stack.peekLast().node;
       }
 
       /// @return the OcTreeKey of the current node, for nodes with depth != maxDepth
@@ -239,6 +243,8 @@ public class OcTreeIterator
       /// @return whether the current node is a leaf, i.e. has no children or is at max level
       public boolean isLeaf()
       {
+         if (stack.isEmpty())
+            return false;
          return (!tree.nodeHasChildren(stack.peekLast().node) || stack.peekLast().depth == maxDepth);
       }
    };
@@ -515,7 +521,7 @@ public class OcTreeIterator
    static class StackElement<V, NODE extends OcTreeDataNode<V>>
    {
       NODE node;
-      OcTreeKey key;
+      OcTreeKey key = new OcTreeKey();
       int depth;
 
       public boolean equals(StackElement<V, NODE> other)
