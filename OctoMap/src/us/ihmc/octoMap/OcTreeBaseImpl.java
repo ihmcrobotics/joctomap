@@ -726,11 +726,10 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    */
    public boolean computeRayKeys(Point3d origin, Point3d end, KeyRay ray)
    {
-
       // see "A Faster Voxel Traversal Algorithm for Ray Tracing" by Amanatides & Woo
       // basically: DDA in 3D
 
-      ray.reset();
+      ray.clear();
 
       OcTreeKey key_origin = new OcTreeKey();
       OcTreeKey key_end = new OcTreeKey();

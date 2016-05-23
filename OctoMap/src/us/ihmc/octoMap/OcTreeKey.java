@@ -119,7 +119,6 @@ public class OcTreeKey
 
       public KeyRay()
       {
-         reset();
       }
 
       public KeyRay(KeyRay other)
@@ -143,8 +142,10 @@ public class OcTreeKey
          return ray.get(ray.size() - 1);
       }
 
-      public void reset();
-      public void clear();
+      public void clear()
+      {
+         ray.clear();
+      }
 
       public int size()
       {
