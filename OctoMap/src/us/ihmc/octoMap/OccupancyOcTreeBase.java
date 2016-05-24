@@ -3,7 +3,6 @@ package us.ihmc.octoMap;
 import static us.ihmc.octoMap.MCTables.edgeTable;
 import static us.ihmc.octoMap.MCTables.triTable;
 import static us.ihmc.octoMap.MCTables.vertexList;
-import static us.ihmc.octoMap.OcTreeKey.computeChildIdx;
 
 import java.util.List;
 import java.util.ListIterator;
@@ -15,6 +14,7 @@ import us.ihmc.octoMap.OcTreeKey.KeyBoolMap;
 import us.ihmc.octoMap.OcTreeKey.KeyRay;
 import us.ihmc.octoMap.OcTreeKey.KeySet;
 import us.ihmc.octoMap.ScanGraph.ScanNode;
+import us.ihmc.octoMap.tools.OctreeKeyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 import us.ihmc.tools.io.printing.PrintTools;
 
@@ -253,7 +253,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     */
    public NODE setNodeValue(Point3d value, float log_odds_value, boolean lazy_eval)
    {
-      OcTreeKey key = coordToKeyChecked(value);
+      OcTreeKey key = convertCartesianCoordinateToKey(value);
       if (key == null)
          return null;
 
@@ -279,7 +279,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     */
    public NODE setNodeValue(double x, double y, double z, float log_odds_value, boolean lazy_eval)
    {
-      OcTreeKey key = coordToKeyChecked(x, y, z);
+      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
          return null;
 
@@ -340,7 +340,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     */
    public NODE updateNode(Point3d coord, float log_odds_update, boolean lazy_eval)
    {
-      OcTreeKey key = coordToKeyChecked(coord);
+      OcTreeKey key = convertCartesianCoordinateToKey(coord);
       if (key == null)
          return null;
 
@@ -366,7 +366,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     */
    public NODE updateNode(double x, double y, double z, float log_odds_update, boolean lazy_eval)
    {
-      OcTreeKey key = coordToKeyChecked(x, y, z);
+      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
          return null;
 
@@ -413,7 +413,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     */
    public NODE updateNode(Point3d coord, boolean occupied, boolean lazy_eval)
    {
-      OcTreeKey key = coordToKeyChecked(coord);
+      OcTreeKey key = convertCartesianCoordinateToKey(coord);
       if (key == null)
          return null;
       return updateNode(key, occupied, lazy_eval);
@@ -438,7 +438,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     */
    public NODE updateNode(double x, double y, double z, boolean occupied, boolean lazy_eval)
    {
-      OcTreeKey key = coordToKeyChecked(x, y, z);
+      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
          return null;
       return updateNode(key, occupied, lazy_eval);
@@ -534,7 +534,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       /// ----------  see OcTreeBase::computeRayKeys  -----------
 
       // Initialization phase -------------------------------------------------------
-      OcTreeKey current_key = coordToKeyChecked(origin);
+      OcTreeKey current_key = convertCartesianCoordinateToKey(origin);
       if (current_key == null)
       {
          PrintTools.warn(this, "Coordinates out of bounds during ray casting");
@@ -819,7 +819,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    {
       normals.clear();
 
-      OcTreeKey init_key = coordToKeyChecked(point);
+      OcTreeKey init_key = convertCartesianCoordinateToKey(point);
       if (init_key == null)
       {
          PrintTools.error(this, "Voxel out of bounds");
@@ -940,7 +940,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    /// sets the minimum for a query bounding box to use
    public void setBBXMin(Point3d min)
    {
-      OcTreeKey newKey = coordToKeyChecked(boundingBoxMin);
+      OcTreeKey newKey = convertCartesianCoordinateToKey(boundingBoxMin);
       if (newKey == null)
       {
          PrintTools.error(this, "ERROR while generating bbx min key.");
@@ -953,7 +953,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    /// sets the maximum for a query bounding box to use
    public void setBBXMax(Point3d max)
    {
-      OcTreeKey newKey = coordToKeyChecked(boundingBoxMax);
+      OcTreeKey newKey = convertCartesianCoordinateToKey(boundingBoxMax);
       if (newKey == null)
       {
          PrintTools.error(this, "ERROR while generating bbx max key.");
@@ -1061,7 +1061,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
                   free_cells.add(keyray.getLast());
                }
                // occupied endpoint
-               OcTreeKey key = coordToKeyChecked(p);
+               OcTreeKey key = convertCartesianCoordinateToKey(p);
                if (key == null)
                {
                   occupied_cells.add(key);
@@ -1084,7 +1084,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
             if (inBBX(p) && ((maxrange < 0.0) || (length <= maxrange)))
             {
                // occupied endpoint
-               OcTreeKey key = coordToKeyChecked(p);
+               OcTreeKey key = convertCartesianCoordinateToKey(p);
                if (key == null)
                {
                   occupied_cells.add(key);
@@ -1135,7 +1135,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
 
       for (int i = 0; i < scan.size(); ++i)
       {
-         OcTreeKey k = coordToKey(scan.getPoint(i));
+         OcTreeKey k = convertCartesianCoordinateToKey(scan.getPoint(i));
          boolean ret = endpoints.add(k);
          if (ret)
          { // insertion took place => k was not in set
@@ -1235,7 +1235,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       // follow down to last level
       if (depth < treeDepth)
       {
-         int pos = computeChildIdx(key, treeDepth - 1 - depth);
+         int pos = OctreeKeyTools.computeChildIdx(key, treeDepth - 1 - depth);
          if (!nodeChildExists(node, pos))
          {
             // child does not exist, but maybe it's a pruned node?
@@ -1316,7 +1316,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       // follow down to last level
       if (depth < treeDepth)
       {
-         int pos = computeChildIdx(key, treeDepth - 1 - depth);
+         int pos = OctreeKeyTools.computeChildIdx(key, treeDepth - 1 - depth);
          if (!nodeChildExists(node, pos))
          {
             // child does not exist, but maybe it's a pruned node?

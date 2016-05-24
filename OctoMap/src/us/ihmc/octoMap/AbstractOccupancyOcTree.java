@@ -1,7 +1,7 @@
 package us.ihmc.octoMap;
 
-import static us.ihmc.octoMap.OctoMapTools.logodds;
-import static us.ihmc.octoMap.OctoMapTools.probability;
+import static us.ihmc.octoMap.tools.OctoMapTools.logodds;
+import static us.ihmc.octoMap.tools.OctoMapTools.probability;
 
 import javax.vecmath.Point3d;
 

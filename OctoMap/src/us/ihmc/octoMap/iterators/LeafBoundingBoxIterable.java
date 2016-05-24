@@ -27,7 +27,7 @@ public class LeafBoundingBoxIterable<NODE extends OcTreeDataNode<?>> implements 
 
    public LeafBoundingBoxIterable(OcTreeBaseImpl<?, NODE> tree, Point3d min, Point3d max, int maxDepth)
    {
-      this(tree, tree.coordToKey(min), tree.coordToKey(max), maxDepth);
+      this(tree, tree.convertCartesianCoordinateToKey(min), tree.convertCartesianCoordinateToKey(max), maxDepth);
    }
 
    public LeafBoundingBoxIterable(OcTreeBaseImpl<?, NODE> tree, OcTreeKey min, OcTreeKey max)

@@ -1,4 +1,4 @@
-package us.ihmc.octoMap;
+package us.ihmc.octoMap.tools;
 
 public class OctoMapTools
 {

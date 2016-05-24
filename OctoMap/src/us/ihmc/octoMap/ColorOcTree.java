@@ -88,7 +88,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
 
    public ColorOcTreeNode setNodeColor(double x, double y, double z, int r, int g, int b)
    {
-      OcTreeKey key = coordToKeyChecked(x, y, z);
+      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
          return null;
       return setNodeColor(key, r, g, b);
@@ -115,7 +115,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
 
    public ColorOcTreeNode averageNodeColor(double x, double y, double z, int r, int g, int b)
    {
-      OcTreeKey key = coordToKeyChecked(x, y, z);
+      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
          return null;
       return averageNodeColor(key, r, g, b);
@@ -146,7 +146,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
 
    public ColorOcTreeNode integrateNodeColor(double x, double y, double z, int r, int g, int b)
    {
-      OcTreeKey key = coordToKeyChecked(x, y, z);
+      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
          return null;
       return integrateNodeColor(key, r, g, b);

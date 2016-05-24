@@ -1,7 +1,5 @@
 package us.ihmc.octoMap;
 
-import static us.ihmc.octoMap.OcTreeKey.computeChildIdx;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -14,6 +12,8 @@ import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
 import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
+import us.ihmc.octoMap.tools.OcTreeNavigationTools;
+import us.ihmc.octoMap.tools.OctreeKeyTools;
 import us.ihmc.robotics.MathTools;
 import us.ihmc.tools.io.printing.PrintTools;
 
@@ -46,7 +46,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    /** No documentation on this field, I assume it seems to be equal to 2^({@link #treeDepth}-1). */
    protected final int treeMaximumValue;
    protected double resolution; ///< in meters
-   protected double resolution_factor; ///< = 1. / resolution
 
    protected int treeSize; ///< number of nodes in tree
    /** flag to denote whether the octree extent changed (for lazy min/max eval) */
@@ -56,8 +55,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    protected double max_value[] = new double[3]; ///< max in x, y, z
    protected double min_value[] = new double[3]; ///< min in x, y, z
-   /// contains the size of a voxel at level i (0: root node). tree_depth+1 levels (incl. 0)
-   protected List<Double> sizeLookupTable = new ArrayList<>();
 
    /// data structure for ray casting, array for multithreading
    protected List<KeyRay> keyrays = new ArrayList<>();
@@ -146,16 +143,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    public void setResolution(double r)
    {
       resolution = r;
-      resolution_factor = 1. / resolution;
 
-      tree_center.x = tree_center.y = tree_center.z = (float) (((double) treeMaximumValue) / resolution_factor);
-
-      // init node size lookup table:
-      sizeLookupTable.clear();
-      for (int i = 0; i <= treeDepth; ++i)
-      {
-         sizeLookupTable.add(resolution * (double) (1 << (treeDepth - i)));
-      }
+      tree_center.x = tree_center.y = tree_center.z = (float) (((double) treeMaximumValue) * resolution);
 
       size_changed = true;
    }
@@ -177,8 +166,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    public double getNodeSize(int depth)
    {
-      MathTools.checkIfLessOrEqual(depth, treeDepth);
-      return sizeLookupTable.get(depth);
+      return OcTreeNavigationTools.computeNodeSize(depth, resolution, treeDepth);
    }
 
    /**
@@ -379,7 +367,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    public NODE search(double x, double y, double z, int depth)
    {
-      OcTreeKey key = coordToKeyChecked(x, y, z);
+      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
       {
          PrintTools.error(this, "Error in search: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
@@ -403,7 +391,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    public NODE search(Point3d coord, int depth)
    {
-      OcTreeKey key = coordToKeyChecked(coord);
+      OcTreeKey key = convertCartesianCoordinateToKey(coord);
       if (key == null)
       {
          PrintTools.error(this, "Error in search: [" + coord + "] is out of OcTree bounds!");
@@ -436,9 +424,11 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
          depth = treeDepth;
 
       // generate appropriate key_at_depth for queried depth
-      OcTreeKey key_at_depth = new OcTreeKey(key);
+      OcTreeKey keyAtDepth;
       if (depth != treeDepth)
-         key_at_depth = adjustKeyAtDepth(key, depth);
+         keyAtDepth = OctreeKeyTools.adjustKeyAtDepth(key, depth, treeDepth);
+      else
+         keyAtDepth = new OcTreeKey(key);
 
       NODE curNode = root;
 
@@ -447,7 +437,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       // follow nodes down to requested level (for diff = 0 it's the last level)
       for (int i = (treeDepth - 1); i >= diff; --i)
       {
-         int pos = computeChildIdx(key_at_depth, i);
+         int pos = OctreeKeyTools.computeChildIdx(keyAtDepth, i);
          if (nodeChildExists(curNode, pos))
          {
             // cast needed: (nodes need to ensure it's the right pointer)
@@ -483,7 +473,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    public boolean deleteNode(double x, double y, double z, int depth)
    {
-      OcTreeKey key = coordToKeyChecked(x, y, z);
+      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
       {
          PrintTools.error(this, "Error in deleteNode: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
@@ -507,7 +497,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    public boolean deleteNode(Point3d coord, int depth)
    {
-      OcTreeKey key = coordToKeyChecked(coord);
+      OcTreeKey key = convertCartesianCoordinateToKey(coord);
       if (key == null)
       {
          PrintTools.error(this, "Error in deleteNode: [" + coord + "] is out of OcTree bounds!");
@@ -732,8 +722,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
       ray.clear();
 
-      OcTreeKey key_origin = coordToKeyChecked(origin);
-      OcTreeKey key_end = coordToKeyChecked(end);
+      OcTreeKey key_origin = convertCartesianCoordinateToKey(origin);
+      OcTreeKey key_end = convertCartesianCoordinateToKey(end);
       if (key_origin == null || key_end == null)
       {
          PrintTools.error(this, "coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
@@ -910,243 +900,72 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    //
 
    /// Converts from a single coordinate into a discrete key
-   public int coordToKey(double coordinate)
+   public int convertCartesianCoordinateToKey(double coordinate)
    {
-      return (int) Math.floor(resolution_factor * coordinate) + treeMaximumValue;
+      return OcTreeNavigationTools.convertCartesianCoordinateToKey(coordinate, resolution, treeDepth);
    }
 
    /// Converts from a single coordinate into a discrete key at a given depth
-   public int coordToKey(double coordinate, int depth)
+   public int convertCartesianCoordinateToKey(double coordinate, int depth)
    {
-      MathTools.checkIfLessOrEqual(depth, treeDepth);
-      int keyval = ((int) Math.floor(resolution_factor * coordinate));
-
-      int diff = treeDepth - depth;
-      if (diff != 0) // same as coordToKey without depth
-         return keyval + treeMaximumValue;
-      else // shift right and left => erase last bits. Then add offset.
-         return ((keyval >> diff) << diff) + (1 << (diff - 1)) + treeMaximumValue;
+      return OcTreeNavigationTools.convertCartesianCoordinateToKey(coordinate, depth, coordinate, treeDepth);
    }
 
    /// Converts from a 3D coordinate into a 3D addressing key
-   public OcTreeKey coordToKey(Point3d coord)
+   public OcTreeKey convertCartesianCoordinateToKey(Point3d coord)
    {
-      return new OcTreeKey(coordToKey(coord.x), coordToKey(coord.y), coordToKey(coord.z));
+      return OcTreeNavigationTools.convertCartesianCoordinateToKey(coord, resolution, treeDepth);
    }
 
    /// Converts from a 3D coordinate into a 3D addressing key
-   public OcTreeKey coordToKey(double x, double y, double z)
+   public OcTreeKey convertCartesianCoordinateToKey(double x, double y, double z)
    {
-      return new OcTreeKey(coordToKey(x), coordToKey(y), coordToKey(z));
+      return OcTreeNavigationTools.convertCartesianCoordinateToKey(x, y, z, resolution, treeDepth);
    }
 
    /// Converts from a 3D coordinate into a 3D addressing key at a given depth
-   public OcTreeKey coordToKey(Point3d coord, int depth)
+   public OcTreeKey convertCartesianCoordinateToKey(Point3d coord, int depth)
    {
-      if (depth == treeDepth)
-         return coordToKey(coord);
-      else
-         return new OcTreeKey(coordToKey(coord.x, depth), coordToKey(coord.y, depth), coordToKey(coord.z, depth));
+      return OcTreeNavigationTools.convertCartesianCoordinateToKey(coord, depth, resolution, treeDepth);
    }
 
    /// Converts from a 3D coordinate into a 3D addressing key at a given depth
-   public OcTreeKey coordToKey(double x, double y, double z, int depth)
+   public OcTreeKey convertCartesianCoordinateToKey(double x, double y, double z, int depth)
    {
-      if (depth == treeDepth)
-         return coordToKey(x, y, z);
-      else
-         return new OcTreeKey(coordToKey(x, depth), coordToKey(y, depth), coordToKey(z, depth));
+      return OcTreeNavigationTools.convertCartesianCoordinateToKey(x, y, z, depth, resolution, treeDepth);
    }
 
-   /**
-    * Adjusts a 3D key from the lowest level to correspond to a higher depth (by
-    * shifting the key values)
-    *
-    * @param key Input key, at the lowest tree level
-    * @param depth Target depth level for the new key
-    * @return Key for the new depth level
-    */
-   public OcTreeKey adjustKeyAtDepth(OcTreeKey key, int depth)
+   public boolean convertCartesianCoordinateToKey(Point3d coord, OcTreeKey keyToPack)
    {
-      if (depth == treeDepth)
-         return key;
-
-      assert (depth <= treeDepth);
-      return new OcTreeKey(adjustKeyAtDepth(key.k[0], depth), adjustKeyAtDepth(key.k[1], depth), adjustKeyAtDepth(key.k[2], depth));
-   }
-
-   /**
-    * Adjusts a single key value from the lowest level to correspond to a higher depth (by
-    * shifting the key value)
-    *
-    * @param key Input key, at the lowest tree level
-    * @param depth Target depth level for the new key
-    * @return Key for the new depth level
-    */
-   public int adjustKeyAtDepth(int key, int depth)
-   {
-      int diff = treeDepth - depth;
-
-      if (diff == 0)
-         return key;
-      else
-         return (((key - treeMaximumValue) >> diff) << diff) + (1 << (diff - 1)) + treeMaximumValue;
-   }
-
-   /**
-    * Converts a 3D coordinate into a 3D OcTreeKey, with boundary checking.
-    *
-    * @param coord 3d coordinate of a point
-    * @return key if point is within the octree (valid), null otherwise
-    */
-   public OcTreeKey coordToKeyChecked(Point3d coord)
-   {
-      return coordToKey(coord.x, coord.y, coord.z);
-   }
-
-   public boolean coordToKeyChecked(Point3d coord, OcTreeKey keyToPack)
-   {
-      OcTreeKey key = coordToKey(coord);
-      if (key == null)
-         return false;
-
-      keyToPack.set(key);
-      return true;
-   }
-
-   /**
-    * Converts a 3D coordinate into a 3D OcTreeKey at a certain depth, with boundary checking.
-    *
-    * @param coord 3d coordinate of a point
-    * @param depth level of the key from the top
-    * @return key if point is within the octree (valid), null otherwise
-    */
-   public OcTreeKey coordToKeyChecked(Point3d coord, int depth)
-   {
-      return coordToKey(coord.x, coord.y, coord.z, depth);
-   }
-
-   /**
-    * Converts a 3D coordinate into a 3D OcTreeKey, with boundary checking.
-    *
-    * @param x
-    * @param y
-    * @param z
-    * @param key values that will be computed, an array of fixed size 3.
-    * @return key if point is within the octree (valid), null otherwise
-    */
-   public OcTreeKey coordToKeyChecked(double x, double y, double z)
-   {
-      OcTreeKey key = new OcTreeKey();
-      if ((key.k[0] = coordToKeyChecked(x)) == -1) return null;
-      if ((key.k[1] = coordToKeyChecked(y)) == -1) return null;
-      if ((key.k[2] = coordToKeyChecked(z)) == -1) return null;
-      return key;
-   }
-
-   /**
-    * Converts a 3D coordinate into a 3D OcTreeKey at a certain depth, with boundary checking.
-    *
-    * @param x
-    * @param y
-    * @param z
-    * @param depth level of the key from the top
-    * @param key values that will be computed, an array of fixed size 3.
-    * @return true if point is within the octree (valid), false otherwise
-    */
-   public OcTreeKey coordToKeyChecked(double x, double y, double z, int depth)
-   {
-      OcTreeKey key = new OcTreeKey();
-      if ((key.k[0] = coordToKeyChecked(x, depth)) == -1) return null;
-      if ((key.k[1] = coordToKeyChecked(y, depth)) == -1) return null;
-      if ((key.k[2] = coordToKeyChecked(z, depth)) == -1) return null;
-      return key;
-   }
-
-   /**
-    * Converts a single coordinate into a discrete addressing key, with boundary checking.
-    *
-    * @param coordinate 3d coordinate of a point
-    * @param key discrete 16 bit adressing key, result
-    * @return key if coordinate is within the octree bounds (valid), -1 otherwise
-    */
-   public int coordToKeyChecked(double coordinate)
-   {
-      // scale to resolution and shift center for tree_max_val
-      int scaled_coord = ((int) Math.floor(resolution_factor * coordinate)) + treeMaximumValue;
-
-      // keyval within range of tree?
-      if ((scaled_coord >= 0) && (((int) scaled_coord) < (2 * treeMaximumValue)))
-      {
-         return scaled_coord;
-      }
-      return -1;
-   }
-
-   /**
-    * Converts a single coordinate into a discrete addressing key, with boundary checking.
-    *
-    * @param coordinate 3d coordinate of a point
-    * @param depth level of the key from the top
-    * @param key discrete 16 bit adressing key, result
-    * @return true if coordinate is within the octree bounds (valid), false otherwise
-    */
-   public int coordToKeyChecked(double coordinate, int depth)
-   {
-
-      // scale to resolution and shift center for tree_max_val
-      int scaled_coord = ((int) Math.floor(resolution_factor * coordinate)) + treeMaximumValue;
-
-      // keyval within range of tree?
-      if ((scaled_coord >= 0) && (((int) scaled_coord) < (2 * treeMaximumValue)))
-      {
-         int keyval = scaled_coord;
-         keyval = adjustKeyAtDepth(keyval, depth);
-         return keyval;
-      }
-      return -1;
+      return OcTreeNavigationTools.convertCartesianCoordinateToKey(coord, resolution, treeDepth, keyToPack);
    }
 
    /// converts from a discrete key at a given depth into a coordinate
    /// corresponding to the key's center
    public double keyToCoord(int key, int depth)
    {
-      MathTools.checkIfLessOrEqual(depth, treeDepth);
-
-      // root is centered on 0 = 0.0
-      if (depth == 0)
-      {
-         return 0.0;
-      }
-      else if (depth == treeDepth)
-      {
-         return keyToCoord(key);
-      }
-      else
-      {
-         return (Math.floor(((double) (key) - (double) (treeMaximumValue)) / (double) (1 << (treeDepth - depth))) + 0.5) * getNodeSize(depth);
-      }
+      return OcTreeNavigationTools.convertKeyToCartesianCoordinate(key, depth, resolution, treeDepth);
    }
 
    /// converts from a discrete key at the lowest tree level into a coordinate
    /// corresponding to the key's center
    public double keyToCoord(int key)
    {
-      return ((double) (key - treeMaximumValue) + 0.5) * resolution;
+      return OcTreeNavigationTools.convertKeyToCartesianCoordinate(key, resolution, treeDepth);
    }
 
    /// converts from an addressing key at the lowest tree level into a coordinate
    /// corresponding to the key's center
    public Point3d keyToCoord(OcTreeKey key)
    {
-      return new Point3d(keyToCoord(key.k[0]), keyToCoord(key.k[1]), keyToCoord(key.k[2]));
+      return OcTreeNavigationTools.convertKeyToCartesianCoordinate(key, resolution, treeDepth);
    }
 
    /// converts from an addressing key at a given depth into a coordinate
    /// corresponding to the key's center
    public Point3d keyToCoord(OcTreeKey key, int depth)
    {
-      return new Point3d(keyToCoord(key.k[0], depth), keyToCoord(key.k[1], depth), keyToCoord(key.k[2], depth));
+      return OcTreeNavigationTools.convertKeyToCartesianCoordinate(key, depth, resolution, treeDepth);
    }
 
    /// initialize non-trivial members, helper for constructors
@@ -1263,7 +1082,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       if (node == null)
          throw new RuntimeException("The given node is null");
 
-      int pos = computeChildIdx(key, treeDepth - 1 - depth);
+      int pos = OctreeKeyTools.computeChildIdx(key, treeDepth - 1 - depth);
 
       if (!nodeChildExists(node, pos))
       {
