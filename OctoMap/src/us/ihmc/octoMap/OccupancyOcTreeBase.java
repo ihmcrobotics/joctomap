@@ -253,8 +253,8 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     */
    public NODE setNodeValue(Point3d value, float log_odds_value, boolean lazy_eval)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(value, key))
+      OcTreeKey key = coordToKeyChecked(value);
+      if (key == null)
          return null;
 
       return setNodeValue(key, log_odds_value, lazy_eval);
@@ -279,8 +279,8 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     */
    public NODE setNodeValue(double x, double y, double z, float log_odds_value, boolean lazy_eval)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(x, y, z, key))
+      OcTreeKey key = coordToKeyChecked(x, y, z);
+      if (key == null)
          return null;
 
       return setNodeValue(key, log_odds_value, lazy_eval);
@@ -323,25 +323,25 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       return updateNodeRecurs(root, createdRoot, key, 0, log_odds_update, lazy_eval);
    }
 
-   public NODE updateNode(Point3d value, float log_odds_update)
+   public NODE updateNode(Point3d coord, float log_odds_update)
    {
-      return updateNode(value, log_odds_update, false);
+      return updateNode(coord, log_odds_update, false);
    }
 
    /**
     * Manipulate log_odds value of a voxel by changing it by log_odds_update (relative).
     * Looks up the OcTreeKey corresponding to the coordinate and then calls updateNode() with it.
     *
-    * @param value 3d coordinate of the NODE that is to be updated
+    * @param coord 3d coordinate of the NODE that is to be updated
     * @param log_odds_update value to be added (+) to log_odds value of node
     * @param lazy_eval whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(Point3d value, float log_odds_update, boolean lazy_eval)
+   public NODE updateNode(Point3d coord, float log_odds_update, boolean lazy_eval)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(value, key))
+      OcTreeKey key = coordToKeyChecked(coord);
+      if (key == null)
          return null;
 
       return updateNode(key, log_odds_update, lazy_eval);
@@ -366,8 +366,8 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     */
    public NODE updateNode(double x, double y, double z, float log_odds_update, boolean lazy_eval)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(x, y, z, key))
+      OcTreeKey key = coordToKeyChecked(x, y, z);
+      if (key == null)
          return null;
 
       return updateNode(key, log_odds_update, lazy_eval);
@@ -396,25 +396,25 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       return updateNode(key, logOdds, lazy_eval);
    }
 
-   public NODE updateNode(Point3d value, boolean occupied)
+   public NODE updateNode(Point3d coord, boolean occupied)
    {
-      return updateNode(value, occupied, false);
+      return updateNode(coord, occupied, false);
    }
 
    /**
     * Integrate occupancy measurement.
     * Looks up the OcTreeKey corresponding to the coordinate and then calls udpateNode() with it.
     *
-    * @param value 3d coordinate of the NODE that is to be updated
+    * @param coord 3d coordinate of the NODE that is to be updated
     * @param occupied true if the node was measured occupied, else false
     * @param lazy_eval whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(Point3d value, boolean occupied, boolean lazy_eval)
+   public NODE updateNode(Point3d coord, boolean occupied, boolean lazy_eval)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(value, key))
+      OcTreeKey key = coordToKeyChecked(coord);
+      if (key == null)
          return null;
       return updateNode(key, occupied, lazy_eval);
    }
@@ -438,8 +438,8 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     */
    public NODE updateNode(double x, double y, double z, boolean occupied, boolean lazy_eval)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(x, y, z, key))
+      OcTreeKey key = coordToKeyChecked(x, y, z);
+      if (key == null)
          return null;
       return updateNode(key, occupied, lazy_eval);
    }
@@ -534,8 +534,8 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       /// ----------  see OcTreeBase::computeRayKeys  -----------
 
       // Initialization phase -------------------------------------------------------
-      OcTreeKey current_key = new OcTreeKey();
-      if (!coordToKeyChecked(origin, current_key))
+      OcTreeKey current_key = coordToKeyChecked(origin);
+      if (current_key == null)
       {
          PrintTools.warn(this, "Coordinates out of bounds during ray casting");
          return false;
@@ -819,8 +819,8 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    {
       normals.clear();
 
-      OcTreeKey init_key = new OcTreeKey();
-      if (!coordToKeyChecked(point, init_key))
+      OcTreeKey init_key = coordToKeyChecked(point);
+      if (init_key == null)
       {
          PrintTools.error(this, "Voxel out of bounds");
          return false;
@@ -940,21 +940,27 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    /// sets the minimum for a query bounding box to use
    public void setBBXMin(Point3d min)
    {
-      bbx_min.set(min);
-      if (!coordToKeyChecked(bbx_min, bbx_min_key))
+      OcTreeKey newKey = coordToKeyChecked(bbx_min);
+      if (newKey == null)
       {
          PrintTools.error(this, "ERROR while generating bbx min key.");
       }
+      
+      bbx_min.set(min);
+      bbx_min_key.set(newKey);
    }
 
    /// sets the maximum for a query bounding box to use
    public void setBBXMax(Point3d max)
    {
-      bbx_max.set(max);
-      if (!coordToKeyChecked(bbx_max, bbx_max_key))
+      OcTreeKey newKey = coordToKeyChecked(bbx_max);
+      if (newKey == null)
       {
          PrintTools.error(this, "ERROR while generating bbx max key.");
       }
+
+      bbx_max.set(max);
+      bbx_max_key.set(newKey);
    }
 
    /// @return the currently set minimum for bounding box queries, if set
@@ -1051,18 +1057,14 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
                  // free cells
                if (computeRayKeys(origin, p, keyray))
                {
-                  {
-                     free_cells.add(keyray.getFirst());
-                     free_cells.add(keyray.getLast());
-                  }
+                  free_cells.add(keyray.getFirst());
+                  free_cells.add(keyray.getLast());
                }
                // occupied endpoint
-               OcTreeKey key = new OcTreeKey();
-               if (coordToKeyChecked(p, key))
+               OcTreeKey key = coordToKeyChecked(p);
+               if (key == null)
                {
-                  {
-                     occupied_cells.add(key);
-                  }
+                  occupied_cells.add(key);
                }
             }
             else
@@ -1071,10 +1073,8 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
                new_end.scaleAdd(maxrange / length, direction, origin);
                if (computeRayKeys(origin, new_end, keyray))
                {
-                  {
-                     free_cells.add(keyray.getFirst());
-                     free_cells.add(keyray.getLast());
-                  }
+                  free_cells.add(keyray.getFirst());
+                  free_cells.add(keyray.getLast());
                }
             } // end if maxrange
          }
@@ -1084,12 +1084,10 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
             if (inBBX(p) && ((maxrange < 0.0) || (length <= maxrange)))
             {
                // occupied endpoint
-               OcTreeKey key = new OcTreeKey();
-               if (coordToKeyChecked(p, key))
+               OcTreeKey key = coordToKeyChecked(p);
+               if (key == null)
                {
-                  {
-                     occupied_cells.add(key);
-                  }
+                  occupied_cells.add(key);
                }
 
                // update freespace, break as soon as bbx limit is reached
@@ -1101,12 +1099,12 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
                      OcTreeKey currentKey = reverseIterator.previous();
                      if (inBBX(currentKey))
                      {
-                        {
-                           free_cells.add(currentKey);
-                        }
+                        free_cells.add(currentKey);
                      }
                      else
+                     {
                         break;
+                     }
                   }
                } // end if compute ray
             } // end if in BBX and not maxrange

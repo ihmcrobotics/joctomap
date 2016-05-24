@@ -378,8 +378,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
 
    public NODE search(double x, double y, double z, int depth)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(x, y, z, key))
+      OcTreeKey key = coordToKeyChecked(x, y, z);
+      if (key == null)
       {
          PrintTools.error(this, "Error in search: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
          return null;
@@ -395,17 +395,17 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public NODE search(Point3d value)
+   public NODE search(Point3d coord)
    {
-      return search(value, 0);
+      return search(coord, 0);
    }
 
-   public NODE search(Point3d value, int depth)
+   public NODE search(Point3d coord, int depth)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(value, key))
+      OcTreeKey key = coordToKeyChecked(coord);
+      if (key == null)
       {
-         PrintTools.error(this, "Error in search: [" + value + "] is out of OcTree bounds!");
+         PrintTools.error(this, "Error in search: [" + coord + "] is out of OcTree bounds!");
          return null;
       }
       else
@@ -482,8 +482,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
 
    public boolean deleteNode(double x, double y, double z, int depth)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(x, y, z, key))
+      OcTreeKey key = coordToKeyChecked(x, y, z);
+      if (key == null)
       {
          PrintTools.error(this, "Error in deleteNode: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
          return false;
@@ -504,12 +504,12 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
       return deleteNode(value, 0);
    }
 
-   public boolean deleteNode(Point3d value, int depth)
+   public boolean deleteNode(Point3d coord, int depth)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(value, key))
+      OcTreeKey key = coordToKeyChecked(coord);
+      if (key == null)
       {
-         PrintTools.error(this, "Error in deleteNode: [" + value + "] is out of OcTree bounds!");
+         PrintTools.error(this, "Error in deleteNode: [" + coord + "] is out of OcTree bounds!");
          return false;
       }
       else
@@ -730,9 +730,9 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
 
       ray.clear();
 
-      OcTreeKey key_origin = new OcTreeKey();
-      OcTreeKey key_end = new OcTreeKey();
-      if (!coordToKeyChecked(origin, key_origin) || !coordToKeyChecked(end, key_end))
+      OcTreeKey key_origin = coordToKeyChecked(origin);
+      OcTreeKey key_end = coordToKeyChecked(end);
+      if (key_origin == null || key_end == null)
       {
          PrintTools.error(this, "coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
          return false;
@@ -1048,15 +1048,21 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
     * Converts a 3D coordinate into a 3D OcTreeKey, with boundary checking.
     *
     * @param coord 3d coordinate of a point
-    * @param key values that will be computed, an array of fixed size 3.
-    * @return true if point is within the octree (valid), false otherwise
+    * @return key if point is within the octree (valid), null otherwise
     */
-   public boolean coordToKeyChecked(Point3d coord, OcTreeKey key)
+   public OcTreeKey coordToKeyChecked(Point3d coord)
    {
-      key.k[0] = coordToKeyChecked(coord.x);
-      key.k[1] = coordToKeyChecked(coord.y);
-      key.k[2] = coordToKeyChecked(coord.z);
-      return key.k[0] != -1 && key.k[1] != -1 && key.k[2] != -1;
+      return coordToKey(coord.x, coord.y, coord.z);
+   }
+
+   public boolean coordToKeyChecked(Point3d coord, OcTreeKey keyToPack)
+   {
+      OcTreeKey key = coordToKey(coord);
+      if (key == null)
+         return false;
+
+      keyToPack.set(key);
+      return true;
    }
 
    /**
@@ -1064,15 +1070,11 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
     *
     * @param coord 3d coordinate of a point
     * @param depth level of the key from the top
-    * @param key values that will be computed, an array of fixed size 3.
-    * @return true if point is within the octree (valid), false otherwise
+    * @return key if point is within the octree (valid), null otherwise
     */
-   public boolean coordToKeyChecked(Point3d coord, int depth, OcTreeKey key)
+   public OcTreeKey coordToKeyChecked(Point3d coord, int depth)
    {
-      key.k[0] = coordToKeyChecked(coord.x, depth);
-      key.k[1] = coordToKeyChecked(coord.y, depth);
-      key.k[2] = coordToKeyChecked(coord.z, depth);
-      return key.k[0] != -1 && key.k[1] != -1 && key.k[2] != -1;
+      return coordToKey(coord.x, coord.y, coord.z, depth);
    }
 
    /**
@@ -1082,14 +1084,15 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
     * @param y
     * @param z
     * @param key values that will be computed, an array of fixed size 3.
-    * @return true if point is within the octree (valid), false otherwise
+    * @return key if point is within the octree (valid), null otherwise
     */
-   public boolean coordToKeyChecked(double x, double y, double z, OcTreeKey key)
+   public OcTreeKey coordToKeyChecked(double x, double y, double z)
    {
-      key.k[0] = coordToKeyChecked(x);
-      key.k[1] = coordToKeyChecked(y);
-      key.k[2] = coordToKeyChecked(z);
-      return key.k[0] != -1 && key.k[1] != -1 && key.k[2] != -1;
+      OcTreeKey key = new OcTreeKey();
+      if ((key.k[0] = coordToKeyChecked(x)) == -1) return null;
+      if ((key.k[1] = coordToKeyChecked(y)) == -1) return null;
+      if ((key.k[2] = coordToKeyChecked(z)) == -1) return null;
+      return key;
    }
 
    /**
@@ -1102,12 +1105,13 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
     * @param key values that will be computed, an array of fixed size 3.
     * @return true if point is within the octree (valid), false otherwise
     */
-   public boolean coordToKeyChecked(double x, double y, double z, int depth, OcTreeKey key)
+   public OcTreeKey coordToKeyChecked(double x, double y, double z, int depth)
    {
-      key.k[0] = coordToKeyChecked(x, depth);
-      key.k[1] = coordToKeyChecked(y, depth);
-      key.k[2] = coordToKeyChecked(z, depth);
-      return key.k[0] != -1 && key.k[1] != -1 && key.k[2] != -1;
+      OcTreeKey key = new OcTreeKey();
+      if ((key.k[0] = coordToKeyChecked(x, depth)) == -1) return null;
+      if ((key.k[1] = coordToKeyChecked(y, depth)) == -1) return null;
+      if ((key.k[2] = coordToKeyChecked(z, depth)) == -1) return null;
+      return key;
    }
 
    /**
@@ -1115,7 +1119,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
     *
     * @param coordinate 3d coordinate of a point
     * @param key discrete 16 bit adressing key, result
-    * @return true if coordinate is within the octree bounds (valid), false otherwise
+    * @return key if coordinate is within the octree bounds (valid), -1 otherwise
     */
    public int coordToKeyChecked(double coordinate)
    {

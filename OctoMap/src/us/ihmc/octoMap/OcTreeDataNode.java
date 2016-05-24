@@ -1,5 +1,7 @@
 package us.ihmc.octoMap;
 
+import java.util.Arrays;
+
 public abstract class OcTreeDataNode<V>
 {
    protected V value;
@@ -64,5 +66,17 @@ public abstract class OcTreeDataNode<V>
    public boolean equals(OcTreeDataNode<V> other)
    {
       return value == other.value;
+   }
+
+   @Override
+   public String toString()
+   {
+      String[] childrenNames = new String[8];
+      for (int i = 0; i < 7; i++)
+      {
+         OcTreeDataNode<V> child = children[i];
+         childrenNames[i] = child == null ? null : child.getClass().getSimpleName();
+      }
+      return getClass().getSimpleName() + ": value: " + value + ", children: " + Arrays.toString(childrenNames);
    }
 }

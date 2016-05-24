@@ -15,37 +15,44 @@ import javafx.stage.Stage;
 import us.ihmc.javaFXToolkit.cameraControllers.FocusBasedCameraMouseEventHandler;
 import us.ihmc.javaFXToolkit.shapes.JavaFXCoordinateSystem;
 import us.ihmc.octoMap.OcTreeIterator.LeafIterator;
-import us.ihmc.octoMap.OcTreeIterator.TreeIterator;
 
 public class OcTreeVisualizer extends Application
 {
-   public final OcTree ocTree = new OcTree(0.01);
+   public final OcTree ocTree = new OcTree(0.05);
 
    public OcTreeVisualizer()
    {
-      double dx = 0.001;
-      double dy = 0.001;
-      double dz = 0.001;
-
-      double xOff = 0.0;
-      double yOff = 0.0;
-      double zOff = 0.0;
-      // insert some measurements of occupied cells
-      for (int x = -20; x < 20; x++)
-      {
-         for (int y = -20; y < 20; y++)
-         {
-            for (int z = -20; z < 20; z++)
-            {
-               Point3d endpoint = new Point3d(x * dx + xOff, y * dy + yOff, z * dz + zOff);
-               ocTree.updateNode(endpoint, true);
-            }
-         }
-      }
+      ocTree.updateNode(0.0, 0.3, 0.0, true);
+      ocTree.updateNode(0.3, 0.0, 0.0, true);
+      ocTree.updateNode(0.0, 0.0, 0.3, true);
+      
+//      ocTree.coordToKeyChecked(x, y, z);
+      
+      
+      System.out.println("Tree size: " + ocTree.size());
+      
+//      double dx = 0.001;
+//      double dy = 0.001;
+//      double dz = 0.001;
+//
+//      double xOff = 0.0;
+//      double yOff = 0.0;
+//      double zOff = 0.0;
+//      // insert some measurements of occupied cells
+//      for (int x = -20; x < 20; x++)
+//      {
+//         for (int y = -20; y < 20; y++)
+//         {
+//            for (int z = -20; z < 20; z++)
+//            {
+//               Point3d endpoint = new Point3d(x * dx + xOff, y * dy + yOff, z * dz + zOff);
+//               ocTree.updateNode(endpoint, true);
+//            }
+//         }
+//      }
 
       // set inner node colors
       ocTree.updateInnerOccupancy();
-//      System.out.println("Tree size: " + ocTree.size());
 //      
 //
 //      // insert some measurements of free cells
@@ -69,7 +76,7 @@ public class OcTreeVisualizer extends Application
       primaryStage.setTitle("OcTree Visualizer");
 
       Group rootNode = new Group();
-      Scene scene = new Scene(rootNode, 600, 400);
+      Scene scene = new Scene(rootNode, 600, 400, true);
       scene.setFill(Color.GRAY);
 
       setupCamera(rootNode, scene);

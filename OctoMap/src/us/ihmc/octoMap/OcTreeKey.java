@@ -85,17 +85,19 @@ public class OcTreeKey
     * @param key input indexing key (at lowest resolution / level)
     * @return key corresponding to the input key at the given level
     */
-   public static OcTreeKey computeIndexKey(int level, OcTreeKey key) {
-     if (level == 0)
-       return key;
-     else {
-       int mask = 65535 << level;
-       OcTreeKey result = key;
-       result.k[0] &= mask;
-       result.k[1] &= mask;
-       result.k[2] &= mask;
-       return result;
-     }
+   public static OcTreeKey computeIndexKey(int level, OcTreeKey key)
+   {
+      if (level == 0)
+         return key;
+      else
+      {
+         int mask = 65535 << level;
+         OcTreeKey result = key;
+         result.k[0] &= mask;
+         result.k[1] &= mask;
+         result.k[2] &= mask;
+         return result;
+      }
    }
 
    public boolean equals(OcTreeKey other)
@@ -110,6 +112,12 @@ public class OcTreeKey
       // explicit casts to size_t to operate on the complete range
       // constanst will be promoted according to C++ standard
       return (int) ((long) (k[0]) + 1447L * (long) (k[1]) + 345637L * (long) (k[2]));
+   }
+
+   @Override
+   public String toString()
+   {
+      return "OcTreeKey: " + Arrays.toString(k);
    }
 
    public static class KeyRay implements Iterable<OcTreeKey>

@@ -1,7 +1,5 @@
 package us.ihmc.octoMap;
 
-import javax.vecmath.Point3d;
-
 import us.ihmc.octoMap.ColorOcTree.ColorOcTreeNode;
 
 public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
@@ -88,10 +86,10 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       return n;
    }
 
-   public ColorOcTreeNode setNodeColor(float x, float y, float z, int r, int g, int b)
+   public ColorOcTreeNode setNodeColor(double x, double y, double z, int r, int g, int b)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(new Point3d(x, y, z), key))
+      OcTreeKey key = coordToKeyChecked(x, y, z);
+      if (key == null)
          return null;
       return setNodeColor(key, r, g, b);
    }
@@ -115,10 +113,10 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       return n;
    }
 
-   public ColorOcTreeNode averageNodeColor(float x, float y, float z, int r, int g, int b)
+   public ColorOcTreeNode averageNodeColor(double x, double y, double z, int r, int g, int b)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(new Point3d(x, y, z), key))
+      OcTreeKey key = coordToKeyChecked(x, y, z);
+      if (key == null)
          return null;
       return averageNodeColor(key, r, g, b);
    }
@@ -146,10 +144,10 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       return n;
    }
 
-   public ColorOcTreeNode integrateNodeColor(float x, float y, float z, int r, int g, int b)
+   public ColorOcTreeNode integrateNodeColor(double x, double y, double z, int r, int g, int b)
    {
-      OcTreeKey key = new OcTreeKey();
-      if (!coordToKeyChecked(new Point3d(x, y, z), key))
+      OcTreeKey key = coordToKeyChecked(x, y, z);
+      if (key == null)
          return null;
       return integrateNodeColor(key, r, g, b);
    }
