@@ -3,15 +3,14 @@ package us.ihmc.octoMap;
 import static us.ihmc.octoMap.OcTreeKey.computeChildIdx;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import us.ihmc.octoMap.OcTreeIterator.LeafBoundingBoxIterator;
-import us.ihmc.octoMap.OcTreeIterator.LeafIterator;
-import us.ihmc.octoMap.OcTreeIterator.TreeIterator;
 import us.ihmc.octoMap.OcTreeKey.KeyRay;
+import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.robotics.MathTools;
 import us.ihmc.tools.io.printing.PrintTools;
 
@@ -34,13 +33,15 @@ import us.ihmc.tools.io.printing.PrintTools;
  * \tparam INTERFACE Interface to be derived from, should be either
  *    AbstractOcTree or AbstractOccupancyOcTree
  */
-public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
+public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implements Iterable<OcTreeSuperNode<NODE>>
 {
    protected NODE root; ///< root NODE, null for empty tree
 
    // constants of the tree
-   protected final int tree_depth; ///< Maximum tree depth is fixed to 16 currently
-   protected final int tree_max_val;
+   /** Maximum tree depth (fixed to 16 usually) */
+   protected final int treeDepth;
+   /** No documentation on this field, I assume it seems to be equal to 2^({@link #treeDepth}-1). */
+   protected final int treeMaximumValue;
    protected double resolution; ///< in meters
    protected double resolution_factor; ///< = 1. / resolution
 
@@ -58,10 +59,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    /// data structure for ray casting, array for multithreading
    protected List<KeyRay> keyrays = new ArrayList<>();
 
-   protected final LeafIterator<V, NODE> leaf_iterator_end = new LeafIterator<>();
-   protected final LeafBoundingBoxIterator<V, NODE> leaf_iterator_bbx_end = new LeafBoundingBoxIterator<>();
-   protected final TreeIterator<V, NODE> tree_iterator_end = new TreeIterator<>();
-
    public OcTreeBaseImpl(double resolution)
    {
       this(resolution, 16, 32768);
@@ -73,8 +70,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    {
       root = null;
       this.resolution = resolution;
-      this.tree_depth = tree_depth;
-      this.tree_max_val = tree_max_val;
+      this.treeDepth = tree_depth;
+      this.treeMaximumValue = tree_max_val;
       tree_size = 0;
 
       init();
@@ -85,8 +82,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    public OcTreeBaseImpl(OcTreeBaseImpl<V, NODE> other)
    {
       resolution = other.resolution;
-      tree_depth = other.tree_depth;
-      tree_max_val = other.tree_max_val;
+      treeDepth = other.treeDepth;
+      treeMaximumValue = other.treeMaximumValue;
       init();
       if (other.root != null)
          root = (NODE) other.root.clone();
@@ -113,29 +110,24 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    /// nodes, and the structure must be identical
    public boolean equals(OcTreeBaseImpl<V, NODE> other)
    {
-      if (tree_depth != other.tree_depth || tree_max_val != other.tree_max_val || resolution != other.resolution || tree_size != other.tree_size)
+      if (treeDepth != other.treeDepth || treeMaximumValue != other.treeMaximumValue || resolution != other.resolution || tree_size != other.tree_size)
       {
          return false;
       }
 
       // traverse all nodes, check if structure the same
-      TreeIterator<V, NODE> it = begin_tree();
-      TreeIterator<V, NODE> end = end_tree();
-      TreeIterator<V, NODE> other_it = other.begin_tree();
-      TreeIterator<V, NODE> other_end = other.end_tree();
+      Iterator<OcTreeSuperNode<NODE>> thisIterator = treeIterator();
+      Iterator<OcTreeSuperNode<NODE>> otherIterator = other.treeIterator();
 
-      for (; !it.equals(end); it.next(), other_it.next())
+      for (OcTreeSuperNode<NODE> thisNode = thisIterator.next(), otherNode = otherIterator.next(); thisIterator.hasNext(); thisNode = thisIterator.next(), otherNode = otherIterator.next())
       {
-         if (other_it.equals(other_end))
+         if (!otherIterator.hasNext()) // The other tree has less nodes
             return false;
-
-         if (it.getDepth() != other_it.getDepth() || !(it.getKey().equals(other_it.getKey())) || !(it.getNode().equals(other_it.getNode())))
-         {
+         if (!thisNode.equals(otherNode))
             return false;
-         }
       }
 
-      if (!(other_it.equals(other_end)))
+      if (otherIterator.hasNext()) // The other tree has more nodes
          return false;
 
       return true;
@@ -153,13 +145,13 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
       resolution = r;
       resolution_factor = 1. / resolution;
 
-      tree_center.x = tree_center.y = tree_center.z = (float) (((double) tree_max_val) / resolution_factor);
+      tree_center.x = tree_center.y = tree_center.z = (float) (((double) treeMaximumValue) / resolution_factor);
 
       // init node size lookup table:
       sizeLookupTable.clear();
-      for (int i = 0; i <= tree_depth; ++i)
+      for (int i = 0; i <= treeDepth; ++i)
       {
-         sizeLookupTable.add(resolution * (double) (1 << (tree_depth - i)));
+         sizeLookupTable.add(resolution * (double) (1 << (treeDepth - i)));
       }
 
       size_changed = true;
@@ -172,12 +164,17 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
 
    public int getTreeDepth()
    {
-      return tree_depth;
+      return treeDepth;
+   }
+
+   public int getTreeMaximumValue()
+   {
+      return treeMaximumValue;
    }
 
    public double getNodeSize(int depth)
    {
-      MathTools.checkIfLessOrEqual(depth, tree_depth);
+      MathTools.checkIfLessOrEqual(depth, treeDepth);
       return sizeLookupTable.get(depth);
    }
 
@@ -427,24 +424,24 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
 
    public NODE search(OcTreeKey key, int depth)
    {
-      MathTools.checkIfLessOrEqual(depth, tree_depth);
+      MathTools.checkIfLessOrEqual(depth, treeDepth);
       if (root == null)
          return null;
 
       if (depth == 0)
-         depth = tree_depth;
+         depth = treeDepth;
 
       // generate appropriate key_at_depth for queried depth
       OcTreeKey key_at_depth = new OcTreeKey(key);
-      if (depth != tree_depth)
+      if (depth != treeDepth)
          key_at_depth = adjustKeyAtDepth(key, depth);
 
       NODE curNode = root;
 
-      int diff = tree_depth - depth;
+      int diff = treeDepth - depth;
 
       // follow nodes down to requested level (for diff = 0 it's the last level)
-      for (int i = (tree_depth - 1); i >= diff; --i)
+      for (int i = (treeDepth - 1); i >= diff; --i)
       {
          int pos = computeChildIdx(key_at_depth, i);
          if (nodeChildExists(curNode, pos))
@@ -535,7 +532,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
          return true;
 
       if (depth == 0)
-         depth = tree_depth;
+         depth = treeDepth;
 
       return deleteNodeRecurs(root, 0, depth, key);
    }
@@ -563,7 +560,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
       if (root == null)
          return;
 
-      for (int depth = tree_depth - 1; depth > 0; --depth)
+      for (int depth = treeDepth - 1; depth > 0; --depth)
       {
          int num_pruned = 0;
          pruneRecurs(root, 0, depth, num_pruned);
@@ -577,7 +574,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    public void expand()
    {
       if (root != null)
-         expandRecurs(root, 0, tree_depth);
+         expandRecurs(root, 0, treeDepth);
    }
 
    // -- statistics  ----------------------
@@ -668,9 +665,9 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    public void getUnknownLeafCenters(List<Point3d> node_centers, Point3d pmin, Point3d pmax, int depth)
    {
 
-      MathTools.checkIfLessOrEqual(depth, tree_depth);
+      MathTools.checkIfLessOrEqual(depth, treeDepth);
       if (depth == 0)
-         depth = tree_depth;
+         depth = treeDepth;
 
       double[] pminArray = new double[3];
       double[] pmaxArray = new double[3];
@@ -679,7 +676,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
 
       double[] diff = new double[3];
       int[] steps = new int[3];
-      double step_size = resolution * Math.pow(2, tree_depth - depth);
+      double step_size = resolution * Math.pow(2, treeDepth - depth);
       for (int i = 0; i < 3; ++i)
       {
          diff[i] = pmaxArray[i] - pminArray[i];
@@ -817,7 +814,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
          current_key.k[dim] += step[dim];
          tMax[dim] += tDelta[dim];
 
-         if (current_key.k[dim] >= 2 * tree_max_val)
+         if (current_key.k[dim] >= 2 * treeMaximumValue)
             throw new RuntimeException("Something went wrong.");
 
          // reached endpoint, key equv?
@@ -877,83 +874,30 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
       return true;
    }
 
-   /// @return beginning of the tree as leaf iterator
-   public LeafIterator<V, NODE> begin()
+   @Override
+   public Iterator<OcTreeSuperNode<NODE>> iterator()
    {
-      return begin(0);
+      return leafIterable().iterator(); // TODO Organize imports;
    }
 
-   public LeafIterator<V, NODE> begin(int maxDepth)
+   public Iterable<OcTreeSuperNode<NODE>> leafIterable()
    {
-      return new LeafIterator<>(this, maxDepth);
-   };
-
-   /// @return end of the tree as leaf iterator
-   public LeafIterator<V, NODE> end()
-   {
-      return leaf_iterator_end;
-   }; // TODO: RVE?
-
-   /// @return beginning of the tree as leaf iterator
-   public LeafIterator<V, NODE> begin_leafs()
-   {
-      return begin_leafs(0);
-   };
-
-   public LeafIterator<V, NODE> begin_leafs(int maxDepth)
-   {
-      return new LeafIterator<>(this, maxDepth);
-   };
-
-   /// @return end of the tree as leaf iterator
-   public LeafIterator<V, NODE> end_leafs()
-   {
-      return leaf_iterator_end;
+      return new us.ihmc.octoMap.iterators.LeafIterable<>(this); // TODO Organize imports;
    }
 
-   /// @return beginning of the tree as leaf iterator in a bounding box
-   public LeafBoundingBoxIterator<V, NODE> begin_leafs_bbx(OcTreeKey min, OcTreeKey max)
+   public Iterator<OcTreeSuperNode<NODE>> treeIterator()
    {
-      return begin_leafs_bbx(min, max, 0);
+      return treeIterable().iterator();
    }
 
-   public LeafBoundingBoxIterator<V, NODE> begin_leafs_bbx(OcTreeKey min, OcTreeKey max, int maxDepth)
+   public Iterable<OcTreeSuperNode<NODE>> treeIterable()
    {
-      return new LeafBoundingBoxIterator<>(this, min, max, maxDepth);
+      return new us.ihmc.octoMap.iterators.OcTreeIterable<>(this); // TODO Organize imports;
    }
 
-   /// @return beginning of the tree as leaf iterator in a bounding box
-   public LeafBoundingBoxIterator<V, NODE> begin_leafs_bbx(Point3d min, Point3d max)
+   public Iterable<OcTreeSuperNode<NODE>> leafBoundingBoxIterable(OcTreeKey min, OcTreeKey max)
    {
-      return begin_leafs_bbx(min, max, 0);
-   }
-
-   public LeafBoundingBoxIterator<V, NODE> begin_leafs_bbx(Point3d min, Point3d max, int maxDepth)
-   {
-      return new LeafBoundingBoxIterator<>(this, min, max, maxDepth);
-   }
-
-   /// @return end of the tree as leaf iterator in a bounding box
-   public LeafBoundingBoxIterator<V, NODE> end_leafs_bbx()
-   {
-      return leaf_iterator_bbx_end;
-   }
-
-   /// @return beginning of the tree as iterator to all nodes (incl. inner)
-   public TreeIterator<V, NODE> begin_tree()
-   {
-      return begin_tree(0);
-   }
-
-   public TreeIterator<V, NODE> begin_tree(int maxDepth)
-   {
-      return new TreeIterator<>(this, maxDepth);
-   }
-
-   /// @return end of the tree as iterator to all nodes (incl. inner)
-   public TreeIterator<V, NODE> end_tree()
-   {
-      return tree_iterator_end;
+      return new us.ihmc.octoMap.iterators.LeafBoundingBoxIterable<>(this, min, max, 0); // TODO Organize imports;
    }
 
    //
@@ -963,20 +907,20 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    /// Converts from a single coordinate into a discrete key
    public int coordToKey(double coordinate)
    {
-      return (int) Math.floor(resolution_factor * coordinate) + tree_max_val;
+      return (int) Math.floor(resolution_factor * coordinate) + treeMaximumValue;
    }
 
    /// Converts from a single coordinate into a discrete key at a given depth
    public int coordToKey(double coordinate, int depth)
    {
-      MathTools.checkIfLessOrEqual(depth, tree_depth);
+      MathTools.checkIfLessOrEqual(depth, treeDepth);
       int keyval = ((int) Math.floor(resolution_factor * coordinate));
 
-      int diff = tree_depth - depth;
+      int diff = treeDepth - depth;
       if (diff != 0) // same as coordToKey without depth
-         return keyval + tree_max_val;
+         return keyval + treeMaximumValue;
       else // shift right and left => erase last bits. Then add offset.
-         return ((keyval >> diff) << diff) + (1 << (diff - 1)) + tree_max_val;
+         return ((keyval >> diff) << diff) + (1 << (diff - 1)) + treeMaximumValue;
    }
 
    /// Converts from a 3D coordinate into a 3D addressing key
@@ -994,7 +938,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    /// Converts from a 3D coordinate into a 3D addressing key at a given depth
    public OcTreeKey coordToKey(Point3d coord, int depth)
    {
-      if (depth == tree_depth)
+      if (depth == treeDepth)
          return coordToKey(coord);
       else
          return new OcTreeKey(coordToKey(coord.x, depth), coordToKey(coord.y, depth), coordToKey(coord.z, depth));
@@ -1003,7 +947,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    /// Converts from a 3D coordinate into a 3D addressing key at a given depth
    public OcTreeKey coordToKey(double x, double y, double z, int depth)
    {
-      if (depth == tree_depth)
+      if (depth == treeDepth)
          return coordToKey(x, y, z);
       else
          return new OcTreeKey(coordToKey(x, depth), coordToKey(y, depth), coordToKey(z, depth));
@@ -1019,10 +963,10 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
     */
    public OcTreeKey adjustKeyAtDepth(OcTreeKey key, int depth)
    {
-      if (depth == tree_depth)
+      if (depth == treeDepth)
          return key;
 
-      assert (depth <= tree_depth);
+      assert (depth <= treeDepth);
       return new OcTreeKey(adjustKeyAtDepth(key.k[0], depth), adjustKeyAtDepth(key.k[1], depth), adjustKeyAtDepth(key.k[2], depth));
    }
 
@@ -1036,12 +980,12 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
     */
    public int adjustKeyAtDepth(int key, int depth)
    {
-      int diff = tree_depth - depth;
+      int diff = treeDepth - depth;
 
       if (diff == 0)
          return key;
       else
-         return (((key - tree_max_val) >> diff) << diff) + (1 << (diff - 1)) + tree_max_val;
+         return (((key - treeMaximumValue) >> diff) << diff) + (1 << (diff - 1)) + treeMaximumValue;
    }
 
    /**
@@ -1124,10 +1068,10 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    public int coordToKeyChecked(double coordinate)
    {
       // scale to resolution and shift center for tree_max_val
-      int scaled_coord = ((int) Math.floor(resolution_factor * coordinate)) + tree_max_val;
+      int scaled_coord = ((int) Math.floor(resolution_factor * coordinate)) + treeMaximumValue;
 
       // keyval within range of tree?
-      if ((scaled_coord >= 0) && (((int) scaled_coord) < (2 * tree_max_val)))
+      if ((scaled_coord >= 0) && (((int) scaled_coord) < (2 * treeMaximumValue)))
       {
          return scaled_coord;
       }
@@ -1146,10 +1090,10 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    {
 
       // scale to resolution and shift center for tree_max_val
-      int scaled_coord = ((int) Math.floor(resolution_factor * coordinate)) + tree_max_val;
+      int scaled_coord = ((int) Math.floor(resolution_factor * coordinate)) + treeMaximumValue;
 
       // keyval within range of tree?
-      if ((scaled_coord >= 0) && (((int) scaled_coord) < (2 * tree_max_val)))
+      if ((scaled_coord >= 0) && (((int) scaled_coord) < (2 * treeMaximumValue)))
       {
          int keyval = scaled_coord;
          keyval = adjustKeyAtDepth(keyval, depth);
@@ -1162,20 +1106,20 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    /// corresponding to the key's center
    public double keyToCoord(int key, int depth)
    {
-      MathTools.checkIfLessOrEqual(depth, tree_depth);
+      MathTools.checkIfLessOrEqual(depth, treeDepth);
 
       // root is centered on 0 = 0.0
       if (depth == 0)
       {
          return 0.0;
       }
-      else if (depth == tree_depth)
+      else if (depth == treeDepth)
       {
          return keyToCoord(key);
       }
       else
       {
-         return (Math.floor(((double) (key) - (double) (tree_max_val)) / (double) (1 << (tree_depth - depth))) + 0.5) * getNodeSize(depth);
+         return (Math.floor(((double) (key) - (double) (treeMaximumValue)) / (double) (1 << (treeDepth - depth))) + 0.5) * getNodeSize(depth);
       }
    }
 
@@ -1183,7 +1127,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
    /// corresponding to the key's center
    public double keyToCoord(int key)
    {
-      return ((double) (key - tree_max_val) + 0.5) * resolution;
+      return ((double) (key - treeMaximumValue) + 0.5) * resolution;
    }
 
    /// converts from an addressing key at the lowest tree level into a coordinate
@@ -1235,13 +1179,13 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
          min_value[i] = Double.POSITIVE_INFINITY;
       }
 
-      for (LeafIterator<V, NODE> it = begin(), end = end(); !(it.equals(end)); it.next())
+      for (OcTreeSuperNode<NODE> node : this)
       {
-         double size = it.getSize();
+         double size = node.getSize();
          double halfSize = size / 2.0;
-         double x = it.getX() - halfSize;
-         double y = it.getY() - halfSize;
-         double z = it.getZ() - halfSize;
+         double x = node.getX() - halfSize;
+         double y = node.getY() - halfSize;
+         double z = node.getZ() - halfSize;
          if (x < min_value[0])
             min_value[0] = x;
          if (y < min_value[1])
@@ -1314,7 +1258,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>>
       if (node == null)
          throw new RuntimeException("The given node is null");
 
-      int pos = computeChildIdx(key, tree_depth - 1 - depth);
+      int pos = computeChildIdx(key, treeDepth - 1 - depth);
 
       if (!nodeChildExists(node, pos))
       {

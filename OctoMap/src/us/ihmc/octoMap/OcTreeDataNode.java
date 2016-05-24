@@ -72,10 +72,13 @@ public abstract class OcTreeDataNode<V>
    public String toString()
    {
       String[] childrenNames = new String[8];
-      for (int i = 0; i < 7; i++)
+      if (children != null)
       {
-         OcTreeDataNode<V> child = children[i];
-         childrenNames[i] = child == null ? null : child.getClass().getSimpleName();
+         for (int i = 0; i < 7; i++)
+         {
+            OcTreeDataNode<V> child = children[i];
+            childrenNames[i] = child == null ? null : child.getClass().getSimpleName();
+         }
       }
       return getClass().getSimpleName() + ": value: " + value + ", children: " + Arrays.toString(childrenNames);
    }

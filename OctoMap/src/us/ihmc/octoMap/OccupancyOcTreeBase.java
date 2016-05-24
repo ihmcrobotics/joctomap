@@ -455,7 +455,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          return;
 
       // convert bottom up
-      for (int depth = tree_depth; depth > 0; depth--)
+      for (int depth = treeDepth; depth > 0; depth--)
       {
          toMaxLikelihoodRecurs(root, 0, depth);
       }
@@ -633,7 +633,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          }
 
          // check for overflow:
-         if ((step[dim] < 0 && current_key.k[dim] == 0) || (step[dim] > 0 && current_key.k[dim] == 2 * tree_max_val - 1))
+         if ((step[dim] < 0 && current_key.k[dim] == 0) || (step[dim] > 0 && current_key.k[dim] == 2 * treeMaximumValue - 1))
          {
             PrintTools.warn(this, "Coordinate hit bounds in dim " + dim + ", aborting raycast");
             // return border point nevertheless:
@@ -1233,9 +1233,9 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          throw new RuntimeException("The given node is null.");
 
       // follow down to last level
-      if (depth < tree_depth)
+      if (depth < treeDepth)
       {
-         int pos = computeChildIdx(key, tree_depth - 1 - depth);
+         int pos = computeChildIdx(key, treeDepth - 1 - depth);
          if (!nodeChildExists(node, pos))
          {
             // child does not exist, but maybe it's a pruned node?
@@ -1316,9 +1316,9 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          throw new RuntimeException("The given node is null.");
 
       // follow down to last level
-      if (depth < tree_depth)
+      if (depth < treeDepth)
       {
-         int pos = computeChildIdx(key, tree_depth - 1 - depth);
+         int pos = computeChildIdx(key, treeDepth - 1 - depth);
          if (!nodeChildExists(node, pos))
          {
             // child does not exist, but maybe it's a pruned node?
@@ -1396,7 +1396,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       if (nodeHasChildren(node))
       {
          // return early for last level:
-         if (depth < tree_depth)
+         if (depth < treeDepth)
          {
             for (int i = 0; i < 8; i++)
             {

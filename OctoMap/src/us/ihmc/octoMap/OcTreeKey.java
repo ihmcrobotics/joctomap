@@ -34,6 +34,18 @@ public class OcTreeKey
          k[i] = other.k[i];
    }
 
+   public void set(int k0, int k1, int k2)
+   {
+      k[0] = k0;
+      k[1] = k1;
+      k[2] = k2;
+   }
+
+   public int getKey(int index)
+   {
+      return k[index];
+   }
+
    /**
     * Computes the key of a child node while traversing the octree, given
     * child index and current key

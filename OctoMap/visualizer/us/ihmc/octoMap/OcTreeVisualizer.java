@@ -1,5 +1,9 @@
 package us.ihmc.octoMap;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
@@ -14,7 +18,9 @@ import javafx.scene.shape.Box;
 import javafx.stage.Stage;
 import us.ihmc.javaFXToolkit.cameraControllers.FocusBasedCameraMouseEventHandler;
 import us.ihmc.javaFXToolkit.shapes.JavaFXCoordinateSystem;
-import us.ihmc.octoMap.OcTreeIterator.LeafIterator;
+import us.ihmc.octoMap.iterators.LeafIterable;
+import us.ihmc.octoMap.iterators.OcTreeIterable;
+import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 
 public class OcTreeVisualizer extends Application
 {
@@ -22,51 +28,124 @@ public class OcTreeVisualizer extends Application
 
    public OcTreeVisualizer()
    {
-      ocTree.updateNode(0.0, 0.3, 0.0, true);
-      ocTree.updateNode(0.3, 0.0, 0.0, true);
-      ocTree.updateNode(0.0, 0.0, 0.3, true);
+//      ocTree.updateNode(0.0, 0.3, 0.0, true);
+//      ocTree.updateNode(0.3, 0.0, 0.0, true);
+//      ocTree.updateNode(0.0, 0.0, 0.3, true);
+
+      int numberOfNodes = 0;
+      int numberOfLeafs = 0;
+      OcTreeNode root = ocTree.root;
+      List<OcTreeNode> stack = new ArrayList<>();
+
+      if (root != null)
+      {
+         numberOfNodes++;
+         stack.add(root);
+         
+         while (!stack.isEmpty())
+         {
+            OcTreeNode currentNode = stack.remove(0);
+            if (currentNode.hasChildren())
+            {
+               for (int i = 0; i < 8; i++)
+               {
+                  OcTreeNode currentChild = (OcTreeNode) currentNode.children[i];
+                  if (currentChild != null)
+                  {
+                     numberOfNodes++;
+                     stack.add(currentChild);
+                  }
+               }
+            }
+            else
+            {
+               numberOfLeafs++;
+            }
+         }
+      }
+      System.out.println("Computed number of nodes = " + numberOfNodes);
+      System.out.println("Computed number of leafs = " + numberOfLeafs);
       
-//      ocTree.coordToKeyChecked(x, y, z);
+      HashSet<OcTreeNode> foundNodes = new HashSet<>();
+      int iteratorDuplicatedFounds = 0;
+      int iteratorNodeCount = 0;
+      int iteratorLeafCount = 0;
       
+      OcTreeIterable<OcTreeNode> treeIterable = new OcTreeIterable<>(ocTree);
+      for (OcTreeSuperNode<OcTreeNode> node : treeIterable)
+      {
+         iteratorNodeCount++;
+         if (foundNodes.contains(node))
+            iteratorDuplicatedFounds++;
+         foundNodes.add(node.getNode());
+         if (node.isLeaf())
+            iteratorLeafCount++;
+      }
+      
+//      TreeIterator<Float, OcTreeNode> it_tree = ocTree.begin_tree();
+//      TreeIterator<Float, OcTreeNode> end = ocTree.end_tree();
+//      while(!it_tree.equals(end))
+//      {
+//         
+//         iteratorNodeCount++;
+//         OcTreeNode node = it_tree.getNode();
+//         if (node != null)
+//         {
+//            if (foundNodes.contains(node))
+//               iteratorDuplicatedFounds++;
+//            foundNodes.add(node);
+//            if (!node.hasChildren())
+//               iteratorLeafCount++;
+//         }
+//         it_tree.next();
+//      }
+
+      System.out.println("Iterator node count = " + iteratorNodeCount);
+      System.out.println("Iterator leaf count = " + iteratorLeafCount);
+      System.out.println("Iterator duplicated count = " + iteratorDuplicatedFounds);
+
+      System.out.println(ocTree.coordToKeyChecked(0.0, 0.3, 0.0));
+      System.out.println(ocTree.coordToKeyChecked(0.3, 0.0, 0.0));
+      System.out.println(ocTree.coordToKeyChecked(0.0, 0.0, 0.3));
       
       System.out.println("Tree size: " + ocTree.size());
       
-//      double dx = 0.001;
-//      double dy = 0.001;
-//      double dz = 0.001;
-//
-//      double xOff = 0.0;
-//      double yOff = 0.0;
-//      double zOff = 0.0;
-//      // insert some measurements of occupied cells
-//      for (int x = -20; x < 20; x++)
-//      {
-//         for (int y = -20; y < 20; y++)
-//         {
-//            for (int z = -20; z < 20; z++)
-//            {
-//               Point3d endpoint = new Point3d(x * dx + xOff, y * dy + yOff, z * dz + zOff);
-//               ocTree.updateNode(endpoint, true);
-//            }
-//         }
-//      }
+      double dx = 0.05;
+      double dy = 0.05;
+      double dz = 0.05;
+
+      double xOff = 0.01;
+      double yOff = 0.01;
+      double zOff = 0.01;
+      // insert some measurements of occupied cells
+      for (int x = -20; x < 20; x++)
+      {
+         for (int y = -20; y < 20; y++)
+         {
+            for (int z = -20; z < 20; z++)
+            {
+               Point3d endpoint = new Point3d(x * dx + xOff, y * dy + yOff, z * dz + zOff);
+               ocTree.updateNode(endpoint, true);
+            }
+         }
+      }
 
       // set inner node colors
       ocTree.updateInnerOccupancy();
 //      
 //
 //      // insert some measurements of free cells
-//      for (int x = -30; x < 30; x++)
-//      {
-//         for (int y = -30; y < 30; y++)
-//         {
-//            for (int z = -30; z < 30; z++)
-//            {
-//               Point3d endpoint = new Point3d(x * 0.02f + 2.0f, y * 0.02f + 2.0f, z * 0.02f + 2.0f);
-//               ocTree.updateNode(endpoint, false);
-//            }
-//         }
-//      }
+      for (int x = -30; x < 30; x++)
+      {
+         for (int y = -30; y < 30; y++)
+         {
+            for (int z = -30; z < 30; z++)
+            {
+               Point3d endpoint = new Point3d(x * 0.02f + 2.0f, y * 0.02f + 2.0f, z * 0.02f + 2.0f);
+               ocTree.updateNode(endpoint, false);
+            }
+         }
+      }
 
    }
 
@@ -86,21 +165,29 @@ public class OcTreeVisualizer extends Application
       primaryStage.setScene(scene);
       primaryStage.show();
 
-      LeafIterator<Float, OcTreeNode> it = ocTree.begin_leafs();
-      LeafIterator<Float, OcTreeNode> end = ocTree.end_leafs();
-
-      while (!it.equals(end))
+      LeafIterable<OcTreeNode> leafIterable = new LeafIterable<>(ocTree);
+      for (OcTreeSuperNode<OcTreeNode> node : leafIterable)
       {
-         if (ocTree.isNodeOccupied(it.getNode()))
-         {
-            double boxSize = it.getSize();
-            Point3d boxCenter = it.getCoordinate();
-            System.out.println("Size: " + boxSize + ", center: " + boxCenter);
-            addBox(boxSize, boxCenter, rootNode);
-         }
-         
-         it.next();
+         double boxSize = node.getSize();
+         Point3d boxCenter = node.getCoordinate();
+         System.out.println("Size: " + boxSize + ", center: " + boxCenter);
+         addBox(boxSize, boxCenter, rootNode);
       }
+      
+//      LeafIterator<Float, OcTreeNode> it = ocTree.begin_leafs();
+//      LeafIterator<Float, OcTreeNode> end = ocTree.end_leafs();
+//      while (!it.equals(end))
+//      {
+//         if (ocTree.isNodeOccupied(it.getNode()))
+//         {
+//            double boxSize = it.getSize();
+//            Point3d boxCenter = it.getCoordinate();
+//            System.out.println("Size: " + boxSize + ", center: " + boxCenter);
+//            addBox(boxSize, boxCenter, rootNode);
+//         }
+//         
+//         it.next();
+//      }
    }
 
    private static final Color DEFAULT_COLOR = Color.DARKCYAN;
@@ -134,7 +221,7 @@ public class OcTreeVisualizer extends Application
    public static void main(String[] args)
    {
 
-      new OcTreeVisualizer();
+//      new OcTreeVisualizer();
 
       Application.launch(args);
    }

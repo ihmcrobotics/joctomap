@@ -9,7 +9,7 @@ import javax.vecmath.Point3d;
 
 import org.junit.Test;
 
-import us.ihmc.octoMap.OcTreeIterator.TreeIterator;
+import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.robotics.geometry.RotationTools;
 
 public class ChangedKeysTest
@@ -91,13 +91,11 @@ public class ChangedKeysTest
       }
 
       // iterate through the entire tree
-      TreeIterator<Float, OcTreeNode> it = tree.begin_tree();
-      TreeIterator<Float, OcTreeNode> end = tree.end_tree();
-      for (; !it.equals(end); it.next())
+      for (OcTreeSuperNode<OcTreeNode> node : tree.treeIterable())
       {
-         if (it.isLeaf())
+         if (node.isLeaf())
          {
-            if (tree.isNodeOccupied(it.getNode()))
+            if (tree.isNodeOccupied(node.getNode()))
             {
                actualOccupied += 1;
             }

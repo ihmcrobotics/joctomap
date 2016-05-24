@@ -164,7 +164,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       if (node != null && nodeHasChildren(node))
       {
          // return early for last level:
-         if (depth < tree_depth)
+         if (depth < treeDepth)
          {
             for (int i = 0; i < 8; i++)
             {
