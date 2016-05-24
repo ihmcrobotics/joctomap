@@ -18,13 +18,13 @@ public abstract class OcTreeDataNode<V>
 
    public OcTreeDataNode(OcTreeDataNode<V> other)
    {
-      value = other.value;
+      copyData(other);
 
       if (other.hasChildren())
          allocateChildren();
 
       for (int i = 0; i < 8; i++)
-         children[i] = other.children[i].clone();
+         children[i] = other.children[i].cloneRecursive();
    }
 
    public void setValue(V value)
@@ -46,7 +46,7 @@ public abstract class OcTreeDataNode<V>
 
    abstract void allocateChildren();
 
-   public abstract OcTreeDataNode<V> clone();
+   public abstract OcTreeDataNode<V> cloneRecursive();
 
    public abstract OcTreeDataNode<V> create();
 
@@ -73,7 +73,7 @@ public abstract class OcTreeDataNode<V>
       String[] childrenNames = new String[8];
       if (children != null)
       {
-         for (int i = 0; i < 7; i++)
+         for (int i = 0; i < 8; i++)
          {
             OcTreeDataNode<V> child = children[i];
             childrenNames[i] = child == null ? null : child.getClass().getSimpleName();

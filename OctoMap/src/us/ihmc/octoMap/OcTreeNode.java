@@ -104,7 +104,7 @@ public class OcTreeNode extends OcTreeDataNode<Float>
    }
 
    @Override
-   public OcTreeNode clone()
+   public OcTreeNode cloneRecursive()
    {
       return new OcTreeNode(this);
    }
@@ -128,7 +128,7 @@ public class OcTreeNode extends OcTreeDataNode<Float>
    @Override
    public boolean epsilonEquals(OcTreeDataNode<?> other)
    {
-      if (!(other instanceof OcTreeNode))
+      if (!(getClass().isInstance(other)))
          return false;
 
       return epsilonEquals((OcTreeNode) other, 1.0e-7f);

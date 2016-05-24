@@ -89,7 +89,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       treeMaximumValue = other.treeMaximumValue;
       init();
       if (other.root != null)
-         root = (NODE) other.root.clone();
+         root = (NODE) other.root.cloneRecursive();
    }
 
    /**
@@ -204,13 +204,13 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       }
       if (node.children[childIdx] != null)
          throw new RuntimeException("Something went wrong.");
-      NODE newNode = (NODE) node.create();
-      node.children[childIdx] = newNode;
+      NODE newChildNode = (NODE) node.create();
+      node.children[childIdx] = newChildNode;
 
       tree_size++;
       size_changed = true;
 
-      return newNode;
+      return newChildNode;
    }
 
    public void checkChildIndex(int childIdx)
@@ -275,9 +275,9 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       {
          if (!nodeChildExists(node, i))
             return false;
-         // comparison via getChild so that casts of derived classes ensure
-         // that the right == operator gets called
+
          NODE currentChild = getNodeChild(node, i);
+
          if (nodeHasChildren(currentChild) || !(currentChild.epsilonEquals(firstChild)))
             return false;
       }
@@ -293,10 +293,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    public boolean nodeChildExists(NODE node, int childIdx)
    {
       checkChildIndex(childIdx);
-      if ((node.children != null) && (node.children[childIdx] != null))
-         return true;
-      else
-         return false;
+      return node.children != null && node.children[childIdx] != null;
    }
 
    /** 
@@ -567,10 +564,9 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       if (root == null)
          return;
 
-      for (int depth = treeDepth - 1; depth > 0; --depth)
+      for (int depth = treeDepth - 1; depth > 0; depth--)
       {
-         int num_pruned = 0;
-         pruneRecurs(root, 0, depth, num_pruned);
+         int num_pruned = pruneRecurs(root, 0, depth, 0);
          if (num_pruned == 0)
             break;
       }
@@ -1305,9 +1301,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    }
 
    /// recursive call of prune()
-   protected void pruneRecurs(NODE node, int depth, int max_depth, int num_pruned)
+   protected int pruneRecurs(NODE node, int depth, int max_depth, int num_pruned)
    {
-
       if (node == null)
          throw new RuntimeException("The given node is null");
 
@@ -1317,11 +1312,10 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
          {
             if (nodeChildExists(node, i))
             {
-               pruneRecurs(getNodeChild(node, i), depth + 1, max_depth, num_pruned);
+               num_pruned = pruneRecurs(getNodeChild(node, i), depth + 1, max_depth, num_pruned);
             }
          }
       } // end if depth
-
       else
       {
          // max level reached
@@ -1330,6 +1324,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
             num_pruned++;
          }
       }
+
+      return num_pruned;
    }
 
    /// recursive call of expand()
@@ -1350,7 +1346,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       for (int i = 0; i < 8; i++)
       {
          if (nodeChildExists(node, i))
-         { // TODO double check (node != NULL)
+         {
             expandRecurs(getNodeChild(node, i), depth + 1, max_depth);
          }
       }

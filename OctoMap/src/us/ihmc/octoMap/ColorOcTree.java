@@ -191,7 +191,6 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       public ColorOcTreeNode(ColorOcTreeNode other)
       {
          super(other);
-
       }
 
       public void setColor(Color color)
@@ -269,9 +268,15 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       }
 
       @Override
-      public ColorOcTreeNode clone()
+      public ColorOcTreeNode cloneRecursive()
       {
          return new ColorOcTreeNode(this);
+      }
+
+      @Override
+      void allocateChildren()
+      {
+         children = new ColorOcTreeNode[8];
       }
    }
 
