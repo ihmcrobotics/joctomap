@@ -1023,7 +1023,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    }
 
    /// Number of changes since last reset.
-   public int numChangesDetected()
+   public int numberOfChangesDetected()
    {
       return changedKeys.size();
    }
@@ -1354,9 +1354,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
             return retval;
          }
       }
-
-      // at last level, update node, end of recursion
-      else
+      else // at last level, update node, end of recursion
       {
          if (useChangeDetection)
          {
