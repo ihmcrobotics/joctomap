@@ -48,8 +48,8 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    protected double resolution; ///< in meters
    protected double resolution_factor; ///< = 1. / resolution
 
-   protected int tree_size; ///< number of nodes in tree
-   /// flag to denote whether the octree extent changed (for lazy min/max eval)
+   protected int treeSize; ///< number of nodes in tree
+   /** flag to denote whether the octree extent changed (for lazy min/max eval) */
    protected boolean size_changed;
 
    protected Point3d tree_center = new Point3d(); // coordinate offset of tree
@@ -75,7 +75,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       this.resolution = resolution;
       this.treeDepth = tree_depth;
       this.treeMaximumValue = tree_max_val;
-      tree_size = 0;
+      treeSize = 0;
 
       init();
       // no longer create an empty root node - only on demand
@@ -104,16 +104,16 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       root = other.root;
       other.root = this_root;
 
-      int this_size = tree_size;
-      tree_size = other.tree_size;
-      other.tree_size = this_size;
+      int this_size = treeSize;
+      treeSize = other.treeSize;
+      other.treeSize = this_size;
    }
 
    /// Comparison between two octrees, all meta data, all
    /// nodes, and the structure must be identical
    public boolean epsilonEquals(OcTreeBaseImpl<V, NODE> other, V epsilon)
    {
-      if (treeDepth != other.treeDepth || treeMaximumValue != other.treeMaximumValue || resolution != other.resolution || tree_size != other.tree_size)
+      if (treeDepth != other.treeDepth || treeMaximumValue != other.treeMaximumValue || resolution != other.resolution || treeSize != other.treeSize)
       {
          return false;
       }
@@ -207,7 +207,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       NODE newChildNode = (NODE) node.create();
       node.children[childIdx] = newChildNode;
 
-      tree_size++;
+      treeSize++;
       size_changed = true;
 
       return newChildNode;
@@ -228,7 +228,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
       node.children[childIdx] = null;
 
-      tree_size--;
+      treeSize--;
       size_changed = true;
    }
 
@@ -547,7 +547,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       if (root != null)
       {
          deleteNodeRecurs(root);
-         tree_size = 0;
+         treeSize = 0;
          // max extent of tree changed:
          size_changed = true;
       }
@@ -587,7 +587,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    /// \return The number of nodes in the tree
    public int size()
    {
-      return tree_size;
+      return treeSize;
    }
 
    public double volume()

@@ -20,21 +20,21 @@ import us.ihmc.tools.io.printing.PrintTools;
 
 public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends AbstractOccupancyOcTree<NODE>
 {
-   protected boolean use_bbx_limit; ///< use bounding box for queries (needs to be set)?
-   protected final Point3d bbx_min = new Point3d();
-   protected final Point3d bbx_max = new Point3d();
-   protected final OcTreeKey bbx_min_key = new OcTreeKey();
-   protected final OcTreeKey bbx_max_key = new OcTreeKey();
+   protected boolean useBoundingBoxLimit; ///< use bounding box for queries (needs to be set)?
+   protected final Point3d boundingBoxMin = new Point3d();
+   protected final Point3d boundingBoxMax = new Point3d();
+   protected final OcTreeKey boundingBoxMinKey = new OcTreeKey();
+   protected final OcTreeKey boundingBoxMaxKey = new OcTreeKey();
 
-   protected boolean use_change_detection;
-   /// Set of leaf keys (lowest level) which changed since last resetChangeDetection
-   protected KeyBoolMap changed_keys = new KeyBoolMap();
+   protected boolean useChangeDetection;
+   /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
+   protected KeyBoolMap changedKeys = new KeyBoolMap();
 
    public OccupancyOcTreeBase(double resolution)
    {
       super(resolution);
-      use_bbx_limit = false;
-      use_change_detection = false;
+      useBoundingBoxLimit = false;
+      useChangeDetection = false;
    }
 
    /// Constructor to enable derived classes to change tree constants.
@@ -42,20 +42,20 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    protected OccupancyOcTreeBase(double resolution, int tree_depth, int tree_max_val)
    {
       super(resolution, tree_depth, tree_max_val);
-      use_bbx_limit = false;
-      use_change_detection = false;
+      useBoundingBoxLimit = false;
+      useChangeDetection = false;
    }
 
    public OccupancyOcTreeBase(OccupancyOcTreeBase<NODE> other)
    {
       super(other);
-      use_bbx_limit = other.use_bbx_limit;
-      bbx_min.set(other.bbx_min);
-      bbx_max.set(other.bbx_max);
-      bbx_min_key.set(other.bbx_min_key);
-      bbx_max_key.set(other.bbx_max_key);
-      changed_keys.putAll(other.changed_keys);
-      use_change_detection = other.use_change_detection;
+      useBoundingBoxLimit = other.useBoundingBoxLimit;
+      boundingBoxMin.set(other.boundingBoxMin);
+      boundingBoxMax.set(other.boundingBoxMax);
+      boundingBoxMinKey.set(other.boundingBoxMinKey);
+      boundingBoxMaxKey.set(other.boundingBoxMaxKey);
+      changedKeys.putAll(other.changedKeys);
+      useChangeDetection = other.useChangeDetection;
    }
 
    public void insertPointCloud(Pointcloud scan, Point3d sensor_origin)
@@ -230,7 +230,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       if (root == null)
       {
          root = createRootNode();
-         tree_size++;
+         treeSize++;
          createdRoot = true;
       }
       return setNodeValueRecurs(root, createdRoot, key, 0, log_odds_value, lazy_eval);
@@ -316,7 +316,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       if (root == null)
       {
          root = createRootNode();
-         tree_size++;
+         treeSize++;
          createdRoot = true;
       }
 
@@ -929,56 +929,56 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    ///  use or ignore BBX limit (default: ignore)
    public void useBBXLimit(boolean enable)
    {
-      use_bbx_limit = enable;
+      useBoundingBoxLimit = enable;
    }
 
    public boolean bbxSet()
    {
-      return use_bbx_limit;
+      return useBoundingBoxLimit;
    }
 
    /// sets the minimum for a query bounding box to use
    public void setBBXMin(Point3d min)
    {
-      OcTreeKey newKey = coordToKeyChecked(bbx_min);
+      OcTreeKey newKey = coordToKeyChecked(boundingBoxMin);
       if (newKey == null)
       {
          PrintTools.error(this, "ERROR while generating bbx min key.");
       }
       
-      bbx_min.set(min);
-      bbx_min_key.set(newKey);
+      boundingBoxMin.set(min);
+      boundingBoxMinKey.set(newKey);
    }
 
    /// sets the maximum for a query bounding box to use
    public void setBBXMax(Point3d max)
    {
-      OcTreeKey newKey = coordToKeyChecked(bbx_max);
+      OcTreeKey newKey = coordToKeyChecked(boundingBoxMax);
       if (newKey == null)
       {
          PrintTools.error(this, "ERROR while generating bbx max key.");
       }
 
-      bbx_max.set(max);
-      bbx_max_key.set(newKey);
+      boundingBoxMax.set(max);
+      boundingBoxMaxKey.set(newKey);
    }
 
    /// @return the currently set minimum for bounding box queries, if set
    public Point3d getBBXMin()
    {
-      return bbx_min;
+      return boundingBoxMin;
    }
 
    /// @return the currently set maximum for bounding box queries, if set
    public Point3d getBBXMax()
    {
-      return bbx_max;
+      return boundingBoxMax;
    }
 
    public Point3d getBBXBounds()
    {
       Point3d obj_bounds = new Point3d();
-      obj_bounds.sub(bbx_max, bbx_min);
+      obj_bounds.sub(boundingBoxMax, boundingBoxMin);
       obj_bounds.scale(0.5);
       return obj_bounds;
    }
@@ -986,46 +986,46 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    public Point3d getBBXCenter()
    {
       Point3d center = getBBXBounds();
-      center.add(bbx_min);
+      center.add(boundingBoxMin);
       return center;
    }
 
    /// @return true if point is in the currently set bounding box
    public boolean inBBX(Point3d p)
    {
-      return ((p.getX() >= bbx_min.getX()) && (p.getY() >= bbx_min.getY()) && (p.getZ() >= bbx_min.getZ()) && (p.getX() <= bbx_max.getX())
-            && (p.getY() <= bbx_max.getY()) && (p.getZ() <= bbx_max.getZ()));
+      return ((p.getX() >= boundingBoxMin.getX()) && (p.getY() >= boundingBoxMin.getY()) && (p.getZ() >= boundingBoxMin.getZ()) && (p.getX() <= boundingBoxMax.getX())
+            && (p.getY() <= boundingBoxMax.getY()) && (p.getZ() <= boundingBoxMax.getZ()));
    }
 
    /// @return true if key is in the currently set bounding box
    public boolean inBBX(OcTreeKey key)
    {
-      return ((key.k[0] >= bbx_min_key.k[0]) && (key.k[1] >= bbx_min_key.k[1]) && (key.k[2] >= bbx_min_key.k[2]) && (key.k[0] <= bbx_max_key.k[0])
-            && (key.k[1] <= bbx_max_key.k[1]) && (key.k[2] <= bbx_max_key.k[2]));
+      return ((key.k[0] >= boundingBoxMinKey.k[0]) && (key.k[1] >= boundingBoxMinKey.k[1]) && (key.k[2] >= boundingBoxMinKey.k[2]) && (key.k[0] <= boundingBoxMaxKey.k[0])
+            && (key.k[1] <= boundingBoxMaxKey.k[1]) && (key.k[2] <= boundingBoxMaxKey.k[2]));
    }
 
    //-- change detection on occupancy:
    /// track or ignore changes while inserting scans (default: ignore)
    public void enableChangeDetection(boolean enable)
    {
-      use_change_detection = enable;
+      useChangeDetection = enable;
    }
 
    public boolean isChangeDetectionEnabled()
    {
-      return use_change_detection;
+      return useChangeDetection;
    }
 
    /// Reset the set of changed keys. Call this after you obtained all changed nodes.
    public void resetChangeDetection()
    {
-      changed_keys.clear();
+      changedKeys.clear();
    }
 
    /// Number of changes since last reset.
    public int numChangesDetected()
    {
-      return changed_keys.size();
+      return changedKeys.size();
    }
 
    /**
@@ -1050,7 +1050,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          direction.sub(p, origin);
          double length = direction.length();
 
-         if (!use_bbx_limit)
+         if (!useBoundingBoxLimit)
          { // no BBX specified
             if ((maxrange < 0.0) || (length <= maxrange))
             { // is not maxrange meas.
@@ -1273,26 +1273,24 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
             return retval;
          }
       }
-
-      // at last level, update node, end of recursion
-      else
+      else // at last level, update node, end of recursion
       {
-         if (use_change_detection)
+         if (useChangeDetection)
          {
             boolean occBefore = isNodeOccupied(node);
             updateNodeLogOdds(node, log_odds_update);
 
             if (node_just_created)
             { // new node
-               changed_keys.put(key, true);
+               changedKeys.put(key, true);
             }
             else if (occBefore != isNodeOccupied(node))
             { // occupancy changed, track it
-               Boolean changedKeyValue = changed_keys.get(key);
+               Boolean changedKeyValue = changedKeys.get(key);
                if (changedKeyValue == null)
-                  changed_keys.put(key, false);
+                  changedKeys.put(key, false);
                else if (changedKeyValue == false)
-                  changed_keys.remove(key);
+                  changedKeys.remove(key);
             }
          }
          else
@@ -1360,23 +1358,23 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       // at last level, update node, end of recursion
       else
       {
-         if (use_change_detection)
+         if (useChangeDetection)
          {
             boolean occBefore = isNodeOccupied(node);
             node.setLogOdds(log_odds_value);
 
             if (node_just_created)
             { // new node
-               changed_keys.put(key, true);
+               changedKeys.put(key, true);
                ;
             }
             else if (occBefore != isNodeOccupied(node))
             { // occupancy changed, track it
-               Boolean keyChangedValue = changed_keys.get(key);
+               Boolean keyChangedValue = changedKeys.get(key);
                if (keyChangedValue == null)
-                  changed_keys.put(key, false);
+                  changedKeys.put(key, false);
                else if (keyChangedValue == false)
-                  changed_keys.remove(key);
+                  changedKeys.remove(key);
             }
          }
          else

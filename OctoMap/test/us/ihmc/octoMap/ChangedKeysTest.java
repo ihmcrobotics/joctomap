@@ -70,7 +70,7 @@ public class ChangedKeysTest
       tree.expand();
 
       // iterate through the changed nodes
-      for (Entry<OcTreeKey, Boolean> entrySet : tree.changed_keys.entrySet())
+      for (Entry<OcTreeKey, Boolean> entrySet : tree.changedKeys.entrySet())
       {
          OcTreeNode node = tree.search(entrySet.getKey());
          if (node != null)
