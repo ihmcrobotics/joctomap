@@ -5,7 +5,7 @@ import javax.vecmath.Point3d;
 import us.ihmc.octoMap.OcTreeKey;
 import us.ihmc.robotics.MathTools;
 
-public abstract class OcTreeNavigationTools
+public abstract class OcTreeCoordinateConversionTools
 {
    /**
     * Converts a single coordinate into a discrete addressing key, with boundary checking.
