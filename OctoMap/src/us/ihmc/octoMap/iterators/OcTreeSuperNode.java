@@ -108,9 +108,9 @@ public class OcTreeSuperNode<NODE extends OcTreeDataNode<?>>
       return true;
    }
 
-   public boolean equals(OcTreeSuperNode<NODE> other)
+   public boolean epsilonEquals(OcTreeSuperNode<NODE> other)
    {
-      if (!node.equals(other.node))
+      if (!node.epsilonEquals(other.node))
          return false;
       if (!key.equals(other.key))
          return false;

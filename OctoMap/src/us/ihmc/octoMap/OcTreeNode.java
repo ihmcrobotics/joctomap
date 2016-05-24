@@ -1,5 +1,7 @@
 package us.ihmc.octoMap;
 
+import us.ihmc.robotics.MathTools;
+
 public class OcTreeNode extends OcTreeDataNode<Float>
 {
 
@@ -121,5 +123,20 @@ public class OcTreeNode extends OcTreeDataNode<Float>
    public void addValue(float logOdds)
    {
       value += logOdds;
+   }
+
+   @Override
+   public boolean epsilonEquals(OcTreeDataNode<?> other)
+   {
+      if (!(other instanceof OcTreeNode))
+         return false;
+
+      return epsilonEquals((OcTreeNode) other, 1.0e-7f);
+   }
+
+   @Override
+   public boolean epsilonEquals(OcTreeDataNode<Float> other, Float epsilon)
+   {
+      return MathTools.epsilonEquals(value, other.value, epsilon);
    }
 }

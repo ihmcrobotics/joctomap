@@ -10,6 +10,9 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.OcTreeKey.KeyRay;
+import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
+import us.ihmc.octoMap.iterators.LeafIterable;
+import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.robotics.MathTools;
 import us.ihmc.tools.io.printing.PrintTools;
@@ -108,7 +111,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    /// Comparison between two octrees, all meta data, all
    /// nodes, and the structure must be identical
-   public boolean equals(OcTreeBaseImpl<V, NODE> other)
+   public boolean epsilonEquals(OcTreeBaseImpl<V, NODE> other, V epsilon)
    {
       if (treeDepth != other.treeDepth || treeMaximumValue != other.treeMaximumValue || resolution != other.resolution || tree_size != other.tree_size)
       {
@@ -123,7 +126,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       {
          if (!otherIterator.hasNext()) // The other tree has less nodes
             return false;
-         if (!thisNode.equals(otherNode))
+         if (!thisNode.epsilonEquals(otherNode))
             return false;
       }
 
@@ -251,8 +254,12 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       return (NODE) node.children[childIdx];
    }
 
-   /// A node is collapsible if all children exist, don't have children of their own
-   /// and have the same occupancy value
+   /**
+    *  A node is collapsible if all children exist, don't have children of their own
+    * and have the same occupancy value
+    * @param node
+    * @return
+    */
    public boolean isNodeCollapsible(NODE node)
    {
       // all children must exist, must not have children of
@@ -271,7 +278,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
          // comparison via getChild so that casts of derived classes ensure
          // that the right == operator gets called
          NODE currentChild = getNodeChild(node, i);
-         if (nodeHasChildren(currentChild) || !(currentChild.equals(firstChild)))
+         if (nodeHasChildren(currentChild) || !(currentChild.epsilonEquals(firstChild)))
             return false;
       }
 
@@ -569,8 +576,10 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       }
    }
 
-   /// Expands all pruned nodes (reverse of prune())
-   /// \note This is an expensive operation, especially when the tree is nearly empty!
+   /**
+    *  Expands all pruned nodes (reverse of prune())
+    *  NOTE This is an expensive operation, especially when the tree is nearly empty!
+    */
    public void expand()
    {
       if (root != null)
@@ -882,7 +891,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    public Iterable<OcTreeSuperNode<NODE>> leafIterable()
    {
-      return new us.ihmc.octoMap.iterators.LeafIterable<>(this); // TODO Organize imports;
+      return new LeafIterable<>(this); // TODO Organize imports;
    }
 
    public Iterator<OcTreeSuperNode<NODE>> treeIterator()
@@ -892,12 +901,12 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    public Iterable<OcTreeSuperNode<NODE>> treeIterable()
    {
-      return new us.ihmc.octoMap.iterators.OcTreeIterable<>(this); // TODO Organize imports;
+      return new OcTreeIterable<>(this); // TODO Organize imports;
    }
 
    public Iterable<OcTreeSuperNode<NODE>> leafBoundingBoxIterable(OcTreeKey min, OcTreeKey max)
    {
-      return new us.ihmc.octoMap.iterators.LeafBoundingBoxIterable<>(this, min, max, 0); // TODO Organize imports;
+      return new LeafBoundingBoxIterable<>(this, min, max, 0); // TODO Organize imports;
    }
 
    //

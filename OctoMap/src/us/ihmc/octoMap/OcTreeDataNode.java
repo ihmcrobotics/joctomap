@@ -63,10 +63,9 @@ public abstract class OcTreeDataNode<V>
       return false;
    }
 
-   public boolean equals(OcTreeDataNode<V> other)
-   {
-      return value == other.value;
-   }
+   public abstract boolean epsilonEquals(OcTreeDataNode<?> other);
+
+   public abstract boolean epsilonEquals(OcTreeDataNode<V> other, V epsilon);
 
    @Override
    public String toString()
