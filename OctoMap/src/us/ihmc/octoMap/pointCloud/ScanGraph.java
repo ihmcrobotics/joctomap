@@ -66,7 +66,7 @@ public class ScanGraph
     */
    public ScanEdge addEdge(ScanNode first, ScanNode second, RigidBodyTransform constraint)
    {
-      if ((first.id != 0) && (second.id != 0))
+      if ((first.getId() != 0) && (second.getId() != 0))
       {
          ScanEdge ret = new ScanEdge(first, second, constraint);
          edges.add(ret);
@@ -91,11 +91,11 @@ public class ScanGraph
       ScanNode first = getNodeByID(first_id);
       ScanNode second = getNodeByID(second_id);
 
-      if ((first.id != 0) && (second.id != 0))
+      if ((first.getId() != 0) && (second.getId() != 0))
       {
          RigidBodyTransform constr = new RigidBodyTransform();
-         constr.invert(first.pose);
-         constr.multiply(second.pose);
+         constr.invert(first.getPose());
+         constr.multiply(second.getPose());
          return addEdge(first, second, constr);
       }
       else
@@ -111,7 +111,7 @@ public class ScanGraph
       for (int i = 0; i < nodes.size(); i++)
       {
          ScanNode currentNode = nodes.get(i);
-         if (currentNode.id == id)
+         if (currentNode.getId() == id)
             return currentNode;
       }
       return null;
@@ -123,9 +123,9 @@ public class ScanGraph
       for (int i = 0; i < edges.size(); i++)
       {
          ScanEdge currentEdge = edges.get(i);
-         ScanNode first = currentEdge.first;
-         ScanNode second = currentEdge.second;
-         if (((first.id == first_id) && (second.id == second_id)) || ((first.id == second_id) && (second.id == first_id)))
+         ScanNode first = currentEdge.getFirst();
+         ScanNode second = currentEdge.getSecond();
+         if (((first.getId() == first_id) && (second.getId() == second_id)) || ((first.getId() == second_id) && (second.getId() == first_id)))
          {
             return true;
          }
@@ -141,8 +141,8 @@ public class ScanGraph
          ScanNode first = nodes.get(nodes.size() - 2);
          ScanNode second = nodes.get(nodes.size() - 1);
          RigidBodyTransform c = new RigidBodyTransform();
-         c.invert(first.pose);
-         c.multiply(second.pose);
+         c.invert(first.getPose());
+         c.multiply(second.getPose());
          addEdge(first, second, c);
       }
    }
@@ -157,11 +157,11 @@ public class ScanGraph
          for (int i = 0; i < nodes.size(); i++)
          {
             ScanNode currentNode = nodes.get(i);
-            if (node.id == currentNode.id)
+            if (node.getId() == currentNode.getId())
                continue;
-            if (edgeExists(id, currentNode.id))
+            if (edgeExists(id, currentNode.getId()))
             {
-               res.add(currentNode.id);
+               res.add(currentNode.getId());
             }
          }
       }
@@ -175,7 +175,7 @@ public class ScanGraph
       {
          for (ScanEdge currentScanEdge : edges)
          {
-            if (currentScanEdge.first.equals(node))
+            if (currentScanEdge.getFirst().equals(node))
             {
                res.add(currentScanEdge);
             }
@@ -192,7 +192,7 @@ public class ScanGraph
       {
          for (ScanEdge currentScanEdge : edges)
          {
-            if (currentScanEdge.second.equals(node))
+            if (currentScanEdge.getSecond().equals(node))
             {
                res.add(currentScanEdge);
             }
@@ -206,7 +206,7 @@ public class ScanGraph
    {
       for (ScanNode scanNode : nodes)
       {
-         scanNode.scan.transformAbsolute(scanNode.pose);
+         scanNode.transformAbsoluteScan(scanNode.getPose());
       }
    }
 
@@ -216,13 +216,13 @@ public class ScanGraph
       // for all node in graph...
       for (ScanNode scanNode : nodes)
       {
-         RigidBodyTransform scan_pose = new RigidBodyTransform(scanNode.pose);
-         PointCloud pc = new PointCloud(scanNode.scan);
+         RigidBodyTransform scan_pose = new RigidBodyTransform(scanNode.getPose());
+         PointCloud pc = new PointCloud(scanNode.getScan());
          pc.transformAbsolute(scan_pose);
          pc.crop(lowerBound, upperBound);
          scan_pose.invert();
          pc.transform(scan_pose);
-         scanNode.scan = pc;
+         scanNode.setScan(pc);;
       }
    }
 
@@ -231,7 +231,7 @@ public class ScanGraph
    {
       for (ScanNode scanNode : nodes)
       {
-         scanNode.scan.crop(lowerBound, upperBound);
+         scanNode.cropScan(lowerBound, upperBound);
       }
    }
 
@@ -251,8 +251,8 @@ public class ScanGraph
 
       for (ScanNode scanNode : nodes)
       {
-         retval += scanNode.scan.size();
-         if ((max_id > 0) && (scanNode.id == max_id))
+         retval += scanNode.getScanSize();
+         if ((max_id > 0) && (scanNode.getId() == max_id))
             break;
       }
       return retval;

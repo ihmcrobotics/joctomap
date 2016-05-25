@@ -68,7 +68,7 @@ public class PointCloud implements Iterable<Point3d>
          transform.transform(points.get(i));
 
       // FIXME: not correct for multiple transforms
-       current_inv_transform.invert(transform);
+      current_inv_transform.invert(transform);
    }
 
    /// Rotate each point in pointcloud
@@ -103,25 +103,36 @@ public class PointCloud implements Iterable<Point3d>
       min_x = min_y = min_z = 1e6;
       max_x = max_y = max_z = -1e6;
 
-      double x,y,z;
+      double x, y, z;
 
-      for (Point3d point : this) {
+      for (Point3d point : this)
+      {
 
-        x = point.x;
-        y = point.y;
-        z = point.z;
+         x = point.x;
+         y = point.y;
+         z = point.z;
 
-        if (x < min_x) min_x = x;
-        if (y < min_y) min_y = y;
-        if (z < min_z) min_z = z;
+         if (x < min_x)
+            min_x = x;
+         if (y < min_y)
+            min_y = y;
+         if (z < min_z)
+            min_z = z;
 
-        if (x > max_x) max_x = x;
-        if (y > max_y) max_y = y;
-        if (z > max_z) max_z = z;
+         if (x > max_x)
+            max_x = x;
+         if (y > max_y)
+            max_y = y;
+         if (z > max_z)
+            max_z = z;
       }
 
-      lowerBound.x = min_x; lowerBound.y = min_y; lowerBound.z = min_z;
-      upperBound.x = max_x; upperBound.y = max_y; upperBound.z = max_z;
+      lowerBound.x = min_x;
+      lowerBound.y = min_y;
+      lowerBound.z = min_z;
+      upperBound.x = max_x;
+      upperBound.y = max_y;
+      upperBound.z = max_z;
    }
 
    /// Crop Pointcloud to given bounding box
@@ -131,25 +142,26 @@ public class PointCloud implements Iterable<Point3d>
 
       double min_x, min_y, min_z;
       double max_x, max_y, max_z;
-      double x,y,z;
+      double x, y, z;
 
-      min_x = lowerBound.x; min_y = lowerBound.y; min_z = lowerBound.z;
-      max_x = upperBound.x; max_y = upperBound.y; max_z = upperBound.z;
+      min_x = lowerBound.x;
+      min_y = lowerBound.y;
+      min_z = lowerBound.z;
+      max_x = upperBound.x;
+      max_y = upperBound.y;
+      max_z = upperBound.z;
 
-      for (Point3d point : this) {
+      for (Point3d point : this)
+      {
 
-        x = point.x;
-        y = point.y;
-        z = point.z;
+         x = point.x;
+         y = point.y;
+         z = point.z;
 
-        if ( (x >= min_x) &&
-        (y >= min_y) &&
-        (z >= min_z) &&
-        (x <= max_x) &&
-        (y <= max_y) &&
-        (z <= max_z) ) {
-     result.add (x,y,z);
-        }
+         if ((x >= min_x) && (y >= min_y) && (z >= min_z) && (x <= max_x) && (y <= max_y) && (z <= max_z))
+         {
+            result.add(x, y, z);
+         }
       } // end for points
 
       clear();
@@ -161,23 +173,25 @@ public class PointCloud implements Iterable<Point3d>
    {
       PointCloud result = new PointCloud();
 
-      double x,y,z;
-      for (Point3d point : this) {
+      double x, y, z;
+      for (Point3d point : this)
+      {
          x = point.x;
          y = point.y;
          z = point.z;
-        double dist = Math.sqrt(x*x+y*y+z*z);
-        if ( dist > thres ) result.add (x,y,z);
+         double dist = Math.sqrt(x * x + y * y + z * z);
+         if (dist > thres)
+            result.add(x, y, z);
       } // end for points
       clear();
       add(result);
-    }
+   }
 
    public void subSampleRandom(int num_samples, PointCloud sample_cloud)
    {
       sample_cloud = new PointCloud(this);
       Random random = new Random();
-      
+
       while (sample_cloud.size() > num_samples)
       {
          int indexToRemove = random.nextInt(sample_cloud.size());
@@ -185,7 +199,7 @@ public class PointCloud implements Iterable<Point3d>
          Collections.swap(sample_cloud.points, indexToRemove, lastIndex);
          sample_cloud.points.remove(lastIndex);
       }
-    }
+   }
 
    public Point3d back()
    {

@@ -7,9 +7,9 @@ import us.ihmc.robotics.geometry.RigidBodyTransform;
  */
 public class ScanEdge
 {
-   ScanNode first;
-   ScanNode second;
-   private RigidBodyTransform constraint = new RigidBodyTransform();
+   private final ScanNode first;
+   private final ScanNode second;
+   private final RigidBodyTransform constraint = new RigidBodyTransform();
    private double weight;
 
    public ScanEdge(ScanNode first, ScanNode second, RigidBodyTransform constraint)
@@ -24,6 +24,31 @@ public class ScanEdge
    {
       first = new ScanNode();
       second = new ScanNode();
+   }
+
+   public double getWeight()
+   {
+      return weight;
+   }
+
+   public void setWeight(double weight)
+   {
+      this.weight = weight;
+   }
+
+   public ScanNode getFirst()
+   {
+      return first;
+   }
+
+   public ScanNode getSecond()
+   {
+      return second;
+   }
+
+   public RigidBodyTransform getConstraint()
+   {
+      return constraint;
    }
 
    public boolean equals(ScanEdge other)

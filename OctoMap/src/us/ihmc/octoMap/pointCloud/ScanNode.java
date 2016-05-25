@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.pointCloud;
 
+import javax.vecmath.Point3d;
+
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 
 /**
@@ -7,9 +9,9 @@ import us.ihmc.robotics.geometry.RigidBodyTransform;
  */
 public class ScanNode
 {
-   PointCloud scan;
-   RigidBodyTransform pose = new RigidBodyTransform(); ///< 6D pose from which the scan was performed
-   int id;
+   private PointCloud scan;
+   private final RigidBodyTransform pose = new RigidBodyTransform(); ///< 6D pose from which the scan was performed
+   private int id;
 
    public ScanNode(PointCloud scan, RigidBodyTransform pose, int id)
    {
@@ -33,6 +35,26 @@ public class ScanNode
    public PointCloud getScan()
    {
       return scan;
+   }
+
+   public int getScanSize()
+   {
+      return scan.size();
+   }
+
+   public void cropScan(Point3d lowerBound, Point3d upperBound)
+   {
+      scan.crop(lowerBound, upperBound);
+   }
+
+   public void setScan(PointCloud scan)
+   {
+      this.scan = scan;
+   }
+
+   public void transformAbsoluteScan(RigidBodyTransform transform)
+   {
+      scan.transformAbsolute(transform);
    }
 
    public RigidBodyTransform getPose()
