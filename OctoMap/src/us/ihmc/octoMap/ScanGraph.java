@@ -286,6 +286,21 @@ public class ScanGraph
          this.id = other.id;
       }
 
+      public PointCloud getScan()
+      {
+         return scan;
+      }
+
+      public RigidBodyTransform getPose()
+      {
+         return pose;
+      }
+
+      public int getId()
+      {
+         return id;
+      }
+
       public boolean equals(ScanNode other)
       {
          return id == other.id;

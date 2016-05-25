@@ -1,4 +1,4 @@
-package us.ihmc.octoMap;
+package us.ihmc.octoMap.ocTree;
 
 import static us.ihmc.octoMap.node.OcTreeNodeTools.getNodeChild;
 
@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.vecmath.Point3d;
 
+import us.ihmc.octoMap.OcTreeKey;
 import us.ihmc.octoMap.node.CountingOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;

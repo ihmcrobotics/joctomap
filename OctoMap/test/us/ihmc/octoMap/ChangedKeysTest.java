@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
+import us.ihmc.octoMap.ocTree.OcTree;
 import us.ihmc.robotics.geometry.RotationTools;
 
 public class ChangedKeysTest
@@ -71,7 +72,7 @@ public class ChangedKeysTest
       tree.expand();
 
       // iterate through the changed nodes
-      for (Entry<OcTreeKey, Boolean> entrySet : tree.changedKeys.entrySet())
+      for (Entry<OcTreeKey, Boolean> entrySet : tree.getChangedKeys().entrySet())
       {
          OccupancyOcTreeNode node = tree.search(entrySet.getKey());
          if (node != null)

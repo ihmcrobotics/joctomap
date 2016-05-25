@@ -23,6 +23,7 @@ import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
+import us.ihmc.octoMap.ocTree.OcTree;
 import us.ihmc.robotics.geometry.RotationTools;
 
 public class OcTreeVisualizer extends Application
@@ -37,7 +38,7 @@ public class OcTreeVisualizer extends Application
       
       int numberOfNodes = 0;
       int numberOfLeafs = 0;
-      OccupancyOcTreeNode root = ocTree.root;
+      OccupancyOcTreeNode root = ocTree.getRoot();
       List<OccupancyOcTreeNode> stack = new ArrayList<>();
 
       if (root != null)

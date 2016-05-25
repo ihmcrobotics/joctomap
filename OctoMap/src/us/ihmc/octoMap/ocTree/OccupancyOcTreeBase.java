@@ -1,4 +1,4 @@
-package us.ihmc.octoMap;
+package us.ihmc.octoMap.ocTree;
 
 import static us.ihmc.octoMap.MCTables.edgeTable;
 import static us.ihmc.octoMap.MCTables.triTable;
@@ -10,9 +10,11 @@ import java.util.ListIterator;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
+import us.ihmc.octoMap.OcTreeKey;
 import us.ihmc.octoMap.OcTreeKey.KeyBoolMap;
 import us.ihmc.octoMap.OcTreeKey.KeyRay;
 import us.ihmc.octoMap.OcTreeKey.KeySet;
+import us.ihmc.octoMap.PointCloud;
 import us.ihmc.octoMap.ScanGraph.ScanNode;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
@@ -161,11 +163,11 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
    public void insertPointCloud(ScanNode scan, double maxrange, boolean lazy_eval, boolean discretize)
    {
       // performs transformation to data and sensor origin first
-      PointCloud cloud = scan.scan;
-      RigidBodyTransform frame_origin = new RigidBodyTransform(scan.pose);
+      PointCloud cloud = scan.getScan();
+      RigidBodyTransform frame_origin = new RigidBodyTransform(scan.getPose());
       frame_origin.invert();
       Vector3d tempVector = new Vector3d();
-      scan.pose.get(tempVector);
+      scan.getPose().get(tempVector);
       Point3d sensor_origin = new Point3d(tempVector);//frame_origin.inv().transform(scan.pose.trans()); // TODO Sylvain Double-check this transformation
       frame_origin.transform(sensor_origin);
       insertPointCloud(cloud, sensor_origin, frame_origin, maxrange, lazy_eval, discretize);
@@ -1028,6 +1030,11 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
    public int numberOfChangesDetected()
    {
       return changedKeys.size();
+   }
+
+   public KeyBoolMap getChangedKeys()
+   {
+      return changedKeys;
    }
 
    /**

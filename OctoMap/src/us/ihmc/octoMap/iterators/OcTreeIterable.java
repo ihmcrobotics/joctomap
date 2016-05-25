@@ -3,9 +3,9 @@ package us.ihmc.octoMap.iterators;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 
-import us.ihmc.octoMap.OcTreeBaseImpl;
 import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
+import us.ihmc.octoMap.ocTree.OcTreeBaseImpl;
 import us.ihmc.robotics.MathTools;
 
 public class OcTreeIterable<NODE extends OcTreeDataNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>

@@ -1,4 +1,4 @@
-package us.ihmc.octoMap;
+package us.ihmc.octoMap.ocTree;
 
 import us.ihmc.octoMap.node.OcTreeDataNode;
 

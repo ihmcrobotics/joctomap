@@ -1,10 +1,11 @@
-package us.ihmc.octoMap;
+package us.ihmc.octoMap.ocTree;
 
 import static us.ihmc.octoMap.tools.OctoMapTools.logodds;
 import static us.ihmc.octoMap.tools.OctoMapTools.probability;
 
 import javax.vecmath.Point3d;
 
+import us.ihmc.octoMap.OcTreeKey;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.robotics.MathTools;
 

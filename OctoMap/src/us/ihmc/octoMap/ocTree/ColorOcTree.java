@@ -1,5 +1,6 @@
-package us.ihmc.octoMap;
+package us.ihmc.octoMap.ocTree;
 
+import us.ihmc.octoMap.OcTreeKey;
 import us.ihmc.octoMap.node.ColorOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 

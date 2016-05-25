@@ -4,10 +4,10 @@ import java.util.Iterator;
 
 import javax.vecmath.Point3d;
 
-import us.ihmc.octoMap.OcTreeBaseImpl;
 import us.ihmc.octoMap.OcTreeKey;
 import us.ihmc.octoMap.iterators.LeafIterable.LeafIterator;
 import us.ihmc.octoMap.node.OcTreeDataNode;
+import us.ihmc.octoMap.ocTree.OcTreeBaseImpl;
 
 /**
  * Bounding-box leaf iterator. This iterator will traverse all leaf nodes
