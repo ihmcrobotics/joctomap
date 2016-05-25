@@ -309,7 +309,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       // may cause an overhead in some configuration, but more often helps
       NODE leaf = search(key);
       // no change: node already at threshold
-      if (leaf != null && ((log_odds_update >= 0 && leaf.getValue() >= clamping_thres_max) || (log_odds_update <= 0 && leaf.getValue() <= clamping_thres_min)))
+      if (leaf != null && ((log_odds_update >= 0 && leaf.getLogOdds() >= clamping_thres_max) || (log_odds_update <= 0 && leaf.getLogOdds() <= clamping_thres_min)))
       {
          return leaf;
       }

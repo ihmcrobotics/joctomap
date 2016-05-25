@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.node;
 
+import java.util.Arrays;
+
 import us.ihmc.octoMap.tools.OctoMapTools;
 import us.ihmc.robotics.MathTools;
 
@@ -116,5 +118,11 @@ public class OcTreeNode extends OcTreeDataNode<Float>
    public boolean epsilonEquals(OcTreeDataNode<Float> other, Float epsilon)
    {
       return MathTools.epsilonEquals(value, other.value, epsilon);
+   }
+
+   @Override
+   public String toString()
+   {
+      return getClass().getSimpleName() + ": value = " + value + ", children = " + Arrays.toString(getChildrenSimpleNames());
    }
 }

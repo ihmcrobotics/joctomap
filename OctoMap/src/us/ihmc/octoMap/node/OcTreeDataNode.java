@@ -21,16 +21,6 @@ public abstract class OcTreeDataNode<V>
       value = initialValue;
    }
 
-   public void setValue(V value)
-   {
-      this.value = value;
-   }
-
-   public V getValue()
-   {
-      return value;
-   }
-
    public void copyData(OcTreeDataNode<V> other)
    {
       value = other.value;
@@ -131,6 +121,11 @@ public abstract class OcTreeDataNode<V>
    @Override
    public String toString()
    {
+      return getClass().getSimpleName() + ": children = " + Arrays.toString(getChildrenSimpleNames());
+   }
+
+   protected String[] getChildrenSimpleNames()
+   {
       String[] childrenNames = new String[8];
       if (children != null)
       {
@@ -140,6 +135,6 @@ public abstract class OcTreeDataNode<V>
             childrenNames[i] = child == null ? null : child.getClass().getSimpleName();
          }
       }
-      return getClass().getSimpleName() + ": value: " + value + ", children: " + Arrays.toString(childrenNames);
+      return childrenNames;
    }
 }
