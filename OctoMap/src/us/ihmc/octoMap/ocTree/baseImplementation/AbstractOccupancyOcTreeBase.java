@@ -62,14 +62,14 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       useChangeDetection = other.useChangeDetection;
    }
 
-   public void insertPointCloud(PointCloud scan, Point3d sensor_origin)
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)
    {
-      insertPointCloud(scan, sensor_origin, -1.0, false, false);
+      insertPointCloud(scan, sensorOrigin, -1.0, false, false);
    }
 
-   public void insertPointCloud(PointCloud scan, Point3d sensor_origin, boolean lazyEvaluation, boolean discretize)
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, boolean lazyEvaluation, boolean discretize)
    {
-      insertPointCloud(scan, sensor_origin, -1.0, lazyEvaluation, discretize);
+      insertPointCloud(scan, sensorOrigin, -1.0, lazyEvaluation, discretize);
    }
 
    /**
@@ -82,36 +82,36 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     * @note replaces insertScan()
     *
     * @param scan Pointcloud (measurement endpoints), in global reference frame
-    * @param sensor_origin measurement origin in global reference frame
-    * @param maxrange maximum range for how long individual beams are inserted (default -1: complete beam)
+    * @param sensorOrigin measurement origin in global reference frame
+    * @param maxRange maximum range for how long individual beams are inserted (default -1: complete beam)
     * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @param discretize whether the scan is discretized first into octree key cells (default: false).
     *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.*
     */
-   public void insertPointCloud(PointCloud scan, Point3d sensor_origin, double maxrange, boolean lazyEvaluation, boolean discretize)
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
       KeySet free_cells = new KeySet();
-      KeySet occupied_cells = new KeySet();
+      KeySet occupiedCells = new KeySet();
       if (discretize)
-         computeDiscreteUpdate(scan, sensor_origin, free_cells, occupied_cells, maxrange);
+         computeDiscreteUpdate(scan, sensorOrigin, free_cells, occupiedCells, maxRange);
       else
-         computeUpdate(scan, sensor_origin, free_cells, occupied_cells, maxrange);
+         computeUpdate(scan, sensorOrigin, free_cells, occupiedCells, maxRange);
 
       // insert data into tree  -----------------------
       for (OcTreeKey key : free_cells)
       {
          updateNode(key, false, lazyEvaluation);
       }
-      for (OcTreeKey key : occupied_cells)
+      for (OcTreeKey key : occupiedCells)
       {
          updateNode(key, true, lazyEvaluation);
       }
    }
 
-   public void insertPointCloud(PointCloud scan, Point3d sensor_origin, RigidBodyTransform frame_origin)
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, RigidBodyTransform frameOrigin)
    {
-      insertPointCloud(scan, sensor_origin, frame_origin, -1.0, false, false);
+      insertPointCloud(scan, sensorOrigin, frameOrigin, -1.0, false, false);
    }
 
    /**
@@ -124,22 +124,22 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    * @note replaces insertScan()
    *
    * @param scan Pointcloud (measurement endpoints) relative to frame origin
-   * @param sensor_origin origin of sensor relative to frame origin
-   * @param frame_origin origin of reference frame, determines transform to be applied to cloud and sensor origin
-   * @param maxrange maximum range for how long individual beams are inserted (default -1: complete beam)
+   * @param sensorOrigin origin of sensor relative to frame origin
+   * @param frameOrigin origin of reference frame, determines transform to be applied to cloud and sensor origin
+   * @param maxRange maximum range for how long individual beams are inserted (default -1: complete beam)
    * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
    *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
    * @param discretize whether the scan is discretized first into octree key cells (default: false).
    *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.*
    */
-   public void insertPointCloud(PointCloud scan, Point3d sensor_origin, RigidBodyTransform frame_origin, double maxrange, boolean lazyEvaluation, boolean discretize)
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, RigidBodyTransform frameOrigin, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
       // performs transformation to data and sensor origin first
-      PointCloud transformed_scan = new PointCloud(scan);
-      transformed_scan.transform(frame_origin);
-      Point3d transformed_sensor_origin = new Point3d(sensor_origin);
-      frame_origin.transform(transformed_sensor_origin);
-      insertPointCloud(transformed_scan, transformed_sensor_origin, maxrange, lazyEvaluation, discretize);
+      PointCloud transformedScan = new PointCloud(scan);
+      transformedScan.transform(frameOrigin);
+      Point3d transformed_sensorOrigin = new Point3d(sensorOrigin);
+      frameOrigin.transform(transformed_sensorOrigin);
+      insertPointCloud(transformedScan, transformed_sensorOrigin, maxRange, lazyEvaluation, discretize);
    }
 
    public void insertPointCloud(ScanNode scan)
@@ -153,13 +153,13 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    * @note replaces insertScan
    *
    * @param scan ScanNode contains Pointcloud data and frame/sensor origin
-   * @param maxrange maximum range for how long individual beams are inserted (default -1: complete beam)
+   * @param maxRange maximum range for how long individual beams are inserted (default -1: complete beam)
    * @param lazyEvaluation whether the tree is left 'dirty' after the update (default: false).
    *   This speeds up the insertion by not updating inner nodes, but you need to call updateInnerOccupancy() when done.
    * @param discretize whether the scan is discretized first into octree key cells (default: false).
    *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.
    */
-   public void insertPointCloud(ScanNode scan, double maxrange, boolean lazyEvaluation, boolean discretize)
+   public void insertPointCloud(ScanNode scan, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
       // performs transformation to data and sensor origin first
       PointCloud cloud = scan.getScan();
@@ -167,14 +167,14 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       frame_origin.invert();
       Vector3d tempVector = new Vector3d();
       scan.getPose().get(tempVector);
-      Point3d sensor_origin = new Point3d(tempVector);//frame_origin.inv().transform(scan.pose.trans()); // TODO Sylvain Double-check this transformation
-      frame_origin.transform(sensor_origin);
-      insertPointCloud(cloud, sensor_origin, frame_origin, maxrange, lazyEvaluation, discretize);
+      Point3d sensorOrigin = new Point3d(tempVector);//frame_origin.inv().transform(scan.pose.trans()); // TODO Sylvain Double-check this transformation
+      frame_origin.transform(sensorOrigin);
+      insertPointCloud(cloud, sensorOrigin, frame_origin, maxRange, lazyEvaluation, discretize);
    }
 
-   public void insertPointCloudRays(PointCloud scan, Point3d sensor_origin)
+   public void insertPointCloudRays(PointCloud scan, Point3d sensorOrigin)
    {
-      insertPointCloudRays(scan, sensor_origin, -1.0, false);
+      insertPointCloudRays(scan, sensorOrigin, -1.0, false);
    }
 
    /**
@@ -184,50 +184,50 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     * usually recommended to use insertPointCloud() instead.
     *
     * @param scan Pointcloud (measurement endpoints), in global reference frame
-    * @param sensor_origin measurement origin in global reference frame
-    * @param maxrange maximum range for how long individual beams are inserted (default -1: complete beam)
+    * @param sensorOrigin measurement origin in global reference frame
+    * @param maxRange maximum range for how long individual beams are inserted (default -1: complete beam)
     * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     */
-   public void insertPointCloudRays(PointCloud scan, Point3d sensor_origin, double maxrange, boolean lazyEvaluation)
+   public void insertPointCloudRays(PointCloud scan, Point3d sensorOrigin, double maxRange, boolean lazyEvaluation)
    {
       if (scan.size() < 1)
          return;
 
       for (int i = 0; i < scan.size(); i++)
       {
-         Point3d p = scan.getPoint(i);
+         Point3d point = scan.getPoint(i);
          KeyRay keyRay = keyrays.get(0);
-         if (computeRayKeys(sensor_origin, p, keyRay))
+         if (computeRayKeys(sensorOrigin, point, keyRay))
          {
             for (OcTreeKey key : keyRay)
             {
                updateNode(key, false, lazyEvaluation); // insert freespace measurement
             }
-            updateNode(p, true, lazyEvaluation); // update endpoint to be occupied
+            updateNode(point, true, lazyEvaluation); // update endpoint to be occupied
          }
       }
    }
 
-   public NODE setNodeValue(OcTreeKey key, float log_odds_value)
+   public NODE setNodeValue(OcTreeKey key, float logOddsValue)
    {
-      return setNodeValue(key, log_odds_value, false);
+      return setNodeValue(key, logOddsValue, false);
    }
 
    /**
-    * Set log_odds value of voxel to log_odds_value. This only works if key is at the lowest
+    * Set log_odds value of voxel to logOddsValue. This only works if key is at the lowest
     * octree level
     *
     * @param key OcTreeKey of the NODE that is to be updated
-    * @param log_odds_value value to be set as the log_odds value of the node
+    * @param logOddsValue value to be set as the log_odds value of the node
     * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE setNodeValue(OcTreeKey key, float log_odds_value, boolean lazyEvaluation)
+   public NODE setNodeValue(OcTreeKey key, float logOddsValue, boolean lazyEvaluation)
    {
       // clamp log odds within range:
-      log_odds_value = Math.min(Math.max(log_odds_value, minOccupancyLogOdds), maxOccupancyLogOdds);
+      logOddsValue = Math.min(Math.max(logOddsValue, minOccupancyLogOdds), maxOccupancyLogOdds);
 
       boolean createdRoot = false;
       if (root == null)
@@ -236,84 +236,84 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          treeSize++;
          createdRoot = true;
       }
-      return setNodeValueRecurs(root, createdRoot, key, 0, log_odds_value, lazyEvaluation);
+      return setNodeValueRecurs(root, createdRoot, key, 0, logOddsValue, lazyEvaluation);
    }
 
-   public NODE setNodeValue(Point3d value, float log_odds_value)
+   public NODE setNodeValue(Point3d coordinate, float logOddsValue)
    {
-      return setNodeValue(value, log_odds_value, false);
+      return setNodeValue(coordinate, logOddsValue, false);
    }
 
    /**
-    * Set log_odds value of voxel to log_odds_value.
+    * Set log_odds value of voxel to logOddsValue.
     * Looks up the OcTreeKey corresponding to the coordinate and then calls setNodeValue() with it.
     *
-    * @param value 3d coordinate of the NODE that is to be updated
-    * @param log_odds_value value to be set as the log_odds value of the node
+    * @param coordinate 3d coordinate of the NODE that is to be updated
+    * @param logOddsValue value to be set as the log_odds value of the node
     * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE setNodeValue(Point3d value, float log_odds_value, boolean lazyEvaluation)
+   public NODE setNodeValue(Point3d coordinate, float logOddsValue, boolean lazyEvaluation)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(value);
+      OcTreeKey key = convertCartesianCoordinateToKey(coordinate);
       if (key == null)
          return null;
 
-      return setNodeValue(key, log_odds_value, lazyEvaluation);
+      return setNodeValue(key, logOddsValue, lazyEvaluation);
    }
 
-   public NODE setNodeValue(double x, double y, double z, float log_odds_value)
+   public NODE setNodeValue(double x, double y, double z, float logOddsValue)
    {
-      return setNodeValue(x, y, z, log_odds_value, false);
+      return setNodeValue(x, y, z, logOddsValue, false);
    }
 
    /**
-    * Set log_odds value of voxel to log_odds_value.
+    * Set log_odds value of voxel to logOddsValue.
     * Looks up the OcTreeKey corresponding to the coordinate and then calls setNodeValue() with it.
     *
     * @param x
     * @param y
     * @param z
-    * @param log_odds_value value to be set as the log_odds value of the node
+    * @param logOddsValue value to be set as the log_odds value of the node
     * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE setNodeValue(double x, double y, double z, float log_odds_value, boolean lazyEvaluation)
+   public NODE setNodeValue(double x, double y, double z, float logOddsValue, boolean lazyEvaluation)
    {
       OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
          return null;
 
-      return setNodeValue(key, log_odds_value, lazyEvaluation);
+      return setNodeValue(key, logOddsValue, lazyEvaluation);
    }
 
    /**
-    * Manipulate log_odds value of a voxel by changing it by log_odds_update (relative).
+    * Manipulate log_odds value of a voxel by changing it by logOddsUpdate (relative).
     * This only works if key is at the lowest octree level
     *
     * @param key OcTreeKey of the NODE that is to be updated
-    * @param log_odds_update value to be added (+) to log_odds value of node
+    * @param logOddsUpdate value to be added (+) to log_odds value of node
     * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
    @Override
-   public NODE updateNode(OcTreeKey key, float log_odds_update, boolean lazyEvaluation)
+   public NODE updateNode(OcTreeKey key, float logOddsUpdate, boolean lazyEvaluation)
    {
       NODE leaf = search(key);
-      if (leaf == null)
-         return null;
 
-      // early abort (no change will happen).
-      // may cause an overhead in some configuration, but more often helps
-      // no change: node already at threshold
-      boolean reachedMaxThreshold = log_odds_update >= 0.0f && leaf.getLogOdds() >= maxOccupancyLogOdds;
-      boolean reachedMinThreshold = log_odds_update <= 0.0f && leaf.getLogOdds() <= minOccupancyLogOdds;
-      if ((reachedMaxThreshold || reachedMinThreshold))
+      if (leaf != null)
       {
-         return leaf;
+         // early abort (no change will happen).
+         // may cause an overhead in some configuration, but more often helps
+         // no change: node already at threshold
+         boolean reachedMaxThreshold = logOddsUpdate >= 0.0f && leaf.getLogOdds() >= maxOccupancyLogOdds;
+         boolean reachedMinThreshold = logOddsUpdate <= 0.0f && leaf.getLogOdds() <= minOccupancyLogOdds;
+
+         if (reachedMaxThreshold || reachedMinThreshold)
+            return leaf;
       }
 
       boolean createdRoot = false;
@@ -324,53 +324,53 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          createdRoot = true;
       }
 
-      return updateNodeRecurs(root, createdRoot, key, 0, log_odds_update, lazyEvaluation);
+      return updateNodeRecurs(root, createdRoot, key, 0, logOddsUpdate, lazyEvaluation);
    }
 
    /**
-    * Manipulate log_odds value of a voxel by changing it by log_odds_update (relative).
+    * Manipulate log_odds value of a voxel by changing it by logOddsUpdate (relative).
     * Looks up the OcTreeKey corresponding to the coordinate and then calls updateNode() with it.
     *
-    * @param coord 3d coordinate of the NODE that is to be updated
-    * @param log_odds_update value to be added (+) to log_odds value of node
+    * @param coordinate 3d coordinate of the NODE that is to be updated
+    * @param logOddsUpdate value to be added (+) to log_odds value of node
     * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
    @Override
-   public NODE updateNode(Point3d coord, float log_odds_update, boolean lazyEvaluation)
+   public NODE updateNode(Point3d coordinate, float logOddsUpdate, boolean lazyEvaluation)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(coord);
+      OcTreeKey key = convertCartesianCoordinateToKey(coordinate);
       if (key == null)
          return null;
 
-      return updateNode(key, log_odds_update, lazyEvaluation);
+      return updateNode(key, logOddsUpdate, lazyEvaluation);
    }
 
-   public NODE updateNode(double x, double y, double z, float log_odds_update)
+   public NODE updateNode(double x, double y, double z, float logOddsUpdate)
    {
-      return updateNode(x, y, z, log_odds_update, false);
+      return updateNode(x, y, z, logOddsUpdate, false);
    }
 
    /**
-    * Manipulate log_odds value of a voxel by changing it by log_odds_update (relative).
+    * Manipulate log_odds value of a voxel by changing it by logOddsUpdate (relative).
     * Looks up the OcTreeKey corresponding to the coordinate and then calls updateNode() with it.
     *
     * @param x
     * @param y
     * @param z
-    * @param log_odds_update value to be added (+) to log_odds value of node
+    * @param logOddsUpdate value to be added (+) to log_odds value of node
     * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(double x, double y, double z, float log_odds_update, boolean lazyEvaluation)
+   public NODE updateNode(double x, double y, double z, float logOddsUpdate, boolean lazyEvaluation)
    {
       OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
          return null;
 
-      return updateNode(key, log_odds_update, lazyEvaluation);
+      return updateNode(key, logOddsUpdate, lazyEvaluation);
    }
 
    /**
@@ -396,16 +396,16 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     * Integrate occupancy measurement.
     * Looks up the OcTreeKey corresponding to the coordinate and then calls udpateNode() with it.
     *
-    * @param coord 3d coordinate of the NODE that is to be updated
+    * @param coordinate 3d coordinate of the NODE that is to be updated
     * @param occupied true if the node was measured occupied, else false
     * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
    @Override
-   public NODE updateNode(Point3d coord, boolean occupied, boolean lazyEvaluation)
+   public NODE updateNode(Point3d coordinate, boolean occupied, boolean lazyEvaluation)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(coord);
+      OcTreeKey key = convertCartesianCoordinateToKey(coordinate);
       if (key == null)
          return null;
       return updateNode(key, occupied, lazyEvaluation);
@@ -470,23 +470,23 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     *
     * @param origin origin of sensor in global coordinates
     * @param end endpoint of measurement in global coordinates
-    * @param maxrange maximum range after which the raycast should be aborted
+    * @param maxRange maximum range after which the raycast should be aborted
     * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return success of operation
     */
-   public boolean insertRay(Point3d origin, Point3d end, double maxrange, boolean lazyEvaluation)
+   public boolean insertRay(Point3d origin, Point3d end, double maxRange, boolean lazyEvaluation)
    {
       Vector3d direction = new Vector3d();
       direction.sub(end, origin);
       double length = direction.length();
 
       // cut ray at maxrange
-      if (maxrange > 0 && length > maxrange)
+      if (maxRange > 0 && length > maxRange)
       {
          direction.scale(1.0 / length);
          Point3d new_end = new Point3d();
-         new_end.scaleAdd(maxrange, direction, origin);
+         new_end.scaleAdd(maxRange, direction, origin);
          return integrateMissOnRay(origin, new_end, lazyEvaluation);
       }
       // insert complete ray
@@ -1218,12 +1218,12 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
    // recursive calls ----------------------------
 
-   protected NODE updateNodeRecurs(NODE node, boolean node_just_created, OcTreeKey key, int depth, float log_odds_update)
+   protected NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKey key, int depth, float logOddsUpdate)
    {
-      return updateNodeRecurs(node, node_just_created, key, depth, log_odds_update, false);
+      return updateNodeRecurs(node, nodeJustCreated, key, depth, logOddsUpdate, false);
    }
 
-   protected NODE updateNodeRecurs(NODE node, boolean node_just_created, OcTreeKey key, int depth, float log_odds_update, boolean lazyEvaluation)
+   protected NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKey key, int depth, float logOddsUpdate, boolean lazyEvaluation)
    {
       boolean created_node = false;
 
@@ -1237,7 +1237,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          if (!OcTreeNodeTools.nodeChildExists(node, pos))
          {
             // child does not exist, but maybe it's a pruned node?
-            if (!node.hasAtLeastOneChild() && !node_just_created)
+            if (!node.hasAtLeastOneChild() && !nodeJustCreated)
             {
                // current node does not have children AND it is not a new node 
                // -> expand pruned node
@@ -1252,10 +1252,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          }
 
          if (lazyEvaluation)
-            return updateNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, log_odds_update, lazyEvaluation);
+            return updateNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, logOddsUpdate, lazyEvaluation);
          else
          {
-            NODE retval = updateNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, log_odds_update, lazyEvaluation);
+            NODE retval = updateNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, logOddsUpdate, lazyEvaluation);
             // prune node if possible, otherwise set own probability
             // note: combining both did not lead to a speedup!
             if (pruneNode(node))
@@ -1276,9 +1276,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          if (useChangeDetection)
          {
             boolean occBefore = isNodeOccupied(node);
-            updateNodeLogOdds(node, log_odds_update);
+            updateNodeLogOdds(node, logOddsUpdate);
 
-            if (node_just_created)
+            if (nodeJustCreated)
             { // new node
                changedKeys.put(key, true);
             }
@@ -1293,18 +1293,18 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          }
          else
          {
-            updateNodeLogOdds(node, log_odds_update);
+            updateNodeLogOdds(node, logOddsUpdate);
          }
          return node;
       }
    }
 
-   protected NODE setNodeValueRecurs(NODE node, boolean node_just_created, OcTreeKey key, int depth, float log_odds_value)
+   protected NODE setNodeValueRecurs(NODE node, boolean nodeJustCreated, OcTreeKey key, int depth, float logOddsValue)
    {
-      return setNodeValueRecurs(node, node_just_created, key, depth, log_odds_value, false);
+      return setNodeValueRecurs(node, nodeJustCreated, key, depth, logOddsValue, false);
    }
 
-   protected NODE setNodeValueRecurs(NODE node, boolean node_just_created, OcTreeKey key, int depth, float log_odds_value, boolean lazyEvaluation)
+   protected NODE setNodeValueRecurs(NODE node, boolean nodeJustCreated, OcTreeKey key, int depth, float logOddsValue, boolean lazyEvaluation)
    {
       boolean created_node = false;
 
@@ -1318,7 +1318,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          if (!OcTreeNodeTools.nodeChildExists(node, pos))
          {
             // child does not exist, but maybe it's a pruned node?
-            if (!node.hasAtLeastOneChild() && !node_just_created)
+            if (!node.hasAtLeastOneChild() && !nodeJustCreated)
             {
                // current node does not have children AND it is not a new node
                // -> expand pruned node
@@ -1333,10 +1333,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          }
 
          if (lazyEvaluation)
-            return setNodeValueRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, log_odds_value, lazyEvaluation);
+            return setNodeValueRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, logOddsValue, lazyEvaluation);
          else
          {
-            NODE retval = setNodeValueRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, log_odds_value, lazyEvaluation);
+            NODE retval = setNodeValueRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, logOddsValue, lazyEvaluation);
             // prune node if possible, otherwise set own probability
             // note: combining both did not lead to a speedup!
             if (pruneNode(node))
@@ -1357,12 +1357,11 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          if (useChangeDetection)
          {
             boolean occBefore = isNodeOccupied(node);
-            node.setLogOdds(log_odds_value);
+            node.setLogOdds(logOddsValue);
 
-            if (node_just_created)
+            if (nodeJustCreated)
             { // new node
                changedKeys.put(key, true);
-               ;
             }
             else if (occBefore != isNodeOccupied(node))
             { // occupancy changed, track it
@@ -1375,7 +1374,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          }
          else
          {
-            node.setLogOdds(log_odds_value);
+            node.setLogOdds(logOddsValue);
          }
          return node;
       }
