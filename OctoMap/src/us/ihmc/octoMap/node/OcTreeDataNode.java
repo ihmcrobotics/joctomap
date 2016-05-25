@@ -98,10 +98,7 @@ public abstract class OcTreeDataNode<V>
 
    public final OcTreeDataNode<V> getChild(int childIndex)
    {
-      OcTreeNodeTools.checkChildIndex(childIndex);
-      OcTreeNodeTools.checkNodeHasChildren(this);
-      OcTreeNodeTools.checkNodeChildNotNull(this, childIndex);
-      return children == null ? null : getChildUnsafe(childIndex);
+      return OcTreeNodeTools.getNodeChild(this, childIndex);
    }
 
    public final OcTreeDataNode<V> getChildUnsafe(int childIndex)
