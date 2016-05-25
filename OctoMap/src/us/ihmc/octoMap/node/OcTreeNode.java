@@ -7,15 +7,21 @@ import us.ihmc.robotics.MathTools;
 
 public class OcTreeNode extends OcTreeDataNode<Float>
 {
+   private float logOdds;
 
    public OcTreeNode()
    {
-      this(0f);
    }
 
    public OcTreeNode(float initialValue)
    {
-      super(initialValue);
+      logOdds = initialValue;
+   }
+
+   @Override
+   public void copyData(OcTreeDataNode<Float> other)
+   {
+      logOdds = ((OcTreeNode) other).logOdds;
    }
 
    /**
@@ -23,7 +29,7 @@ public class OcTreeNode extends OcTreeDataNode<Float>
     */
    public double getOccupancy()
    {
-      return OctoMapTools.probability(value);
+      return OctoMapTools.probability(logOdds);
    }
 
    /**
@@ -31,7 +37,7 @@ public class OcTreeNode extends OcTreeDataNode<Float>
     */
    public float getLogOdds()
    {
-      return value;
+      return logOdds;
    }
 
    /**
@@ -39,7 +45,7 @@ public class OcTreeNode extends OcTreeDataNode<Float>
     */
    public void setLogOdds(float l)
    {
-      value = l;
+      logOdds = l;
    }
 
    /**
@@ -102,7 +108,7 @@ public class OcTreeNode extends OcTreeDataNode<Float>
     */
    public void addValue(float logOdds)
    {
-      value += logOdds;
+      this.logOdds += logOdds;
    }
 
    @Override
@@ -116,12 +122,12 @@ public class OcTreeNode extends OcTreeDataNode<Float>
 
    public boolean epsilonEquals(OcTreeDataNode<Float> other, Float epsilon)
    {
-      return MathTools.epsilonEquals(value, other.value, epsilon);
+      return MathTools.epsilonEquals(logOdds, ((OcTreeNode) other).logOdds, epsilon);
    }
 
    @Override
    public String toString()
    {
-      return getClass().getSimpleName() + ": value = " + value + ", children = " + Arrays.toString(getChildrenSimpleNames());
+      return getClass().getSimpleName() + ": logOdds = " + logOdds + ", children = " + Arrays.toString(getChildrenSimpleNames());
    }
 }

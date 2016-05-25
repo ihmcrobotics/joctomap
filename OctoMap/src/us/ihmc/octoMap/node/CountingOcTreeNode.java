@@ -4,24 +4,31 @@ import java.util.Arrays;
 
 public class CountingOcTreeNode extends OcTreeDataNode<Integer>
 {
+   private int count;
+
    public CountingOcTreeNode()
    {
-      super(0);
    }
 
-   public int getCount()
+   @Override
+   public void copyData(OcTreeDataNode<Integer> other)
    {
-      return value;
+      count = ((CountingOcTreeNode) other).count;
    }
 
    public void increaseCount()
    {
-      value++;
+      count++;
    }
 
    public void setCount(int count)
    {
-      value = count;
+      this.count = count;
+   }
+
+   public int getCount()
+   {
+      return count;
    }
 
    @Override
@@ -36,12 +43,12 @@ public class CountingOcTreeNode extends OcTreeDataNode<Integer>
       if (!(getClass().isInstance(other)))
          return false;
 
-      return value == (Integer) other.value;
+      return count == ((CountingOcTreeNode) other).count;
    }
 
    @Override
    public String toString()
    {
-      return getClass().getSimpleName() + ": value = " + value + ", children = " + Arrays.toString(getChildrenSimpleNames());
+      return getClass().getSimpleName() + ": count = " + count + ", children = " + Arrays.toString(getChildrenSimpleNames());
    }
 }

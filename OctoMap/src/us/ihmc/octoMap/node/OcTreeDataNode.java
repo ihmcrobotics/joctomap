@@ -9,22 +9,13 @@ public abstract class OcTreeDataNode<V>
 {
    private HashMap<Class<? extends OcTreeDataNode<?>>, GenericTypeBuilder<? extends OcTreeDataNode<?>>> builderCache = OcTreeNodeTools.BUILDER_CACHE_THREAD_LOCAL.get();
 
-   protected V value;
    protected OcTreeDataNode<V>[] children;
 
    public OcTreeDataNode()
    {
    }
 
-   public OcTreeDataNode(V initialValue)
-   {
-      value = initialValue;
-   }
-
-   public void copyData(OcTreeDataNode<V> other)
-   {
-      value = other.value;
-   }
+   public abstract void copyData(OcTreeDataNode<V> other);
 
    public abstract void updateOccupancyChildren();
 
