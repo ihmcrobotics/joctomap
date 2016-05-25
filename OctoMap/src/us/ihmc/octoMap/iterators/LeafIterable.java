@@ -3,8 +3,8 @@ package us.ihmc.octoMap.iterators;
 import java.util.Iterator;
 
 import us.ihmc.octoMap.OcTreeBaseImpl;
-import us.ihmc.octoMap.OcTreeDataNode;
 import us.ihmc.octoMap.iterators.OcTreeIterable.OcTreeIterator;
+import us.ihmc.octoMap.node.OcTreeDataNode;
 
 /**
  * Iterator to iterate over all leafs of the tree.

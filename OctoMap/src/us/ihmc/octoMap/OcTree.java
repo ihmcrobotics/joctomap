@@ -1,5 +1,7 @@
 package us.ihmc.octoMap;
 
+import us.ihmc.octoMap.node.OcTreeNode;
+
 public class OcTree extends OccupancyOcTreeBase<OcTreeNode>
 {
    public OcTree(double resolution)

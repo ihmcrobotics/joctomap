@@ -21,6 +21,7 @@ import us.ihmc.javaFXToolkit.shapes.JavaFXCoordinateSystem;
 import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
+import us.ihmc.octoMap.node.OcTreeNode;
 
 public class OcTreeVisualizer extends Application
 {
@@ -79,11 +80,11 @@ public class OcTreeVisualizer extends Application
          while (!stack.isEmpty())
          {
             OcTreeNode currentNode = stack.remove(0);
-            if (currentNode.hasChildren())
+            if (currentNode.hasAtLeastOneChild())
             {
                for (int i = 0; i < 8; i++)
                {
-                  OcTreeNode currentChild = (OcTreeNode) currentNode.children[i];
+                  OcTreeNode currentChild = (OcTreeNode) currentNode.getChild(i);
                   if (currentChild != null)
                   {
                      numberOfNodes++;

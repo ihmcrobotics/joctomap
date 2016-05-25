@@ -12,6 +12,7 @@ import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
 import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
+import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.tools.OcTreeCoordinateConversionTools;
 import us.ihmc.octoMap.tools.OctreeKeyTools;
 import us.ihmc.robotics.MathTools;
@@ -183,17 +184,16 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    /// Creates (allocates) the i-th child of the node. @return ptr to newly create NODE
    @SuppressWarnings("unchecked")
-   public NODE createNodeChild(NODE node, int childIdx)
+   public NODE createNodeChild(NODE node, int childIndex)
    {
-      checkChildIndex(childIdx);
-      if (node.children == null)
-      {
-         allocNodeChildren(node);
-      }
-      if (node.children[childIdx] != null)
+      OcTreeDataNode.checkChildIndex(childIndex);
+      if (!node.hasArrayForChildren())
+         node.allocateChildren();
+
+      if (node.getChildUnsafe(childIndex) != null)
          throw new RuntimeException("Something went wrong.");
       NODE newChildNode = (NODE) node.create();
-      node.children[childIdx] = newChildNode;
+      node.setChild(childIndex, newChildNode);
 
       treeSize++;
       size_changed = true;
@@ -201,45 +201,17 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       return newChildNode;
    }
 
-   public void checkChildIndex(int childIdx)
-   {
-      if (childIdx > 7)
-         throw new RuntimeException("Bad child index :" + childIdx + ", expected index to be in [0, 7].");
-   }
-
    /// Deletes the i-th child of the node
-   public void deleteNodeChild(NODE node, int childIdx)
+   public void deleteNodeChild(NODE node, int childIndex)
    {
-      checkChildIndex(childIdx);
-      checkNodeHasChildren(node);
-      checkNodeChildNotNull(node, childIdx);
+      OcTreeDataNode.checkChildIndex(childIndex);
+      OcTreeDataNode.checkNodeHasChildren(node);
+      OcTreeDataNode.checkNodeChildNotNull(node, childIndex);
 
-      node.children[childIdx] = null;
+      node.removeChild(childIndex);
 
       treeSize--;
       size_changed = true;
-   }
-
-   public void checkNodeChildNotNull(NODE node, int childIdx)
-   {
-      if (node.children[childIdx] == null)
-         throw new RuntimeException("Child is already null.");
-   }
-
-   public void checkNodeHasChildren(NODE node)
-   {
-      if (node.children == null)
-         throw new RuntimeException("The given node has no children.");
-   }
-
-   /// @return ptr to child number childIdx of node
-   @SuppressWarnings("unchecked")
-   public NODE getNodeChild(NODE node, int childIdx)
-   {
-      checkChildIndex(childIdx);
-      checkNodeHasChildren(node);
-      checkNodeChildNotNull(node, childIdx);
-      return (NODE) node.children[childIdx];
    }
 
    /**
@@ -248,57 +220,30 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
     * @param node
     * @return
     */
+   @SuppressWarnings("unchecked")
    public boolean isNodeCollapsible(NODE node)
    {
       // all children must exist, must not have children of
       // their own and have the same occupancy probability
-      if (!nodeChildExists(node, 0))
+      if (!OcTreeDataNode.nodeChildExists(node, 0))
          return false;
 
-      NODE firstChild = getNodeChild(node, 0);
-      if (nodeHasChildren(firstChild))
+      NODE firstChild = (NODE) node.getChild(0);
+      if (firstChild.hasAtLeastOneChild())
          return false;
 
       for (int i = 1; i < 8; i++)
       {
-         if (!nodeChildExists(node, i))
+         if (!OcTreeDataNode.nodeChildExists(node, i))
             return false;
 
-         NODE currentChild = getNodeChild(node, i);
+         NODE currentChild = (NODE) node.getChild(i);
 
-         if (nodeHasChildren(currentChild) || !(currentChild.epsilonEquals(firstChild)))
+         if (currentChild.hasAtLeastOneChild() || !(currentChild.epsilonEquals(firstChild)))
             return false;
       }
 
       return true;
-   }
-
-   /** 
-    * Safe test if node has a child at index childIdx.
-    * First tests if there are any children. Replaces node->childExists(...)
-    * \return true if the child at childIdx exists
-    */
-   public boolean nodeChildExists(NODE node, int childIdx)
-   {
-      checkChildIndex(childIdx);
-      return node.children != null && node.children[childIdx] != null;
-   }
-
-   /** 
-    * Safe test if node has any children. Replaces node->hasChildren(...)
-    * \return true if node has at least one child
-    */
-   public boolean nodeHasChildren(NODE node)
-   {
-      if (node.children == null)
-         return false;
-
-      for (int i = 0; i < 8; i++)
-      {
-         if (node.children[i] != null)
-            return true;
-      }
-      return false;
    }
 
    /**
@@ -311,7 +256,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
     */
    public void expandNode(NODE node)
    {
-      if (nodeHasChildren(node))
+      if (node.hasAtLeastOneChild())
          throw new RuntimeException("Node has already been expanded.");
 
       for (int k = 0; k < 8; k++)
@@ -331,14 +276,14 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
          return false;
 
       // set value to children's values (all assumed equal)
-      node.copyData(getNodeChild(node, 0));
+      node.copyData(node.getChild(0));
 
       // delete children (known to be leafs at this point!)
       for (int i = 0; i < 8; i++)
       {
          deleteNodeChild(node, i);
       }
-      node.children = null;
+      node.removeChildren();
 
       return true;
    }
@@ -414,6 +359,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       return search(key, 0);
    }
 
+   @SuppressWarnings("unchecked")
    public NODE search(OcTreeKey key, int depth)
    {
       MathTools.checkIfLessOrEqual(depth, treeDepth);
@@ -438,16 +384,16 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       for (int i = (treeDepth - 1); i >= diff; --i)
       {
          int pos = OctreeKeyTools.computeChildIdx(keyAtDepth, i);
-         if (nodeChildExists(curNode, pos))
+         if (OcTreeDataNode.nodeChildExists(curNode, pos))
          {
             // cast needed: (nodes need to ensure it's the right pointer)
-            curNode = getNodeChild(curNode, pos);
+            curNode = (NODE) curNode.getChild(pos);
          }
          else
          {
             // we expected a child but did not get it
             // is the current node a leaf already?
-            if (!nodeHasChildren(curNode))
+            if (!curNode.hasAtLeastOneChild())
             { // TODO similar check to nodeChildExists?
                return curNode;
             }
@@ -1032,19 +978,20 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       size_changed = false;
    }
 
+   @SuppressWarnings("unchecked")
    protected int calculateNumberOfNodesRecursively(NODE node, int currentNumberOfNodes)
    {
       if (node == null)
          throw new RuntimeException("The given node is null");
 
-      if (nodeHasChildren(node))
+      if (node.hasAtLeastOneChild())
       {
          for (int i = 0; i < 8; i++)
          {
-            if (nodeChildExists(node, i))
+            if (OcTreeDataNode.nodeChildExists(node, i))
             {
                currentNumberOfNodes++;
-               currentNumberOfNodes = calculateNumberOfNodesRecursively(getNodeChild(node, i), currentNumberOfNodes);
+               currentNumberOfNodes = calculateNumberOfNodesRecursively((NODE) node.getChild(i), currentNumberOfNodes);
             }
          }
       }
@@ -1053,27 +1000,26 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    }
 
    /// recursive delete of node and all children (deallocates memory)
-   @SuppressWarnings("unchecked")
-   protected void deleteNodeRecurs(NODE node)
+   protected void deleteNodeRecurs(OcTreeDataNode<?> node)
    {
       if (node == null)
          throw new RuntimeException("The given node is null");
       // TODO: maintain tree size?
 
-      if (node.children != null)
+      if (node.hasAtLeastOneChild())
       {
          for (int i = 0; i < 8; i++)
          {
-            if (node.children[i] != null)
-               deleteNodeRecurs((NODE) node.children[i]);
+            OcTreeDataNode<?> child = node.getChild(i);
+            if (child != null)
+               deleteNodeRecurs(child);
          }
-         node.children = null;
+         node.removeChildren();
       } // else: node has no children
-
-      node = null;
    }
 
    /// recursive call of deleteNode()
+   @SuppressWarnings("unchecked")
    protected boolean deleteNodeRecurs(NODE node, int depth, int max_depth, OcTreeKey key)
    {
       if (depth >= max_depth) // on last level: delete child when going up
@@ -1084,10 +1030,10 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
       int pos = OctreeKeyTools.computeChildIdx(key, treeDepth - 1 - depth);
 
-      if (!nodeChildExists(node, pos))
+      if (!OcTreeDataNode.nodeChildExists(node, pos))
       {
          // child does not exist, but maybe it's a pruned node?
-         if ((!nodeHasChildren(node)) && (node != root))
+         if ((!node.hasAtLeastOneChild()) && (node != root))
          { // TODO double check for exists / root exception?
               // current node does not have children AND it's not the root node
            // -> expand pruned node
@@ -1101,14 +1047,14 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       }
 
       // follow down further, fix inner nodes on way back up
-      boolean deleteChild = deleteNodeRecurs(getNodeChild(node, pos), depth + 1, max_depth, key);
+      boolean deleteChild = deleteNodeRecurs((NODE) node.getChild(pos), depth + 1, max_depth, key);
       if (deleteChild)
       {
          // TODO: lazy eval?
          // TODO delete check depth, what happens to inner nodes with children?
          deleteNodeChild(node, pos);
 
-         if (!nodeHasChildren(node))
+         if (!node.hasAtLeastOneChild())
             return true;
          else
          {
@@ -1120,6 +1066,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    }
 
    /// recursive call of prune()
+   @SuppressWarnings("unchecked")
    protected int pruneRecurs(NODE node, int depth, int max_depth, int num_pruned)
    {
       if (node == null)
@@ -1129,9 +1076,9 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       {
          for (int i = 0; i < 8; i++)
          {
-            if (nodeChildExists(node, i))
+            if (OcTreeDataNode.nodeChildExists(node, i))
             {
-               num_pruned = pruneRecurs(getNodeChild(node, i), depth + 1, max_depth, num_pruned);
+               num_pruned = pruneRecurs((NODE) node.getChild(i), depth + 1, max_depth, num_pruned);
             }
          }
       } // end if depth
@@ -1148,6 +1095,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    }
 
    /// recursive call of expand()
+   @SuppressWarnings("unchecked")
    protected void expandRecurs(NODE node, int depth, int max_depth)
    {
       if (depth >= max_depth)
@@ -1157,43 +1105,38 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
          throw new RuntimeException("The given node is null");
 
       // current node has no children => can be expanded
-      if (!nodeHasChildren(node))
+      if (!node.hasAtLeastOneChild())
       {
          expandNode(node);
       }
       // recursively expand children
       for (int i = 0; i < 8; i++)
       {
-         if (nodeChildExists(node, i))
+         if (OcTreeDataNode.nodeChildExists(node, i))
          {
-            expandRecurs(getNodeChild(node, i), depth + 1, max_depth);
+            expandRecurs((NODE) node.getChild(i), depth + 1, max_depth);
          }
       }
    }
 
+   @SuppressWarnings("unchecked")
    protected int getNumLeafNodesRecurs(NODE parent)
    {
       if (parent == null)
          throw new RuntimeException("The given parent node is null");
 
-      if (!nodeHasChildren(parent)) // this is a leaf -> terminate
+      if (!parent.hasAtLeastOneChild()) // this is a leaf -> terminate
          return 1;
 
       int sum_leafs_children = 0;
       for (int i = 0; i < 8; ++i)
       {
-         if (nodeChildExists(parent, i))
+         if (OcTreeDataNode.nodeChildExists(parent, i))
          {
-            sum_leafs_children += getNumLeafNodesRecurs(getNodeChild(parent, i));
+            sum_leafs_children += getNumLeafNodesRecurs((NODE) parent.getChild(i));
          }
       }
       return sum_leafs_children;
-   }
-
-   protected void allocNodeChildren(NODE node)
-   {
-      // TODO NODE*
-      node.allocateChildren();
    }
 
    protected abstract NODE createRootNode();

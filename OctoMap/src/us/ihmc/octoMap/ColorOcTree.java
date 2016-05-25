@@ -1,6 +1,8 @@
 package us.ihmc.octoMap;
 
 import us.ihmc.octoMap.ColorOcTree.ColorOcTreeNode;
+import us.ihmc.octoMap.node.OcTreeDataNode;
+import us.ihmc.octoMap.node.OcTreeNode;
 
 public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
 {
@@ -39,7 +41,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
          return false;
 
       // set value to children's values (all assumed equal)
-      node.copyData(getNodeChild(node, 0));
+      node.copyData(node.getChild(0));
 
       if (node.isColorSet()) // TODO check
          node.setColor(node.getAverageChildColor());
@@ -49,7 +51,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       {
          deleteNodeChild(node, i);
       }
-      node.children = null;
+      node.removeChildren();
 
       return true;
    }
@@ -58,17 +60,18 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
    {
       // all children must exist, must not have children of
       // their own and have the same occupancy probability
-      if (!nodeChildExists(node, 0))
+      if (!OcTreeDataNode.nodeChildExists(node, 0))
          return false;
 
-      ColorOcTreeNode firstChild = getNodeChild(node, 0);
-      if (nodeHasChildren(firstChild))
+      ColorOcTreeNode firstChild = (ColorOcTreeNode) node.getChild(0);
+      if (firstChild.hasAtLeastOneChild())
          return false;
 
       for (int i = 1; i < 8; i++)
       {
          // compare nodes only using their occupancy, ignoring color for pruning
-         if (!nodeChildExists(node, i) || nodeHasChildren(getNodeChild(node, i)) || !(getNodeChild(node, i).epsilonEquals(firstChild)))
+         OcTreeDataNode<Float> child = node.getChild(i);
+         if (!OcTreeDataNode.nodeChildExists(node, i) || child.hasAtLeastOneChild() || !(child.epsilonEquals(firstChild)))
             return false;
       }
 
@@ -161,16 +164,16 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
    protected void updateInnerOccupancyRecurs(ColorOcTreeNode node, int depth)
    {
       // only recurse and update for inner nodes:
-      if (node != null && nodeHasChildren(node))
+      if (node != null && node.hasAtLeastOneChild())
       {
          // return early for last level:
          if (depth < treeDepth)
          {
             for (int i = 0; i < 8; i++)
             {
-               if (nodeChildExists(node, i))
+               if (OcTreeDataNode.nodeChildExists(node, i))
                {
-                  updateInnerOccupancyRecurs(getNodeChild(node, i), depth + 1);
+                  updateInnerOccupancyRecurs((ColorOcTreeNode) node.getChild(i), depth + 1);
                }
             }
          }
@@ -274,7 +277,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       }
 
       @Override
-      void allocateChildren()
+      public void allocateChildren()
       {
          children = new ColorOcTreeNode[8];
       }

@@ -5,6 +5,7 @@ import static us.ihmc.octoMap.tools.OctoMapTools.probability;
 
 import javax.vecmath.Point3d;
 
+import us.ihmc.octoMap.node.OcTreeNode;
 import us.ihmc.robotics.MathTools;
 
 public abstract class AbstractOccupancyOcTree<NODE extends OcTreeNode> extends OcTreeBaseImpl<Float, NODE>

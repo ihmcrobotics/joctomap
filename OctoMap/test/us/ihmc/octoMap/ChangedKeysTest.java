@@ -10,6 +10,7 @@ import javax.vecmath.Point3d;
 import org.junit.Test;
 
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
+import us.ihmc.octoMap.node.OcTreeNode;
 import us.ihmc.robotics.geometry.RotationTools;
 
 public class ChangedKeysTest

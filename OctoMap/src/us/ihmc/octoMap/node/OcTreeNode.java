@@ -1,4 +1,4 @@
-package us.ihmc.octoMap;
+package us.ihmc.octoMap.node;
 
 import us.ihmc.octoMap.tools.OctoMapTools;
 import us.ihmc.robotics.MathTools;
@@ -93,7 +93,7 @@ public class OcTreeNode extends OcTreeDataNode<Float>
    }
 
    @Override
-   void allocateChildren()
+   public void allocateChildren()
    {
       children = new OcTreeNode[8];
    }

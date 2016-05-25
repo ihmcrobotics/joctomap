@@ -3,8 +3,8 @@ package us.ihmc.octoMap.iterators;
 import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.OcTreeBaseImpl;
-import us.ihmc.octoMap.OcTreeDataNode;
 import us.ihmc.octoMap.OcTreeKey;
+import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.tools.OctreeKeyTools;
 
 public class OcTreeSuperNode<NODE extends OcTreeDataNode<?>>
