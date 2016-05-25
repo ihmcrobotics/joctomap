@@ -544,7 +544,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    public void getUnknownLeafCenters(List<Point3d> node_centers, Point3d pmin, Point3d pmax, int depth)
    {
-
       MathTools.checkIfLessOrEqual(depth, treeDepth);
       if (depth == 0)
          depth = treeDepth;

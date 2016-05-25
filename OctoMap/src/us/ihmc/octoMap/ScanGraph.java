@@ -40,7 +40,7 @@ public class ScanGraph
     * @param pose 6D pose of the origin of the Pointcloud
     * @return Pointer to the new node
     */
-   public ScanNode addNode(Pointcloud scan, RigidBodyTransform pose)
+   public ScanNode addNode(PointCloud scan, RigidBodyTransform pose)
    {
       if (scan.size() != 0)
       {
@@ -217,7 +217,7 @@ public class ScanGraph
       for (ScanNode scanNode : nodes)
       {
          RigidBodyTransform scan_pose = new RigidBodyTransform(scanNode.pose);
-         Pointcloud pc = new Pointcloud(scanNode.scan);
+         PointCloud pc = new PointCloud(scanNode.scan);
          pc.transformAbsolute(scan_pose);
          pc.crop(lowerBound, upperBound);
          scan_pose.invert();
@@ -263,13 +263,13 @@ public class ScanGraph
     */
    public static class ScanNode
    {
-      Pointcloud scan;
+      PointCloud scan;
       RigidBodyTransform pose = new RigidBodyTransform(); ///< 6D pose from which the scan was performed
       private int id;
 
-      public ScanNode(Pointcloud scan, RigidBodyTransform pose, int id)
+      public ScanNode(PointCloud scan, RigidBodyTransform pose, int id)
       {
-         this.scan = new Pointcloud(scan);
+         this.scan = new PointCloud(scan);
          this.pose.set(pose);
          this.id = id;
       }
@@ -281,7 +281,7 @@ public class ScanGraph
 
       public ScanNode(ScanNode other)
       {
-         this.scan = new Pointcloud(other.scan);
+         this.scan = new PointCloud(other.scan);
          this.pose.set(other.pose);
          this.id = other.id;
       }

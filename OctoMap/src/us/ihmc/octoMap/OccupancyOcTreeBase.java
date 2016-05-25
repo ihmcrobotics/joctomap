@@ -60,13 +60,13 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       useChangeDetection = other.useChangeDetection;
    }
 
-   public void insertPointCloud(Pointcloud scan, Point3d sensor_origin)
+   public void insertPointCloud(PointCloud scan, Point3d sensor_origin)
 
    {
       insertPointCloud(scan, sensor_origin, -1.0, false, false);
    }
 
-   public void insertPointCloud(Pointcloud scan, Point3d sensor_origin, boolean lazy_eval, boolean discretize)
+   public void insertPointCloud(PointCloud scan, Point3d sensor_origin, boolean lazy_eval, boolean discretize)
    {
       insertPointCloud(scan, sensor_origin, -1.0, lazy_eval, discretize);
    }
@@ -88,7 +88,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     * @param discretize whether the scan is discretized first into octree key cells (default: false).
     *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.*
     */
-   public void insertPointCloud(Pointcloud scan, Point3d sensor_origin, double maxrange, boolean lazy_eval, boolean discretize)
+   public void insertPointCloud(PointCloud scan, Point3d sensor_origin, double maxrange, boolean lazy_eval, boolean discretize)
    {
       KeySet free_cells = new KeySet();
       KeySet occupied_cells = new KeySet();
@@ -108,7 +108,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       }
    }
 
-   public void insertPointCloud(Pointcloud scan, Point3d sensor_origin, RigidBodyTransform frame_origin)
+   public void insertPointCloud(PointCloud scan, Point3d sensor_origin, RigidBodyTransform frame_origin)
    {
       insertPointCloud(scan, sensor_origin, frame_origin, -1.0, false, false);
    }
@@ -131,10 +131,10 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    * @param discretize whether the scan is discretized first into octree key cells (default: false).
    *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.*
    */
-   public void insertPointCloud(Pointcloud scan, Point3d sensor_origin, RigidBodyTransform frame_origin, double maxrange, boolean lazy_eval, boolean discretize)
+   public void insertPointCloud(PointCloud scan, Point3d sensor_origin, RigidBodyTransform frame_origin, double maxrange, boolean lazy_eval, boolean discretize)
    {
       // performs transformation to data and sensor origin first
-      Pointcloud transformed_scan = new Pointcloud(scan);
+      PointCloud transformed_scan = new PointCloud(scan);
       transformed_scan.transform(frame_origin);
       Point3d transformed_sensor_origin = new Point3d(sensor_origin);
       frame_origin.transform(transformed_sensor_origin);
@@ -161,7 +161,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
    public void insertPointCloud(ScanNode scan, double maxrange, boolean lazy_eval, boolean discretize)
    {
       // performs transformation to data and sensor origin first
-      Pointcloud cloud = scan.scan;
+      PointCloud cloud = scan.scan;
       RigidBodyTransform frame_origin = new RigidBodyTransform(scan.pose);
       frame_origin.invert();
       Vector3d tempVector = new Vector3d();
@@ -171,7 +171,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       insertPointCloud(cloud, sensor_origin, frame_origin, maxrange, lazy_eval, discretize);
    }
 
-   public void insertPointCloudRays(Pointcloud scan, Point3d sensor_origin)
+   public void insertPointCloudRays(PointCloud scan, Point3d sensor_origin)
    {
       insertPointCloudRays(scan, sensor_origin, -1.0, false);
    }
@@ -188,7 +188,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     * @param lazy_eval whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     */
-   public void insertPointCloudRays(Pointcloud scan, Point3d sensor_origin, double maxrange, boolean lazy_eval)
+   public void insertPointCloudRays(PointCloud scan, Point3d sensor_origin, double maxrange, boolean lazy_eval)
    {
       if (scan.size() < 1)
          return;
@@ -1041,7 +1041,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     * @param occupied_cells keys of nodes to be marked occupied
     * @param maxrange maximum range for raycasting (-1: unlimited)
     */
-   public void computeUpdate(Pointcloud scan, Point3d origin, KeySet free_cells, KeySet occupied_cells, double maxrange)
+   public void computeUpdate(PointCloud scan, Point3d origin, KeySet free_cells, KeySet occupied_cells, double maxrange)
    {
       for (int i = 0; i < scan.size(); ++i)
       {
@@ -1130,9 +1130,9 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
     * @param occupied_cells keys of nodes to be marked occupied
     * @param maxrange maximum range for raycasting (-1: unlimited)
     */
-   public void computeDiscreteUpdate(Pointcloud scan, Point3d origin, KeySet free_cells, KeySet occupied_cells, double maxrange)
+   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, KeySet free_cells, KeySet occupied_cells, double maxrange)
    {
-      Pointcloud discretePC = new Pointcloud();
+      PointCloud discretePC = new PointCloud();
       KeySet endpoints = new KeySet();
 
       for (int i = 0; i < scan.size(); ++i)
@@ -1141,7 +1141,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          boolean ret = endpoints.add(k);
          if (ret)
          { // insertion took place => k was not in set
-            discretePC.push_back(keyToCoord(k));
+            discretePC.add(keyToCoord(k));
          }
       }
 

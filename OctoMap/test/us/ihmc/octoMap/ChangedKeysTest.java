@@ -41,14 +41,14 @@ public class ChangedKeysTest
 
       for (int i = -100; i < 101; i++)
       {
-         Pointcloud cloud = new Pointcloud();
+         PointCloud cloud = new PointCloud();
          for (int j = -100; j < 101; j++)
          {
             Point3d rotated = new Point3d(point_on_surface);
             Matrix3d rotation = new Matrix3d();
             RotationTools.convertYawPitchRollToMatrix(Math.toRadians(i * 0.5), Math.toRadians(j * 0.5), 0.0, rotation);
             rotation.transform(rotated);
-            cloud.push_back(rotated);
+            cloud.add(rotated);
          }
 
          // insert in global coordinates:

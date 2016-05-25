@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import javax.vecmath.Matrix3d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
@@ -22,6 +23,7 @@ import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OcTreeNode;
+import us.ihmc.robotics.geometry.RotationTools;
 
 public class OcTreeVisualizer extends Application
 {
@@ -30,42 +32,8 @@ public class OcTreeVisualizer extends Application
    public OcTreeVisualizer()
    {
 
-      double dx = 0.05;
-      double dy = 0.05;
-      double dz = 0.05;
-
-      double xOff = 0.01;
-      double yOff = 0.01;
-      double zOff = 0.01;
-      // insert some measurements of occupied cells
-      for (int x = -20; x < 20; x++)
-      {
-         for (int y = -20; y < 20; y++)
-         {
-            for (int z = -20; z < 20; z++)
-            {
-               Point3d endpoint = new Point3d(x * dx + xOff, y * dy + yOff, z * dz + zOff);
-               ocTree.updateNode(endpoint, true);
-            }
-         }
-      }
-
-      // set inner node colors
-      ocTree.updateInnerOccupancy();
-//      
-//
-//      // insert some measurements of free cells
-      for (int x = -30; x < 30; x++)
-      {
-         for (int y = -30; y < 30; y++)
-         {
-            for (int z = -30; z < 30; z++)
-            {
-               Point3d endpoint = new Point3d(x * 0.02f + 2.0f, y * 0.02f + 2.0f, z * 0.02f + 2.0f);
-               ocTree.updateNode(endpoint, false);
-            }
-         }
-      }
+//      callUpdateNode();
+      callInsertPointCloud();
       
       int numberOfNodes = 0;
       int numberOfLeafs = 0;
@@ -122,6 +90,66 @@ public class OcTreeVisualizer extends Application
       System.out.println("Iterator duplicated count = " + iteratorDuplicatedFounds);
 
       System.out.println("Tree size: " + ocTree.size());
+   }
+
+   private void callInsertPointCloud()
+   {
+      Point3d origin = new Point3d(0.01, 0.01, 0.02);
+      Point3d pointOnSurface = new Point3d(4.01, 0.01, 0.01);
+
+      PointCloud pointcloud = new PointCloud();
+
+      for (int i = 0; i < 100; i++)
+      {
+         for (int j = 0; j < 100; j++)
+         {
+            Point3d rotated = new Point3d(pointOnSurface);
+            Matrix3d rotation = new Matrix3d();
+            RotationTools.convertYawPitchRollToMatrix(Math.toRadians(i * 0.5), Math.toRadians(j * 0.5), 0.0, rotation);
+            rotation.transform(rotated);
+            pointcloud.add(rotated);
+         }
+      }
+
+      ocTree.insertPointCloud(pointcloud, origin);
+   }
+
+   private void callUpdateNode()
+   {
+      double dx = 0.05;
+      double dy = 0.05;
+      double dz = 0.05;
+
+      double xOff = 0.01;
+      double yOff = 0.01;
+      double zOff = 0.01;
+      // insert some measurements of occupied cells
+      for (int x = -20; x < 20; x++)
+      {
+         for (int y = -20; y < 20; y++)
+         {
+            for (int z = -20; z < 20; z++)
+            {
+               Point3d endpoint = new Point3d(x * dx + xOff, y * dy + yOff, z * dz + zOff);
+               ocTree.updateNode(endpoint, true);
+            }
+         }
+      }
+
+//      // insert some measurements of free cells
+      for (int x = -30; x < 30; x++)
+      {
+         for (int y = -30; y < 30; y++)
+         {
+            for (int z = -30; z < 30; z++)
+            {
+               Point3d endpoint = new Point3d(x * 0.02f + 2.0f, y * 0.02f + 2.0f, z * 0.02f + 2.0f);
+               ocTree.updateNode(endpoint, false);
+            }
+         }
+      }
+
+      ocTree.updateInnerOccupancy();
    }
 
    @Override

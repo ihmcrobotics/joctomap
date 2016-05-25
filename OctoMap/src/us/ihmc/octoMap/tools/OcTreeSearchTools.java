@@ -10,7 +10,6 @@ import us.ihmc.tools.io.printing.PrintTools;
 
 public abstract class OcTreeSearchTools
 {
-
    /** 
     *  Search node at specified depth given a 3d point (depth=0: search full tree depth).
     *  You need to check if the returned node is NULL, since it can be in unknown space.

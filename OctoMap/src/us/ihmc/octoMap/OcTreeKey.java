@@ -128,12 +128,6 @@ public class OcTreeKey
       }
    }
 
-   /**
-    * Data structure to efficiently compute the nodes to update from a scan
-    * insertion using a hash set.
-    * @note you need to use boost::unordered_set instead if your compiler does not
-    * yet support tr1!
-    */
    public static class KeySet extends HashSet<OcTreeKey>
    {
       private static final long serialVersionUID = 2780317356917541560L;
@@ -147,5 +141,10 @@ public class OcTreeKey
    public static class KeyBoolMap extends HashMap<OcTreeKey, Boolean>
    {
       private static final long serialVersionUID = 2656234567169415329L;
+   }
+
+   public static class OcTreeKeyBoundingBox
+   {
+      
    }
 }

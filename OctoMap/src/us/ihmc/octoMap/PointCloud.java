@@ -12,7 +12,7 @@ import javax.vecmath.Point3d;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 import us.ihmc.robotics.geometry.RotationTools;
 
-public class Pointcloud implements Iterable<Point3d>
+public class PointCloud implements Iterable<Point3d>
 {
    protected RigidBodyTransform current_inv_transform = new RigidBodyTransform();
    protected List<Point3d> points = new ArrayList<>();
@@ -21,13 +21,13 @@ public class Pointcloud implements Iterable<Point3d>
     * A collection of 3D coordinates (point3d), which are regarded as endpoints of a
     * 3D laser scan.
     */
-   public Pointcloud()
+   public PointCloud()
    {
    }
 
-   public Pointcloud(Pointcloud other)
+   public PointCloud(PointCloud other)
    {
-      push_back(other);
+      add(other);
    }
 
    public int size()
@@ -44,21 +44,21 @@ public class Pointcloud implements Iterable<Point3d>
       }
    }
 
-   public void push_back(double x, double y, double z)
+   public void add(double x, double y, double z)
    {
       points.add(new Point3d(x, y, z));
    }
 
-   public void push_back(Point3d p)
+   public void add(Point3d point)
    {
-      points.add(p);
+      points.add(point);
    }
 
    /// Add points from other Pointcloud
-   public void push_back(Pointcloud other)
+   public void add(PointCloud other)
    {
       for (Point3d point : other)
-         push_back(new Point3d(point));
+         add(new Point3d(point));
    }
 
    /// Apply transform to each point
@@ -96,9 +96,8 @@ public class Pointcloud implements Iterable<Point3d>
    }
 
    /// Calculate bounding box of Pointcloud
-   public void calcBBX(Point3d lowerBound, Point3d upperBound)
+   public void calculateBoundingBox(Point3d lowerBound, Point3d upperBound)
    {
-
       double min_x, min_y, min_z;
       double max_x, max_y, max_z;
       min_x = min_y = min_z = 1e6;
@@ -128,7 +127,7 @@ public class Pointcloud implements Iterable<Point3d>
    /// Crop Pointcloud to given bounding box
    public void crop(Point3d lowerBound, Point3d upperBound)
    {
-      Pointcloud result = new Pointcloud();
+      PointCloud result = new PointCloud();
 
       double min_x, min_y, min_z;
       double max_x, max_y, max_z;
@@ -149,18 +148,18 @@ public class Pointcloud implements Iterable<Point3d>
         (x <= max_x) &&
         (y <= max_y) &&
         (z <= max_z) ) {
-     result.push_back (x,y,z);
+     result.add (x,y,z);
         }
       } // end for points
 
       clear();
-      push_back(result);
+      add(result);
    }
 
    // removes any points closer than [thres] to (0,0,0)
    public void minDist(double thres)
    {
-      Pointcloud result = new Pointcloud();
+      PointCloud result = new PointCloud();
 
       double x,y,z;
       for (Point3d point : this) {
@@ -168,15 +167,15 @@ public class Pointcloud implements Iterable<Point3d>
          y = point.y;
          z = point.z;
         double dist = Math.sqrt(x*x+y*y+z*z);
-        if ( dist > thres ) result.push_back (x,y,z);
+        if ( dist > thres ) result.add (x,y,z);
       } // end for points
       clear();
-      push_back(result);
+      add(result);
     }
 
-   public void subSampleRandom(int num_samples, Pointcloud sample_cloud)
+   public void subSampleRandom(int num_samples, PointCloud sample_cloud)
    {
-      sample_cloud = new Pointcloud(this);
+      sample_cloud = new PointCloud(this);
       Random random = new Random();
       
       while (sample_cloud.size() > num_samples)
