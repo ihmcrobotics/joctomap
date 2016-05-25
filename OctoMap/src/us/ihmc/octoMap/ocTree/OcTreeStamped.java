@@ -43,7 +43,7 @@ public class OcTreeStamped extends AbstractOccupancyOcTreeBase<OcTreeNodeStamped
 
    public void integrateMissNoTime(OcTreeNodeStamped node)
    {
-      updateNodeLogOdds(node, prob_miss_log);
+      updateNodeLogOdds(node, missUpdateLogOdds);
    }
 
    @Override

@@ -227,7 +227,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    public NODE setNodeValue(OcTreeKey key, float log_odds_value, boolean lazy_eval)
    {
       // clamp log odds within range:
-      log_odds_value = Math.min(Math.max(log_odds_value, clamping_thres_min), clamping_thres_max);
+      log_odds_value = Math.min(Math.max(log_odds_value, minOccupancyLogOdds), maxOccupancyLogOdds);
 
       boolean createdRoot = false;
       if (root == null)
@@ -302,11 +302,16 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    @Override
    public NODE updateNode(OcTreeKey key, float log_odds_update, boolean lazy_eval)
    {
+      NODE leaf = search(key);
+      if (leaf == null)
+         return null;
+
       // early abort (no change will happen).
       // may cause an overhead in some configuration, but more often helps
-      NODE leaf = search(key);
       // no change: node already at threshold
-      if (leaf != null && (log_odds_update >= 0 && leaf.getLogOdds() >= clamping_thres_max || log_odds_update <= 0 && leaf.getLogOdds() <= clamping_thres_min))
+      boolean reachedMaxThreshold = log_odds_update >= 0.0f && leaf.getLogOdds() >= maxOccupancyLogOdds;
+      boolean reachedMinThreshold = log_odds_update <= 0.0f && leaf.getLogOdds() <= minOccupancyLogOdds;
+      if ((reachedMaxThreshold || reachedMinThreshold))
       {
          return leaf;
       }
@@ -380,9 +385,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    @Override
    public NODE updateNode(OcTreeKey key, boolean occupied, boolean lazy_eval)
    {
-      float logOdds = prob_miss_log;
+      float logOdds = missUpdateLogOdds;
       if (occupied)
-         logOdds = prob_hit_log;
+         logOdds = hitUpdateLogOdds;
 
       return updateNode(key, logOdds, lazy_eval);
    }
@@ -1153,27 +1158,27 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    /// integrate a "hit" measurement according to the tree's sensor model
    public void integrateHit(NODE occupancyNode)
    {
-      updateNodeLogOdds(occupancyNode, prob_hit_log);
+      updateNodeLogOdds(occupancyNode, hitUpdateLogOdds);
    }
 
    /// integrate a "miss" measurement according to the tree's sensor model
    public void integrateMiss(NODE occupancyNode)
    {
-      updateNodeLogOdds(occupancyNode, prob_miss_log);
+      updateNodeLogOdds(occupancyNode, missUpdateLogOdds);
    }
 
    /// update logodds value of node by adding to the current value.
    public void updateNodeLogOdds(NODE occupancyNode, float update)
    {
       occupancyNode.addValue(update);
-      if (occupancyNode.getLogOdds() < clamping_thres_min)
+      if (occupancyNode.getLogOdds() < minOccupancyLogOdds)
       {
-         occupancyNode.setLogOdds(clamping_thres_min);
+         occupancyNode.setLogOdds(minOccupancyLogOdds);
          return;
       }
-      if (occupancyNode.getLogOdds() > clamping_thres_max)
+      if (occupancyNode.getLogOdds() > maxOccupancyLogOdds)
       {
-         occupancyNode.setLogOdds(clamping_thres_max);
+         occupancyNode.setLogOdds(maxOccupancyLogOdds);
       }
    }
 
@@ -1181,9 +1186,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    public void nodeToMaxLikelihood(NODE occupancyNode)
    {
       if (isNodeOccupied(occupancyNode))
-         occupancyNode.setLogOdds(clamping_thres_max);
+         occupancyNode.setLogOdds(maxOccupancyLogOdds);
       else
-         occupancyNode.setLogOdds(clamping_thres_min);
+         occupancyNode.setLogOdds(minOccupancyLogOdds);
    }
 
    protected boolean integrateMissOnRay(Point3d origin, Point3d end)

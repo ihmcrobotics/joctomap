@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.tools;
 
+import static us.ihmc.octoMap.tools.OcTreeCoordinateConversionTools.convertCartesianCoordinateToKey;
+
 import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
@@ -22,7 +24,7 @@ public abstract class OcTreeSearchTools
 
    public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, double x, double y, double z, int depth, double resolution, int maxDepth)
    {
-      OcTreeKey key = OcTreeCoordinateConversionTools.convertCartesianCoordinateToKey(x, y, z, resolution, maxDepth);
+      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z, resolution, maxDepth);
       if (key == null)
       {
          PrintTools.error(OcTreeSearchTools.class, "Error in search: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
@@ -30,7 +32,7 @@ public abstract class OcTreeSearchTools
       }
       else
       {
-         return search(rootNode, key, depth);
+         return search(rootNode, key, depth, maxDepth);
       }
    }
 
@@ -46,7 +48,7 @@ public abstract class OcTreeSearchTools
 
    public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, Point3d coord, int depth, double resolution, int maxDepth)
    {
-      OcTreeKey key = OcTreeCoordinateConversionTools.convertCartesianCoordinateToKey(coord, resolution, maxDepth);
+      OcTreeKey key = convertCartesianCoordinateToKey(coord, resolution, maxDepth);
       if (key == null)
       {
          PrintTools.error(OcTreeSearchTools.class, "Error in search: [" + coord + "] is out of OcTree bounds!");
@@ -54,7 +56,7 @@ public abstract class OcTreeSearchTools
       }
       else
       {
-         return search(rootNode, key, depth);
+         return search(rootNode, key, depth, maxDepth);
       }
    }
 
