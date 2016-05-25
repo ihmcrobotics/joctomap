@@ -1,5 +1,6 @@
 package us.ihmc.octoMap.node;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -23,7 +24,7 @@ public abstract class OcTreeDataNode<N extends OcTreeDataNode<N>>
    @SuppressWarnings("unchecked")
    public final void allocateChildren()
    {
-      children = (N[]) new OcTreeDataNode[8];
+      children = (N[]) Array.newInstance(getClass(), 8);
    }
 
    @SuppressWarnings("unchecked")
