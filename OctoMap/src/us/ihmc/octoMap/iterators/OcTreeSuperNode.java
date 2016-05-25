@@ -5,7 +5,7 @@ import javax.vecmath.Point3d;
 import us.ihmc.octoMap.OcTreeBaseImpl;
 import us.ihmc.octoMap.OcTreeKey;
 import us.ihmc.octoMap.node.OcTreeDataNode;
-import us.ihmc.octoMap.tools.OctreeKeyTools;
+import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class OcTreeSuperNode<NODE extends OcTreeDataNode<?>>
 {
@@ -34,7 +34,7 @@ public class OcTreeSuperNode<NODE extends OcTreeDataNode<?>>
       this.maxDepth = maxDepth;
       depth = parentNode.depth + 1;
       int center_offset_key = tree.getTreeMaximumValue() >> depth;
-      OctreeKeyTools.computeChildKey(childIndex, center_offset_key, parentNode.key, key);
+      OcTreeKeyTools.computeChildKey(childIndex, center_offset_key, parentNode.key, key);
       node = (NODE) parentNode.node.getChild(childIndex);
    }
 
@@ -89,7 +89,7 @@ public class OcTreeSuperNode<NODE extends OcTreeDataNode<?>>
    /** @return the OcTreeKey of this node, for nodes with depth != maxDepth */
    public OcTreeKey getIndexKey()
    {
-      return OctreeKeyTools.computeIndexKey(tree.getTreeDepth() - depth, key);
+      return OcTreeKeyTools.computeIndexKey(tree.getTreeDepth() - depth, key);
    }
 
    /** @return whether the current node is a leaf, i.e. has no children or is at max level */

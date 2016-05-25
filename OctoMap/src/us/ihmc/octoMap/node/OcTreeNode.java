@@ -114,7 +114,6 @@ public class OcTreeNode extends OcTreeDataNode<Float>
       return epsilonEquals((OcTreeNode) other, 1.0e-7f);
    }
 
-   @Override
    public boolean epsilonEquals(OcTreeDataNode<Float> other, Float epsilon)
    {
       return MathTools.epsilonEquals(value, other.value, epsilon);

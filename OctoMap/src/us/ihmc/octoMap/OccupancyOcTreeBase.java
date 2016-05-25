@@ -16,7 +16,7 @@ import us.ihmc.octoMap.OcTreeKey.KeySet;
 import us.ihmc.octoMap.ScanGraph.ScanNode;
 import us.ihmc.octoMap.node.OcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
-import us.ihmc.octoMap.tools.OctreeKeyTools;
+import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 import us.ihmc.tools.io.printing.PrintTools;
 
@@ -1237,7 +1237,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       // follow down to last level
       if (depth < treeDepth)
       {
-         int pos = OctreeKeyTools.computeChildIdx(key, treeDepth - 1 - depth);
+         int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
          if (!OcTreeNodeTools.nodeChildExists(node, pos))
          {
             // child does not exist, but maybe it's a pruned node?
@@ -1318,7 +1318,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       // follow down to last level
       if (depth < treeDepth)
       {
-         int pos = OctreeKeyTools.computeChildIdx(key, treeDepth - 1 - depth);
+         int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
          if (!OcTreeNodeTools.nodeChildExists(node, pos))
          {
             // child does not exist, but maybe it's a pruned node?

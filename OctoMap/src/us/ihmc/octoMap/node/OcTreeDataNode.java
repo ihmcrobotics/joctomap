@@ -116,8 +116,6 @@ public abstract class OcTreeDataNode<V>
 
    public abstract boolean epsilonEquals(OcTreeDataNode<?> other);
 
-   public abstract boolean epsilonEquals(OcTreeDataNode<V> other, V epsilon);
-
    @Override
    public String toString()
    {

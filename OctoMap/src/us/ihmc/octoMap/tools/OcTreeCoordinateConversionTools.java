@@ -35,7 +35,7 @@ public abstract class OcTreeCoordinateConversionTools
       // scale to resolution and shift center for tree_max_val
       int scaledCoord = ((int) Math.floor(coordinate / resolution)) + maxValue;
       if (scaledCoord >= 0 && scaledCoord < 2 * maxValue)
-         return OctreeKeyTools.adjustKeyAtDepth(scaledCoord, depth, maxDepth);
+         return OcTreeKeyTools.adjustKeyAtDepth(scaledCoord, depth, maxDepth);
       else
          return -1;
    }

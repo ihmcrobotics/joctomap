@@ -3,7 +3,7 @@ package us.ihmc.octoMap.tools;
 import us.ihmc.octoMap.OcTreeKey;
 import us.ihmc.robotics.MathTools;
 
-public class OctreeKeyTools
+public class OcTreeKeyTools
 {
    public static OcTreeKey computeChildKey(int pos, int centerOffsetKey, OcTreeKey parentKey)
    {
@@ -41,7 +41,7 @@ public class OctreeKeyTools
    }
 
    /// generate child index (between 0 and 7) from key at given tree depth
-   public static int computeChildIdx(OcTreeKey key, int depth)
+   public static int computeChildIndex(OcTreeKey key, int depth)
    {
       int pos = 0;
       int temp = 1 << depth;

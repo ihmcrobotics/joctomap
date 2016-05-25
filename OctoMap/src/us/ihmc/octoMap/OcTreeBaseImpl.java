@@ -16,7 +16,7 @@ import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeCoordinateConversionTools;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;
-import us.ihmc.octoMap.tools.OctreeKeyTools;
+import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.robotics.MathTools;
 import us.ihmc.tools.io.printing.PrintTools;
 
@@ -964,7 +964,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       if (node == null)
          throw new RuntimeException("The given node is null");
 
-      int pos = OctreeKeyTools.computeChildIdx(key, treeDepth - 1 - depth);
+      int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
 
       if (!OcTreeNodeTools.nodeChildExists(node, pos))
       {
