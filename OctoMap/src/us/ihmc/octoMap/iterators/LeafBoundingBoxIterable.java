@@ -4,8 +4,8 @@ import java.util.Iterator;
 
 import javax.vecmath.Point3d;
 
-import us.ihmc.octoMap.OcTreeKey;
 import us.ihmc.octoMap.iterators.LeafIterable.LeafIterator;
+import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.ocTree.OcTreeBaseImpl;
 

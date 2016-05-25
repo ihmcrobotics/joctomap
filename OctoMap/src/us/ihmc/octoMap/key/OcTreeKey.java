@@ -1,4 +1,4 @@
-package us.ihmc.octoMap;
+package us.ihmc.octoMap.key;
 
 import java.util.ArrayList;
 import java.util.Arrays;

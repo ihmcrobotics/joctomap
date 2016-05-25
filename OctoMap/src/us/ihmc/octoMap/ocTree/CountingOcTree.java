@@ -6,7 +6,7 @@ import java.util.List;
 
 import javax.vecmath.Point3d;
 
-import us.ihmc.octoMap.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.CountingOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;

@@ -2,7 +2,7 @@ package us.ihmc.octoMap.iterators;
 
 import javax.vecmath.Point3d;
 
-import us.ihmc.octoMap.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.ocTree.OcTreeBaseImpl;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;

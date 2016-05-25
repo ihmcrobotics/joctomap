@@ -2,7 +2,7 @@ package us.ihmc.octoMap.tools;
 
 import javax.vecmath.Point3d;
 
-import us.ihmc.octoMap.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.robotics.MathTools;
 
 public abstract class OcTreeCoordinateConversionTools

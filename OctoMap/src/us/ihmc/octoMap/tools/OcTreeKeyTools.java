@@ -1,6 +1,6 @@
 package us.ihmc.octoMap.tools;
 
-import us.ihmc.octoMap.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.robotics.MathTools;
 
 public class OcTreeKeyTools

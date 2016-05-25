@@ -5,7 +5,7 @@ import static us.ihmc.octoMap.tools.OctoMapTools.probability;
 
 import javax.vecmath.Point3d;
 
-import us.ihmc.octoMap.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.robotics.MathTools;
 
