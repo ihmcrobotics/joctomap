@@ -119,7 +119,7 @@ public class ColorTreeTest
          // find parent of newly inserted node:
          ColorOcTreeNode parentNode = tree.search(newCoord, tree.getTreeDepth() - 1);
          assertTrue(parentNode != null);
-         assertTrue(tree.nodeHasChildren(parentNode));
+         assertTrue(parentNode.hasAtLeastOneChild());
 
          // only one child exists:
          assertTrue(OcTreeDataNode.nodeChildExists(parentNode, 0));

@@ -133,7 +133,8 @@ public abstract class OcTreeDataNode<V>
     */
    public final static boolean nodeChildExists(OcTreeDataNode<?> node, int childIndex)
    {
-      return node.children[childIndex] != null;
+      checkChildIndex(childIndex);
+      return node.children != null && node.children[childIndex] != null;
    }
 
    public final static void checkChildIndex(int childIndex)

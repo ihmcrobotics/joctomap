@@ -70,8 +70,10 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       for (int i = 1; i < 8; i++)
       {
          // compare nodes only using their occupancy, ignoring color for pruning
+         if (!OcTreeDataNode.nodeChildExists(node, i))
+            return false;
          OcTreeDataNode<Float> child = node.getChild(i);
-         if (!OcTreeDataNode.nodeChildExists(node, i) || child.hasAtLeastOneChild() || !(child.epsilonEquals(firstChild)))
+         if (child.hasAtLeastOneChild() || !(child.epsilonEquals(firstChild)))
             return false;
       }
 
