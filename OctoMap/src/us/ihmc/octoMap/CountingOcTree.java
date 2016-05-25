@@ -10,7 +10,7 @@ import us.ihmc.octoMap.node.CountingOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
-public class CountingOcTree extends AbstractOcTree<Integer, CountingOcTreeNode>
+public class CountingOcTree extends AbstractOcTree<CountingOcTreeNode>
 {
    public CountingOcTree(double resolution)
    {
@@ -83,7 +83,7 @@ public class CountingOcTree extends AbstractOcTree<Integer, CountingOcTreeNode>
    }
 
    @Override
-   public AbstractOcTree<Integer, CountingOcTreeNode> create()
+   public AbstractOcTree<CountingOcTreeNode> create()
    {
       return new CountingOcTree(resolution);
    }

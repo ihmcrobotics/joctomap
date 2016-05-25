@@ -5,23 +5,23 @@ import java.util.Arrays;
 import us.ihmc.octoMap.tools.OctoMapTools;
 import us.ihmc.robotics.MathTools;
 
-public class OcTreeNode extends OcTreeDataNode<Float>
+public class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcTreeNode<N>> extends OcTreeDataNode<N>
 {
-   private float logOdds;
+   float logOdds;
 
-   public OcTreeNode()
+   public AbstractOccupancyOcTreeNode()
    {
    }
 
-   public OcTreeNode(float initialValue)
+   public AbstractOccupancyOcTreeNode(float initialValue)
    {
       logOdds = initialValue;
    }
 
    @Override
-   public void copyData(OcTreeDataNode<Float> other)
+   public void copyData(N other)
    {
-      logOdds = ((OcTreeNode) other).logOdds;
+      logOdds = other.logOdds;
    }
 
    /**
@@ -61,14 +61,14 @@ public class OcTreeNode extends OcTreeDataNode<Float>
          {
             if (children[i] != null)
             {
-               mean += ((OcTreeNode) children[i]).getOccupancy(); // TODO check if works generally
+               mean += children[i].getOccupancy(); // TODO check if works generally
                ++c;
             }
          }
       }
 
       if (c > 0)
-         mean /= (double) c;
+         mean /= c;
 
       return Math.log(mean / (1 - mean));
    }
@@ -86,7 +86,7 @@ public class OcTreeNode extends OcTreeDataNode<Float>
          {
             if (children[i] != null)
             {
-               float l = ((OcTreeNode) children[i]).getLogOdds(); // TODO check if works generally
+               float l = children[i].getLogOdds(); // TODO check if works generally
                if (l > max)
                   max = l;
             }
@@ -98,9 +98,10 @@ public class OcTreeNode extends OcTreeDataNode<Float>
    /**
     * Update this node's occupancy according to its children's maximum occupancy
     */
+   @Override
    public void updateOccupancyChildren()
    {
-      this.setLogOdds(this.getMaxChildLogOdds()); // conservative
+      setLogOdds(getMaxChildLogOdds()); // conservative
    }
 
    /**
@@ -112,17 +113,14 @@ public class OcTreeNode extends OcTreeDataNode<Float>
    }
 
    @Override
-   public boolean epsilonEquals(OcTreeDataNode<?> other)
+   public boolean epsilonEquals(N other)
    {
-      if (!(getClass().isInstance(other)))
-         return false;
-
-      return epsilonEquals((OcTreeNode) other, 1.0e-7f);
+      return epsilonEquals(other, 1.0e-7f);
    }
 
-   public boolean epsilonEquals(OcTreeDataNode<Float> other, Float epsilon)
+   public boolean epsilonEquals(N other, float epsilon)
    {
-      return MathTools.epsilonEquals(logOdds, ((OcTreeNode) other).logOdds, epsilon);
+      return MathTools.epsilonEquals(logOdds, other.logOdds, epsilon);
    }
 
    @Override

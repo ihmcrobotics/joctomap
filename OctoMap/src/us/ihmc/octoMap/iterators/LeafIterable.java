@@ -11,17 +11,17 @@ import us.ihmc.octoMap.node.OcTreeDataNode;
  * Inner nodes are skipped.
  *
  */
-public class LeafIterable<NODE extends OcTreeDataNode<?>> implements Iterable<OcTreeSuperNode<NODE>>
+public class LeafIterable<NODE extends OcTreeDataNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
-   private final OcTreeBaseImpl<?, NODE> tree;
+   private final OcTreeBaseImpl<NODE> tree;
    private final int maxDepth;
 
-   public LeafIterable(OcTreeBaseImpl<?, NODE> tree)
+   public LeafIterable(OcTreeBaseImpl<NODE> tree)
    {
       this(tree, 0);
    }
 
-   public LeafIterable(OcTreeBaseImpl<?, NODE> tree, int maxDepth)
+   public LeafIterable(OcTreeBaseImpl<NODE> tree, int maxDepth)
    {
       this.tree = tree;
       this.maxDepth = maxDepth;
@@ -33,14 +33,14 @@ public class LeafIterable<NODE extends OcTreeDataNode<?>> implements Iterable<Oc
       return new LeafIterator<>(tree, maxDepth);
    }
 
-   public static class LeafIterator<NODE extends OcTreeDataNode<?>> extends OcTreeIterator<NODE>
+   public static class LeafIterator<NODE extends OcTreeDataNode<NODE>> extends OcTreeIterator<NODE>
    {
-      public LeafIterator(OcTreeBaseImpl<?, NODE> tree)
+      public LeafIterator(OcTreeBaseImpl<NODE> tree)
       {
          super(tree, 0);
       }
 
-      public LeafIterator(OcTreeBaseImpl<?, NODE> tree, int maxDepth)
+      public LeafIterator(OcTreeBaseImpl<NODE> tree, int maxDepth)
       {
          super(tree, maxDepth);
       }

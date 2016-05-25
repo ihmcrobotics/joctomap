@@ -15,8 +15,8 @@ import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeCoordinateConversionTools;
-import us.ihmc.octoMap.tools.OcTreeSearchTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
+import us.ihmc.octoMap.tools.OcTreeSearchTools;
 import us.ihmc.robotics.MathTools;
 import us.ihmc.tools.io.printing.PrintTools;
 
@@ -39,7 +39,7 @@ import us.ihmc.tools.io.printing.PrintTools;
  * \tparam INTERFACE Interface to be derived from, should be either
  *    AbstractOcTree or AbstractOccupancyOcTree
  */
-public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implements Iterable<OcTreeSuperNode<NODE>>
+public abstract class OcTreeBaseImpl<NODE extends OcTreeDataNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
    protected NODE root; ///< root NODE, null for empty tree
 
@@ -81,15 +81,14 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       // no longer create an empty root node - only on demand
    }
 
-   @SuppressWarnings("unchecked")
-   public OcTreeBaseImpl(OcTreeBaseImpl<V, NODE> other)
+   public OcTreeBaseImpl(OcTreeBaseImpl<NODE> other)
    {
       resolution = other.resolution;
       treeDepth = other.treeDepth;
       treeMaximumValue = other.treeMaximumValue;
       init();
       if (other.root != null)
-         root = (NODE) other.root.cloneRecursive();
+         root = other.root.cloneRecursive();
    }
 
    /**
@@ -98,7 +97,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
     * metadata (resolution etc) matches. No memory is cleared
     * in this function
     */
-   public void swapContent(OcTreeBaseImpl<V, NODE> other)
+   public void swapContent(OcTreeBaseImpl<NODE> other)
    {
       NODE this_root = root;
       root = other.root;
@@ -111,7 +110,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
    /// Comparison between two octrees, all meta data, all
    /// nodes, and the structure must be identical
-   public boolean epsilonEquals(OcTreeBaseImpl<V, NODE> other, V epsilon)
+   public boolean epsilonEquals(OcTreeBaseImpl<NODE> other)
    {
       if (treeDepth != other.treeDepth || treeMaximumValue != other.treeMaximumValue || resolution != other.resolution || treeSize != other.treeSize)
       {
@@ -147,7 +146,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    {
       resolution = r;
 
-      tree_center.x = tree_center.y = tree_center.z = (float) (((double) treeMaximumValue) * resolution);
+      tree_center.x = tree_center.y = tree_center.z = (float) (treeMaximumValue * resolution);
 
       size_changed = true;
    }
@@ -185,7 +184,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    // -- Tree structure operations formerly contained in the nodes ---
 
    /// Creates (allocates) the i-th child of the node. @return ptr to newly create NODE
-   @SuppressWarnings("unchecked")
    public NODE createNodeChild(NODE node, int childIndex)
    {
       OcTreeNodeTools.checkChildIndex(childIndex);
@@ -194,7 +192,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
       if (node.getChildUnsafe(childIndex) != null)
          throw new RuntimeException("Something went wrong.");
-      NODE newChildNode = (NODE) node.create();
+      NODE newChildNode = node.create();
       node.setChild(childIndex, newChildNode);
 
       treeSize++;
@@ -240,7 +238,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
          NODE currentChild = OcTreeNodeTools.getNodeChild(node, i);
 
-         if (currentChild.hasAtLeastOneChild() || !(currentChild.epsilonEquals(firstChild)))
+         if (currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
             return false;
       }
 
@@ -722,7 +720,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
             }
          }
 
-         assert (ray.size() < ray.sizeMax() - 1);
+         assert ray.size() < ray.sizeMax() - 1;
 
       } // end while
 
@@ -937,7 +935,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    }
 
    /// recursive delete of node and all children (deallocates memory)
-   protected void deleteNodeRecurs(OcTreeDataNode<?> node)
+   protected void deleteNodeRecurs(NODE node)
    {
       if (node == null)
          throw new RuntimeException("The given node is null");
@@ -947,7 +945,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       {
          for (int i = 0; i < 8; i++)
          {
-            OcTreeDataNode<?> child = OcTreeNodeTools.getNodeChild(node, i);
+            NODE child = OcTreeNodeTools.getNodeChild(node, i);
             if (child != null)
                deleteNodeRecurs(child);
          }
@@ -969,7 +967,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       if (!OcTreeNodeTools.nodeChildExists(node, pos))
       {
          // child does not exist, but maybe it's a pruned node?
-         if ((!node.hasAtLeastOneChild()) && (node != root))
+         if (!node.hasAtLeastOneChild() && node != root)
          { // TODO double check for exists / root exception?
               // current node does not have children AND it's not the root node
            // -> expand pruned node

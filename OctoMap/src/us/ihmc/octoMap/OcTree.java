@@ -1,8 +1,8 @@
 package us.ihmc.octoMap;
 
-import us.ihmc.octoMap.node.OcTreeNode;
+import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 
-public class OcTree extends OccupancyOcTreeBase<OcTreeNode>
+public class OcTree extends OccupancyOcTreeBase<OccupancyOcTreeNode>
 {
    public OcTree(double resolution)
    {
@@ -10,9 +10,9 @@ public class OcTree extends OccupancyOcTreeBase<OcTreeNode>
    }
 
    @Override
-   protected OcTreeNode createRootNode()
+   protected OccupancyOcTreeNode createRootNode()
    {
-      return new OcTreeNode();
+      return new OccupancyOcTreeNode();
    }
 
    /// virtual constructor: creates a new object of same type

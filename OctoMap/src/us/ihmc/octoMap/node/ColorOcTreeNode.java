@@ -2,7 +2,7 @@ package us.ihmc.octoMap.node;
 
 import us.ihmc.octoMap.OctoMapColor;
 
-public class ColorOcTreeNode extends OcTreeNode
+public final class ColorOcTreeNode extends AbstractOccupancyOcTreeNode<ColorOcTreeNode>
 {
    private final OctoMapColor color = new OctoMapColor(255, 255, 255);
 
@@ -41,9 +41,10 @@ public class ColorOcTreeNode extends OcTreeNode
 
    private static int integrateColorParameter(int currentColorParameter, int newColorParameter, double occupancy)
    {
-      return (int) ((double) currentColorParameter * occupancy + (double) newColorParameter * (0.99 - occupancy));
+      return (int) (currentColorParameter * occupancy + newColorParameter * (0.99 - occupancy));
    }
 
+   @Override
    public void copyData(ColorOcTreeNode other)
    {
       super.copyData(other);
@@ -72,7 +73,7 @@ public class ColorOcTreeNode extends OcTreeNode
       {
          for (int i = 0; i < 8; i++)
          {
-            ColorOcTreeNode child = (ColorOcTreeNode) children[i];
+            ColorOcTreeNode child = children[i];
 
             if (child != null && child.isColorSet())
             {

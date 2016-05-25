@@ -15,12 +15,12 @@ public abstract class OcTreeSearchTools
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public static <V, NODE extends OcTreeDataNode<V>> NODE search(NODE rootNode, double x, double y, double z, double resolution, int maxDepth)
+   public static <NODE extends OcTreeDataNode<NODE>> NODE search(NODE rootNode, double x, double y, double z, double resolution, int maxDepth)
    {
       return search(rootNode, x, y, z, 0, resolution, maxDepth);
    }
 
-   public static <V, NODE extends OcTreeDataNode<V>> NODE search(NODE rootNode, double x, double y, double z, int depth, double resolution, int maxDepth)
+   public static <NODE extends OcTreeDataNode<NODE>> NODE search(NODE rootNode, double x, double y, double z, int depth, double resolution, int maxDepth)
    {
       OcTreeKey key = OcTreeCoordinateConversionTools.convertCartesianCoordinateToKey(x, y, z, resolution, maxDepth);
       if (key == null)
@@ -39,12 +39,12 @@ public abstract class OcTreeSearchTools
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public static <V, NODE extends OcTreeDataNode<V>> NODE search(NODE rootNode, Point3d coord, double resolution, int maxDepth)
+   public static <NODE extends OcTreeDataNode<NODE>> NODE search(NODE rootNode, Point3d coord, double resolution, int maxDepth)
    {
       return search(rootNode, coord, 0, resolution, maxDepth);
    }
 
-   public static <V, NODE extends OcTreeDataNode<V>> NODE search(NODE rootNode, Point3d coord, int depth, double resolution, int maxDepth)
+   public static <NODE extends OcTreeDataNode<NODE>> NODE search(NODE rootNode, Point3d coord, int depth, double resolution, int maxDepth)
    {
       OcTreeKey key = OcTreeCoordinateConversionTools.convertCartesianCoordinateToKey(coord, resolution, maxDepth);
       if (key == null)
@@ -58,7 +58,7 @@ public abstract class OcTreeSearchTools
       }
    }
 
-   public static <V, NODE extends OcTreeDataNode<V>> NODE search(NODE rootNode, OcTreeKey key, int maxDepth)
+   public static <NODE extends OcTreeDataNode<NODE>> NODE search(NODE rootNode, OcTreeKey key, int maxDepth)
    {
       return search(rootNode, key, 0, maxDepth);
    }
@@ -68,7 +68,7 @@ public abstract class OcTreeSearchTools
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public static <V, NODE extends OcTreeDataNode<V>> NODE search(NODE rootNode, OcTreeKey key, int depth, int maxDepth)
+   public static <NODE extends OcTreeDataNode<NODE>> NODE search(NODE rootNode, OcTreeKey key, int depth, int maxDepth)
    {
       MathTools.checkIfLessOrEqual(depth, maxDepth);
       if (rootNode == null)

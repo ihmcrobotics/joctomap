@@ -2,7 +2,7 @@ package us.ihmc.octoMap;
 
 import us.ihmc.octoMap.node.OcTreeDataNode;
 
-public abstract class AbstractOcTree<V, NODE extends OcTreeDataNode<V>> extends OcTreeBaseImpl<V, NODE>
+public abstract class AbstractOcTree<NODE extends OcTreeDataNode<NODE>> extends OcTreeBaseImpl<NODE>
 {
    public AbstractOcTree(double resolution)
    {
@@ -16,13 +16,13 @@ public abstract class AbstractOcTree<V, NODE extends OcTreeDataNode<V>> extends 
       super(resolution, tree_depth, tree_max_val);
    }
 
-   public AbstractOcTree(AbstractOcTree<V, NODE> other)
+   public AbstractOcTree(AbstractOcTree<NODE> other)
    {
       super(other);
    }
 
    /// virtual constructor: creates a new object of same type
-   public abstract AbstractOcTree<V, NODE> create();
+   public abstract AbstractOcTree<NODE> create();
 
    /// returns actual class name as string for identification
    public abstract String getTreeType();

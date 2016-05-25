@@ -10,7 +10,7 @@ import javax.vecmath.Point3d;
 import org.junit.Test;
 
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
-import us.ihmc.octoMap.node.OcTreeNode;
+import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.robotics.geometry.RotationTools;
 
 public class ChangedKeysTest
@@ -73,7 +73,7 @@ public class ChangedKeysTest
       // iterate through the changed nodes
       for (Entry<OcTreeKey, Boolean> entrySet : tree.changedKeys.entrySet())
       {
-         OcTreeNode node = tree.search(entrySet.getKey());
+         OccupancyOcTreeNode node = tree.search(entrySet.getKey());
          if (node != null)
          {
             if (tree.isNodeOccupied(node))
@@ -92,7 +92,7 @@ public class ChangedKeysTest
       }
 
       // iterate through the entire tree
-      for (OcTreeSuperNode<OcTreeNode> node : tree.treeIterable())
+      for (OcTreeSuperNode<OccupancyOcTreeNode> node : tree.treeIterable())
       {
          if (node.isLeaf())
          {

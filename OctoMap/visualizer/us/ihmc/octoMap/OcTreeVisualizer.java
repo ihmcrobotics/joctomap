@@ -22,7 +22,7 @@ import us.ihmc.javaFXToolkit.shapes.JavaFXCoordinateSystem;
 import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
-import us.ihmc.octoMap.node.OcTreeNode;
+import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.robotics.geometry.RotationTools;
 
 public class OcTreeVisualizer extends Application
@@ -37,8 +37,8 @@ public class OcTreeVisualizer extends Application
       
       int numberOfNodes = 0;
       int numberOfLeafs = 0;
-      OcTreeNode root = ocTree.root;
-      List<OcTreeNode> stack = new ArrayList<>();
+      OccupancyOcTreeNode root = ocTree.root;
+      List<OccupancyOcTreeNode> stack = new ArrayList<>();
 
       if (root != null)
       {
@@ -47,12 +47,12 @@ public class OcTreeVisualizer extends Application
          
          while (!stack.isEmpty())
          {
-            OcTreeNode currentNode = stack.remove(0);
+            OccupancyOcTreeNode currentNode = stack.remove(0);
             if (currentNode.hasAtLeastOneChild())
             {
                for (int i = 0; i < 8; i++)
                {
-                  OcTreeNode currentChild = (OcTreeNode) currentNode.getChildUnsafe(i);
+                  OccupancyOcTreeNode currentChild = (OccupancyOcTreeNode) currentNode.getChildUnsafe(i);
                   if (currentChild != null)
                   {
                      numberOfNodes++;
@@ -69,13 +69,13 @@ public class OcTreeVisualizer extends Application
       System.out.println("Computed number of nodes = " + numberOfNodes);
       System.out.println("Computed number of leafs = " + numberOfLeafs);
       
-      HashSet<OcTreeNode> foundNodes = new HashSet<>();
+      HashSet<OccupancyOcTreeNode> foundNodes = new HashSet<>();
       int iteratorDuplicatedFounds = 0;
       int iteratorNodeCount = 0;
       int iteratorLeafCount = 0;
       
-      OcTreeIterable<OcTreeNode> treeIterable = new OcTreeIterable<>(ocTree);
-      for (OcTreeSuperNode<OcTreeNode> node : treeIterable)
+      OcTreeIterable<OccupancyOcTreeNode> treeIterable = new OcTreeIterable<>(ocTree);
+      for (OcTreeSuperNode<OccupancyOcTreeNode> node : treeIterable)
       {
          iteratorNodeCount++;
          if (foundNodes.contains(node))
@@ -168,8 +168,8 @@ public class OcTreeVisualizer extends Application
       primaryStage.setScene(scene);
       primaryStage.show();
 
-      LeafIterable<OcTreeNode> leafIterable = new LeafIterable<>(ocTree);
-      for (OcTreeSuperNode<OcTreeNode> node : leafIterable)
+      LeafIterable<OccupancyOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
+      for (OcTreeSuperNode<OccupancyOcTreeNode> node : leafIterable)
       {
          double boxSize = node.getSize();
          Point3d boxCenter = node.getCoordinate();

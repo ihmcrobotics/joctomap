@@ -7,16 +7,16 @@ import us.ihmc.octoMap.OcTreeKey;
 import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
-public class OcTreeSuperNode<NODE extends OcTreeDataNode<?>>
+public class OcTreeSuperNode<NODE extends OcTreeDataNode<NODE>>
 {
-   private final OcTreeBaseImpl<?, NODE> tree;
+   private final OcTreeBaseImpl<NODE> tree;
    private final NODE node;
    private final OcTreeKey key = new OcTreeKey();
    private final int depth;
    private final int maxDepth;
 
    /** Constructor for the root node */
-   OcTreeSuperNode(OcTreeBaseImpl<?, NODE> tree, int maxDepth)
+   OcTreeSuperNode(OcTreeBaseImpl<NODE> tree, int maxDepth)
    {
       this.tree = tree;
       this.maxDepth = maxDepth;
@@ -27,15 +27,14 @@ public class OcTreeSuperNode<NODE extends OcTreeDataNode<?>>
    }
 
    /** Constructor for nodes inside the tree */
-   @SuppressWarnings("unchecked")
-   OcTreeSuperNode(OcTreeBaseImpl<?, NODE> tree, OcTreeSuperNode<NODE> parentNode, int childIndex, int maxDepth)
+   OcTreeSuperNode(OcTreeBaseImpl<NODE> tree, OcTreeSuperNode<NODE> parentNode, int childIndex, int maxDepth)
    {
       this.tree = tree;
       this.maxDepth = maxDepth;
       depth = parentNode.depth + 1;
       int center_offset_key = tree.getTreeMaximumValue() >> depth;
       OcTreeKeyTools.computeChildKey(childIndex, center_offset_key, parentNode.key, key);
-      node = (NODE) parentNode.node.getChild(childIndex);
+      node = parentNode.node.getChild(childIndex);
    }
 
    /** @return the center coordinate of this node */

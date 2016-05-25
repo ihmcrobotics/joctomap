@@ -2,7 +2,7 @@ package us.ihmc.octoMap.node;
 
 import java.util.Arrays;
 
-public class CountingOcTreeNode extends OcTreeDataNode<Integer>
+public class CountingOcTreeNode extends OcTreeDataNode<CountingOcTreeNode>
 {
    private int count;
 
@@ -11,9 +11,9 @@ public class CountingOcTreeNode extends OcTreeDataNode<Integer>
    }
 
    @Override
-   public void copyData(OcTreeDataNode<Integer> other)
+   public void copyData(CountingOcTreeNode other)
    {
-      count = ((CountingOcTreeNode) other).count;
+      count = other.count;
    }
 
    public void increaseCount()
@@ -38,12 +38,9 @@ public class CountingOcTreeNode extends OcTreeDataNode<Integer>
    }
 
    @Override
-   public boolean epsilonEquals(OcTreeDataNode<?> other)
+   public boolean epsilonEquals(CountingOcTreeNode other)
    {
-      if (!(getClass().isInstance(other)))
-         return false;
-
-      return count == ((CountingOcTreeNode) other).count;
+      return count == other.count;
    }
 
    @Override

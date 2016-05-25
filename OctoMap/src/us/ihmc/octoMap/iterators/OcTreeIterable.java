@@ -8,17 +8,17 @@ import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.robotics.MathTools;
 
-public class OcTreeIterable<NODE extends OcTreeDataNode<?>> implements Iterable<OcTreeSuperNode<NODE>>
+public class OcTreeIterable<NODE extends OcTreeDataNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
-   private final OcTreeBaseImpl<?, NODE> tree;
+   private final OcTreeBaseImpl<NODE> tree;
    private final int maxDepth;
 
-   public OcTreeIterable(OcTreeBaseImpl<?, NODE> tree)
+   public OcTreeIterable(OcTreeBaseImpl<NODE> tree)
    {
       this(tree, 0);
    }
 
-   public OcTreeIterable(OcTreeBaseImpl<?, NODE> tree, int maxDepth)
+   public OcTreeIterable(OcTreeBaseImpl<NODE> tree, int maxDepth)
    {
       this.tree = tree;
       this.maxDepth = maxDepth;
@@ -30,20 +30,20 @@ public class OcTreeIterable<NODE extends OcTreeDataNode<?>> implements Iterable<
       return new OcTreeIterator<>(tree, maxDepth);
    }
 
-   public static class OcTreeIterator<NODE extends OcTreeDataNode<?>> implements Iterator<OcTreeSuperNode<NODE>>
+   public static class OcTreeIterator<NODE extends OcTreeDataNode<NODE>> implements Iterator<OcTreeSuperNode<NODE>>
    {
-      private final OcTreeBaseImpl<?, NODE> tree; ///< Octree this iterator is working on
+      private final OcTreeBaseImpl<NODE> tree; ///< Octree this iterator is working on
       private final int maxDepth; ///< Maximum depth for depth-limited queries
 
       /// Internal recursion stack.
       private final ArrayDeque<OcTreeSuperNode<NODE>> stack = new ArrayDeque<>();
 
-      public OcTreeIterator(OcTreeBaseImpl<?, NODE> tree)
+      public OcTreeIterator(OcTreeBaseImpl<NODE> tree)
       {
          this(tree, 0);
       }
 
-      public OcTreeIterator(OcTreeBaseImpl<?, NODE> tree, int maxDepth)
+      public OcTreeIterator(OcTreeBaseImpl<NODE> tree, int maxDepth)
       {
          if (tree == null)
             throw new RuntimeException("Creating an iterator with no tree.");

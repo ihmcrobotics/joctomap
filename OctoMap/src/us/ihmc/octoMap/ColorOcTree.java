@@ -1,7 +1,6 @@
 package us.ihmc.octoMap;
 
 import us.ihmc.octoMap.node.ColorOcTreeNode;
-import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 
 public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
@@ -72,7 +71,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
          // compare nodes only using their occupancy, ignoring color for pruning
          if (!OcTreeNodeTools.nodeChildExists(node, i))
             return false;
-         OcTreeDataNode<Float> child = OcTreeNodeTools.getNodeChild(node, i);
+         ColorOcTreeNode child = OcTreeNodeTools.getNodeChild(node, i);
          if (child.hasAtLeastOneChild() || !(child.epsilonEquals(firstChild)))
             return false;
       }

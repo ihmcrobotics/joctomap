@@ -13,29 +13,29 @@ import us.ihmc.octoMap.node.OcTreeDataNode;
  * Bounding-box leaf iterator. This iterator will traverse all leaf nodes
  * within a given bounding box (axis-aligned).
  */
-public class LeafBoundingBoxIterable<NODE extends OcTreeDataNode<?>> implements Iterable<OcTreeSuperNode<NODE>>
+public class LeafBoundingBoxIterable<NODE extends OcTreeDataNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
-   private final OcTreeBaseImpl<?, NODE> tree;
+   private final OcTreeBaseImpl<NODE> tree;
    private final int maxDepth;
    private final OcTreeKey minKey = new OcTreeKey();
    private final OcTreeKey maxKey = new OcTreeKey();
 
-   public LeafBoundingBoxIterable(OcTreeBaseImpl<?, NODE> tree, Point3d min, Point3d max)
+   public LeafBoundingBoxIterable(OcTreeBaseImpl<NODE> tree, Point3d min, Point3d max)
    {
       this(tree, min, max, 0);
    }
 
-   public LeafBoundingBoxIterable(OcTreeBaseImpl<?, NODE> tree, Point3d min, Point3d max, int maxDepth)
+   public LeafBoundingBoxIterable(OcTreeBaseImpl<NODE> tree, Point3d min, Point3d max, int maxDepth)
    {
       this(tree, tree.convertCartesianCoordinateToKey(min), tree.convertCartesianCoordinateToKey(max), maxDepth);
    }
 
-   public LeafBoundingBoxIterable(OcTreeBaseImpl<?, NODE> tree, OcTreeKey min, OcTreeKey max)
+   public LeafBoundingBoxIterable(OcTreeBaseImpl<NODE> tree, OcTreeKey min, OcTreeKey max)
    {
       this(tree, min, max, 0);
    }
 
-   public LeafBoundingBoxIterable(OcTreeBaseImpl<?, NODE> tree, OcTreeKey min, OcTreeKey max, int maxDepth)
+   public LeafBoundingBoxIterable(OcTreeBaseImpl<NODE> tree, OcTreeKey min, OcTreeKey max, int maxDepth)
    {
       this.tree = tree;
       this.maxDepth = maxDepth;
@@ -49,12 +49,12 @@ public class LeafBoundingBoxIterable<NODE extends OcTreeDataNode<?>> implements 
       return new LeafBoundingBoxIterator<>(tree, minKey, maxKey, maxDepth);
    }
 
-   public static class LeafBoundingBoxIterator<NODE extends OcTreeDataNode<?>> extends LeafIterator<NODE>
+   public static class LeafBoundingBoxIterator<NODE extends OcTreeDataNode<NODE>> extends LeafIterator<NODE>
    {
       private final OcTreeKey minKey = new OcTreeKey();
       private final OcTreeKey maxKey = new OcTreeKey();
 
-      public LeafBoundingBoxIterator(OcTreeBaseImpl<?, NODE> tree, OcTreeKey min, OcTreeKey max, int maxDepth)
+      public LeafBoundingBoxIterator(OcTreeBaseImpl<NODE> tree, OcTreeKey min, OcTreeKey max, int maxDepth)
       {
          super(tree, maxDepth);
          minKey.set(min);

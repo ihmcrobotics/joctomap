@@ -49,12 +49,11 @@ public class OcTreeNodeTools
          throw new RuntimeException("Child is already null.");
    }
 
-   @SuppressWarnings("unchecked")
-   public static final <V, NODE extends OcTreeDataNode<V>> NODE getNodeChild(NODE node, int childIndex)
+   public static final <NODE extends OcTreeDataNode<NODE>> NODE getNodeChild(NODE node, int childIndex)
    {
       checkChildIndex(childIndex);
       checkNodeHasChildren(node);
       checkNodeChildNotNull(node, childIndex);
-      return node.children == null ? null : (NODE) node.getChildUnsafe(childIndex);
+      return node.children == null ? null : node.getChildUnsafe(childIndex);
    }
 }

@@ -5,30 +5,32 @@ import java.util.HashMap;
 
 import us.ihmc.robotics.lists.GenericTypeBuilder;
 
-public abstract class OcTreeDataNode<V>
+public abstract class OcTreeDataNode<N extends OcTreeDataNode<N>>
 {
-   private HashMap<Class<? extends OcTreeDataNode<?>>, GenericTypeBuilder<? extends OcTreeDataNode<?>>> builderCache = OcTreeNodeTools.BUILDER_CACHE_THREAD_LOCAL.get();
+   private HashMap<Class<? extends OcTreeDataNode<?>>, GenericTypeBuilder<? extends OcTreeDataNode<?>>> builderCache = OcTreeNodeTools.BUILDER_CACHE_THREAD_LOCAL
+         .get();
 
-   protected OcTreeDataNode<V>[] children;
+   protected N[] children;
 
    public OcTreeDataNode()
    {
    }
 
-   public abstract void copyData(OcTreeDataNode<V> other);
+   public abstract void copyData(N other);
 
    public abstract void updateOccupancyChildren();
 
    @SuppressWarnings("unchecked")
    public final void allocateChildren()
    {
-      children = new OcTreeDataNode[8];
+      children = (N[]) new OcTreeDataNode[8];
    }
 
-   public final OcTreeDataNode<V> cloneRecursive()
+   @SuppressWarnings("unchecked")
+   public final N cloneRecursive()
    {
-      OcTreeDataNode<V> ret = create();
-      ret.copyData(this);
+      N ret = create();
+      ret.copyData((N) this);
 
       if (hasAtLeastOneChild())
          allocateChildren();
@@ -40,15 +42,15 @@ public abstract class OcTreeDataNode<V>
    }
 
    @SuppressWarnings("unchecked")
-   public final OcTreeDataNode<V> create()
+   public final N create()
    {
-      GenericTypeBuilder<? extends OcTreeDataNode<?>> builder = builderCache.get(getClass());
+      GenericTypeBuilder<N> builder = (GenericTypeBuilder<N>) builderCache.get(getClass());
       if (builder == null)
       {
-         builder = (GenericTypeBuilder<? extends OcTreeDataNode<?>>) GenericTypeBuilder.createBuilderWithEmptyConstructor(getClass());
+         builder = (GenericTypeBuilder<N>) GenericTypeBuilder.createBuilderWithEmptyConstructor(getClass());
          builderCache.put((Class<? extends OcTreeDataNode<?>>) getClass(), builder);
       }
-      return (OcTreeDataNode<V>) builder.newInstance();
+      return builder.newInstance();
    }
 
    public final boolean hasArrayForChildren()
@@ -69,7 +71,7 @@ public abstract class OcTreeDataNode<V>
       return false;
    }
 
-   public final void setChild(int childIndex, OcTreeDataNode<V> newChild)
+   public final void setChild(int childIndex, N newChild)
    {
       OcTreeNodeTools.checkChildIndex(childIndex);
       if (!getClass().isInstance(newChild))
@@ -77,25 +79,26 @@ public abstract class OcTreeDataNode<V>
       children[childIndex] = newChild;
    }
 
-   public final OcTreeDataNode<V> getChild(int childIndex)
+   @SuppressWarnings("unchecked")
+   public final N getChild(int childIndex)
    {
-      return OcTreeNodeTools.getNodeChild(this, childIndex);
+      return OcTreeNodeTools.getNodeChild((N) this, childIndex);
    }
 
-   public final OcTreeDataNode<V> getChildUnsafe(int childIndex)
+   public final N getChildUnsafe(int childIndex)
    {
       return children[childIndex];
    }
 
-   public final OcTreeDataNode<V> removeChild(int childIndex)
+   public final N removeChild(int childIndex)
    {
       OcTreeNodeTools.checkChildIndex(childIndex);
       return removeChildUnsafe(childIndex);
    }
 
-   public final OcTreeDataNode<V> removeChildUnsafe(int childIndex)
+   public final N removeChildUnsafe(int childIndex)
    {
-      OcTreeDataNode<V> removedChild = children[childIndex];
+      N removedChild = children[childIndex];
       children[childIndex] = null;
       return removedChild;
    }
@@ -105,7 +108,7 @@ public abstract class OcTreeDataNode<V>
       children = null;
    }
 
-   public abstract boolean epsilonEquals(OcTreeDataNode<?> other);
+   public abstract boolean epsilonEquals(N other);
 
    @Override
    public String toString()
@@ -120,7 +123,7 @@ public abstract class OcTreeDataNode<V>
       {
          for (int i = 0; i < 8; i++)
          {
-            OcTreeDataNode<V> child = getChildUnsafe(i);
+            N child = getChildUnsafe(i);
             childrenNames[i] = child == null ? null : child.getClass().getSimpleName();
          }
       }

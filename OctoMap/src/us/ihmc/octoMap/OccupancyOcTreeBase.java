@@ -14,13 +14,13 @@ import us.ihmc.octoMap.OcTreeKey.KeyBoolMap;
 import us.ihmc.octoMap.OcTreeKey.KeyRay;
 import us.ihmc.octoMap.OcTreeKey.KeySet;
 import us.ihmc.octoMap.ScanGraph.ScanNode;
-import us.ihmc.octoMap.node.OcTreeNode;
+import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 import us.ihmc.tools.io.printing.PrintTools;
 
-public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends AbstractOccupancyOcTree<NODE>
+public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOccupancyOcTree<NODE>
 {
    protected boolean useBoundingBoxLimit; ///< use bounding box for queries (needs to be set)?
    protected final Point3d boundingBoxMin = new Point3d();

@@ -5,10 +5,10 @@ import static us.ihmc.octoMap.tools.OctoMapTools.probability;
 
 import javax.vecmath.Point3d;
 
-import us.ihmc.octoMap.node.OcTreeNode;
+import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.robotics.MathTools;
 
-public abstract class AbstractOccupancyOcTree<NODE extends OcTreeNode> extends OcTreeBaseImpl<Float, NODE>
+public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends OcTreeBaseImpl<NODE>
 {
    // occupancy parameters of tree, stored in logodds:
    protected float clamping_thres_min;
