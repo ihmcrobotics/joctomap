@@ -915,18 +915,18 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    //-- set BBX limit (limits tree updates to this bounding box)
 
    ///  use or ignore BBX limit (default: ignore)
-   public void useBBXLimit(boolean enable)
+   public void useBoundingBoxLimit(boolean enable)
    {
       useBoundingBoxLimit = enable;
    }
 
-   public boolean bbxSet()
+   public boolean isUsingBoundingBox()
    {
       return useBoundingBoxLimit;
    }
 
    /// sets the minimum for a query bounding box to use
-   public void setBBXMin(Point3d min)
+   public void setBoundingBoxMin(Point3d min)
    {
       OcTreeKey newKey = convertCartesianCoordinateToKey(boundingBoxMin);
       if (newKey == null)
@@ -939,7 +939,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    }
 
    /// sets the maximum for a query bounding box to use
-   public void setBBXMax(Point3d max)
+   public void setBoundingBoxMax(Point3d max)
    {
       OcTreeKey newKey = convertCartesianCoordinateToKey(boundingBoxMax);
       if (newKey == null)
@@ -952,18 +952,18 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    }
 
    /// @return the currently set minimum for bounding box queries, if set
-   public Point3d getBBXMin()
+   public Point3d getBoundingBoxMin()
    {
       return boundingBoxMin;
    }
 
    /// @return the currently set maximum for bounding box queries, if set
-   public Point3d getBBXMax()
+   public Point3d getBoundingBoxMax()
    {
       return boundingBoxMax;
    }
 
-   public Point3d getBBXBounds()
+   public Point3d getBoundingBoxBounds()
    {
       Point3d obj_bounds = new Point3d();
       obj_bounds.sub(boundingBoxMax, boundingBoxMin);
@@ -971,22 +971,22 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       return obj_bounds;
    }
 
-   public Point3d getBBXCenter()
+   public Point3d getBoundingBoxCenter()
    {
-      Point3d center = getBBXBounds();
+      Point3d center = getBoundingBoxBounds();
       center.add(boundingBoxMin);
       return center;
    }
 
    /// @return true if point is in the currently set bounding box
-   public boolean inBBX(Point3d p)
+   public boolean isInBoundingBox(Point3d p)
    {
       return p.getX() >= boundingBoxMin.getX() && p.getY() >= boundingBoxMin.getY() && p.getZ() >= boundingBoxMin.getZ() && p.getX() <= boundingBoxMax.getX()
             && p.getY() <= boundingBoxMax.getY() && p.getZ() <= boundingBoxMax.getZ();
    }
 
    /// @return true if key is in the currently set bounding box
-   public boolean inBBX(OcTreeKey key)
+   public boolean isInBoundingBox(OcTreeKey key)
    {
       return key.k[0] >= boundingBoxMinKey.k[0] && key.k[1] >= boundingBoxMinKey.k[1] && key.k[2] >= boundingBoxMinKey.k[2] && key.k[0] <= boundingBoxMaxKey.k[0]
             && key.k[1] <= boundingBoxMaxKey.k[1] && key.k[2] <= boundingBoxMaxKey.k[2];
@@ -1074,7 +1074,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          else
          { // BBX was set
               // endpoint in bbx and not maxrange?
-            if (inBBX(p) && (maxrange < 0.0 || length <= maxrange))
+            if (isInBoundingBox(p) && (maxrange < 0.0 || length <= maxrange))
             {
                // occupied endpoint
                OcTreeKey key = convertCartesianCoordinateToKey(p);
@@ -1090,7 +1090,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
                   while (reverseIterator.hasPrevious())
                   {
                      OcTreeKey currentKey = reverseIterator.previous();
-                     if (inBBX(currentKey))
+                     if (isInBoundingBox(currentKey))
                      {
                         free_cells.add(currentKey);
                      }
