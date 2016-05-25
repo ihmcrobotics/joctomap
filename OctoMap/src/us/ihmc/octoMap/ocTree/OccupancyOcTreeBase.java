@@ -12,10 +12,10 @@ import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.PointCloud;
 import us.ihmc.octoMap.ScanGraph.ScanNode;
+import us.ihmc.octoMap.key.KeyBoolMap;
+import us.ihmc.octoMap.key.KeyRay;
+import us.ihmc.octoMap.key.KeySet;
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.key.OcTreeKey.KeyBoolMap;
-import us.ihmc.octoMap.key.OcTreeKey.KeyRay;
-import us.ihmc.octoMap.key.OcTreeKey.KeySet;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;

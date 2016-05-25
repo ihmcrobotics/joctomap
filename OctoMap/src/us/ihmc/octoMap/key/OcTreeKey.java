@@ -1,12 +1,6 @@
 package us.ihmc.octoMap.key;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
 
 public class OcTreeKey
 {
@@ -69,82 +63,5 @@ public class OcTreeKey
    public String toString()
    {
       return "OcTreeKey: " + Arrays.toString(k);
-   }
-
-   public static class KeyRay implements Iterable<OcTreeKey>
-   {
-      private static final int maxSize = 100000;
-      private final List<OcTreeKey> ray = new ArrayList<>();
-
-      public KeyRay()
-      {
-      }
-
-      public KeyRay(KeyRay other)
-      {
-         ray.clear();
-         ray.addAll(other.ray);
-      }
-
-      public void addKey(OcTreeKey key)
-      {
-         ray.add(key);
-      }
-
-      public OcTreeKey getFirst()
-      {
-         return ray.get(0);
-      }
-
-      public OcTreeKey getLast()
-      {
-         return ray.get(ray.size() - 1);
-      }
-
-      public void clear()
-      {
-         ray.clear();
-      }
-
-      public int size()
-      {
-         return ray.size();
-      }
-
-      public int sizeMax()
-      {
-         return maxSize;
-      }
-
-      @Override
-      public Iterator<OcTreeKey> iterator()
-      {
-         return ray.iterator();
-      }
-
-      public ListIterator<OcTreeKey> reverseIterator()
-      {
-         return ray.listIterator(ray.size() - 1);
-      }
-   }
-
-   public static class KeySet extends HashSet<OcTreeKey>
-   {
-      private static final long serialVersionUID = 2780317356917541560L;
-   }
-
-   /**
-    * Data structrure to efficiently track changed nodes as a combination of
-    * OcTreeKeys and a bool flag (to denote newly created nodes)
-    *
-    */
-   public static class KeyBoolMap extends HashMap<OcTreeKey, Boolean>
-   {
-      private static final long serialVersionUID = 2656234567169415329L;
-   }
-
-   public static class OcTreeKeyBoundingBox
-   {
-      
    }
 }
