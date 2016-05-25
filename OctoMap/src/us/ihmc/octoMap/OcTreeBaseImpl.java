@@ -15,6 +15,7 @@ import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeCoordinateConversionTools;
+import us.ihmc.octoMap.tools.OcTreeSearchTools;
 import us.ihmc.octoMap.tools.OctreeKeyTools;
 import us.ihmc.robotics.MathTools;
 import us.ihmc.tools.io.printing.PrintTools;
@@ -307,21 +308,12 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
     */
    public NODE search(double x, double y, double z)
    {
-      return search(x, y, z, 0);
+      return OcTreeSearchTools.search(root, x, y, z, resolution, treeDepth);
    }
 
    public NODE search(double x, double y, double z, int depth)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
-      if (key == null)
-      {
-         PrintTools.error(this, "Error in search: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
-         return null;
-      }
-      else
-      {
-         return search(key, depth);
-      }
+      return OcTreeSearchTools.search(root, x, y, z, depth, resolution, treeDepth);
    }
 
    /**
@@ -331,22 +323,12 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
     */
    public NODE search(Point3d coord)
    {
-      return search(coord, 0);
+      return OcTreeSearchTools.search(root, coord, resolution, treeDepth);
    }
 
    public NODE search(Point3d coord, int depth)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(coord);
-      if (key == null)
-      {
-         PrintTools.error(this, "Error in search: [" + coord + "] is out of OcTree bounds!");
-         return null;
-      }
-      else
-      {
-         return search(key, depth);
-      }
-
+      return OcTreeSearchTools.search(root, coord, depth, resolution, treeDepth);
    }
 
    /**
@@ -356,54 +338,12 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
     */
    public NODE search(OcTreeKey key)
    {
-      return search(key, 0);
+      return OcTreeSearchTools.search(root, key, treeDepth);
    }
 
    public NODE search(OcTreeKey key, int depth)
    {
-      MathTools.checkIfLessOrEqual(depth, treeDepth);
-      if (root == null)
-         return null;
-
-      if (depth == 0)
-         depth = treeDepth;
-
-      // generate appropriate key_at_depth for queried depth
-      OcTreeKey keyAtDepth;
-      if (depth != treeDepth)
-         keyAtDepth = OctreeKeyTools.adjustKeyAtDepth(key, depth, treeDepth);
-      else
-         keyAtDepth = new OcTreeKey(key);
-
-      NODE curNode = root;
-
-      int diff = treeDepth - depth;
-
-      // follow nodes down to requested level (for diff = 0 it's the last level)
-      for (int i = (treeDepth - 1); i >= diff; --i)
-      {
-         int pos = OctreeKeyTools.computeChildIdx(keyAtDepth, i);
-         if (OcTreeNodeTools.nodeChildExists(curNode, pos))
-         {
-            // cast needed: (nodes need to ensure it's the right pointer)
-            curNode = OcTreeNodeTools.getNodeChild(curNode, pos);
-         }
-         else
-         {
-            // we expected a child but did not get it
-            // is the current node a leaf already?
-            if (!curNode.hasAtLeastOneChild())
-            { // TODO similar check to nodeChildExists?
-               return curNode;
-            }
-            else
-            {
-               // it is not, search failed
-               return null;
-            }
-         }
-      } // end for
-      return curNode;
+      return OcTreeSearchTools.search(root, key, depth, treeDepth);
    }
 
    /**
