@@ -173,25 +173,13 @@ public class OcTreeVisualizer extends Application
       LeafIterable<OccupancyOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
       for (OcTreeSuperNode<OccupancyOcTreeNode> node : leafIterable)
       {
-         double boxSize = node.getSize();
-         Point3d boxCenter = node.getCoordinate();
-         addBox(boxSize, boxCenter, rootNode);
+         if (ocTree.isNodeOccupied(node.getNode()))
+         {
+            double boxSize = node.getSize();
+            Point3d boxCenter = node.getCoordinate();
+            addBox(boxSize, boxCenter, rootNode);
+         }
       }
-      
-//      LeafIterator<Float, OcTreeNode> it = ocTree.begin_leafs();
-//      LeafIterator<Float, OcTreeNode> end = ocTree.end_leafs();
-//      while (!it.equals(end))
-//      {
-//         if (ocTree.isNodeOccupied(it.getNode()))
-//         {
-//            double boxSize = it.getSize();
-//            Point3d boxCenter = it.getCoordinate();
-//            System.out.println("Size: " + boxSize + ", center: " + boxCenter);
-//            addBox(boxSize, boxCenter, rootNode);
-//         }
-//         
-//         it.next();
-//      }
    }
 
    private static final Color DEFAULT_COLOR = Color.DARKCYAN;

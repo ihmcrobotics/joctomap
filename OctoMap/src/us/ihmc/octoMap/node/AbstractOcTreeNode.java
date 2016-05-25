@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.node;
 
+import static us.ihmc.octoMap.node.OcTreeNodeTools.BUILDER_CACHE_THREAD_LOCAL;
+
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,10 +10,8 @@ import us.ihmc.robotics.lists.GenericTypeBuilder;
 
 public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 {
-   private HashMap<Class<? extends AbstractOcTreeNode<?>>, GenericTypeBuilder<? extends AbstractOcTreeNode<?>>> builderCache = OcTreeNodeTools.BUILDER_CACHE_THREAD_LOCAL
-         .get();
-
    protected N[] children;
+   private final HashMap<Class<? extends AbstractOcTreeNode<?>>, GenericTypeBuilder<? extends AbstractOcTreeNode<?>>> builderCache = BUILDER_CACHE_THREAD_LOCAL.get();
 
    AbstractOcTreeNode()
    {

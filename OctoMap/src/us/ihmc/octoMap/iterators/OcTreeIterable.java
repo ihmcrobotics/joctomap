@@ -56,7 +56,7 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
 
          if (tree.getRoot() != null)
          { // tree is not empty
-            stack.add(new OcTreeSuperNode<>(tree, maxDepth));
+            stack.add(new OcTreeSuperNode<>(tree, this.maxDepth));
          }
       }
 

@@ -63,8 +63,11 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       return occupancyNode.getLogOdds() >= this.occupancyThresholdLogOdds;
    }
 
-   /// queries whether a node is at the clamping threshold according to the tree's parameter
-   public boolean isNodeAtThreshold(NODE occupancyNode)
+   /**
+    * Queries whether a node is at the clamping limit according to the tree's parameter
+    * @param occupancyNode
+    */
+   public boolean isNodeAtOccupancyLimit(NODE occupancyNode)
    {
       return occupancyNode.getLogOdds() >= this.maxOccupancyLogOdds || occupancyNode.getLogOdds() <= this.minOccupancyLogOdds;
    }

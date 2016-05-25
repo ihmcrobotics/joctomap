@@ -91,15 +91,15 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
-      KeySet free_cells = new KeySet();
+      KeySet freeCells = new KeySet();
       KeySet occupiedCells = new KeySet();
       if (discretize)
-         computeDiscreteUpdate(scan, sensorOrigin, free_cells, occupiedCells, maxRange);
+         computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, maxRange);
       else
-         computeUpdate(scan, sensorOrigin, free_cells, occupiedCells, maxRange);
+         computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, maxRange);
 
       // insert data into tree  -----------------------
-      for (OcTreeKey key : free_cells)
+      for (OcTreeKey key : freeCells)
       {
          updateNode(key, false, lazyEvaluation);
       }
@@ -1060,10 +1060,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
                }
                // occupied endpoint
                OcTreeKey key = convertCartesianCoordinateToKey(p);
-               if (key == null)
-               {
+               if (key != null)
                   occupied_cells.add(key);
-               }
             }
             else
             { // user set a maxrange and length is above
@@ -1083,10 +1081,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             {
                // occupied endpoint
                OcTreeKey key = convertCartesianCoordinateToKey(p);
-               if (key == null)
-               {
+               if (key != null)
                   occupied_cells.add(key);
-               }
 
                // update freespace, break as soon as bbx limit is reached
                if (computeRayKeys(origin, p, keyray))
@@ -1155,19 +1151,29 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          updateInnerOccupancyRecurs(root, 0);
    }
 
-   /// integrate a "hit" measurement according to the tree's sensor model
+   /**
+    * Integrate a "hit" measurement according to the tree's sensor model
+    * @param occupancyNode
+    */
    public void integrateHit(NODE occupancyNode)
    {
       updateNodeLogOdds(occupancyNode, hitUpdateLogOdds);
    }
 
-   /// integrate a "miss" measurement according to the tree's sensor model
+   /**
+    * Integrate a "miss" measurement according to the tree's sensor model
+    * @param occupancyNode
+    */
    public void integrateMiss(NODE occupancyNode)
    {
       updateNodeLogOdds(occupancyNode, missUpdateLogOdds);
    }
 
-   /// update logodds value of node by adding to the current value.
+   /**
+    * Update logodds value of node by adding to the current value.
+    * @param occupancyNode
+    * @param update
+    */
    public void updateNodeLogOdds(NODE occupancyNode, float update)
    {
       occupancyNode.addValue(update);
@@ -1182,7 +1188,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       }
    }
 
-   /// converts the node to the maximum likelihood value according to the tree's parameter for "occupancy"
+   /**
+    * Converts the node to the maximum likelihood occupancy value according to the tree's parameter for min/max "occupancy"
+    * @param occupancyNode
+    */
    public void nodeToMaxLikelihood(NODE occupancyNode)
    {
       if (isNodeOccupied(occupancyNode))
