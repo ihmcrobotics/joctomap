@@ -11,7 +11,6 @@ import us.ihmc.robotics.lists.GenericTypeBuilder;
  */
 public class OcTreeNodeTools
 {
-
    static final ThreadLocal<HashMap<Class<? extends OcTreeDataNode<?>>, GenericTypeBuilder<? extends OcTreeDataNode<?>>>> BUILDER_CACHE_THREAD_LOCAL = new ThreadLocal<HashMap<Class<? extends OcTreeDataNode<?>>, GenericTypeBuilder<? extends OcTreeDataNode<?>>>>()
    {
       @Override
@@ -58,5 +57,4 @@ public class OcTreeNodeTools
       checkNodeChildNotNull(node, childIndex);
       return node.children == null ? null : (NODE) node.getChildUnsafe(childIndex);
    }
-
 }
