@@ -9,11 +9,11 @@ public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcT
 {
    float logOdds;
 
-   public AbstractOccupancyOcTreeNode()
+   AbstractOccupancyOcTreeNode()
    {
    }
 
-   public AbstractOccupancyOcTreeNode(float initialValue)
+   AbstractOccupancyOcTreeNode(float initialValue)
    {
       logOdds = initialValue;
    }
