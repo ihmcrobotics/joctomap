@@ -5,7 +5,7 @@ import java.util.Arrays;
 import us.ihmc.octoMap.tools.OctoMapTools;
 import us.ihmc.robotics.MathTools;
 
-public class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcTreeNode<N>> extends AbstractOcTreeNode<N>
+public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcTreeNode<N>> extends AbstractOcTreeNode<N>
 {
    float logOdds;
 
