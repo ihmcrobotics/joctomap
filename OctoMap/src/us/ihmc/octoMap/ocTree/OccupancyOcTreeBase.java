@@ -10,14 +10,14 @@ import java.util.ListIterator;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import us.ihmc.octoMap.PointCloud;
-import us.ihmc.octoMap.ScanGraph.ScanNode;
 import us.ihmc.octoMap.key.KeyBoolMap;
 import us.ihmc.octoMap.key.KeyRay;
 import us.ihmc.octoMap.key.KeySet;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
+import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.pointCloud.ScanGraph.ScanNode;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 import us.ihmc.tools.io.printing.PrintTools;

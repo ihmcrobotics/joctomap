@@ -1,4 +1,4 @@
-package us.ihmc.octoMap;
+package us.ihmc.octoMap.pointCloud;
 
 import java.util.ArrayList;
 import java.util.Collections;

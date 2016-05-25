@@ -13,6 +13,7 @@ import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.OcTree;
+import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.robotics.geometry.RotationTools;
 
 public class ChangedKeysTest
