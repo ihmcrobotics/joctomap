@@ -13,6 +13,7 @@ import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OcTreeDataNode;
+import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeCoordinateConversionTools;
 import us.ihmc.octoMap.tools.OctreeKeyTools;
 import us.ihmc.robotics.MathTools;
@@ -186,7 +187,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    @SuppressWarnings("unchecked")
    public NODE createNodeChild(NODE node, int childIndex)
    {
-      OcTreeDataNode.checkChildIndex(childIndex);
+      OcTreeNodeTools.checkChildIndex(childIndex);
       if (!node.hasArrayForChildren())
          node.allocateChildren();
 
@@ -204,9 +205,9 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    /// Deletes the i-th child of the node
    public void deleteNodeChild(NODE node, int childIndex)
    {
-      OcTreeDataNode.checkChildIndex(childIndex);
-      OcTreeDataNode.checkNodeHasChildren(node);
-      OcTreeDataNode.checkNodeChildNotNull(node, childIndex);
+      OcTreeNodeTools.checkChildIndex(childIndex);
+      OcTreeNodeTools.checkNodeHasChildren(node);
+      OcTreeNodeTools.checkNodeChildNotNull(node, childIndex);
 
       node.removeChild(childIndex);
 
@@ -220,24 +221,23 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
     * @param node
     * @return
     */
-   @SuppressWarnings("unchecked")
    public boolean isNodeCollapsible(NODE node)
    {
       // all children must exist, must not have children of
       // their own and have the same occupancy probability
-      if (!OcTreeDataNode.nodeChildExists(node, 0))
+      if (!OcTreeNodeTools.nodeChildExists(node, 0))
          return false;
 
-      NODE firstChild = (NODE) node.getChild(0);
+      NODE firstChild = OcTreeNodeTools.getNodeChild(node, 0);
       if (firstChild.hasAtLeastOneChild())
          return false;
 
       for (int i = 1; i < 8; i++)
       {
-         if (!OcTreeDataNode.nodeChildExists(node, i))
+         if (!OcTreeNodeTools.nodeChildExists(node, i))
             return false;
 
-         NODE currentChild = (NODE) node.getChild(i);
+         NODE currentChild = OcTreeNodeTools.getNodeChild(node, i);
 
          if (currentChild.hasAtLeastOneChild() || !(currentChild.epsilonEquals(firstChild)))
             return false;
@@ -276,7 +276,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
          return false;
 
       // set value to children's values (all assumed equal)
-      node.copyData(node.getChild(0));
+      node.copyData(OcTreeNodeTools.getNodeChild(node, 0));
 
       // delete children (known to be leafs at this point!)
       for (int i = 0; i < 8; i++)
@@ -359,7 +359,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       return search(key, 0);
    }
 
-   @SuppressWarnings("unchecked")
    public NODE search(OcTreeKey key, int depth)
    {
       MathTools.checkIfLessOrEqual(depth, treeDepth);
@@ -384,10 +383,10 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       for (int i = (treeDepth - 1); i >= diff; --i)
       {
          int pos = OctreeKeyTools.computeChildIdx(keyAtDepth, i);
-         if (OcTreeDataNode.nodeChildExists(curNode, pos))
+         if (OcTreeNodeTools.nodeChildExists(curNode, pos))
          {
             // cast needed: (nodes need to ensure it's the right pointer)
-            curNode = (NODE) curNode.getChild(pos);
+            curNode = OcTreeNodeTools.getNodeChild(curNode, pos);
          }
          else
          {
@@ -978,7 +977,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       size_changed = false;
    }
 
-   @SuppressWarnings("unchecked")
    protected int calculateNumberOfNodesRecursively(NODE node, int currentNumberOfNodes)
    {
       if (node == null)
@@ -988,10 +986,10 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       {
          for (int i = 0; i < 8; i++)
          {
-            if (OcTreeDataNode.nodeChildExists(node, i))
+            if (OcTreeNodeTools.nodeChildExists(node, i))
             {
                currentNumberOfNodes++;
-               currentNumberOfNodes = calculateNumberOfNodesRecursively((NODE) node.getChild(i), currentNumberOfNodes);
+               currentNumberOfNodes = calculateNumberOfNodesRecursively(OcTreeNodeTools.getNodeChild(node, i), currentNumberOfNodes);
             }
          }
       }
@@ -1010,7 +1008,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       {
          for (int i = 0; i < 8; i++)
          {
-            OcTreeDataNode<?> child = node.getChild(i);
+            OcTreeDataNode<?> child = OcTreeNodeTools.getNodeChild(node, i);
             if (child != null)
                deleteNodeRecurs(child);
          }
@@ -1019,7 +1017,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    }
 
    /// recursive call of deleteNode()
-   @SuppressWarnings("unchecked")
    protected boolean deleteNodeRecurs(NODE node, int depth, int max_depth, OcTreeKey key)
    {
       if (depth >= max_depth) // on last level: delete child when going up
@@ -1030,7 +1027,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
 
       int pos = OctreeKeyTools.computeChildIdx(key, treeDepth - 1 - depth);
 
-      if (!OcTreeDataNode.nodeChildExists(node, pos))
+      if (!OcTreeNodeTools.nodeChildExists(node, pos))
       {
          // child does not exist, but maybe it's a pruned node?
          if ((!node.hasAtLeastOneChild()) && (node != root))
@@ -1047,7 +1044,7 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       }
 
       // follow down further, fix inner nodes on way back up
-      boolean deleteChild = deleteNodeRecurs((NODE) node.getChild(pos), depth + 1, max_depth, key);
+      boolean deleteChild = deleteNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), depth + 1, max_depth, key);
       if (deleteChild)
       {
          // TODO: lazy eval?
@@ -1066,7 +1063,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    }
 
    /// recursive call of prune()
-   @SuppressWarnings("unchecked")
    protected int pruneRecurs(NODE node, int depth, int max_depth, int num_pruned)
    {
       if (node == null)
@@ -1076,9 +1072,9 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       {
          for (int i = 0; i < 8; i++)
          {
-            if (OcTreeDataNode.nodeChildExists(node, i))
+            if (OcTreeNodeTools.nodeChildExists(node, i))
             {
-               num_pruned = pruneRecurs((NODE) node.getChild(i), depth + 1, max_depth, num_pruned);
+               num_pruned = pruneRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1, max_depth, num_pruned);
             }
          }
       } // end if depth
@@ -1095,7 +1091,6 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
    }
 
    /// recursive call of expand()
-   @SuppressWarnings("unchecked")
    protected void expandRecurs(NODE node, int depth, int max_depth)
    {
       if (depth >= max_depth)
@@ -1112,14 +1107,13 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       // recursively expand children
       for (int i = 0; i < 8; i++)
       {
-         if (OcTreeDataNode.nodeChildExists(node, i))
+         if (OcTreeNodeTools.nodeChildExists(node, i))
          {
-            expandRecurs((NODE) node.getChild(i), depth + 1, max_depth);
+            expandRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1, max_depth);
          }
       }
    }
 
-   @SuppressWarnings("unchecked")
    protected int getNumLeafNodesRecurs(NODE parent)
    {
       if (parent == null)
@@ -1131,9 +1125,9 @@ public abstract class OcTreeBaseImpl<V, NODE extends OcTreeDataNode<V>> implemen
       int sum_leafs_children = 0;
       for (int i = 0; i < 8; ++i)
       {
-         if (OcTreeDataNode.nodeChildExists(parent, i))
+         if (OcTreeNodeTools.nodeChildExists(parent, i))
          {
-            sum_leafs_children += getNumLeafNodesRecurs((NODE) parent.getChild(i));
+            sum_leafs_children += getNumLeafNodesRecurs(OcTreeNodeTools.getNodeChild(parent, i));
          }
       }
       return sum_leafs_children;

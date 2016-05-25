@@ -16,11 +16,6 @@ public class OcTreeNode extends OcTreeDataNode<Float>
       super(initialValue);
    }
 
-   public OcTreeNode(OcTreeNode other)
-   {
-      super(other);
-   }
-
    /**
     * Return occupancy probability of node
     */
@@ -90,24 +85,6 @@ public class OcTreeNode extends OcTreeDataNode<Float>
          }
       }
       return max;
-   }
-
-   @Override
-   public void allocateChildren()
-   {
-      children = new OcTreeNode[8];
-   }
-
-   @Override
-   public OcTreeNode create()
-   {
-      return new OcTreeNode();
-   }
-
-   @Override
-   public OcTreeNode cloneRecursive()
-   {
-      return new OcTreeNode(this);
    }
 
    /**

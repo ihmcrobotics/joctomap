@@ -3,6 +3,7 @@ package us.ihmc.octoMap;
 import us.ihmc.octoMap.ColorOcTree.ColorOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.node.OcTreeNode;
+import us.ihmc.octoMap.node.OcTreeNodeTools;
 
 public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
 {
@@ -41,7 +42,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
          return false;
 
       // set value to children's values (all assumed equal)
-      node.copyData(node.getChild(0));
+      node.copyData(OcTreeNodeTools.getNodeChild(node, 0));
 
       if (node.isColorSet()) // TODO check
          node.setColor(node.getAverageChildColor());
@@ -60,19 +61,19 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
    {
       // all children must exist, must not have children of
       // their own and have the same occupancy probability
-      if (!OcTreeDataNode.nodeChildExists(node, 0))
+      if (!OcTreeNodeTools.nodeChildExists(node, 0))
          return false;
 
-      ColorOcTreeNode firstChild = (ColorOcTreeNode) node.getChild(0);
+      ColorOcTreeNode firstChild = OcTreeNodeTools.getNodeChild(node, 0);
       if (firstChild.hasAtLeastOneChild())
          return false;
 
       for (int i = 1; i < 8; i++)
       {
          // compare nodes only using their occupancy, ignoring color for pruning
-         if (!OcTreeDataNode.nodeChildExists(node, i))
+         if (!OcTreeNodeTools.nodeChildExists(node, i))
             return false;
-         OcTreeDataNode<Float> child = node.getChild(i);
+         OcTreeDataNode<Float> child = OcTreeNodeTools.getNodeChild(node, i);
          if (child.hasAtLeastOneChild() || !(child.epsilonEquals(firstChild)))
             return false;
       }
@@ -173,9 +174,9 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
          {
             for (int i = 0; i < 8; i++)
             {
-               if (OcTreeDataNode.nodeChildExists(node, i))
+               if (OcTreeNodeTools.nodeChildExists(node, i))
                {
-                  updateInnerOccupancyRecurs((ColorOcTreeNode) node.getChild(i), depth + 1);
+                  updateInnerOccupancyRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1);
                }
             }
          }
@@ -191,11 +192,6 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       public ColorOcTreeNode()
       {
          super();
-      }
-
-      public ColorOcTreeNode(ColorOcTreeNode other)
-      {
-         super(other);
       }
 
       public void setColor(Color color)
@@ -264,24 +260,6 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
          { // no child had a color other than white
             return new Color(255, 255, 255);
          }
-      }
-
-      @Override
-      public ColorOcTreeNode create()
-      {
-         return new ColorOcTreeNode();
-      }
-
-      @Override
-      public ColorOcTreeNode cloneRecursive()
-      {
-         return new ColorOcTreeNode(this);
-      }
-
-      @Override
-      public void allocateChildren()
-      {
-         children = new ColorOcTreeNode[8];
       }
    }
 

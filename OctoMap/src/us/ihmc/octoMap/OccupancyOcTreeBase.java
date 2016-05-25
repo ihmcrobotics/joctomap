@@ -14,8 +14,8 @@ import us.ihmc.octoMap.OcTreeKey.KeyBoolMap;
 import us.ihmc.octoMap.OcTreeKey.KeyRay;
 import us.ihmc.octoMap.OcTreeKey.KeySet;
 import us.ihmc.octoMap.ScanGraph.ScanNode;
-import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.node.OcTreeNode;
+import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OctreeKeyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 import us.ihmc.tools.io.printing.PrintTools;
@@ -1227,7 +1227,6 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       return updateNodeRecurs(node, node_just_created, key, depth, log_odds_update, false);
    }
 
-   @SuppressWarnings("unchecked")
    protected NODE updateNodeRecurs(NODE node, boolean node_just_created, OcTreeKey key, int depth, float log_odds_update, boolean lazy_eval)
    {
       boolean created_node = false;
@@ -1239,7 +1238,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       if (depth < treeDepth)
       {
          int pos = OctreeKeyTools.computeChildIdx(key, treeDepth - 1 - depth);
-         if (!OcTreeDataNode.nodeChildExists(node, pos))
+         if (!OcTreeNodeTools.nodeChildExists(node, pos))
          {
             // child does not exist, but maybe it's a pruned node?
             if (!node.hasAtLeastOneChild() && !node_just_created)
@@ -1257,10 +1256,10 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          }
 
          if (lazy_eval)
-            return updateNodeRecurs((NODE) node.getChild(pos), created_node, key, depth + 1, log_odds_update, lazy_eval);
+            return updateNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, log_odds_update, lazy_eval);
          else
          {
-            NODE retval = updateNodeRecurs((NODE) node.getChild(pos), created_node, key, depth + 1, log_odds_update, lazy_eval);
+            NODE retval = updateNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, log_odds_update, lazy_eval);
             // prune node if possible, otherwise set own probability
             // note: combining both did not lead to a speedup!
             if (pruneNode(node))
@@ -1309,7 +1308,6 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       return setNodeValueRecurs(node, node_just_created, key, depth, log_odds_value, false);
    }
 
-   @SuppressWarnings("unchecked")
    protected NODE setNodeValueRecurs(NODE node, boolean node_just_created, OcTreeKey key, int depth, float log_odds_value, boolean lazy_eval)
    {
       boolean created_node = false;
@@ -1321,7 +1319,7 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       if (depth < treeDepth)
       {
          int pos = OctreeKeyTools.computeChildIdx(key, treeDepth - 1 - depth);
-         if (!OcTreeDataNode.nodeChildExists(node, pos))
+         if (!OcTreeNodeTools.nodeChildExists(node, pos))
          {
             // child does not exist, but maybe it's a pruned node?
             if (!node.hasAtLeastOneChild() && !node_just_created)
@@ -1339,10 +1337,10 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          }
 
          if (lazy_eval)
-            return setNodeValueRecurs((NODE) node.getChild(pos), created_node, key, depth + 1, log_odds_value, lazy_eval);
+            return setNodeValueRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, log_odds_value, lazy_eval);
          else
          {
-            NODE retval = setNodeValueRecurs((NODE) node.getChild(pos), created_node, key, depth + 1, log_odds_value, lazy_eval);
+            NODE retval = setNodeValueRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, log_odds_value, lazy_eval);
             // prune node if possible, otherwise set own probability
             // note: combining both did not lead to a speedup!
             if (pruneNode(node))
@@ -1387,7 +1385,6 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       }
    }
 
-   @SuppressWarnings("unchecked")
    protected void updateInnerOccupancyRecurs(NODE node, int depth)
    {
       if (node == null)
@@ -1401,9 +1398,9 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
          {
             for (int i = 0; i < 8; i++)
             {
-               if (OcTreeDataNode.nodeChildExists(node, i))
+               if (OcTreeNodeTools.nodeChildExists(node, i))
                {
-                  updateInnerOccupancyRecurs((NODE) node.getChild(i), depth + 1);
+                  updateInnerOccupancyRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1);
                }
             }
          }
@@ -1411,7 +1408,6 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       }
    }
 
-   @SuppressWarnings("unchecked")
    protected void toMaxLikelihoodRecurs(NODE node, int depth, int max_depth)
    {
       if (node == null)
@@ -1421,9 +1417,9 @@ public abstract class OccupancyOcTreeBase<NODE extends OcTreeNode> extends Abstr
       {
          for (int i = 0; i < 8; i++)
          {
-            if (OcTreeDataNode.nodeChildExists(node, i))
+            if (OcTreeNodeTools.nodeChildExists(node, i))
             {
-               toMaxLikelihoodRecurs((NODE) node.getChild(i), depth + 1, max_depth);
+               toMaxLikelihoodRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1, max_depth);
             }
          }
       }

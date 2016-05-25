@@ -1,9 +1,14 @@
 package us.ihmc.octoMap.node;
 
 import java.util.Arrays;
+import java.util.HashMap;
+
+import us.ihmc.robotics.lists.GenericTypeBuilder;
 
 public abstract class OcTreeDataNode<V>
 {
+   private HashMap<Class<? extends OcTreeDataNode<?>>, GenericTypeBuilder<? extends OcTreeDataNode<?>>> builderCache = OcTreeNodeTools.BUILDER_CACHE_THREAD_LOCAL.get();
+
    protected V value;
    protected OcTreeDataNode<V>[] children;
 
@@ -14,17 +19,6 @@ public abstract class OcTreeDataNode<V>
    public OcTreeDataNode(V initialValue)
    {
       value = initialValue;
-   }
-
-   public OcTreeDataNode(OcTreeDataNode<V> other)
-   {
-      copyData(other);
-
-      if (other.hasAtLeastOneChild())
-         allocateChildren();
-
-      for (int i = 0; i < 8; i++)
-         children[i] = other.children[i].cloneRecursive();
    }
 
    public void setValue(V value)
@@ -44,11 +38,37 @@ public abstract class OcTreeDataNode<V>
 
    public abstract void updateOccupancyChildren();
 
-   public abstract void allocateChildren();
+   @SuppressWarnings("unchecked")
+   public final void allocateChildren()
+   {
+      children = new OcTreeDataNode[8];
+   }
 
-   public abstract OcTreeDataNode<V> cloneRecursive();
+   public final OcTreeDataNode<V> cloneRecursive()
+   {
+      OcTreeDataNode<V> ret = create();
+      ret.copyData(this);
 
-   public abstract OcTreeDataNode<V> create();
+      if (hasAtLeastOneChild())
+         allocateChildren();
+
+      for (int i = 0; i < 8; i++)
+         ret.children[i] = children[i].cloneRecursive();
+
+      return ret;
+   }
+
+   @SuppressWarnings("unchecked")
+   public final OcTreeDataNode<V> create()
+   {
+      GenericTypeBuilder<? extends OcTreeDataNode<?>> builder = builderCache.get(getClass());
+      if (builder == null)
+      {
+         builder = (GenericTypeBuilder<? extends OcTreeDataNode<?>>) GenericTypeBuilder.createBuilderWithEmptyConstructor(getClass());
+         builderCache.put((Class<? extends OcTreeDataNode<?>>) getClass(), builder);
+      }
+      return (OcTreeDataNode<V>) builder.newInstance();
+   }
 
    public final boolean hasArrayForChildren()
    {
@@ -70,7 +90,7 @@ public abstract class OcTreeDataNode<V>
 
    public final void setChild(int childIndex, OcTreeDataNode<V> newChild)
    {
-      OcTreeDataNode.checkChildIndex(childIndex);
+      OcTreeNodeTools.checkChildIndex(childIndex);
       if (!getClass().isInstance(newChild))
          throw new RuntimeException("Cannot add a child of a different type");
       children[childIndex] = newChild;
@@ -78,9 +98,9 @@ public abstract class OcTreeDataNode<V>
 
    public final OcTreeDataNode<V> getChild(int childIndex)
    {
-      checkChildIndex(childIndex);
-      checkNodeHasChildren(this);
-      checkNodeChildNotNull(this, childIndex);
+      OcTreeNodeTools.checkChildIndex(childIndex);
+      OcTreeNodeTools.checkNodeHasChildren(this);
+      OcTreeNodeTools.checkNodeChildNotNull(this, childIndex);
       return children == null ? null : getChildUnsafe(childIndex);
    }
 
@@ -91,7 +111,7 @@ public abstract class OcTreeDataNode<V>
 
    public final OcTreeDataNode<V> removeChild(int childIndex)
    {
-      OcTreeDataNode.checkChildIndex(childIndex);
+      OcTreeNodeTools.checkChildIndex(childIndex);
       return removeChildUnsafe(childIndex);
    }
 
@@ -124,34 +144,5 @@ public abstract class OcTreeDataNode<V>
          }
       }
       return getClass().getSimpleName() + ": value: " + value + ", children: " + Arrays.toString(childrenNames);
-   }
-
-   /** 
-    * Safe test if node has a child at index childIdx.
-    * First tests if there are any children. Replaces node->childExists(...)
-    * \return true if the child at childIdx exists
-    */
-   public final static boolean nodeChildExists(OcTreeDataNode<?> node, int childIndex)
-   {
-      checkChildIndex(childIndex);
-      return node.children != null && node.children[childIndex] != null;
-   }
-
-   public final static void checkChildIndex(int childIndex)
-   {
-      if (childIndex > 7)
-         throw new RuntimeException("Bad child index :" + childIndex + ", expected index to be in [0, 7].");
-   }
-
-   public final static void checkNodeHasChildren(OcTreeDataNode<?> node)
-   {
-      if (node.children == null)
-         throw new RuntimeException("The given node has no children.");
-   }
-
-   public final static void checkNodeChildNotNull(OcTreeDataNode<?> node, int childIndex)
-   {
-      if (node.children[childIndex] == null)
-         throw new RuntimeException("Child is already null.");
    }
 }

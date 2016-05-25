@@ -9,7 +9,7 @@ import javax.vecmath.Point3d;
 import org.junit.Assert;
 
 import us.ihmc.octoMap.ColorOcTree.ColorOcTreeNode;
-import us.ihmc.octoMap.node.OcTreeDataNode;
+import us.ihmc.octoMap.node.OcTreeNodeTools;
 
 public class ColorTreeTest
 {
@@ -122,10 +122,10 @@ public class ColorTreeTest
          assertTrue(parentNode.hasAtLeastOneChild());
 
          // only one child exists:
-         assertTrue(OcTreeDataNode.nodeChildExists(parentNode, 0));
+         assertTrue(OcTreeNodeTools.nodeChildExists(parentNode, 0));
          for (int i = 1; i < 8; ++i)
          {
-            assertFalse(OcTreeDataNode.nodeChildExists(parentNode, i));
+            assertFalse(OcTreeNodeTools.nodeChildExists(parentNode, i));
          }
 
          tree.deleteNodeChild(parentNode, 0);

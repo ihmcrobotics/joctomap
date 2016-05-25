@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import us.ihmc.octoMap.OcTreeBaseImpl;
 import us.ihmc.octoMap.node.OcTreeDataNode;
+import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.robotics.MathTools;
 
 public class OcTreeIterable<NODE extends OcTreeDataNode<?>> implements Iterable<OcTreeSuperNode<NODE>>
@@ -75,7 +76,7 @@ public class OcTreeIterable<NODE extends OcTreeDataNode<?>> implements Iterable<
             // push on stack in reverse order
             for (int i = 7; i >= 0; i--)
             {
-               if (OcTreeDataNode.nodeChildExists(currentNode.getNode(), i))
+               if (OcTreeNodeTools.nodeChildExists(currentNode.getNode(), i))
                {
                   OcTreeSuperNode<NODE> newNode = new OcTreeSuperNode<>(tree, currentNode, i, maxDepth);
                   stack.add(newNode);
