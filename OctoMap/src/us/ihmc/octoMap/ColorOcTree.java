@@ -4,6 +4,7 @@ import us.ihmc.octoMap.ColorOcTree.ColorOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeDataNode;
 import us.ihmc.octoMap.node.OcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
+import us.ihmc.robotics.MathTools;
 
 public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
 {
@@ -82,80 +83,74 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
    }
 
    // set node color at given key or coordinate. Replaces previous color.
-   public ColorOcTreeNode setNodeColor(OcTreeKey key, int r, int g, int b)
+   public ColorOcTreeNode setNodeColor(OcTreeKey key, int red, int green, int blue)
    {
       ColorOcTreeNode n = search(key);
       if (n != null)
       {
-         n.setColor(r, g, b);
+         n.setColor(red, green, blue);
       }
       return n;
    }
 
-   public ColorOcTreeNode setNodeColor(double x, double y, double z, int r, int g, int b)
+   public ColorOcTreeNode setNodeColor(double x, double y, double z, int red, int green, int blue)
    {
       OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
          return null;
-      return setNodeColor(key, r, g, b);
+      return setNodeColor(key, red, green, blue);
    }
 
    // integrate color measurement at given key or coordinate. Average with previous color
-   public ColorOcTreeNode averageNodeColor(OcTreeKey key, int r, int g, int b)
+   public ColorOcTreeNode averageNodeColor(OcTreeKey key, int red, int green, int blue)
    {
-      ColorOcTreeNode n = search(key);
-      if (n != null)
+      ColorOcTreeNode node = search(key);
+      if (node != null)
       {
-         if (n.isColorSet())
+         if (node.isColorSet())
          {
-            Color prev_color = n.getColor();
-            n.setColor((prev_color.red + r) / 2, (prev_color.green + g) / 2, (prev_color.blue + b) / 2);
+            node.interpolateColor(0.5, red, green, blue);
          }
          else
          {
-            n.setColor(r, g, b);
+            node.setColor(red, green, blue);
          }
       }
-      return n;
+      return node;
    }
 
-   public ColorOcTreeNode averageNodeColor(double x, double y, double z, int r, int g, int b)
+   public ColorOcTreeNode averageNodeColor(double x, double y, double z, int red, int green, int blue)
    {
       OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
          return null;
-      return averageNodeColor(key, r, g, b);
+      return averageNodeColor(key, red, green, blue);
    }
 
    // integrate color measurement at given key or coordinate. Average with previous color
-   public ColorOcTreeNode integrateNodeColor(OcTreeKey key, int r, int g, int b)
+   public ColorOcTreeNode integrateNodeColor(OcTreeKey key, int red, int green, int blue)
    {
-      ColorOcTreeNode n = search(key);
-      if (n != null)
+      ColorOcTreeNode node = search(key);
+      if (node != null)
       {
-         if (n.isColorSet())
+         if (node.isColorSet())
          {
-            Color prev_color = n.getColor();
-            double node_prob = n.getOccupancy();
-            int new_r = (int) ((double) prev_color.red * node_prob + (double) r * (0.99 - node_prob));
-            int new_g = (int) ((double) prev_color.green * node_prob + (double) g * (0.99 - node_prob));
-            int new_b = (int) ((double) prev_color.blue * node_prob + (double) b * (0.99 - node_prob));
-            n.setColor(new_r, new_g, new_b);
+            node.integrateColor(red, green, blue);
          }
          else
          {
-            n.setColor(r, g, b);
+            node.setColor(red, green, blue);
          }
       }
-      return n;
+      return node;
    }
 
-   public ColorOcTreeNode integrateNodeColor(double x, double y, double z, int r, int g, int b)
+   public ColorOcTreeNode integrateNodeColor(double x, double y, double z, int red, int green, int blue)
    {
       OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
       if (key == null)
          return null;
-      return integrateNodeColor(key, r, g, b);
+      return integrateNodeColor(key, red, green, blue);
    }
 
    // update inner nodes, sets color to average child color
@@ -187,7 +182,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
 
    public static class ColorOcTreeNode extends OcTreeNode
    {
-      private final Color color = new Color();
+      private final Color color = new Color(255, 255, 255);
 
       public ColorOcTreeNode()
       {
@@ -209,6 +204,24 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
          return color;
       }
 
+      public void interpolateColor(double alpha, int red, int green, int blue)
+      {
+         color.interpolate(alpha, red, green, blue);
+      }
+
+      public void integrateColor(int red, int green, int blue)
+      {
+         double occupancyProbability = getOccupancy();
+         color.setRed(integrateColorParameter(color.getRed(), red, occupancyProbability));
+         color.setGreen(integrateColorParameter(color.getGreen(), green, occupancyProbability));
+         color.setBlue(integrateColorParameter(color.getBlue(), blue, occupancyProbability));
+      }
+
+      private static int integrateColorParameter(int currentColorParameter, int newColorParameter, double occupancy)
+      {
+         return (int) ((double) currentColorParameter * occupancy + (double) newColorParameter * (0.99 - occupancy));
+      }
+
       public void copyData(ColorOcTreeNode other)
       {
          super.copyData(other);
@@ -218,7 +231,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       // has any color been integrated? (pure white is very unlikely...)
       public boolean isColorSet()
       {
-         return color.red != 255 || color.green != 255 || color.blue != 255;
+         return color.getRed() != 255 || color.getGreen() != 255 || color.getBlue() != 255;
       }
 
       public void updateColorChildren()
@@ -228,10 +241,10 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
 
       public Color getAverageChildColor()
       {
-         int mr = 0;
-         int mg = 0;
-         int mb = 0;
-         int c = 0;
+         int meanRed = 0;
+         int meanGreen = 0;
+         int meanBlue = 0;
+         int count = 0;
 
          if (children != null)
          {
@@ -241,20 +254,21 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
 
                if (child != null && child.isColorSet())
                {
-                  mr += child.getColor().red;
-                  mg += child.getColor().green;
-                  mb += child.getColor().blue;
-                  ++c;
+                  Color childColor = child.getColor();
+                  meanRed += childColor.getRed();
+                  meanGreen += childColor.getGreen();
+                  meanBlue += childColor.getBlue();
+                  ++count;
                }
             }
          }
 
-         if (c > 0)
+         if (count > 0)
          {
-            mr /= c;
-            mg /= c;
-            mb /= c;
-            return new Color(mr, mg, mb);
+            meanRed /= count;
+            meanGreen /= count;
+            meanBlue /= count;
+            return new Color(meanRed, meanGreen, meanBlue);
          }
          else
          { // no child had a color other than white
@@ -265,16 +279,21 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
 
    public static class Color
    {
-      private int red, green, blue;
+      private int red, green, blue, opacity;
 
       public Color()
       {
-         this(255, 255, 255);
+         this(255, 255, 255, 255);
       }
 
       public Color(int red, int green, int blue)
       {
-         set(red, green, blue);
+         this(red, green, blue, 255);
+      }
+
+      public Color(int red, int green, int blue, int opacity)
+      {
+         set(red, green, blue, opacity);
       }
 
       public Color(Color other)
@@ -284,9 +303,16 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
 
       public void set(int red, int green, int blue)
       {
+         set(red, green, blue, 255);
+      }
+
+      public void set(int red, int green, int blue, int opacity)
+      {
+         checkColor(red, green, blue, opacity);
          this.red = red;
          this.green = green;
          this.blue = blue;
+         this.opacity = opacity;
       }
 
       public void set(Color other)
@@ -294,11 +320,128 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
          red = other.red;
          green = other.green;
          blue = other.blue;
+         opacity = other.opacity;
+      }
+
+      public void setRed(int red)
+      {
+         checkRedValue(red);
+         this.red = red;
+      }
+
+      public void setGreen(int green)
+      {
+         checkGreenValue(green);
+         this.green = green;
+      }
+
+      public void setBlue(int blue)
+      {
+         checkBlueValue(blue);
+         this.blue = blue;
+      }
+
+      public void setOpacity(int opacity)
+      {
+         checkOpacityValue(opacity);
+         this.opacity = opacity;
+      }
+
+      public void interpolate(double alpha, int red, int green, int blue)
+      {
+         interpolate(alpha, red, green, blue, 255);
+      }
+
+      public void interpolate(double alpha, int red, int green, int blue, int opacity)
+      {
+         MathTools.checkIfInRange(alpha, 0.0, 1.0);
+         this.red = interpolate(alpha, this.red, red);
+         this.green = interpolate(alpha, this.green, green);
+         this.blue = interpolate(alpha, this.blue, blue);
+         this.opacity = interpolate(alpha, this.opacity, opacity);
+      }
+
+      public void interpolate(double alpha, Color color)
+      {
+         interpolate(alpha, this, color);
+      }
+
+      public void interpolate(double alpha, Color firstColor, Color secondColor)
+      {
+         MathTools.checkIfInRange(alpha, 0.0, 1.0);
+         red = interpolate(alpha, firstColor.red, secondColor.red);
+         green = interpolate(alpha, firstColor.green, secondColor.green);
+         blue = interpolate(alpha, firstColor.blue, secondColor.blue);
+         opacity = interpolate(alpha, firstColor.opacity, secondColor.opacity);
+      }
+
+      private static int interpolate(double alpha, int firstInteger, int secondInteger)
+      {
+         return (int) ((1.0 - alpha) * firstInteger + alpha * secondInteger);
+      }
+
+      public int getRed()
+      {
+         return red;
+      }
+
+      public int getGreen()
+      {
+         return green;
+      }
+
+      public int getBlue()
+      {
+         return blue;
+      }
+
+      public int getOpacity()
+      {
+         return opacity;
       }
 
       public boolean equals(Color other)
       {
-         return red == other.red && green == other.green && blue == other.blue;
+         return red == other.red && green == other.green && blue == other.blue && opacity == other.opacity;
+      }
+
+      private static final String RED_STR = "red";
+      private static final String GREEN_STR = "green";
+      private static final String BLUE_STR = "blue";
+      private static final String OPACITY_STR = "opacity";
+
+      private static final void checkColor(int red, int green, int blue, int opacity)
+      {
+         checkRedValue(red);
+         checkGreenValue(green);
+         checkBlueValue(blue);
+         checkOpacityValue(opacity);
+      }
+
+      private static final void checkRedValue(int red)
+      {
+         checkParameterRange(RED_STR, red);
+      }
+
+      private static final void checkGreenValue(int green)
+      {
+         checkParameterRange(GREEN_STR, green);
+      }
+
+      private static final void checkBlueValue(int blue)
+      {
+         checkParameterRange(BLUE_STR, blue);
+      }
+
+      private static final void checkOpacityValue(int opacity)
+      {
+         checkParameterRange(OPACITY_STR, opacity);
+      }
+
+      private static final void checkParameterRange(String parameterName, int value)
+      {
+         if (value < 0 || value > 255)
+            throw new IllegalArgumentException("Color parameter " + parameterName + " outside of expected range:" + value);
       }
    }
 }
