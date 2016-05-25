@@ -21,11 +21,4 @@ public class OcTree extends OccupancyOcTreeBase<OccupancyOcTreeNode>
    {
       return new OcTree(resolution);
    }
-
-   public String getTreeType()
-   {
-      return "OcTree";
-   }
-
-   
 }

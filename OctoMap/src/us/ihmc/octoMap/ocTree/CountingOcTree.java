@@ -90,12 +90,6 @@ public class CountingOcTree extends AbstractOcTree<CountingOcTreeNode>
    }
 
    @Override
-   public String getTreeType()
-   {
-      return getClass().getSimpleName();
-   }
-
-   @Override
    protected CountingOcTreeNode createRootNode()
    {
       return new CountingOcTreeNode();

@@ -136,9 +136,9 @@ public abstract class OcTreeBaseImpl<NODE extends AbstractOcTreeNode<NODE>> impl
       return true;
    }
 
-   public String getTreeType()
+   public final String getTreeType()
    {
-      return "OcTreeBaseImpl";
+      return getClass().getSimpleName();
    }
 
    /// Change the resolution of the octree, scaling all voxels.

@@ -24,11 +24,6 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       return new ColorOcTree(resolution);
    }
 
-   public String getTreeType()
-   {
-      return "ColorOcTree";
-   }
-
    /**
    * Prunes a node when it is collapsible. This overloaded
    * version only considers the node occupancy for pruning,

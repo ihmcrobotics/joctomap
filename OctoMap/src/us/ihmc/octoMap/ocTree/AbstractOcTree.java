@@ -23,7 +23,4 @@ public abstract class AbstractOcTree<NODE extends AbstractOcTreeNode<NODE>> exte
 
    /// virtual constructor: creates a new object of same type
    public abstract AbstractOcTree<NODE> create();
-
-   /// returns actual class name as string for identification
-   public abstract String getTreeType();
 }
