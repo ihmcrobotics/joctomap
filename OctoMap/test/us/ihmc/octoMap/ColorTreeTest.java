@@ -6,8 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import javax.vecmath.Point3d;
 
-import org.junit.Assert;
-
 import us.ihmc.octoMap.node.ColorOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.ColorOcTree;
