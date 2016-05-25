@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.ocTree.baseImplementation;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,10 +37,8 @@ import us.ihmc.tools.io.printing.PrintTools;
  *
  * \tparam NODE Node class to be used in tree (usually derived from
  *    OcTreeDataNode)
- * \tparam INTERFACE Interface to be derived from, should be either
- *    AbstractOcTree or AbstractOccupancyOcTree
  */
-public abstract class OcTreeBaseImpl<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
+public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
    protected NODE root; ///< root NODE, null for empty tree
 
@@ -63,14 +61,14 @@ public abstract class OcTreeBaseImpl<NODE extends AbstractOcTreeNode<NODE>> impl
    /// data structure for ray casting, array for multithreading
    protected List<KeyRay> keyrays = new ArrayList<>();
 
-   public OcTreeBaseImpl(double resolution)
+   public AbstractOcTreeBase(double resolution)
    {
       this(resolution, 16, 32768);
    }
 
    /// Constructor to enable derived classes to change tree constants.
    /// This usually requires a re-implementation of some core tree-traversal functions as well!
-   protected OcTreeBaseImpl(double resolution, int tree_depth, int tree_max_val)
+   protected AbstractOcTreeBase(double resolution, int tree_depth, int tree_max_val)
    {
       root = null;
       this.resolution = resolution;
@@ -82,7 +80,7 @@ public abstract class OcTreeBaseImpl<NODE extends AbstractOcTreeNode<NODE>> impl
       // no longer create an empty root node - only on demand
    }
 
-   public OcTreeBaseImpl(OcTreeBaseImpl<NODE> other)
+   public AbstractOcTreeBase(AbstractOcTreeBase<NODE> other)
    {
       resolution = other.resolution;
       treeDepth = other.treeDepth;
@@ -98,7 +96,7 @@ public abstract class OcTreeBaseImpl<NODE extends AbstractOcTreeNode<NODE>> impl
     * metadata (resolution etc) matches. No memory is cleared
     * in this function
     */
-   public void swapContent(OcTreeBaseImpl<NODE> other)
+   public void swapContent(AbstractOcTreeBase<NODE> other)
    {
       NODE this_root = root;
       root = other.root;
@@ -111,7 +109,7 @@ public abstract class OcTreeBaseImpl<NODE extends AbstractOcTreeNode<NODE>> impl
 
    /// Comparison between two octrees, all meta data, all
    /// nodes, and the structure must be identical
-   public boolean epsilonEquals(OcTreeBaseImpl<NODE> other)
+   public boolean epsilonEquals(AbstractOcTreeBase<NODE> other)
    {
       if (treeDepth != other.treeDepth || treeMaximumValue != other.treeMaximumValue || resolution != other.resolution || treeSize != other.treeSize)
       {

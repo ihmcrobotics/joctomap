@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.ocTree.baseImplementation;
 
 import static us.ihmc.octoMap.tools.OctoMapTools.logodds;
 import static us.ihmc.octoMap.tools.OctoMapTools.probability;
@@ -9,7 +9,7 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.robotics.MathTools;
 
-public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends OcTreeBaseImpl<NODE>
+public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOcTreeBase<NODE>
 {
    // occupancy parameters of tree, stored in logodds:
    protected float clamping_thres_min;
@@ -56,13 +56,13 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    /// queries whether a node is occupied according to the tree's parameter for "occupancy"
    public boolean isNodeOccupied(NODE occupancyNode)
    {
-      return (occupancyNode.getLogOdds() >= this.occ_prob_thres_log);
+      return occupancyNode.getLogOdds() >= this.occ_prob_thres_log;
    }
 
    /// queries whether a node is at the clamping threshold according to the tree's parameter
    public boolean isNodeAtThreshold(NODE occupancyNode)
    {
-      return (occupancyNode.getLogOdds() >= this.clamping_thres_max || occupancyNode.getLogOdds() <= this.clamping_thres_min);
+      return occupancyNode.getLogOdds() >= this.clamping_thres_max || occupancyNode.getLogOdds() <= this.clamping_thres_min;
    }
 
    /**

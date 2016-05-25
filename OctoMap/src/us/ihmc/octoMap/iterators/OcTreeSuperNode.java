@@ -4,19 +4,19 @@ import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
-import us.ihmc.octoMap.ocTree.OcTreeBaseImpl;
+import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
 {
-   private final OcTreeBaseImpl<NODE> tree;
+   private final AbstractOcTreeBase<NODE> tree;
    private final NODE node;
    private final OcTreeKey key = new OcTreeKey();
    private final int depth;
    private final int maxDepth;
 
    /** Constructor for the root node */
-   OcTreeSuperNode(OcTreeBaseImpl<NODE> tree, int maxDepth)
+   OcTreeSuperNode(AbstractOcTreeBase<NODE> tree, int maxDepth)
    {
       this.tree = tree;
       this.maxDepth = maxDepth;
@@ -27,7 +27,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
    }
 
    /** Constructor for nodes inside the tree */
-   OcTreeSuperNode(OcTreeBaseImpl<NODE> tree, OcTreeSuperNode<NODE> parentNode, int childIndex, int maxDepth)
+   OcTreeSuperNode(AbstractOcTreeBase<NODE> tree, OcTreeSuperNode<NODE> parentNode, int childIndex, int maxDepth)
    {
       this.tree = tree;
       this.maxDepth = maxDepth;

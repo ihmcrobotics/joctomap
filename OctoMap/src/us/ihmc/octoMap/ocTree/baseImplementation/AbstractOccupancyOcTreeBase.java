@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.ocTree.baseImplementation;
 
 import static us.ihmc.octoMap.MCTables.edgeTable;
 import static us.ihmc.octoMap.MCTables.triTable;
@@ -22,7 +22,7 @@ import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 import us.ihmc.tools.io.printing.PrintTools;
 
-public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOccupancyOcTree<NODE>
+public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOccupancyOcTree<NODE>
 {
    protected boolean useBoundingBoxLimit; ///< use bounding box for queries (needs to be set)?
    protected final Point3d boundingBoxMin = new Point3d();
@@ -34,7 +34,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
    /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
    protected KeyBoolMap changedKeys = new KeyBoolMap();
 
-   public OccupancyOcTreeBase(double resolution)
+   public AbstractOccupancyOcTreeBase(double resolution)
    {
       super(resolution);
       useBoundingBoxLimit = false;
@@ -43,14 +43,14 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
 
    /// Constructor to enable derived classes to change tree constants.
    /// This usually requires a re-implementation of some core tree-traversal functions as well!
-   protected OccupancyOcTreeBase(double resolution, int tree_depth, int tree_max_val)
+   protected AbstractOccupancyOcTreeBase(double resolution, int tree_depth, int tree_max_val)
    {
       super(resolution, tree_depth, tree_max_val);
       useBoundingBoxLimit = false;
       useChangeDetection = false;
    }
 
-   public OccupancyOcTreeBase(OccupancyOcTreeBase<NODE> other)
+   public AbstractOccupancyOcTreeBase(AbstractOccupancyOcTreeBase<NODE> other)
    {
       super(other);
       useBoundingBoxLimit = other.useBoundingBoxLimit;
@@ -63,7 +63,6 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
    }
 
    public void insertPointCloud(PointCloud scan, Point3d sensor_origin)
-
    {
       insertPointCloud(scan, sensor_origin, -1.0, false, false);
    }

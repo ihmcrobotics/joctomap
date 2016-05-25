@@ -2,8 +2,9 @@ package us.ihmc.octoMap.ocTree;
 
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OcTreeNodeStamped;
+import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
 
-public class OcTreeStamped extends OccupancyOcTreeBase<OcTreeNodeStamped>
+public class OcTreeStamped extends AbstractOccupancyOcTreeBase<OcTreeNodeStamped>
 {
 
    public OcTreeStamped(double resolution)

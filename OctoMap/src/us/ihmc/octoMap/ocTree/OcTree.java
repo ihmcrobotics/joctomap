@@ -1,8 +1,9 @@
 package us.ihmc.octoMap.ocTree;
 
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
+import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
 
-public class OcTree extends OccupancyOcTreeBase<OccupancyOcTreeNode>
+public class OcTree extends AbstractOccupancyOcTreeBase<OccupancyOcTreeNode>
 {
    public OcTree(double resolution)
    {
@@ -13,12 +14,5 @@ public class OcTree extends OccupancyOcTreeBase<OccupancyOcTreeNode>
    protected OccupancyOcTreeNode createRootNode()
    {
       return new OccupancyOcTreeNode();
-   }
-
-   /// virtual constructor: creates a new object of same type
-   /// (Covariant return type requires an up-to-date compiler)
-   public OcTree create()
-   {
-      return new OcTree(resolution);
    }
 }

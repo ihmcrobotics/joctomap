@@ -9,9 +9,10 @@ import javax.vecmath.Point3d;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.CountingOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
+import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
-public class CountingOcTree extends AbstractOcTree<CountingOcTreeNode>
+public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
 {
    public CountingOcTree(double resolution)
    {
@@ -81,12 +82,6 @@ public class CountingOcTree extends AbstractOcTree<CountingOcTreeNode>
             node_centers.add(keyToCoord(parent_key, depth));
          }
       }
-   }
-
-   @Override
-   public AbstractOcTree<CountingOcTreeNode> create()
-   {
-      return new CountingOcTree(resolution);
    }
 
    @Override

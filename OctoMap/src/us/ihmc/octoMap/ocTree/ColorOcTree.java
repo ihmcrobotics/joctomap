@@ -3,8 +3,9 @@ package us.ihmc.octoMap.ocTree;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.ColorOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
+import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
 
-public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
+public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
 {
    public ColorOcTree(double resolution)
    {
@@ -30,6 +31,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
    * different colors of child nodes are ignored.
    * @return true if pruning was successful
    */
+   @Override
    public boolean pruneNode(ColorOcTreeNode node)
    {
       if (!isNodeCollapsible(node))
@@ -51,6 +53,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
       return true;
    }
 
+   @Override
    public boolean isNodeCollapsible(ColorOcTreeNode node)
    {
       // all children must exist, must not have children of
@@ -68,7 +71,7 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
          if (!OcTreeNodeTools.nodeChildExists(node, i))
             return false;
          ColorOcTreeNode child = OcTreeNodeTools.getNodeChild(node, i);
-         if (child.hasAtLeastOneChild() || !(child.epsilonEquals(firstChild)))
+         if (child.hasAtLeastOneChild() || !child.epsilonEquals(firstChild))
             return false;
       }
 
@@ -147,11 +150,13 @@ public class ColorOcTree extends OccupancyOcTreeBase<ColorOcTreeNode>
    }
 
    // update inner nodes, sets color to average child color
+   @Override
    public void updateInnerOccupancy()
    {
       updateInnerOccupancyRecurs(root, 0);
    }
 
+   @Override
    protected void updateInnerOccupancyRecurs(ColorOcTreeNode node, int depth)
    {
       // only recurse and update for inner nodes:

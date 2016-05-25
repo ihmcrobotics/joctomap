@@ -7,7 +7,7 @@ import javax.vecmath.Point3d;
 import us.ihmc.octoMap.iterators.LeafIterable.LeafIterator;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
-import us.ihmc.octoMap.ocTree.OcTreeBaseImpl;
+import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 
 /**
  * Bounding-box leaf iterator. This iterator will traverse all leaf nodes
@@ -15,27 +15,27 @@ import us.ihmc.octoMap.ocTree.OcTreeBaseImpl;
  */
 public class LeafBoundingBoxIterable<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
-   private final OcTreeBaseImpl<NODE> tree;
+   private final AbstractOcTreeBase<NODE> tree;
    private final int maxDepth;
    private final OcTreeKey minKey = new OcTreeKey();
    private final OcTreeKey maxKey = new OcTreeKey();
 
-   public LeafBoundingBoxIterable(OcTreeBaseImpl<NODE> tree, Point3d min, Point3d max)
+   public LeafBoundingBoxIterable(AbstractOcTreeBase<NODE> tree, Point3d min, Point3d max)
    {
       this(tree, min, max, 0);
    }
 
-   public LeafBoundingBoxIterable(OcTreeBaseImpl<NODE> tree, Point3d min, Point3d max, int maxDepth)
+   public LeafBoundingBoxIterable(AbstractOcTreeBase<NODE> tree, Point3d min, Point3d max, int maxDepth)
    {
       this(tree, tree.convertCartesianCoordinateToKey(min), tree.convertCartesianCoordinateToKey(max), maxDepth);
    }
 
-   public LeafBoundingBoxIterable(OcTreeBaseImpl<NODE> tree, OcTreeKey min, OcTreeKey max)
+   public LeafBoundingBoxIterable(AbstractOcTreeBase<NODE> tree, OcTreeKey min, OcTreeKey max)
    {
       this(tree, min, max, 0);
    }
 
-   public LeafBoundingBoxIterable(OcTreeBaseImpl<NODE> tree, OcTreeKey min, OcTreeKey max, int maxDepth)
+   public LeafBoundingBoxIterable(AbstractOcTreeBase<NODE> tree, OcTreeKey min, OcTreeKey max, int maxDepth)
    {
       this.tree = tree;
       this.maxDepth = maxDepth;
@@ -54,7 +54,7 @@ public class LeafBoundingBoxIterable<NODE extends AbstractOcTreeNode<NODE>> impl
       private final OcTreeKey minKey = new OcTreeKey();
       private final OcTreeKey maxKey = new OcTreeKey();
 
-      public LeafBoundingBoxIterator(OcTreeBaseImpl<NODE> tree, OcTreeKey min, OcTreeKey max, int maxDepth)
+      public LeafBoundingBoxIterator(AbstractOcTreeBase<NODE> tree, OcTreeKey min, OcTreeKey max, int maxDepth)
       {
          super(tree, maxDepth);
          minKey.set(min);
