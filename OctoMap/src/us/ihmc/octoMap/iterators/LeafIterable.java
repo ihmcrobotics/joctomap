@@ -3,7 +3,7 @@ package us.ihmc.octoMap.iterators;
 import java.util.Iterator;
 
 import us.ihmc.octoMap.iterators.OcTreeIterable.OcTreeIterator;
-import us.ihmc.octoMap.node.OcTreeDataNode;
+import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.ocTree.OcTreeBaseImpl;
 
 /**
@@ -11,7 +11,7 @@ import us.ihmc.octoMap.ocTree.OcTreeBaseImpl;
  * Inner nodes are skipped.
  *
  */
-public class LeafIterable<NODE extends OcTreeDataNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
+public class LeafIterable<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
    private final OcTreeBaseImpl<NODE> tree;
    private final int maxDepth;
@@ -33,7 +33,7 @@ public class LeafIterable<NODE extends OcTreeDataNode<NODE>> implements Iterable
       return new LeafIterator<>(tree, maxDepth);
    }
 
-   public static class LeafIterator<NODE extends OcTreeDataNode<NODE>> extends OcTreeIterator<NODE>
+   public static class LeafIterator<NODE extends AbstractOcTreeNode<NODE>> extends OcTreeIterator<NODE>
    {
       public LeafIterator(OcTreeBaseImpl<NODE> tree)
       {

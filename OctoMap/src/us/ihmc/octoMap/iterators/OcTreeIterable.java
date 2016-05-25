@@ -3,12 +3,12 @@ package us.ihmc.octoMap.iterators;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 
-import us.ihmc.octoMap.node.OcTreeDataNode;
+import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.OcTreeBaseImpl;
 import us.ihmc.robotics.MathTools;
 
-public class OcTreeIterable<NODE extends OcTreeDataNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
+public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
    private final OcTreeBaseImpl<NODE> tree;
    private final int maxDepth;
@@ -30,7 +30,7 @@ public class OcTreeIterable<NODE extends OcTreeDataNode<NODE>> implements Iterab
       return new OcTreeIterator<>(tree, maxDepth);
    }
 
-   public static class OcTreeIterator<NODE extends OcTreeDataNode<NODE>> implements Iterator<OcTreeSuperNode<NODE>>
+   public static class OcTreeIterator<NODE extends AbstractOcTreeNode<NODE>> implements Iterator<OcTreeSuperNode<NODE>>
    {
       private final OcTreeBaseImpl<NODE> tree; ///< Octree this iterator is working on
       private final int maxDepth; ///< Maximum depth for depth-limited queries

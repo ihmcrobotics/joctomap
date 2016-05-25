@@ -13,7 +13,7 @@ import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.KeyRay;
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.node.OcTreeDataNode;
+import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeCoordinateConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
@@ -40,7 +40,7 @@ import us.ihmc.tools.io.printing.PrintTools;
  * \tparam INTERFACE Interface to be derived from, should be either
  *    AbstractOcTree or AbstractOccupancyOcTree
  */
-public abstract class OcTreeBaseImpl<NODE extends OcTreeDataNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
+public abstract class OcTreeBaseImpl<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
    protected NODE root; ///< root NODE, null for empty tree
 

@@ -11,10 +11,10 @@ import us.ihmc.robotics.lists.GenericTypeBuilder;
  */
 public class OcTreeNodeTools
 {
-   static final ThreadLocal<HashMap<Class<? extends OcTreeDataNode<?>>, GenericTypeBuilder<? extends OcTreeDataNode<?>>>> BUILDER_CACHE_THREAD_LOCAL = new ThreadLocal<HashMap<Class<? extends OcTreeDataNode<?>>, GenericTypeBuilder<? extends OcTreeDataNode<?>>>>()
+   static final ThreadLocal<HashMap<Class<? extends AbstractOcTreeNode<?>>, GenericTypeBuilder<? extends AbstractOcTreeNode<?>>>> BUILDER_CACHE_THREAD_LOCAL = new ThreadLocal<HashMap<Class<? extends AbstractOcTreeNode<?>>, GenericTypeBuilder<? extends AbstractOcTreeNode<?>>>>()
    {
       @Override
-      public HashMap<Class<? extends OcTreeDataNode<?>>, GenericTypeBuilder<? extends OcTreeDataNode<?>>> initialValue()
+      public HashMap<Class<? extends AbstractOcTreeNode<?>>, GenericTypeBuilder<? extends AbstractOcTreeNode<?>>> initialValue()
       {
          return new HashMap<>();
       }
@@ -25,7 +25,7 @@ public class OcTreeNodeTools
     * First tests if there are any children. Replaces node->childExists(...)
     * \return true if the child at childIdx exists
     */
-   public final static boolean nodeChildExists(OcTreeDataNode<?> node, int childIndex)
+   public final static boolean nodeChildExists(AbstractOcTreeNode<?> node, int childIndex)
    {
       checkChildIndex(childIndex);
       return node.children != null && node.children[childIndex] != null;
@@ -37,19 +37,19 @@ public class OcTreeNodeTools
          throw new RuntimeException("Bad child index :" + childIndex + ", expected index to be in [0, 7].");
    }
 
-   public final static void checkNodeHasChildren(OcTreeDataNode<?> node)
+   public final static void checkNodeHasChildren(AbstractOcTreeNode<?> node)
    {
       if (node.children == null)
          throw new RuntimeException("The given node has no children.");
    }
 
-   public final static void checkNodeChildNotNull(OcTreeDataNode<?> node, int childIndex)
+   public final static void checkNodeChildNotNull(AbstractOcTreeNode<?> node, int childIndex)
    {
       if (node.children[childIndex] == null)
          throw new RuntimeException("Child is already null.");
    }
 
-   public static final <NODE extends OcTreeDataNode<NODE>> NODE getNodeChild(NODE node, int childIndex)
+   public static final <NODE extends AbstractOcTreeNode<NODE>> NODE getNodeChild(NODE node, int childIndex)
    {
       checkChildIndex(childIndex);
       checkNodeHasChildren(node);

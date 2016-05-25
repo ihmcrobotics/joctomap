@@ -6,14 +6,14 @@ import java.util.HashMap;
 
 import us.ihmc.robotics.lists.GenericTypeBuilder;
 
-public abstract class OcTreeDataNode<N extends OcTreeDataNode<N>>
+public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 {
-   private HashMap<Class<? extends OcTreeDataNode<?>>, GenericTypeBuilder<? extends OcTreeDataNode<?>>> builderCache = OcTreeNodeTools.BUILDER_CACHE_THREAD_LOCAL
+   private HashMap<Class<? extends AbstractOcTreeNode<?>>, GenericTypeBuilder<? extends AbstractOcTreeNode<?>>> builderCache = OcTreeNodeTools.BUILDER_CACHE_THREAD_LOCAL
          .get();
 
    protected N[] children;
 
-   public OcTreeDataNode()
+   public AbstractOcTreeNode()
    {
    }
 
@@ -49,7 +49,7 @@ public abstract class OcTreeDataNode<N extends OcTreeDataNode<N>>
       if (builder == null)
       {
          builder = (GenericTypeBuilder<N>) GenericTypeBuilder.createBuilderWithEmptyConstructor(getClass());
-         builderCache.put((Class<? extends OcTreeDataNode<?>>) getClass(), builder);
+         builderCache.put((Class<? extends AbstractOcTreeNode<?>>) getClass(), builder);
       }
       return builder.newInstance();
    }
