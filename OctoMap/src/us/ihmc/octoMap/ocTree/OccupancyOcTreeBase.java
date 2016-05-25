@@ -290,11 +290,6 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
       return setNodeValue(key, log_odds_value, lazy_eval);
    }
 
-   public NODE updateNode(OcTreeKey key, float log_odds_update)
-   {
-      return updateNode(key, log_odds_update, false);
-   }
-
    /**
     * Manipulate log_odds value of a voxel by changing it by log_odds_update (relative).
     * This only works if key is at the lowest octree level
@@ -305,13 +300,14 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
+   @Override
    public NODE updateNode(OcTreeKey key, float log_odds_update, boolean lazy_eval)
    {
       // early abort (no change will happen).
       // may cause an overhead in some configuration, but more often helps
       NODE leaf = search(key);
       // no change: node already at threshold
-      if (leaf != null && ((log_odds_update >= 0 && leaf.getLogOdds() >= clamping_thres_max) || (log_odds_update <= 0 && leaf.getLogOdds() <= clamping_thres_min)))
+      if (leaf != null && (log_odds_update >= 0 && leaf.getLogOdds() >= clamping_thres_max || log_odds_update <= 0 && leaf.getLogOdds() <= clamping_thres_min))
       {
          return leaf;
       }
@@ -327,11 +323,6 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
       return updateNodeRecurs(root, createdRoot, key, 0, log_odds_update, lazy_eval);
    }
 
-   public NODE updateNode(Point3d coord, float log_odds_update)
-   {
-      return updateNode(coord, log_odds_update, false);
-   }
-
    /**
     * Manipulate log_odds value of a voxel by changing it by log_odds_update (relative).
     * Looks up the OcTreeKey corresponding to the coordinate and then calls updateNode() with it.
@@ -342,6 +333,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
+   @Override
    public NODE updateNode(Point3d coord, float log_odds_update, boolean lazy_eval)
    {
       OcTreeKey key = convertCartesianCoordinateToKey(coord);
@@ -377,11 +369,6 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
       return updateNode(key, log_odds_update, lazy_eval);
    }
 
-   public NODE updateNode(OcTreeKey key, boolean occupied)
-   {
-      return updateNode(key, occupied, false);
-   }
-
    /**
     * Integrate occupancy measurement.
     *
@@ -391,6 +378,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
+   @Override
    public NODE updateNode(OcTreeKey key, boolean occupied, boolean lazy_eval)
    {
       float logOdds = prob_miss_log;
@@ -398,11 +386,6 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
          logOdds = prob_hit_log;
 
       return updateNode(key, logOdds, lazy_eval);
-   }
-
-   public NODE updateNode(Point3d coord, boolean occupied)
-   {
-      return updateNode(coord, occupied, false);
    }
 
    /**
@@ -415,6 +398,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
+   @Override
    public NODE updateNode(Point3d coord, boolean occupied, boolean lazy_eval)
    {
       OcTreeKey key = convertCartesianCoordinateToKey(coord);
@@ -453,6 +437,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
     * tree nodes, setting their occupancy to the corresponding occupancy thresholds.
     * This enables a very efficient compression if you call prune() afterwards.
     */
+   @Override
    public void toMaxLikelihood()
    {
       if (root == null)
@@ -493,7 +478,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
       double length = direction.length();
 
       // cut ray at maxrange
-      if ((maxrange > 0) && (length > maxrange))
+      if (maxrange > 0 && length > maxrange)
       {
          direction.scale(1.0 / length);
          Point3d new_end = new Point3d();
@@ -564,7 +549,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
 
       direction = new Vector3d(direction);
       direction.normalize();
-      boolean max_range_set = (maxRange > 0.0);
+      boolean max_range_set = maxRange > 0.0;
 
       double[] originArray = new double[3];
       origin.get(originArray);
@@ -591,7 +576,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
          {
             // corner point of voxel (in direction of ray)
             double voxelBorder = keyToCoord(current_key.k[i]);
-            voxelBorder += (double) (step[i] * resolution * 0.5);
+            voxelBorder += step[i] * resolution * 0.5;
 
             tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
             tDelta[i] = resolution / Math.abs(directionArray[i]);
@@ -637,7 +622,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
          }
 
          // check for overflow:
-         if ((step[dim] < 0 && current_key.k[dim] == 0) || (step[dim] > 0 && current_key.k[dim] == 2 * treeMaximumValue - 1))
+         if (step[dim] < 0 && current_key.k[dim] == 0 || step[dim] > 0 && current_key.k[dim] == 2 * treeMaximumValue - 1)
          {
             PrintTools.warn(this, "Coordinate hit bounds in dim " + dim + ", aborting raycast");
             // return border point nevertheless:
@@ -658,7 +643,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
             double dist_from_origin_sq = 0.0;
             for (int j = 0; j < 3; j++)
             {
-               dist_from_origin_sq += ((endArray[j] - originArray[j]) * (endArray[j] - originArray[j]));
+               dist_from_origin_sq += (endArray[j] - originArray[j]) * (endArray[j] - originArray[j]);
             }
             if (dist_from_origin_sq > maxrange_sq)
                return false;
@@ -732,8 +717,8 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
          tempVector.sub(pointXNeg, origin);
          d = tempVector.dot(normalX) / lineDotNormal;
          intersect.scaleAdd(d, direction, origin);
-         if (!(intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6) || intersect.getZ() < (pointZNeg.getZ() - 1e-6)
-               || intersect.getZ() > (pointZPos.getZ() + 1e-6)))
+         if (!(intersect.getY() < pointYNeg.getY() - 1e-6 || intersect.getY() > pointYPos.getY() + 1e-6 || intersect.getZ() < pointZNeg.getZ() - 1e-6
+               || intersect.getZ() > pointZPos.getZ() + 1e-6))
          {
             outD = Math.min(outD, d);
             found = true;
@@ -742,8 +727,8 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
          tempVector.sub(pointXPos, origin);
          d = tempVector.dot(normalX) / lineDotNormal;
          intersect.scaleAdd(d, direction, origin);
-         if (!(intersect.getY() < (pointYNeg.getY() - 1e-6) || intersect.getY() > (pointYPos.getY() + 1e-6) || intersect.getZ() < (pointZNeg.getZ() - 1e-6)
-               || intersect.getZ() > (pointZPos.getZ() + 1e-6)))
+         if (!(intersect.getY() < pointYNeg.getY() - 1e-6 || intersect.getY() > pointYPos.getY() + 1e-6 || intersect.getZ() < pointZNeg.getZ() - 1e-6
+               || intersect.getZ() > pointZPos.getZ() + 1e-6))
          {
             outD = Math.min(outD, d);
             found = true;
@@ -755,8 +740,8 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
          tempVector.sub(pointYNeg, origin);
          d = tempVector.dot(normalY) / lineDotNormal;
          intersect.scaleAdd(d, direction, origin);
-         if (!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) || intersect.getZ() < (pointZNeg.getZ() - 1e-6)
-               || intersect.getZ() > (pointZPos.getZ() + 1e-6)))
+         if (!(intersect.getX() < pointXNeg.getX() - 1e-6 || intersect.getX() > pointXPos.getX() + 1e-6 || intersect.getZ() < pointZNeg.getZ() - 1e-6
+               || intersect.getZ() > pointZPos.getZ() + 1e-6))
          {
             outD = Math.min(outD, d);
             found = true;
@@ -765,8 +750,8 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
          tempVector.sub(pointYPos, origin);
          d = tempVector.dot(normalY) / lineDotNormal;
          intersect.scaleAdd(d, direction, origin);
-         if (!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) || intersect.getZ() < (pointZNeg.getZ() - 1e-6)
-               || intersect.getZ() > (pointZPos.getZ() + 1e-6)))
+         if (!(intersect.getX() < pointXNeg.getX() - 1e-6 || intersect.getX() > pointXPos.getX() + 1e-6 || intersect.getZ() < pointZNeg.getZ() - 1e-6
+               || intersect.getZ() > pointZPos.getZ() + 1e-6))
          {
             outD = Math.min(outD, d);
             found = true;
@@ -778,8 +763,8 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
          tempVector.sub(pointZNeg, origin);
          d = tempVector.dot(normalZ) / lineDotNormal;
          intersect.scaleAdd(d, direction, origin);
-         if (!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) || intersect.getY() < (pointYNeg.getY() - 1e-6)
-               || intersect.getY() > (pointYPos.getY() + 1e-6)))
+         if (!(intersect.getX() < pointXNeg.getX() - 1e-6 || intersect.getX() > pointXPos.getX() + 1e-6 || intersect.getY() < pointYNeg.getY() - 1e-6
+               || intersect.getY() > pointYPos.getY() + 1e-6))
          {
             outD = Math.min(outD, d);
             found = true;
@@ -788,8 +773,8 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
          tempVector.sub(pointZPos, origin);
          d = tempVector.dot(normalZ) / lineDotNormal;
          intersect.scaleAdd(d, direction, origin);
-         if (!(intersect.getX() < (pointXNeg.getX() - 1e-6) || intersect.getX() > (pointXPos.getX() + 1e-6) || intersect.getY() < (pointYNeg.getY() - 1e-6)
-               || intersect.getY() > (pointYPos.getY() + 1e-6)))
+         if (!(intersect.getX() < pointXNeg.getX() - 1e-6 || intersect.getX() > pointXPos.getX() + 1e-6 || intersect.getY() < pointYNeg.getY() - 1e-6
+               || intersect.getY() > pointYPos.getY() + 1e-6))
          {
             outD = Math.min(outD, d);
             found = true;
@@ -997,15 +982,15 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
    /// @return true if point is in the currently set bounding box
    public boolean inBBX(Point3d p)
    {
-      return ((p.getX() >= boundingBoxMin.getX()) && (p.getY() >= boundingBoxMin.getY()) && (p.getZ() >= boundingBoxMin.getZ()) && (p.getX() <= boundingBoxMax.getX())
-            && (p.getY() <= boundingBoxMax.getY()) && (p.getZ() <= boundingBoxMax.getZ()));
+      return p.getX() >= boundingBoxMin.getX() && p.getY() >= boundingBoxMin.getY() && p.getZ() >= boundingBoxMin.getZ() && p.getX() <= boundingBoxMax.getX()
+            && p.getY() <= boundingBoxMax.getY() && p.getZ() <= boundingBoxMax.getZ();
    }
 
    /// @return true if key is in the currently set bounding box
    public boolean inBBX(OcTreeKey key)
    {
-      return ((key.k[0] >= boundingBoxMinKey.k[0]) && (key.k[1] >= boundingBoxMinKey.k[1]) && (key.k[2] >= boundingBoxMinKey.k[2]) && (key.k[0] <= boundingBoxMaxKey.k[0])
-            && (key.k[1] <= boundingBoxMaxKey.k[1]) && (key.k[2] <= boundingBoxMaxKey.k[2]));
+      return key.k[0] >= boundingBoxMinKey.k[0] && key.k[1] >= boundingBoxMinKey.k[1] && key.k[2] >= boundingBoxMinKey.k[2] && key.k[0] <= boundingBoxMaxKey.k[0]
+            && key.k[1] <= boundingBoxMaxKey.k[1] && key.k[2] <= boundingBoxMaxKey.k[2];
    }
 
    //-- change detection on occupancy:
@@ -1061,7 +1046,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
 
          if (!useBoundingBoxLimit)
          { // no BBX specified
-            if ((maxrange < 0.0) || (length <= maxrange))
+            if (maxrange < 0.0 || length <= maxrange)
             { // is not maxrange meas.
                  // free cells
                if (computeRayKeys(origin, p, keyray))
@@ -1090,7 +1075,7 @@ public abstract class OccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNo
          else
          { // BBX was set
               // endpoint in bbx and not maxrange?
-            if (inBBX(p) && ((maxrange < 0.0) || (length <= maxrange)))
+            if (inBBX(p) && (maxrange < 0.0 || length <= maxrange))
             {
                // occupied endpoint
                OcTreeKey key = convertCartesianCoordinateToKey(p);
