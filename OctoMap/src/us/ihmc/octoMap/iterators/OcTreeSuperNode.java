@@ -27,6 +27,7 @@ public class OcTreeSuperNode<NODE extends OcTreeDataNode<?>>
    }
 
    /** Constructor for nodes inside the tree */
+   @SuppressWarnings("unchecked")
    OcTreeSuperNode(OcTreeBaseImpl<?, NODE> tree, OcTreeSuperNode<NODE> parentNode, int childIndex, int maxDepth)
    {
       this.tree = tree;
@@ -34,7 +35,7 @@ public class OcTreeSuperNode<NODE extends OcTreeDataNode<?>>
       depth = parentNode.depth + 1;
       int center_offset_key = tree.getTreeMaximumValue() >> depth;
       OctreeKeyTools.computeChildKey(childIndex, center_offset_key, parentNode.key, key);
-      node = tree.getNodeChild(parentNode.node, childIndex);
+      node = (NODE) parentNode.node.getChild(childIndex);
    }
 
    /** @return the center coordinate of this node */
@@ -94,7 +95,7 @@ public class OcTreeSuperNode<NODE extends OcTreeDataNode<?>>
    /** @return whether the current node is a leaf, i.e. has no children or is at max level */
    public boolean isLeaf()
    {
-      return !tree.nodeHasChildren(node) || depth == maxDepth;
+      return !node.hasAtLeastOneChild() || depth == maxDepth;
    }
 
    public boolean isInsideBoundingBox(OcTreeKey minKey, OcTreeKey maxKey)

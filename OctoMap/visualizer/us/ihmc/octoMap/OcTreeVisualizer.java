@@ -84,7 +84,7 @@ public class OcTreeVisualizer extends Application
             {
                for (int i = 0; i < 8; i++)
                {
-                  OcTreeNode currentChild = (OcTreeNode) currentNode.getChild(i);
+                  OcTreeNode currentChild = (OcTreeNode) currentNode.getChildUnsafe(i);
                   if (currentChild != null)
                   {
                      numberOfNodes++;
