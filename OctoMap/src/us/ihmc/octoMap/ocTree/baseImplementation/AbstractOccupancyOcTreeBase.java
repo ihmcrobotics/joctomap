@@ -196,7 +196,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
       for (int i = 0; i < scan.size(); i++)
       {
-         Point3d point = scan.getPoint(i);
+         Point3d point = new Point3d(scan.getPoint(i));
          KeyRay keyRay = keyrays.get(0);
          if (computeRayKeys(sensorOrigin, point, keyRay))
          {
@@ -1041,11 +1041,11 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    {
       for (int i = 0; i < scan.size(); ++i)
       {
-         Point3d p = scan.getPoint(i);
+         Point3d point = new Point3d(scan.getPoint(i));
          KeyRay keyray = keyrays.get(0);
 
          Vector3d direction = new Vector3d();
-         direction.sub(p, origin);
+         direction.sub(point, origin);
          double length = direction.length();
 
          if (!useBoundingBoxLimit)
@@ -1053,13 +1053,13 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             if (maxrange < 0.0 || length <= maxrange)
             { // is not maxrange meas.
                  // free cells
-               if (computeRayKeys(origin, p, keyray))
+               if (computeRayKeys(origin, point, keyray))
                {
                   free_cells.add(keyray.getFirst());
                   free_cells.add(keyray.getLast());
                }
                // occupied endpoint
-               OcTreeKey key = convertCartesianCoordinateToKey(p);
+               OcTreeKey key = convertCartesianCoordinateToKey(point);
                if (key != null)
                   occupied_cells.add(key);
             }
@@ -1077,15 +1077,15 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          else
          { // BBX was set
               // endpoint in bbx and not maxrange?
-            if (isInBoundingBox(p) && (maxrange < 0.0 || length <= maxrange))
+            if (isInBoundingBox(point) && (maxrange < 0.0 || length <= maxrange))
             {
                // occupied endpoint
-               OcTreeKey key = convertCartesianCoordinateToKey(p);
+               OcTreeKey key = convertCartesianCoordinateToKey(point);
                if (key != null)
                   occupied_cells.add(key);
 
                // update freespace, break as soon as bbx limit is reached
-               if (computeRayKeys(origin, p, keyray))
+               if (computeRayKeys(origin, point, keyray))
                {
                   ListIterator<OcTreeKey> reverseIterator = keyray.reverseIterator();
                   while (reverseIterator.hasPrevious())

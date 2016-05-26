@@ -1,6 +1,7 @@
 package us.ihmc.octoMap.tools;
 
 import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.robotics.MathTools;
@@ -40,6 +41,17 @@ public abstract class OcTreeCoordinateConversionTools
          return -1;
    }
 
+   /**
+    * Converts a 3D coordinate into a 3D OcTreeKey, with boundary checking.
+    *
+    * @param coord 3d coordinate of a point
+    * @return key if point is within the octree (valid), null otherwise
+    */
+   public static OcTreeKey convertCartesianCoordinateToKey(Point3f coord, double resolution, int maxDepth)
+   {
+      return convertCartesianCoordinateToKey(coord.x, coord.y, coord.z, maxDepth, resolution, maxDepth);
+   }
+   
    /**
     * Converts a 3D coordinate into a 3D OcTreeKey, with boundary checking.
     *

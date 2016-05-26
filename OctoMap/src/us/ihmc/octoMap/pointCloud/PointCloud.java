@@ -6,16 +6,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import javax.vecmath.Matrix3d;
 import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
 
 import us.ihmc.robotics.geometry.RigidBodyTransform;
-import us.ihmc.robotics.geometry.RotationTools;
 
-public class PointCloud implements Iterable<Point3d>
+public class PointCloud implements Iterable<Point3f>
 {
    protected RigidBodyTransform current_inv_transform = new RigidBodyTransform();
-   protected List<Point3d> points = new ArrayList<>();
+   protected List<Point3f> points = new ArrayList<>();
 
    /**
     * A collection of 3D coordinates (point3d), which are regarded as endpoints of a
@@ -27,7 +26,12 @@ public class PointCloud implements Iterable<Point3d>
 
    public PointCloud(PointCloud other)
    {
-      add(other);
+      addAll(other);
+   }
+
+   public PointCloud(Point3f[] points)
+   {
+      addAll(points);
    }
 
    public int size()
@@ -44,21 +48,32 @@ public class PointCloud implements Iterable<Point3d>
       }
    }
 
-   public void add(double x, double y, double z)
+   public void add(float x, float y, float z)
    {
-      points.add(new Point3d(x, y, z));
+      points.add(new Point3f(x, y, z));
    }
 
    public void add(Point3d point)
+   {
+      points.add(new Point3f(point));
+   }
+
+   public void add(Point3f point)
    {
       points.add(point);
    }
 
    /// Add points from other Pointcloud
-   public void add(PointCloud other)
+   public void addAll(PointCloud other)
    {
-      for (Point3d point : other)
-         add(new Point3d(point));
+      for (Point3f point : other)
+         add(new Point3f(point));
+   }
+
+   public void addAll(Point3f[] points)
+   {
+      for (Point3f point : points)
+         add(point);
    }
 
    /// Apply transform to each point
@@ -69,17 +84,6 @@ public class PointCloud implements Iterable<Point3d>
 
       // FIXME: not correct for multiple transforms
       current_inv_transform.invert(transform);
-   }
-
-   /// Rotate each point in pointcloud
-   public void rotate(double roll, double pitch, double yaw)
-   {
-      Matrix3d rotation = new Matrix3d();
-      RotationTools.convertYawPitchRollToMatrix(yaw, pitch, roll, rotation);
-
-      for (int i = 0; i < size(); i++)
-         rotation.transform(points.get(i));
-
    }
 
    /// Apply transform to each point, undo previous transforms
@@ -105,9 +109,8 @@ public class PointCloud implements Iterable<Point3d>
 
       double x, y, z;
 
-      for (Point3d point : this)
+      for (Point3f point : this)
       {
-
          x = point.x;
          y = point.y;
          z = point.z;
@@ -140,20 +143,19 @@ public class PointCloud implements Iterable<Point3d>
    {
       PointCloud result = new PointCloud();
 
-      double min_x, min_y, min_z;
-      double max_x, max_y, max_z;
-      double x, y, z;
+      float min_x, min_y, min_z;
+      float max_x, max_y, max_z;
+      float x, y, z;
 
-      min_x = lowerBound.x;
-      min_y = lowerBound.y;
-      min_z = lowerBound.z;
-      max_x = upperBound.x;
-      max_y = upperBound.y;
-      max_z = upperBound.z;
+      min_x = (float) lowerBound.x;
+      min_y = (float) lowerBound.y;
+      min_z = (float) lowerBound.z;
+      max_x = (float) upperBound.x;
+      max_y = (float) upperBound.y;
+      max_z = (float) upperBound.z;
 
-      for (Point3d point : this)
+      for (Point3f point : this)
       {
-
          x = point.x;
          y = point.y;
          z = point.z;
@@ -165,31 +167,31 @@ public class PointCloud implements Iterable<Point3d>
       } // end for points
 
       clear();
-      add(result);
+      addAll(result);
    }
 
    // removes any points closer than [thres] to (0,0,0)
-   public void minDist(double thres)
+   public void minDist(float thres)
    {
       PointCloud result = new PointCloud();
 
-      double x, y, z;
-      for (Point3d point : this)
+      float x, y, z;
+      for (Point3f point : this)
       {
          x = point.x;
          y = point.y;
          z = point.z;
-         double dist = Math.sqrt(x * x + y * y + z * z);
+         float dist = (float) Math.sqrt(x * x + y * y + z * z);
          if (dist > thres)
             result.add(x, y, z);
       } // end for points
       clear();
-      add(result);
+      addAll(result);
    }
 
-   public void subSampleRandom(int num_samples, PointCloud sample_cloud)
+   public PointCloud subSampleRandom(int num_samples)
    {
-      sample_cloud = new PointCloud(this);
+      PointCloud sample_cloud = new PointCloud(this);
       Random random = new Random();
 
       while (sample_cloud.size() > num_samples)
@@ -199,22 +201,24 @@ public class PointCloud implements Iterable<Point3d>
          Collections.swap(sample_cloud.points, indexToRemove, lastIndex);
          sample_cloud.points.remove(lastIndex);
       }
+
+      return sample_cloud;
    }
 
-   public Point3d back()
+   public Point3f getLast()
    {
       return points.get(points.size() - 1);
    }
 
    /// Returns a copy of the ith point in point cloud.
    /// Use operator[] for direct access to point reference.
-   public Point3d getPoint(int i) // may return NULL
+   public Point3f getPoint(int i) // may return NULL
    {
       return points.get(i);
    }
 
    @Override
-   public Iterator<Point3d> iterator()
+   public Iterator<Point3f> iterator()
    {
       return points.iterator();
    }
