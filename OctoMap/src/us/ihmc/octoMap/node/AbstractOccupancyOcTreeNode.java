@@ -8,6 +8,8 @@ import us.ihmc.robotics.MathTools;
 public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcTreeNode<N>> extends AbstractOcTreeNode<N>
 {
    float logOdds;
+   boolean pointCloudModeEnabled = false;
+   boolean hasBeenUpdated = false;
 
    AbstractOccupancyOcTreeNode()
    {
@@ -22,6 +24,48 @@ public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcT
    public void copyData(N other)
    {
       logOdds = other.logOdds;
+   }
+
+   public void enablePointCloudModeRecursively(boolean enable)
+   {
+      if (enable == pointCloudModeEnabled)
+         return;
+      enablePointCloudMode(enable);
+      if (children != null)
+      {
+         for (N child : children)
+         {
+            if (child != null)
+               child.enablePointCloudModeRecursively(enable);
+         }
+      }
+   }
+
+   public void enablePointCloudMode(boolean enable)
+   {
+      hasBeenUpdated = hasBeenUpdated && pointCloudModeEnabled == enable;
+      pointCloudModeEnabled = enable;
+   }
+
+   public boolean hasBeenUpdated()
+   {
+      return hasBeenUpdated;
+   }
+
+   public void setHasBeenUpdated(boolean value)
+   {
+      hasBeenUpdated = value;
+   }
+
+   public boolean isUpdatable()
+   {
+      return !pointCloudModeEnabled || !hasBeenUpdated;
+   }
+
+   @Override
+   protected void inheritPropertiesAtCreation(N parent)
+   {
+      pointCloudModeEnabled = parent.pointCloudModeEnabled;
    }
 
    /**

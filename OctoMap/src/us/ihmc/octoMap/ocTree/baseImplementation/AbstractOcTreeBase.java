@@ -420,6 +420,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (root != null)
       {
          deleteNodeRecurs(root);
+         root = null;
          treeSize = 0;
          // max extent of tree changed:
          size_changed = true;
@@ -604,18 +605,19 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       ray.clear();
 
-      OcTreeKey key_origin = convertCartesianCoordinateToKey(origin);
-      OcTreeKey key_end = convertCartesianCoordinateToKey(end);
-      if (key_origin == null || key_end == null)
+      OcTreeKey keyOrigin = convertCartesianCoordinateToKey(origin);
+      OcTreeKey keyEnd = convertCartesianCoordinateToKey(end);
+
+      if (keyOrigin == null || keyEnd == null)
       {
          PrintTools.error(this, "coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
          return false;
       }
 
-      if (key_origin.equals(key_end))
+      if (keyOrigin.equals(keyEnd))
          return true; // same tree cell, we're done.
 
-      ray.addKey(key_origin);
+      ray.addKey(keyOrigin);
 
       // Initialization phase -------------------------------------------------------
 
@@ -634,7 +636,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       double[] tMax = new double[3];
       double[] tDelta = new double[3];
 
-      OcTreeKey current_key = new OcTreeKey(key_origin);
+      OcTreeKey currentKey = new OcTreeKey(keyOrigin);
 
       for (int i = 0; i < 3; ++i)
       {
@@ -650,7 +652,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          if (step[i] != 0)
          {
             // corner point of voxel (in direction of ray)
-            double voxelBorder = keyToCoord(current_key.k[i]);
+            double voxelBorder = keyToCoord(currentKey.k[i]);
             voxelBorder += (float) (step[i] * resolution * 0.5);
 
             tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
@@ -668,7 +670,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       boolean done = false;
       while (!done)
       {
-
          int dim;
 
          // find minimum tMax:
@@ -688,39 +689,54 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          }
 
          // advance in direction "dim"
-         current_key.k[dim] += step[dim];
+         currentKey.k[dim] += step[dim];
          tMax[dim] += tDelta[dim];
 
-         if (current_key.k[dim] >= 2 * treeMaximumValue)
+         if (currentKey.k[dim] >= 2 * treeMaximumValue)
             throw new RuntimeException("Something went wrong.");
 
          // reached endpoint, key equv?
-         if (current_key.equals(key_end))
+         if (currentKey.equals(keyEnd))
          {
             done = true;
             break;
          }
          else
          {
-
             // reached endpoint world coords?
             // dist_from_origin now contains the length of the ray when traveled until the border of the current voxel
-            double dist_from_origin = Math.min(Math.min(tMax[0], tMax[1]), tMax[2]);
+            double distanceFromOrigin;// = Math.min(Math.min(tMax[0], tMax[1]), tMax[2]);
+
+            if (tMax[0] < tMax[1])
+            {
+               if (tMax[0] < tMax[2])
+                  distanceFromOrigin = tMax[0];
+               else
+                  distanceFromOrigin = tMax[2];
+            }
+            else
+            {
+               if (tMax[1] < tMax[2])
+                  distanceFromOrigin = tMax[1];
+               else
+                  distanceFromOrigin = tMax[2];
+            }
+            
             // if this is longer than the expected ray length, we should have already hit the voxel containing the end point with the code above (key_end).
             // However, we did not hit it due to accumulating discretization errors, so this is the point here to stop the ray as we would never reach the voxel key_end
-            if (dist_from_origin > length)
+            if (distanceFromOrigin > length)
             {
                done = true;
                break;
             }
-
             else
             { // continue to add freespace cells
-               ray.addKey(current_key);
+               ray.addKey(currentKey);
             }
          }
 
-         assert ray.size() < ray.sizeMax() - 1;
+         if (ray.size() >= ray.sizeMax() - 1)
+            break;
 
       } // end while
 
@@ -754,12 +770,17 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    @Override
    public Iterator<OcTreeSuperNode<NODE>> iterator()
    {
-      return leafIterable().iterator(); // TODO Organize imports;
+      return leafIterable().iterator();
    }
 
    public Iterable<OcTreeSuperNode<NODE>> leafIterable()
    {
-      return new LeafIterable<>(this); // TODO Organize imports;
+      return new LeafIterable<>(this);
+   }
+
+   public Iterable<OcTreeSuperNode<NODE>> leafIterable(int maxDepth)
+   {
+      return new LeafIterable<>(this, maxDepth);
    }
 
    public Iterator<OcTreeSuperNode<NODE>> treeIterator()
@@ -769,7 +790,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    public Iterable<OcTreeSuperNode<NODE>> treeIterable()
    {
-      return new OcTreeIterable<>(this); // TODO Organize imports;
+      return new OcTreeIterable<>(this);
+   }
+
+   public Iterable<OcTreeSuperNode<NODE>> treeIterable(int maxDepth)
+   {
+      return new OcTreeIterable<>(this, maxDepth);
    }
 
    public Iterable<OcTreeSuperNode<NODE>> leafBoundingBoxIterable(OcTreeKey min, OcTreeKey max)
@@ -852,6 +878,18 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return OcTreeCoordinateConversionTools.convertKeyToCartesianCoordinate(key, depth, resolution, treeDepth);
    }
 
+   /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
+   public void keyToCoord(OcTreeKey key, Point3d coordinateToPack)
+   {
+      OcTreeCoordinateConversionTools.convertKeyToCartesianCoordinate(key, coordinateToPack, resolution, treeDepth);
+   }
+
+   /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
+   public void keyToCoord(OcTreeKey key, Point3d coordinateToPack, int depth)
+   {
+      OcTreeCoordinateConversionTools.convertKeyToCartesianCoordinate(key, depth, coordinateToPack, resolution, treeDepth);
+   }
+
    /// initialize non-trivial members, helper for constructors
    protected void init()
    {
@@ -863,7 +901,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
       size_changed = true;
 
-      keyrays.add(new KeyRay());
+      keyrays.clear();
+      keyrays.add(new KeyRay(1000));
    }
 
    /// recalculates min and max in x, y, z. Does nothing when tree size didn't change.
@@ -947,7 +986,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          for (int i = 0; i < 8; i++)
          {
-            NODE child = OcTreeNodeTools.getNodeChild(node, i);
+            NODE child = node.getChildUnsafe(i);
             if (child != null)
                deleteNodeRecurs(child);
          }

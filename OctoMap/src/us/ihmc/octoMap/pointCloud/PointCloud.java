@@ -2,6 +2,7 @@ package us.ihmc.octoMap.pointCloud;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -203,6 +204,29 @@ public class PointCloud implements Iterable<Point3f>
       }
 
       return sample_cloud;
+   }
+
+   public static PointCloud createPointCloudFromSubSample(float[] points, int numberOfSamples)
+   {
+      PointCloud pointCloud = new PointCloud();
+      Random random = new Random();
+
+      int numberOfPoints = points.length / 3;
+      
+      HashSet<Integer> indices = new HashSet<>(numberOfSamples);
+
+      while (indices.size() < numberOfSamples)
+         indices.add(random.nextInt(numberOfPoints));
+
+      for (int index : indices)
+      {
+         float x = points[3 * index];
+         float y = points[3 * index + 1];
+         float z = points[3 * index + 2];
+         pointCloud.add(x, y, z);
+      }
+
+      return pointCloud;
    }
 
    public Point3f getLast()

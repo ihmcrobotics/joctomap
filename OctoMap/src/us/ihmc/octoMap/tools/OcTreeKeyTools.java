@@ -126,4 +126,8 @@ public class OcTreeKeyTools
       return new OcTreeKey(k0, k1, k2);
    }
 
+   public static int computeMaximumValueFromDepth(int maxDepth)
+   {
+      return 1 << (maxDepth - 1);
+   }
 }

@@ -1,6 +1,9 @@
 package us.ihmc.octoMap.key;
 
 import java.util.Arrays;
+import java.util.Random;
+
+import us.ihmc.robotics.random.RandomTools;
 
 public class OcTreeKey
 {
@@ -35,6 +38,12 @@ public class OcTreeKey
       k[2] = k2;
    }
 
+   public void set(int key[])
+   {
+      for (int i = 0; i < 3; i++)
+         k[i] = key[i];
+   }
+
    public void setKey(int index, int keyValue)
    {
       k[index] = keyValue;
@@ -47,7 +56,7 @@ public class OcTreeKey
 
    public boolean equals(OcTreeKey other)
    {
-      return Arrays.equals(k, other.k);
+      return k[0] == other.k[0] && k[1] == other.k[1] && k[2] == other.k[2];
    }
 
    @Override
@@ -63,5 +72,10 @@ public class OcTreeKey
    public String toString()
    {
       return "OcTreeKey: " + Arrays.toString(k);
+   }
+
+   public OcTreeKey(Random random, int maxValue)
+   {
+      set(RandomTools.generateRandomIntArray(random, 3, 0, maxValue));
    }
 }

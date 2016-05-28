@@ -5,4 +5,14 @@ import java.util.HashSet;
 public class KeySet extends HashSet<OcTreeKey>
 {
    private static final long serialVersionUID = 2780317356917541560L;
+
+   public KeySet()
+   {
+      super();
+   }
+
+   public KeySet(int initialCapacity)
+   {
+      super(initialCapacity);
+   }
 }

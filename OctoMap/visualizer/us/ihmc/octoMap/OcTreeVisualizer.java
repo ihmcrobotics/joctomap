@@ -35,7 +35,8 @@ public class OcTreeVisualizer extends Application
    {
 
 //      callUpdateNode();
-      callInsertPointCloud();
+//      callInsertPointCloud();
+      createPlane(0.0, 0.0, -0.05);
       
       int numberOfNodes = 0;
       int numberOfLeafs = 0;
@@ -92,14 +93,24 @@ public class OcTreeVisualizer extends Application
       System.out.println("Iterator duplicated count = " + iteratorDuplicatedFounds);
 
       System.out.println("Tree size: " + ocTree.size());
+
+      Point3d end = new Point3d(5.0, 3.0, 1.0);
+      boolean success = ocTree.castRay(new Point3d(0.0, 0.0, 2.0), new Vector3d(0.0, 0.0, -1.0), end, true);
+      System.out.println("Success = " + success + ", point found: " + end);
+
+      Point3d pointOnSurface = new Point3d(pointcloud.getPoint(12));
+      List<Vector3d> normals = new ArrayList<>();
+      ocTree.getNormals(end, normals);
+      System.out.println(normals);
    }
+
+   PointCloud pointcloud = new PointCloud();
 
    private void callInsertPointCloud()
    {
       Point3d origin = new Point3d(0.01, 0.01, 0.02);
       Point3d pointOnSurface = new Point3d(4.01, 0.01, 0.01);
 
-      PointCloud pointcloud = new PointCloud();
 
       for (int i = 0; i < 100; i++)
       {
@@ -152,6 +163,29 @@ public class OcTreeVisualizer extends Application
       }
 
       ocTree.updateInnerOccupancy();
+   }
+
+   public void createPlane(double pitch, double roll, double z)
+   {
+      Point3d origin = new Point3d(0.0, 0.0, z + 2.0);
+      pointcloud.clear();
+
+      double planeSize = 4.0;
+
+      for (double x = -0.5*planeSize; x < 0.5*planeSize; x+= 0.7 * ocTree.getResolution())
+      {
+         for (double y = -0.5*planeSize; y < 0.5*planeSize; y+= 0.7 * ocTree.getResolution())
+         {
+            Point3d point = new Point3d(x, y, 0.0);
+            Matrix3d rotation = new Matrix3d();
+            RotationTools.convertYawPitchRollToMatrix(0.0, Math.toRadians(pitch), Math.toRadians(roll), rotation);
+            rotation.transform(point);
+            point.z += z;
+
+            pointcloud.add(point);
+         }
+      }
+      ocTree.insertPointCloud(pointcloud, origin);
    }
 
    @Override
