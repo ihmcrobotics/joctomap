@@ -23,9 +23,14 @@ public class KeyRay extends ArrayList<OcTreeKey>
       super(other);
    }
 
-   public void addKey(OcTreeKey key)
+   public boolean add(OcTreeKey key)
    {
-      add(key);
+      return addKey(key);
+   }
+
+   public boolean addKey(OcTreeKey key)
+   {
+      return super.add(new OcTreeKey(key));
    }
 
    public OcTreeKey getFirst()

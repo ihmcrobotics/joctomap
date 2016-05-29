@@ -47,7 +47,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       // some sane default values:
       setOccupancyThreshold(0.5);            // = 0.0 in logodds
       setHitProbabilityUpdate(0.7);          // = 0.85 in logodds
-      setMissProbabilityUpdate(0.4);         // = -0.4 in logodds
+      setMissProbabilityUpdate(0.4);//0.4);         // = -0.4 in logodds
 
       setMinProbability(0.1192);             // = -2 in log odds
       setMaxProbability(0.971);              // = 3.5 in log odds

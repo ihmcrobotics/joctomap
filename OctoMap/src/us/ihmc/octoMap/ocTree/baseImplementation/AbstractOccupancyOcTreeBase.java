@@ -864,7 +864,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
       // There is 8 neighbouring sets
       // The current cube can be at any of the 8 vertex
-      int[][] x_index = new int[][] {{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0 - 1, -1}, {0, 0 - 1, -1}};
+      int[][] x_index = new int[][] {{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0, - 1, -1}, {0, 0, - 1, -1}};
       int[][] y_index = new int[][] {{1, 0, 0, 1}, {0, -1, -1, 0}, {0, -1, -1, 0}, {1, 0, 0, 1}};
       int[][] z_index = new int[][] {{0, 1}, {-1, 0}};
 

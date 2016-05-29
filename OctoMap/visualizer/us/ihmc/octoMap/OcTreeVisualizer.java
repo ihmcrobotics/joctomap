@@ -26,17 +26,23 @@ import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.OcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.robotics.geometry.RotationTools;
+import us.ihmc.robotics.time.TimeTools;
 
 public class OcTreeVisualizer extends Application
 {
    public final OcTree ocTree = new OcTree(0.05);
+   private static final boolean SHOW_FREE_CELLS = false;
+   private static final Color FREE_COLOR = new Color(Color.YELLOW.getRed(), Color.YELLOW.getGreen(), Color.YELLOW.getBlue(), 0.0);
 
    public OcTreeVisualizer()
    {
 
 //      callUpdateNode();
 //      callInsertPointCloud();
-      createPlane(0.0, 0.0, -0.05);
+      createPlane(45, 0.0, -0.05);
+      
+//      pointcloud.add(new Point3d());
+//      ocTree.insertPointCloud(pointcloud, new Point3d(0.0, 0.0, 2.0));
       
       int numberOfNodes = 0;
       int numberOfLeafs = 0;
@@ -94,14 +100,17 @@ public class OcTreeVisualizer extends Application
 
       System.out.println("Tree size: " + ocTree.size());
 
-      Point3d end = new Point3d(5.0, 3.0, 1.0);
-      boolean success = ocTree.castRay(new Point3d(0.0, 0.0, 2.0), new Vector3d(0.0, 0.0, -1.0), end, true);
-      System.out.println("Success = " + success + ", point found: " + end);
 
-      Point3d pointOnSurface = new Point3d(pointcloud.getPoint(12));
-      List<Vector3d> normals = new ArrayList<>();
-      ocTree.getNormals(end, normals);
-      System.out.println(normals);
+      long startTime = System.nanoTime();
+      for (int i = 0; i < 10000; i++)
+      {
+         Point3d end = new Point3d(5.0, 3.0, 1.0);
+         ocTree.castRay(new Point3d(0.0, 0.0, 2.0), new Vector3d(0.0, 0.0, -1.0), end, true);
+         List<Vector3d> normals = new ArrayList<>();
+         ocTree.getNormals(end, normals);
+      }
+      long endTime = System.nanoTime();
+      System.out.println(TimeTools.nanoSecondstoSeconds(endTime - startTime));
    }
 
    PointCloud pointcloud = new PointCloud();
@@ -207,26 +216,40 @@ public class OcTreeVisualizer extends Application
       LeafIterable<OccupancyOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
       for (OcTreeSuperNode<OccupancyOcTreeNode> node : leafIterable)
       {
+         double boxSize = node.getSize();
+         Point3d boxCenter = node.getCoordinate();
+
          if (ocTree.isNodeOccupied(node.getNode()))
          {
-            double boxSize = node.getSize();
-            Point3d boxCenter = node.getCoordinate();
-            addBox(boxSize, boxCenter, rootNode);
+            addOccupiedBox(boxSize, boxCenter, rootNode);
+         }
+         else if (SHOW_FREE_CELLS)
+         {
+            addFreeBox(boxSize, boxCenter, rootNode);
          }
       }
    }
 
    private static final Color DEFAULT_COLOR = Color.DARKCYAN;
-   
-   public void addBox(double size, Point3d center, Group root)
+
+   public void addOccupiedBox(double size, Point3d center, Group root)
+   {
+      addBox(size, center, root, DEFAULT_COLOR);
+   }
+
+   public void addFreeBox(double size, Point3d center, Group root)
+   {
+      addBox(size, center, root, FREE_COLOR);
+   }
+
+   private void addBox(double size, Point3d center, Group root, Color color)
    {
       Box box = new Box(size, size, size);
       box.setTranslateX(center.getX());
       box.setTranslateY(center.getY());
       box.setTranslateZ(center.getZ());
       PhongMaterial material = new PhongMaterial();
-      material.setDiffuseColor(DEFAULT_COLOR);
-      material.setSpecularColor(DEFAULT_COLOR.brighter());
+      material.setDiffuseColor(color);
       box.setMaterial(material);
       root.getChildren().add(box);
    }
