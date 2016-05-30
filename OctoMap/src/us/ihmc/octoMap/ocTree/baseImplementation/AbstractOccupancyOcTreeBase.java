@@ -4,10 +4,8 @@ import static us.ihmc.octoMap.MarchingCubesTables.edgeTable;
 import static us.ihmc.octoMap.MarchingCubesTables.triTable;
 import static us.ihmc.octoMap.MarchingCubesTables.vertexList;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -36,14 +34,11 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
    protected KeyBoolMap changedKeys = new KeyBoolMap();
 
-   private final ConcurrentLinkedQueue<List<OcTreeKey>> keyListPool = new ConcurrentLinkedQueue<>();
-
    public AbstractOccupancyOcTreeBase(double resolution)
    {
       super(resolution);
       useBoundingBoxLimit = false;
       useChangeDetection = false;
-      initTemporaryFields();
    }
 
    /// Constructor to enable derived classes to change tree constants.
@@ -53,7 +48,6 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       super(resolution, tree_depth, tree_max_val);
       useBoundingBoxLimit = false;
       useChangeDetection = false;
-      initTemporaryFields();
    }
 
    public AbstractOccupancyOcTreeBase(AbstractOccupancyOcTreeBase<NODE> other)
@@ -66,15 +60,6 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       boundingBoxMaxKey.set(other.boundingBoxMaxKey);
       changedKeys.putAll(other.changedKeys);
       useChangeDetection = other.useChangeDetection;
-      initTemporaryFields();
-   }
-
-   private void initTemporaryFields()
-   {
-      for (int i = 0; i < 6; i++)
-      {
-         keyListPool.add(new ArrayList<>(1000000));
-      }
    }
 
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)
@@ -106,10 +91,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
-      List<OcTreeKey> freeCells = keyListPool.isEmpty() ? new ArrayList<>(1000000) : keyListPool.poll();
-      List<OcTreeKey> occupiedCells = keyListPool.isEmpty() ? new ArrayList<>(1000000) : keyListPool.poll();
-      freeCells.clear();
-      occupiedCells.clear();
+      KeySet freeCells = new KeySet();
+      KeySet occupiedCells = new KeySet();
 
       if (discretize)
          computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, maxRange);
@@ -118,14 +101,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
       // insert data into tree  -----------------------
       for (OcTreeKey key : occupiedCells)
-         updateNode(key, true, lazyEvaluation, true);
+         updateNode(key, true, lazyEvaluation);
 
       for (OcTreeKey key : freeCells)
-         updateNode(key, false, lazyEvaluation, true);
-
-      root.enablePointCloudModeRecursively(false);
-      keyListPool.add(freeCells);
-      keyListPool.add(occupiedCells);
+         updateNode(key, false, lazyEvaluation);
    }
 
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, RigidBodyTransform frameOrigin)
@@ -1078,7 +1057,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       for (int i = 0; i < scan.size(); ++i)
       {
          Point3d point = new Point3d(scan.getPoint(i));
-         KeyRay keyray = getKeyRay(i);
+         KeyRay keyray = new KeyRay();
 
          Vector3d direction = new Vector3d();
          direction.sub(point, origin);
@@ -1140,84 +1119,6 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
    /**
     * Helper for insertPointCloud(). Computes all octree nodes affected by the point cloud
-    * integration at once. By using lists, this method is faster than {@link #computeDiscreteUpdate(PointCloud, Point3d, KeySet, KeySet, double)}.
-    * However, duplicates are not checked, freeCells can contain key contained in occupiedCells.
-    *
-    * @param scan point cloud measurement to be integrated
-    * @param origin origin of the sensor for ray casting
-    * @param freeCells keys of nodes to be cleared
-    * @param occupiedCells keys of nodes to be marked occupied
-    * @param maxrange maximum range for raycasting (-1: unlimited)
-    */
-   public void computeUpdate(PointCloud scan, Point3d origin, List<OcTreeKey> freeCells, List<OcTreeKey> occupiedCells, double maxrange)
-   {
-      for (int i = 0; i < scan.size(); ++i)
-      {
-         Point3d point = new Point3d(scan.getPoint(i));
-         KeyRay keyray = keyrays.get(0);
-
-         Vector3d direction = new Vector3d();
-         direction.sub(point, origin);
-         double length = direction.length();
-
-         if (!useBoundingBoxLimit)
-         { // no BBX specified
-            if (maxrange < 0.0 || length <= maxrange)
-            { // is not maxrange meas.
-                 // free cells
-               if (computeRayKeys(origin, point, keyray))
-                  freeCells.addAll(keyray);
-               // occupied endpoint
-               OcTreeKey key = convertCartesianCoordinateToKey(point);
-               if (key != null)
-                  occupiedCells.add(key);
-            }
-            else
-            { // user set a maxrange and length is above
-               Point3d new_end = new Point3d();
-               new_end.scaleAdd(maxrange / length, direction, origin);
-               if (computeRayKeys(origin, new_end, keyray))
-                  freeCells.addAll(keyray);
-            } // end if maxrange
-         }
-         else
-         { // BBX was set
-              // endpoint in bbx and not maxrange?
-            if (isInBoundingBox(point) && (maxrange < 0.0 || length <= maxrange))
-            {
-               // occupied endpoint
-               OcTreeKey key = convertCartesianCoordinateToKey(point);
-               if (key != null)
-                  occupiedCells.add(key);
-
-               // update freespace, break as soon as bbx limit is reached
-               if (computeRayKeys(origin, point, keyray))
-               {
-                  ListIterator<OcTreeKey> reverseIterator = keyray.reverseIterator();
-                  while (reverseIterator.hasPrevious())
-                  {
-                     OcTreeKey currentKey = reverseIterator.previous();
-                     if (isInBoundingBox(currentKey))
-                        freeCells.add(currentKey);
-                     else
-                        break;
-                  }
-               } // end if compute ray
-            } // end if in BBX and not maxrange
-         } // end bbx case
-
-      } // end for all points, end of parallel OMP loop
-   }
-
-   protected KeyRay getKeyRay(int index)
-   {
-      while(keyrays.size() <= index)
-         keyrays.add(new KeyRay(1000));
-      return keyrays.get(index);
-   }
-
-   /**
-    * Helper for insertPointCloud(). Computes all octree nodes affected by the point cloud
     * integration at once. Here, occupied nodes have a preference over free
     * ones. This function first discretizes the scan with the octree grid, which results
     * in fewer raycasts (=speedup) but a slightly different result than computeUpdate().
@@ -1228,7 +1129,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxrange maximum range for raycasting (-1: unlimited)
     */
-   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, List<OcTreeKey> freeCells, List<OcTreeKey> occupiedCells, double maxrange)
+   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, KeySet freeCells, KeySet occupiedCells, double maxrange)
    {
       PointCloud discretePC = new PointCloud();
       KeySet endpoints = new KeySet();
