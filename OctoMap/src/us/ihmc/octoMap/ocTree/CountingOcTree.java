@@ -56,20 +56,19 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
       getCentersMinHitsRecurs(node_centers, min_hits, treeDepth, root, 0, root_key);
    }
 
-   protected void getCentersMinHitsRecurs(List<Point3d> node_centers, int min_hits, int max_depth, CountingOcTreeNode node, int depth, OcTreeKey parent_key)
+   protected void getCentersMinHitsRecurs(List<Point3d> node_centers, int min_hits, int max_depth, CountingOcTreeNode node, int depth, OcTreeKey parentKey)
    {
       if (depth < max_depth && node.hasAtLeastOneChild())
       {
-
-         int center_offset_key = treeMaximumValue >> (depth + 1);
-         OcTreeKey search_key = new OcTreeKey();
+         int centerOffsetKey = treeMaximumValue >> (depth + 1);
+         OcTreeKey searchKey = new OcTreeKey();
 
          for (int i = 0; i < 8; ++i)
          {
             if (OcTreeNodeTools.nodeChildExists(node, i))
             {
-               OcTreeKeyTools.computeChildKey(i, center_offset_key, parent_key, search_key);
-               getCentersMinHitsRecurs(node_centers, min_hits, max_depth, getNodeChild(node, i), depth + 1, search_key);
+               OcTreeKeyTools.computeChildKey(i, centerOffsetKey, parentKey, searchKey);
+               getCentersMinHitsRecurs(node_centers, min_hits, max_depth, getNodeChild(node, i), depth + 1, searchKey);
             }
          }
       }
@@ -79,7 +78,7 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
 
          if (node.getCount() >= min_hits)
          {
-            node_centers.add(keyToCoord(parent_key, depth));
+            node_centers.add(keyToCoord(parentKey, depth));
          }
       }
    }
