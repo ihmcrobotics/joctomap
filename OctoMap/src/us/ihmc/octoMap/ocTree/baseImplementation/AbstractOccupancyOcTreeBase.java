@@ -18,6 +18,7 @@ import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.ScanNode;
+import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 import us.ihmc.tools.io.printing.PrintTools;
@@ -60,6 +61,37 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       boundingBoxMaxKey.set(other.boundingBoxMaxKey);
       changedKeys.putAll(other.changedKeys);
       useChangeDetection = other.useChangeDetection;
+   }
+
+   public void insertSweepCollection(SweepCollection sweepCollection)
+   {
+      insertSweepCollection(sweepCollection, -1.0, false, false);
+   }
+
+   public void insertSweepCollection(SweepCollection sweepCollection, double maxRange, boolean lazyEvaluation, boolean discretize)
+   {
+      KeySet freeCells = new KeySet();
+      KeySet occupiedCells = new KeySet();
+
+      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
+      {
+         PointCloud scan = sweepCollection.getSweep(i);
+         Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
+
+         if (discretize)
+            computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, maxRange);
+         else
+            computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, maxRange);
+      }
+
+      freeCells.remove(occupiedCells);
+
+      // insert data into tree  -----------------------
+      for (OcTreeKey key : occupiedCells)
+         updateNode(key, true, lazyEvaluation);
+
+      for (OcTreeKey key : freeCells)
+         updateNode(key, false, lazyEvaluation);
    }
 
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)

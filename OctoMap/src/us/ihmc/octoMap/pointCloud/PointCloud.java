@@ -95,7 +95,6 @@ public class PointCloud implements Iterable<Point3f>
    /// Apply transform to each point, undo previous transforms
    public void transformAbsolute(RigidBodyTransform transform)
    {
-
       // undo previous transform, then apply current transform
       current_inv_transform.multiply(transform);
 
