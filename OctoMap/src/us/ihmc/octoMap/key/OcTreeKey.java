@@ -54,6 +54,15 @@ public class OcTreeKey
       return k[index];
    }
 
+   @Override
+   public boolean equals(Object obj)
+   {
+      if (obj instanceof OcTreeKey)
+         return equals((OcTreeKey) obj);
+      else
+         return false;
+   }
+
    public boolean equals(OcTreeKey other)
    {
       return k[0] == other.k[0] && k[1] == other.k[1] && k[2] == other.k[2];
