@@ -49,6 +49,11 @@ public class PointCloud implements Iterable<Point3f>
       }
    }
 
+   public void add(double x, double y, double z)
+   {
+      add((float) x, (float) y, (float) z);
+   }
+
    public void add(float x, float y, float z)
    {
       points.add(new Point3f(x, y, z));
