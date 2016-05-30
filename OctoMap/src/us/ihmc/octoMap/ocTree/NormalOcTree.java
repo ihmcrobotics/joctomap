@@ -3,7 +3,6 @@ package us.ihmc.octoMap.ocTree;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
