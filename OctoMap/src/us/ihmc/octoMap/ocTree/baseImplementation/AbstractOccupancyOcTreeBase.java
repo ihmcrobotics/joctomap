@@ -1,8 +1,8 @@
 package us.ihmc.octoMap.ocTree.baseImplementation;
 
-import static us.ihmc.octoMap.MCTables.edgeTable;
-import static us.ihmc.octoMap.MCTables.triTable;
-import static us.ihmc.octoMap.MCTables.vertexList;
+import static us.ihmc.octoMap.MarchingCubesTables.edgeTable;
+import static us.ihmc.octoMap.MarchingCubesTables.triTable;
+import static us.ihmc.octoMap.MarchingCubesTables.vertexList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -836,10 +836,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
    /**
       * Performs a step of the marching cubes surface reconstruction algorithm
-      * to retreive the normal of the triangles that fall in the cube
+      * to retrieve the normal of the triangles that fall in the cube
       * formed by the voxels located at the vertex of a given voxel.
       *
-      * @param[in] voxel for which retreive the normals
+      * @param[in] voxel for which retrieve the normals
       * @param[out] triangles normals
       * @param[in] unknownStatus consider unknown cells as free (false) or occupied (default, true).
       * @return True if the input voxel is known in the occupancy grid, and false if it is unknown.
@@ -857,37 +857,36 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
       // OCTOMAP_WARNING("Normal for %f, %f, %f\n", point.x(), point.y(), point.z());
 
-      int[] vertex_values = new int[8];
+      int[] vertexValues = new int[8];
 
-      OcTreeKey current_key = new OcTreeKey();
-      NODE current_node;
+      OcTreeKey currentKey = new OcTreeKey();
+      NODE currentNode;
 
       // There is 8 neighbouring sets
       // The current cube can be at any of the 8 vertex
-      int[][] x_index = new int[][] {{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0, - 1, -1}, {0, 0, - 1, -1}};
-      int[][] y_index = new int[][] {{1, 0, 0, 1}, {0, -1, -1, 0}, {0, -1, -1, 0}, {1, 0, 0, 1}};
-      int[][] z_index = new int[][] {{0, 1}, {-1, 0}};
+      int[][] xIndex = new int[][] {{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0, - 1, -1}, {0, 0, - 1, -1}};
+      int[][] yIndex = new int[][] {{1, 0, 0, 1}, {0, -1, -1, 0}, {0, -1, -1, 0}, {1, 0, 0, 1}};
+      int[][] zIndex = new int[][] {{0, 1}, {-1, 0}};
 
       // Iterate over the 8 neighboring sets
       for (int m = 0; m < 2; ++m)
       {
          for (int l = 0; l < 4; ++l)
          {
-
             int k = 0;
             // Iterate over the cubes
             for (int j = 0; j < 2; ++j)
             {
                for (int i = 0; i < 4; ++i)
                {
-                  current_key.k[0] = initKey.k[0] + x_index[l][i];
-                  current_key.k[1] = initKey.k[1] + y_index[l][i];
-                  current_key.k[2] = initKey.k[2] + z_index[m][j];
-                  current_node = search(current_key);
+                  currentKey.k[0] = initKey.k[0] + xIndex[l][i];
+                  currentKey.k[1] = initKey.k[1] + yIndex[l][i];
+                  currentKey.k[2] = initKey.k[2] + zIndex[m][j];
+                  currentNode = search(currentKey);
 
-                  if (current_node != null)
+                  if (currentNode != null)
                   {
-                     vertex_values[k] = isNodeOccupied(current_node) ? 1 : 0;
+                     vertexValues[k] = isNodeOccupied(currentNode) ? 1 : 0;
 
                      // point3d coord = this->keyToCoord(current_key);
                      // OCTOMAP_WARNING_STR("vertex " << k << " at " << coord << "; value " << vertex_values[k]);
@@ -895,42 +894,42 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
                   else
                   {
                      // Occupancy of unknown cells
-                     vertex_values[k] = unknownStatus ? 1 : 0;
+                     vertexValues[k] = unknownStatus ? 1 : 0;
                   }
                   ++k;
                }
             }
 
-            int cube_index = 0;
-            if (vertex_values[0] != 0)
-               cube_index |= 1;
-            if (vertex_values[1] != 0)
-               cube_index |= 2;
-            if (vertex_values[2] != 0)
-               cube_index |= 4;
-            if (vertex_values[3] != 0)
-               cube_index |= 8;
-            if (vertex_values[4] != 0)
-               cube_index |= 16;
-            if (vertex_values[5] != 0)
-               cube_index |= 32;
-            if (vertex_values[6] != 0)
-               cube_index |= 64;
-            if (vertex_values[7] != 0)
-               cube_index |= 128;
+            int cubeIndex = 0;
+            if (vertexValues[0] != 0)
+               cubeIndex |= 1;
+            if (vertexValues[1] != 0)
+               cubeIndex |= 2;
+            if (vertexValues[2] != 0)
+               cubeIndex |= 4;
+            if (vertexValues[3] != 0)
+               cubeIndex |= 8;
+            if (vertexValues[4] != 0)
+               cubeIndex |= 16;
+            if (vertexValues[5] != 0)
+               cubeIndex |= 32;
+            if (vertexValues[6] != 0)
+               cubeIndex |= 64;
+            if (vertexValues[7] != 0)
+               cubeIndex |= 128;
 
             // OCTOMAP_WARNING_STR("cubde_index: " << cube_index);
 
             // All vertices are occupied or free resulting in no normal
-            if (edgeTable[cube_index] == 0)
+            if (edgeTable[cubeIndex] == 0)
                return true;
 
             // No interpolation is done yet, we use vertexList in <MCTables.h>.
-            for (int i = 0; triTable[cube_index][i] != -1; i += 3)
+            for (int i = 0; triTable[cubeIndex][i] != -1; i += 3)
             {
-               Point3d p1 = new Point3d(vertexList[triTable[cube_index][i]]);
-               Point3d p2 = new Point3d(vertexList[triTable[cube_index][i + 1]]);
-               Point3d p3 = new Point3d(vertexList[triTable[cube_index][i + 2]]);
+               Point3d p1 = new Point3d(vertexList[triTable[cubeIndex][i]]);
+               Point3d p2 = new Point3d(vertexList[triTable[cubeIndex][i + 1]]);
+               Point3d p3 = new Point3d(vertexList[triTable[cubeIndex][i + 2]]);
                Vector3d v1 = new Vector3d(); //p2 - p1;
                Vector3d v2 = new Vector3d(); //p3 - p1;
                Vector3d v3 = new Vector3d();

@@ -2,7 +2,7 @@ package us.ihmc.octoMap;
 
 import javax.vecmath.Point3d;
 
-public class MCTables
+public class MarchingCubesTables
 {
    public static final int[] edgeTable = new int[]{
    0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
