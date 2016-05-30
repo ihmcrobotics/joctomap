@@ -846,8 +846,6 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       */
    public boolean getNormals(Point3d voxel, List<Vector3d> normals, boolean unknownStatus)
    {
-      normals.clear();
-
       OcTreeKey initKey = convertCartesianCoordinateToKey(voxel);
       if (initKey == null)
       {
@@ -855,6 +853,17 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          return false;
       }
 
+      return getNormals(initKey, normals, unknownStatus);
+   }
+   
+   public boolean getNormals(OcTreeKey key, List<Vector3d> normals)
+   {
+      return getNormals(key, normals, true);
+   }
+
+   public boolean getNormals(OcTreeKey key, List<Vector3d> normals, boolean unknownStatus)
+   {
+      normals.clear();
       // OCTOMAP_WARNING("Normal for %f, %f, %f\n", point.x(), point.y(), point.z());
 
       int[] vertexValues = new int[8];
@@ -879,9 +888,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             {
                for (int i = 0; i < 4; ++i)
                {
-                  currentKey.k[0] = initKey.k[0] + xIndex[l][i];
-                  currentKey.k[1] = initKey.k[1] + yIndex[l][i];
-                  currentKey.k[2] = initKey.k[2] + zIndex[m][j];
+                  currentKey.k[0] = key.k[0] + xIndex[l][i];
+                  currentKey.k[1] = key.k[1] + yIndex[l][i];
+                  currentKey.k[2] = key.k[2] + zIndex[m][j];
                   currentNode = search(currentKey);
 
                   if (currentNode != null)
@@ -901,28 +910,20 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             }
 
             int cubeIndex = 0;
-            if (vertexValues[0] != 0)
-               cubeIndex |= 1;
-            if (vertexValues[1] != 0)
-               cubeIndex |= 2;
-            if (vertexValues[2] != 0)
-               cubeIndex |= 4;
-            if (vertexValues[3] != 0)
-               cubeIndex |= 8;
-            if (vertexValues[4] != 0)
-               cubeIndex |= 16;
-            if (vertexValues[5] != 0)
-               cubeIndex |= 32;
-            if (vertexValues[6] != 0)
-               cubeIndex |= 64;
-            if (vertexValues[7] != 0)
-               cubeIndex |= 128;
+            if (vertexValues[0] != 0) cubeIndex |= 1;
+            if (vertexValues[1] != 0) cubeIndex |= 2;
+            if (vertexValues[2] != 0) cubeIndex |= 4;
+            if (vertexValues[3] != 0) cubeIndex |= 8;
+            if (vertexValues[4] != 0) cubeIndex |= 16;
+            if (vertexValues[5] != 0) cubeIndex |= 32;
+            if (vertexValues[6] != 0) cubeIndex |= 64;
+            if (vertexValues[7] != 0) cubeIndex |= 128;
 
             // OCTOMAP_WARNING_STR("cubde_index: " << cube_index);
 
             // All vertices are occupied or free resulting in no normal
             if (edgeTable[cubeIndex] == 0)
-               return true;
+               continue; //return true;
 
             // No interpolation is done yet, we use vertexList in <MCTables.h>.
             for (int i = 0; triTable[cubeIndex][i] != -1; i += 3)
