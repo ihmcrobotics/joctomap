@@ -52,13 +52,7 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
          builderCache.put((Class<? extends AbstractOcTreeNode<?>>) getClass(), builder);
       }
       N ret = builder.newInstance();
-      ret.inheritPropertiesAtCreation((N) this);
       return ret;
-   }
-
-   /** Override this method to make a newly created inherit properties from its parent. */
-   protected void inheritPropertiesAtCreation(N parent)
-   {
    }
 
    public final boolean hasArrayForChildren()

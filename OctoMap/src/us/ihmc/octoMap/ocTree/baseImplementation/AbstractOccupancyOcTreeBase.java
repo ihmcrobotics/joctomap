@@ -319,12 +319,6 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       return setNodeValue(key, logOddsValue, lazyEvaluation);
    }
 
-   @Override
-   public NODE updateNode(OcTreeKey key, float logOddsUpdate, boolean lazyEvaluation)
-   {
-      return updateNode(key, logOddsUpdate, lazyEvaluation, false);
-   }
-
    /**
     * Manipulate log_odds value of a voxel by changing it by logOddsUpdate (relative).
     * This only works if key is at the lowest octree level
@@ -335,7 +329,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(OcTreeKey key, float logOddsUpdate, boolean lazyEvaluation, boolean enablePointCloudMode)
+   @Override
+   public NODE updateNode(OcTreeKey key, float logOddsUpdate, boolean lazyEvaluation)
    {
       NODE leaf = search(key);
 
@@ -347,7 +342,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          boolean reachedMaxThreshold = logOddsUpdate >= 0.0f && leaf.getLogOdds() >= maxOccupancyLogOdds;
          boolean reachedMinThreshold = logOddsUpdate <= 0.0f && leaf.getLogOdds() <= minOccupancyLogOdds;
 
-         if (!leaf.isUpdatable() || reachedMaxThreshold || reachedMinThreshold)
+         if (reachedMaxThreshold || reachedMinThreshold)
             return leaf;
       }
 
@@ -358,8 +353,6 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          treeSize++;
          createdRoot = true;
       }
-
-      root.enablePointCloudModeRecursively(enablePointCloudMode);
 
       return updateNodeRecurs(root, createdRoot, key, 0, logOddsUpdate, lazyEvaluation);
    }
@@ -431,7 +424,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       if (occupied)
          logOdds = hitUpdateLogOdds;
 
-      return updateNode(key, logOdds, lazyEvaluation, enablePointCloudMode);
+      return updateNode(key, logOdds, lazyEvaluation);
    }
 
    /**
@@ -1212,20 +1205,16 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public void updateNodeLogOdds(NODE occupancyNode, float update)
    {
-      if (occupancyNode.isUpdatable())
+      occupancyNode.addValue(update);
+      if (occupancyNode.getLogOdds() < minOccupancyLogOdds)
       {
-         occupancyNode.addValue(update);
-         if (occupancyNode.getLogOdds() < minOccupancyLogOdds)
-         {
-            occupancyNode.setLogOdds(minOccupancyLogOdds);
-            return;
-         }
-         if (occupancyNode.getLogOdds() > maxOccupancyLogOdds)
-         {
-            occupancyNode.setLogOdds(maxOccupancyLogOdds);
-         }
+         occupancyNode.setLogOdds(minOccupancyLogOdds);
+         return;
       }
-      occupancyNode.setHasBeenUpdated(true);
+      if (occupancyNode.getLogOdds() > maxOccupancyLogOdds)
+      {
+         occupancyNode.setLogOdds(maxOccupancyLogOdds);
+      }
    }
 
    /**
