@@ -1100,15 +1100,15 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (!parent.hasAtLeastOneChild()) // this is a leaf -> terminate
          return 1;
 
-      int sum_leafs_children = 0;
+      int sumLeafsChildren = 0;
       for (int i = 0; i < 8; ++i)
       {
          if (OcTreeNodeTools.nodeChildExists(parent, i))
          {
-            sum_leafs_children += getNumLeafNodesRecurs(OcTreeNodeTools.getNodeChild(parent, i));
+            sumLeafsChildren += getNumLeafNodesRecurs(OcTreeNodeTools.getNodeChild(parent, i));
          }
       }
-      return sum_leafs_children;
+      return sumLeafsChildren;
    }
 
    protected abstract NODE createRootNode();
