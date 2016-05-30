@@ -1,27 +1,18 @@
 package us.ihmc.octoMap;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
-import javax.imageio.ImageIO;
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import javafx.application.Application;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.Event;
 import javafx.scene.Group;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
-import javafx.scene.image.Image;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
@@ -35,7 +26,6 @@ import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.OcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.robotics.geometry.RotationTools;
-import us.ihmc.robotics.time.TimeTools;
 
 public class OcTreeVisualizer extends Application
 {
@@ -110,16 +100,17 @@ public class OcTreeVisualizer extends Application
       System.out.println("Tree size: " + ocTree.size());
 
 
-      long startTime = System.nanoTime();
-      for (int i = 0; i < 10000; i++)
-      {
+//      long startTime = System.nanoTime();
+//      for (int i = 0; i < 10000; i++)
+//      {
          Point3d end = new Point3d(5.0, 3.0, 1.0);
          ocTree.castRay(new Point3d(0.0, 0.0, 2.0), new Vector3d(0.0, 0.0, -1.0), end, true);
          List<Vector3d> normals = new ArrayList<>();
          ocTree.getNormals(end, normals);
-      }
-      long endTime = System.nanoTime();
-      System.out.println(TimeTools.nanoSecondstoSeconds(endTime - startTime));
+//      }
+      System.out.println(normals);
+//      long endTime = System.nanoTime();
+//      System.out.println(TimeTools.nanoSecondstoSeconds(endTime - startTime));
    }
 
    PointCloud pointcloud = new PointCloud();
@@ -281,42 +272,6 @@ public class OcTreeVisualizer extends Application
 
 //      new OcTreeVisualizer();
 
-//      Application.launch(args);
-      colorPallete(1 << 16);
+      Application.launch(args);
    }
-   public static Image colorPallete(int numColors){
-      int width=(int)Math.sqrt(numColors);
-      int height=numColors/width;
-
-      WritableImage img = new WritableImage(width, height);
-      PixelWriter   pw  = img.getPixelWriter();
-      AtomicInteger count = new AtomicInteger();
-      
-      for (int h = 0; h < height; h++)
-      {
-         for (int w = 0; w < width; w++)
-         {
-            pw.setColor(w, h, getColor(count.getAndIncrement(), (float)Math.sqrt((float) w / (float) width), numColors));
-         }
-      }
-      
-//      IntStream.range(0, height).boxed()
-//              .forEach(y->IntStream.range(0, width).boxed()
-//                      .forEach(x->pw.setColor(x, y, getColor(count.getAndIncrement(),numColors))));
-
-      // save for testing purposes
-      try {            
-          ImageIO.write(SwingFXUtils.fromFXImage(img, null), "png", new File("palette.png"));
-      } catch (IOException ex) { }
-      return img;
-  }
-
-  private static Color getColor(int iColor, float s, int numColors){
-      // nice palette of colors 
-      java.awt.Color c = java.awt.Color.getHSBColor((float) iColor / (float) numColors, s, 1.0f);
-      return Color.rgb(c.getRed(), c.getGreen(), c.getBlue());
-
-      // raw palette
-      //return Color.rgb((iColor >> 16) & 0xFF, (iColor >> 8) & 0xFF, iColor & 0xFF);
-  }
 }
