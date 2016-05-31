@@ -1,7 +1,6 @@
 package us.ihmc.octoMap.pointCloud;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -80,6 +79,19 @@ public class PointCloud implements Iterable<Point3f>
    {
       for (Point3f point : points)
          add(point);
+   }
+
+   public void addAll(float[] points)
+   {
+      int numberOfPoints = points.length / 3;
+
+      for (int i = 0; i < numberOfPoints; i++)
+      {
+         float x = points[3 * i];
+         float y = points[3 * i + 1];
+         float z = points[3 * i + 2];
+         add(x, y, z);
+      }
    }
 
    /// Apply transform to each point
@@ -194,42 +206,31 @@ public class PointCloud implements Iterable<Point3f>
       addAll(result);
    }
 
-   public PointCloud subSampleRandom(int num_samples)
-   {
-      PointCloud sample_cloud = new PointCloud(this);
-      Random random = new Random();
-
-      while (sample_cloud.size() > num_samples)
-      {
-         int indexToRemove = random.nextInt(sample_cloud.size());
-         int lastIndex = sample_cloud.size() - 1;
-         Collections.swap(sample_cloud.points, indexToRemove, lastIndex);
-         sample_cloud.points.remove(lastIndex);
-      }
-
-      return sample_cloud;
-   }
-
    public static PointCloud createPointCloudFromSubSample(float[] points, int numberOfSamples)
    {
       PointCloud pointCloud = new PointCloud();
-      Random random = new Random();
-
       int numberOfPoints = points.length / 3;
-      
-      HashSet<Integer> indices = new HashSet<>(numberOfSamples);
 
-      while (indices.size() < numberOfSamples)
-         indices.add(random.nextInt(numberOfPoints));
-
-      for (int index : indices)
+      if (numberOfPoints <= numberOfSamples)
       {
-         float x = points[3 * index];
-         float y = points[3 * index + 1];
-         float z = points[3 * index + 2];
-         pointCloud.add(x, y, z);
+         pointCloud.addAll(points);
       }
+      else
+      {
+         Random random = new Random();
+         HashSet<Integer> indices = new HashSet<>(numberOfSamples);
 
+         while (indices.size() < numberOfSamples)
+            indices.add(random.nextInt(numberOfPoints));
+
+         for (int index : indices)
+         {
+            float x = points[3 * index];
+            float y = points[3 * index + 1];
+            float z = points[3 * index + 2];
+            pointCloud.add(x, y, z);
+         }
+      }
       return pointCloud;
    }
 
