@@ -1,10 +1,14 @@
 package us.ihmc.octoMap.node;
 
+import java.util.List;
+
+import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
 {
    private Vector3d normal = null;
+   private List<Point3d> plane = null;
 
    public NormalOcTreeNode()
    {
@@ -62,5 +66,15 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public boolean isNormalSet()
    {
       return normal != null;
+   }
+   
+   public List<Point3d> getPlane()
+   {
+      return plane;
+   }
+   
+   public void setPlane(List<Point3d> plane)
+   {
+      this.plane = plane;
    }
 }

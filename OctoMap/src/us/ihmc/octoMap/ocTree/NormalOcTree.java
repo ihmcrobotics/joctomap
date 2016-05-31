@@ -3,16 +3,20 @@ package us.ihmc.octoMap.ocTree;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
+import us.ihmc.octoMap.tools.IntersectionPlaneBoxCalculator;
+import us.ihmc.octoMap.tools.OcTreeCoordinateConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 {
+   private final IntersectionPlaneBoxCalculator intersectionPlaneBoxCalculator = new IntersectionPlaneBoxCalculator();
 
    public NormalOcTree(double resolution)
    {
@@ -73,7 +77,21 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
             node.setNormal(averageNormal);
          }
          else
+         {
             node.setNormal(null);
+            return;
+         }
+      }
+      
+      if (node.getNormal() != null)
+      {
+         Point3d center = keyToCoord(nodeKey);
+         double computeNodeSize = getNodeSize(depth);
+         intersectionPlaneBoxCalculator.setCube(computeNodeSize, center);
+         intersectionPlaneBoxCalculator.setPlane(center, node.getNormal());
+         List<Point3d> intersections = new ArrayList<>();
+         intersectionPlaneBoxCalculator.computeIntersections(intersections);
+         node.setPlane(intersections);
       }
    }
 

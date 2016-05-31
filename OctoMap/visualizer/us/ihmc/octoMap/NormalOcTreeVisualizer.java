@@ -228,7 +228,7 @@ public class NormalOcTreeVisualizer extends Application
       MultiColorMeshBuilder occupiedMeshBuilder = new MultiColorMeshBuilder();
       MeshBuilder freeMeshBuilder = new MeshBuilder();
 
-      LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
+      LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree, 15);
       for (OcTreeSuperNode<NormalOcTreeNode> node : leafIterable)
       {
          double boxSize = node.getSize();
@@ -237,7 +237,12 @@ public class NormalOcTreeVisualizer extends Application
          if (ocTree.isNodeOccupied(node.getNode()))
          {
             Vector3d normal = node.getNode().getNormal();
-            occupiedMeshBuilder.addCubeMesh((float) boxSize, new Point3f(boxCenter), getNormalBasedColor(normal));
+            Color normalBasedColor = getNormalBasedColor(normal);
+            List<Point3d> plane = node.getNode().getPlane();
+            if (plane != null)
+               occupiedMeshBuilder.addPolyon(plane, normalBasedColor);
+            else
+               occupiedMeshBuilder.addCubeMesh((float) boxSize, new Point3f(boxCenter), normalBasedColor);
          }
          else if (SHOW_FREE_CELLS)
          {
