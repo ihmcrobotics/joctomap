@@ -1,11 +1,8 @@
 package us.ihmc.octoMap;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import javax.vecmath.Point2f;
 import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
 import javafx.application.Application;
@@ -27,7 +24,6 @@ public class IntersectionPlaneBoxCalculatorVisualizer extends Application
 {
    private final MeshBuilder meshBuilder = new MeshBuilder();
    private final IntersectionPlaneBoxCalculator calculator = new IntersectionPlaneBoxCalculator();
-   private final List<Point3d> intersections = new ArrayList<>();
    private final Box box;
 
    public IntersectionPlaneBoxCalculatorVisualizer()
@@ -36,15 +32,25 @@ public class IntersectionPlaneBoxCalculatorVisualizer extends Application
       double ly = 1.0;
       double lz = 1.0;
 
-      Point3d boxCenter = new Point3d(0.0, 0.0, 0.3);
+      Point3d boxCenter = new Point3d();//-0.775, 0.525, -0.275);
       calculator.setBox(lx, ly, lz, boxCenter);
-      Vector3d planeNormal = new Vector3d(0.0, 1.0, 1.0);
+      Vector3d planeNormal = new Vector3d(0.7071067811865476, 0.7071067811865476, 0.0);
       planeNormal.normalize();
-      Point3d planeOrigin = new Point3d();
+      Point3d planeOrigin = new Point3d();//-0.775, 0.525, -0.275);
       calculator.setPlane(planeOrigin, planeNormal);
-      calculator.computeIntersections(intersections);
-      meshBuilder.addPolygon(intersections);
-
+      
+//      meshBuilder.addSingleFace(intersections.get(0), intersections.get(1), intersections.get(2), new Point2f());
+      
+      List<Point3d> computeIntersections = calculator.computeIntersections();
+      System.out.println(computeIntersections);
+      meshBuilder.addPolygon(computeIntersections);
+      
+      //(-0.8, 0.5, -0.26),
+      //(-0.75, 0.55, -0.29),
+      //(-0.77, 0.55, -0.25),
+      //(-0.8, 0.51, -0.25),
+      //(-0.78, 0.5, -0.30),
+      //(-0.75, 0.54, -0.30)
       box = new Box(lx, ly, lz);
       box.setTranslateX(boxCenter.x);
       box.setTranslateY(boxCenter.y);

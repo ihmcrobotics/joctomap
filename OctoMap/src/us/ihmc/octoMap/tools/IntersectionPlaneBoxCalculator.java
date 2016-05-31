@@ -13,6 +13,8 @@ import us.ihmc.robotics.MathTools;
 
 public class IntersectionPlaneBoxCalculator
 {
+   private static final double EPSILON = 1.0e-3;
+
    private final Point3d[] boxVertices = new Point3d[8];
    private final List<Pair<Point3d, Point3d>> boxEdges = new ArrayList<>();
 
@@ -57,7 +59,6 @@ public class IntersectionPlaneBoxCalculator
    {
       boxSize.set(lx, ly, lz);
       boxCenter.set(center);
-
    }
 
    public void setPlane(Point3d pointOnPlane, Vector3d planeNormal)
@@ -66,13 +67,12 @@ public class IntersectionPlaneBoxCalculator
       this.planeNormal.set(planeNormal);
    }
 
-   public void computeIntersections(List<Point3d> intersectionsToPack)
+   public List<Point3d> computeIntersections()
    {
       Vector3d edgeVector = new Vector3d();
-      intersectionsToPack.clear();
-      
-      int count = 0;
-      
+      Vector3d fromPlaneCenterToEdgeStart = new Vector3d();
+      List<Point3d> intersections = new ArrayList<>();
+
       for (int i = 0; i < 12; i++)
       {
          Point3d intersection = new Point3d();
@@ -80,7 +80,6 @@ public class IntersectionPlaneBoxCalculator
          Point3d edgeEnd = boxEdges.get(i).getValue();
          edgeVector.sub(edgeEnd, edgeStart);
 
-         Vector3d fromPlaneCenterToEdgeStart = new Vector3d();
          fromPlaneCenterToEdgeStart.sub(pointOnPlane, boxCenter);
          fromPlaneCenterToEdgeStart.sub(edgeStart);
 
@@ -98,36 +97,107 @@ public class IntersectionPlaneBoxCalculator
          intersection.y *= boxSize.y;
          intersection.z *= boxSize.z;
          intersection.add(boxCenter);
-         intersectionsToPack.add(intersection);
-         count++;
+         if (!listContains(intersections, intersection))
+            intersections.add(intersection);
 
-         if (count == 6) // That's the max number of possible intersections
+         if (intersections.size() == 6) // That's the max number of possible intersections
             break;
       }
-      reorderIntersections(intersectionsToPack);
+      return reorderIntersections(intersections);
    }
 
-   private void reorderIntersections(List<Point3d> intersectionsToPack)
+   private List<Point3d> reorderIntersections(List<Point3d> intersectionsToPack)
    {
       if (intersectionsToPack.isEmpty())
-         return;
+         return intersectionsToPack;
 
-      final Vector3d v1 = new Vector3d();
-      final Vector3d v2 = new Vector3d();
-      final Vector3d v3 = new Vector3d();
+      List<Point3d> orderedIntersections = new ArrayList<>(intersectionsToPack.size());
+      List<Double> orderedAngles = new ArrayList<>(intersectionsToPack.size());
 
-      Collections.sort(intersectionsToPack, new Comparator<Point3d>()
+      orderedIntersections.add(intersectionsToPack.get(0));
+      orderedAngles.add(0.0);
+
+      Vector3d v0 = new Vector3d();
+      v0.sub(intersectionsToPack.get(0), pointOnPlane);
+      v0.normalize();
+
+      Vector3d vi = new Vector3d();
+      Vector3d vCross = new Vector3d();
+
+      for (int i = 1; i < intersectionsToPack.size(); i++)
       {
-         @Override
-         public int compare(Point3d o1, Point3d o2)
-         {
-            if (o1.epsilonEquals(o2, 1.0e-10))
-               return 0;
-            v1.sub(o1, pointOnPlane);
-            v2.sub(o2, pointOnPlane);
-            v3.cross(v1, v2);
-            return v3.dot(planeNormal) < 0.0 ? 1 : -1;
-         }
-      });
+         vi.sub(intersectionsToPack.get(i), pointOnPlane);
+         vi.normalize();
+
+         double angle = v0.dot(vi); // Gives [1.0, -1.0] for an angle in [0, Pi]
+
+         vCross.cross(v0, vi);
+         if (vCross.dot(planeNormal) < 0.0) // Allows to make a difference between the two angle ranges: [0, Pi] and [Pi, 2*Pi]
+            angle = -2 - angle; // We're in the range [Pi, 2*Pi], this transform the dot original range [1, -1] to [-1, -3] where -3 is when vi & v0 point in the same direction. 
+         // We obtained an "angle" that goes from 1 down to -3. It is transformed to be in the range [0, 4].
+         angle -= 1.0;
+         angle *= -1.0;
+
+         // Binary search to figure out where the vertex should go in the list.
+         int index = Collections.binarySearch(orderedAngles, angle, angleComparator);
+         if (index < 0)
+            index = -index - 1;
+
+         orderedIntersections.add(index, intersectionsToPack.get(i));
+         orderedAngles.add(index, angle);
+      }
+
+      return orderedIntersections;
+   }
+
+   private final AngleComparator angleComparator = new AngleComparator();
+
+   private static class AngleComparator implements Comparator<Double>
+   {
+      @Override
+      public int compare(Double angle1, Double angle2)
+      {
+         if (angle1 == angle2)
+            return 0;
+         else if (angle1 < angle2)
+            return -1;
+         // (angle1 > angle2)
+         return 1;
+      }
+   }
+
+   private boolean listContains(List<Point3d> listOfPoints, Point3d pointToCheck)
+   {
+      for (Point3d pointInList : listOfPoints)
+      {
+         if (epsilonEquals(pointInList, pointToCheck))
+            return true;
+      }
+      return false;
+   }
+
+   private boolean epsilonEquals(Point3d point1, Point3d point2)
+   {
+      double diff;
+
+      diff = point1.x - point2.x;
+      if (Double.isNaN(diff))
+         return false;
+      if ((diff < 0 ? -diff : diff) > EPSILON * boxSize.x)
+         return false;
+
+      diff = point1.y - point2.y;
+      if (Double.isNaN(diff))
+         return false;
+      if ((diff < 0 ? -diff : diff) > EPSILON * boxSize.y)
+         return false;
+
+      diff = point1.z - point2.z;
+      if (Double.isNaN(diff))
+         return false;
+      if ((diff < 0 ? -diff : diff) > EPSILON * boxSize.z)
+         return false;
+
+      return true;
    }
 }
