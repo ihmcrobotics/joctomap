@@ -1,4 +1,4 @@
-package us.ihmc.octoMap;
+package us.ihmc.octoMap.tools;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,6 +70,9 @@ public class IntersectionPlaneBoxCalculator
    {
       Vector3d edgeVector = new Vector3d();
       intersectionsToPack.clear();
+      
+      int count = 0;
+      
       for (int i = 0; i < 12; i++)
       {
          Point3d intersection = new Point3d();
@@ -81,19 +84,25 @@ public class IntersectionPlaneBoxCalculator
          fromPlaneCenterToEdgeStart.sub(pointOnPlane, boxCenter);
          fromPlaneCenterToEdgeStart.sub(edgeStart);
 
-         double dot = planeNormal.dot(fromPlaneCenterToEdgeStart);
          double dotNormalEdge = planeNormal.dot(edgeVector);
+
          if (Math.abs(dotNormalEdge) < 1.0e-5)
             continue;
 
-         double scaleFactor = dot / dotNormalEdge;
+         double scaleFactor = planeNormal.dot(fromPlaneCenterToEdgeStart) / dotNormalEdge;
          if (!MathTools.isInsideBoundsInclusive(scaleFactor, 0.0, 1.0))
             continue;
 
          intersection.scaleAdd(scaleFactor, edgeVector, edgeStart);
+         intersection.x *= boxSize.x;
+         intersection.y *= boxSize.y;
+         intersection.z *= boxSize.z;
          intersection.add(boxCenter);
-
          intersectionsToPack.add(intersection);
+         count++;
+
+         if (count == 6) // That's the max number of possible intersections
+            break;
       }
       reorderIntersections(intersectionsToPack);
    }
