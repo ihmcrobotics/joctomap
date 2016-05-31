@@ -1,8 +1,5 @@
 package us.ihmc.octoMap.ocTree;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
@@ -11,7 +8,6 @@ import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
 import us.ihmc.octoMap.tools.IntersectionPlaneBoxCalculator;
-import us.ihmc.octoMap.tools.OcTreeCoordinateConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
@@ -63,24 +59,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
       else
       {
-         List<Vector3d> normals = new ArrayList<>();
-         getNormals(nodeKey, normals);
-         if (!normals.isEmpty())
-         {
-            Vector3d averageNormal = new Vector3d();
-            for (Vector3d normal : normals)
-            {
-               averageNormal.add(normal);
-            }
-            averageNormal.scale(1.0 / (double) normals.size());
-            averageNormal.normalize();
-            node.setNormal(averageNormal);
-         }
-         else
-         {
-            node.setNormal(null);
-            return;
-         }
+         node.setNormal(computeNodeNormal(nodeKey, true));
       }
       
       if (node.getNormal() != null)
@@ -89,9 +68,58 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          double computeNodeSize = getNodeSize(depth);
          intersectionPlaneBoxCalculator.setCube(computeNodeSize, center);
          intersectionPlaneBoxCalculator.setPlane(center, node.getNormal());
-         List<Point3d> intersections = new ArrayList<>();
-         intersectionPlaneBoxCalculator.computeIntersections(intersections);
-         node.setPlane(intersections);
+         node.setPlane(intersectionPlaneBoxCalculator.computeIntersections());
+      }
+   }
+
+   public Vector3d computeNodeNormal(OcTreeKey key, boolean unknownStatus)
+   {
+      NormalOcTreeNode node = search(key);
+      if (node == null)
+         return null;
+
+      Vector3d normal = new Vector3d();
+      OcTreeKey currentKey = new OcTreeKey();
+      NormalOcTreeNode currentNode;
+
+      int kxOffset = 0;
+      int kyOffset = 0;
+      int kzOffset = 0;
+
+      for (kxOffset = -1; kxOffset <= 1; kxOffset++)
+      {
+         for (kyOffset = -1; kyOffset <= 1; kyOffset++)
+         {
+            for (kzOffset = -1; kzOffset <= 1; kzOffset++)
+            {
+               currentKey.k[0] = key.k[0] + kxOffset;
+               currentKey.k[1] = key.k[1] + kyOffset;
+               currentKey.k[2] = key.k[2] + kzOffset;
+               currentNode = search(currentKey);
+
+               boolean nodeExists = currentNode == null;
+               boolean isOccupied = !nodeExists && isNodeOccupied(currentNode);
+               boolean isUnknownConsideredOccupied = nodeExists && unknownStatus;
+               
+               if (isOccupied || isUnknownConsideredOccupied)
+               {
+                  normal.x -= kxOffset;
+                  normal.y -= kyOffset;
+                  normal.z -= kzOffset;
+               }
+            }
+         }
+      }
+
+      double lengthSquared = normal.lengthSquared();
+      if (lengthSquared > 1.0e-3)
+      {
+         normal.scale(1.0 / Math.sqrt(lengthSquared));
+         return normal;
+      }
+      else
+      {
+         return null;
       }
    }
 
