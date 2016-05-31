@@ -35,7 +35,7 @@ import us.ihmc.robotics.time.TimeTools;
 
 public class NormalOcTreeVisualizer extends Application
 {
-   public final NormalOcTree ocTree = new NormalOcTree(0.05);
+   public final NormalOcTree ocTree = new NormalOcTree(0.15);
    private static final boolean SHOW_FREE_CELLS = false;
    private static final Color FREE_COLOR = new Color(Color.YELLOW.getRed(), Color.YELLOW.getGreen(), Color.YELLOW.getBlue(), 0.0);
 
@@ -45,7 +45,7 @@ public class NormalOcTreeVisualizer extends Application
       //      callUpdateNode();
       //      callInsertPointCloud();
 //      createPlane(0.0, 0.0, -0.05);
-      createBowl(1.0, new Point3d());
+      createBowl(5.0, new Point3d());
       System.out.println("Number of leafs: " + ocTree.getNumLeafNodes());
       System.out.println("Initialized octree");
       System.out.println("Computing normals");
@@ -101,6 +101,14 @@ public class NormalOcTreeVisualizer extends Application
       ocTree.getNormals(badNodeKey, normals, true);
       System.out.println(normals);
 
+      Point3d end = new Point3d();
+      Vector3d direction = new Vector3d(-3.54, -3.565, -0.2);
+      direction.normalize();
+      ocTree.castRay(new Point3d(), direction, end);
+      
+      NormalOcTreeNode search = ocTree.search(end);
+      if (search != null)
+         System.out.println(search.getPlane());
    }
    
    PointCloud pointcloud = new PointCloud();
@@ -217,9 +225,6 @@ public class NormalOcTreeVisualizer extends Application
       rootNode.setMouseTransparent(true);
       setupCamera(rootNode, scene);
       JavaFXCoordinateSystem worldCoordinateSystem = new JavaFXCoordinateSystem(0.3);
-      worldCoordinateSystem.setTranslateX(0.975);
-      worldCoordinateSystem.setTranslateY(-0.025);
-      worldCoordinateSystem.setTranslateZ(-0.075);
       rootNode.getChildren().add(worldCoordinateSystem);
 
       primaryStage.setScene(scene);
@@ -228,7 +233,7 @@ public class NormalOcTreeVisualizer extends Application
       MultiColorMeshBuilder occupiedMeshBuilder = new MultiColorMeshBuilder();
       MeshBuilder freeMeshBuilder = new MeshBuilder();
 
-      LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree, 15);
+      LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
       for (OcTreeSuperNode<NormalOcTreeNode> node : leafIterable)
       {
          double boxSize = node.getSize();
