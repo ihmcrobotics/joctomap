@@ -79,7 +79,7 @@ public abstract class OcTreeSearchTools
       if (depth == 0)
          depth = maxDepth;
 
-      // generate appropriate key_at_depth for queried depth
+      // generate appropriate keyAtDepth for queried depth
       OcTreeKey keyAtDepth;
       if (depth != maxDepth)
          keyAtDepth = OcTreeKeyTools.adjustKeyAtDepth(key, depth, maxDepth);
@@ -88,12 +88,12 @@ public abstract class OcTreeSearchTools
 
       NODE currentNode = rootNode;
 
-      int diff = maxDepth - depth;
+      int level = maxDepth - depth;
 
-      // follow nodes down to requested level (for diff = 0 it's the last level)
-      for (int i = (maxDepth - 1); i >= diff; --i)
+      // follow nodes down to requested level (for level = 0 it's the last level)
+      for (int currentDepth = (maxDepth - 1); currentDepth >= level; --currentDepth)
       {
-         int childIndex = OcTreeKeyTools.computeChildIndex(keyAtDepth, i);
+         int childIndex = OcTreeKeyTools.computeChildIndex(keyAtDepth, currentDepth);
 
          if (OcTreeNodeTools.nodeChildExists(currentNode, childIndex))
          {
