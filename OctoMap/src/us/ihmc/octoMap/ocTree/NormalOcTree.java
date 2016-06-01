@@ -3,6 +3,8 @@ package us.ihmc.octoMap.ocTree;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
+import org.apache.commons.math3.stat.descriptive.moment.Variance;
+
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
@@ -70,6 +72,10 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          intersectionPlaneBoxCalculator.setPlane(center, node.getNormal());
          node.setPlane(intersectionPlaneBoxCalculator.computeIntersections());
       }
+      else
+      {
+         node.setPlane(null);
+      }
    }
 
    public Vector3d computeNodeNormal(OcTreeKey key, boolean unknownStatus)
@@ -121,6 +127,62 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       {
          return null;
       }
+   }
+
+   public double computeNodeNeighborNormalDifference(OcTreeKey key, int depth)
+   {
+      NormalOcTreeNode node = search(key, depth);
+      if (node == null || !node.isNormalSet())
+         return Double.NaN;
+
+      Vector3d normal = node.getNormal();
+      Vector3d meanNormal = new Vector3d();
+      OcTreeKey currentKey = new OcTreeKey();
+      NormalOcTreeNode currentNode;
+
+      int kxOffset = 0;
+      int kyOffset = 0;
+      int kzOffset = 0;
+      int count = 0;
+
+      double meanDifference = 0.0;
+      Variance var = new Variance();
+
+      for (kxOffset = -1; kxOffset <= 1; kxOffset++)
+      {
+         for (kyOffset = -1; kyOffset <= 1; kyOffset++)
+         {
+            for (kzOffset = -1; kzOffset <= 1; kzOffset++)
+            {
+               if (kxOffset == 0 && kyOffset == 0 && kzOffset == 0)
+                  continue;
+
+               currentKey.k[0] = key.k[0] + kxOffset;
+               currentKey.k[1] = key.k[1] + kyOffset;
+               currentKey.k[2] = key.k[2] + kzOffset;
+               currentNode = search(currentKey, depth);
+
+               if (currentNode == null || !currentNode.isNormalSet())
+                  continue;
+
+               meanNormal.add(currentNode.getNormal());
+               meanDifference += 1.0 - Math.abs(currentNode.getNormal().dot(normal));
+               var.increment(1.0 - Math.abs(currentNode.getNormal().dot(normal)));
+//               meanDifference = Math.max(meanDifference, 1.0 - Math.abs(currentNode.getNormal().dot(normal)));
+               count++;
+            }
+         }
+      }
+
+      if (count == 0)
+         return Double.NaN;
+
+      meanNormal.scale(1.0 / count);
+      meanDifference = 1.0 - Math.abs(meanNormal.dot(normal));
+
+//      meanDifference /= count;
+      return meanDifference;
+//      return var.getResult();
    }
 
    @Override
