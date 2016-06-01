@@ -21,7 +21,7 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
 
    public CountingOcTreeNode updateNode(Point3d coordinate)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(coordinate);
+      OcTreeKey key = coordinateToKey(coordinate);
       if (key == null)
          return null;
       return updateNode(key);
@@ -78,7 +78,7 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
 
          if (node.getCount() >= min_hits)
          {
-            node_centers.add(keyToCoord(parentKey, depth));
+            node_centers.add(keyToCoordinate(parentKey, depth));
          }
       }
    }

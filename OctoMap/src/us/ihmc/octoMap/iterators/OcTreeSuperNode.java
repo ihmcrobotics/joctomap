@@ -40,25 +40,25 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
    /** @return the center coordinate of this node */
    public Point3d getCoordinate()
    {
-      return tree.keyToCoord(key, depth);
+      return tree.keyToCoordinate(key, depth);
    }
 
    /** @return single coordinate of this node */
    public double getX()
    {
-      return tree.keyToCoord(key.getKey(0), depth);
+      return tree.keyToCoordinate(key.getKey(0), depth);
    }
 
    /** @return single coordinate of this node */
    public double getY()
    {
-      return tree.keyToCoord(key.getKey(1), depth);
+      return tree.keyToCoordinate(key.getKey(1), depth);
    }
 
    /** @return single coordinate of this node */
    public double getZ()
    {
-      return tree.keyToCoord(key.getKey(2), depth);
+      return tree.keyToCoordinate(key.getKey(2), depth);
    }
 
    /** @return the side of the volume occupied by this node */

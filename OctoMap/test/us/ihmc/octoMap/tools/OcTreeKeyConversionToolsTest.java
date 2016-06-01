@@ -2,8 +2,8 @@ package us.ihmc.octoMap.tools;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static us.ihmc.octoMap.tools.OcTreeCoordinateConversionTools.convertCartesianCoordinateToKey;
-import static us.ihmc.octoMap.tools.OcTreeCoordinateConversionTools.convertKeyToCartesianCoordinate;
+import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.coordinateToKey;
+import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.keyToCoordinate;
 
 import java.util.Random;
 
@@ -14,7 +14,7 @@ import org.junit.Test;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.robotics.random.RandomTools;
 
-public class OcTreeCoordinateConversionToolsTest
+public class OcTreeKeyConversionToolsTest
 {
    @Test
    public void testConvertKeyCoordBackForthMaxDepth() throws Exception
@@ -28,16 +28,16 @@ public class OcTreeCoordinateConversionToolsTest
       for (int i = 0; i < 10000; i++)
       {
          int expectedKey = RandomTools.generateRandomInt(random, 0, keyMax);
-         double coord = convertKeyToCartesianCoordinate(expectedKey, resolution, maxDepth);
-         double actualKey = convertCartesianCoordinateToKey(coord, resolution, maxDepth);
+         double coord = keyToCoordinate(expectedKey, resolution, maxDepth);
+         double actualKey = coordinateToKey(coord, resolution, maxDepth);
          assertTrue(expectedKey == actualKey);
       }
 
       for (int i = 0; i < 10000; i++)
       {
          OcTreeKey expectedKey = new OcTreeKey(random, keyMax);
-         Point3d coord = convertKeyToCartesianCoordinate(expectedKey, resolution, maxDepth);
-         OcTreeKey actualKey = convertCartesianCoordinateToKey(coord, resolution, maxDepth);
+         Point3d coord = keyToCoordinate(expectedKey, resolution, maxDepth);
+         OcTreeKey actualKey = coordinateToKey(coord, resolution, maxDepth);
          assertTrue(expectedKey.equals(actualKey));
       }
    }

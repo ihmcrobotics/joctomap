@@ -286,7 +286,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public NODE setNodeValue(Point3d coordinate, float logOddsValue, boolean lazyEvaluation)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(coordinate);
+      OcTreeKey key = coordinateToKey(coordinate);
       if (key == null)
          return null;
 
@@ -312,7 +312,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public NODE setNodeValue(double x, double y, double z, float logOddsValue, boolean lazyEvaluation)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
+      OcTreeKey key = coordinateToKey(x, y, z);
       if (key == null)
          return null;
 
@@ -370,7 +370,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    @Override
    public NODE updateNode(Point3d coordinate, float logOddsUpdate, boolean lazyEvaluation)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(coordinate);
+      OcTreeKey key = coordinateToKey(coordinate);
       if (key == null)
          return null;
 
@@ -396,7 +396,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public NODE updateNode(double x, double y, double z, float logOddsUpdate, boolean lazyEvaluation)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
+      OcTreeKey key = coordinateToKey(x, y, z);
       if (key == null)
          return null;
 
@@ -440,7 +440,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    @Override
    public NODE updateNode(Point3d coordinate, boolean occupied, boolean lazyEvaluation)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(coordinate);
+      OcTreeKey key = coordinateToKey(coordinate);
       if (key == null)
          return null;
       return updateNode(key, occupied, lazyEvaluation);
@@ -465,7 +465,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public NODE updateNode(double x, double y, double z, boolean occupied, boolean lazyEvaluation)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(x, y, z);
+      OcTreeKey key = coordinateToKey(x, y, z);
       if (key == null)
          return null;
       return updateNode(key, occupied, lazyEvaluation);
@@ -567,7 +567,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       /// ----------  see OcTreeBase::computeRayKeys  -----------
 
       // Initialization phase -------------------------------------------------------
-      OcTreeKey current_key = convertCartesianCoordinateToKey(origin);
+      OcTreeKey current_key = coordinateToKey(origin);
       if (current_key == null)
       {
          PrintTools.warn(this, "Coordinates out of bounds during ray casting");
@@ -581,13 +581,13 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          {
             // Occupied node found at origin 
             // (need to convert from key, since origin does not need to be a voxel center)
-            keyToCoord(current_key, end);
+            keyToCoordinate(current_key, end);
             return true;
          }
       }
       else if (!ignoreUnknownCells)
       {
-         keyToCoord(current_key, end);
+         keyToCoordinate(current_key, end);
          return false;
       }
 
@@ -619,7 +619,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          if (step[i] != 0)
          {
             // corner point of voxel (in direction of ray)
-            double voxelBorder = keyToCoord(current_key.k[i]);
+            double voxelBorder = keyToCoordinate(current_key.k[i]);
             voxelBorder += step[i] * resolution * 0.5;
 
             tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
@@ -670,7 +670,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          {
             PrintTools.warn(this, "Coordinate hit bounds in dim " + dim + ", aborting raycast");
             // return border point nevertheless:
-            keyToCoord(current_key, end);
+            keyToCoordinate(current_key, end);
             return false;
          }
 
@@ -679,7 +679,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          tMax[dim] += tDelta[dim];
 
          // generate world coords from key
-         keyToCoord(current_key, end);
+         keyToCoordinate(current_key, end);
 
          // check for maxrange:
          if (max_range_set)
@@ -850,7 +850,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       */
    public boolean getNormals(Point3d voxel, List<Vector3d> normals, boolean unknownStatus)
    {
-      OcTreeKey initKey = convertCartesianCoordinateToKey(voxel);
+      OcTreeKey initKey = coordinateToKey(voxel);
       if (initKey == null)
       {
          PrintTools.error(this, "Voxel out of bounds");
@@ -973,7 +973,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    /// sets the minimum for a query bounding box to use
    public void setBoundingBoxMin(Point3d min)
    {
-      OcTreeKey newKey = convertCartesianCoordinateToKey(boundingBoxMin);
+      OcTreeKey newKey = coordinateToKey(boundingBoxMin);
       if (newKey == null)
       {
          PrintTools.error(this, "ERROR while generating bbx min key.");
@@ -986,7 +986,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    /// sets the maximum for a query bounding box to use
    public void setBoundingBoxMax(Point3d max)
    {
-      OcTreeKey newKey = convertCartesianCoordinateToKey(boundingBoxMax);
+      OcTreeKey newKey = coordinateToKey(boundingBoxMax);
       if (newKey == null)
       {
          PrintTools.error(this, "ERROR while generating bbx max key.");
@@ -1098,7 +1098,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
                   freeCells.addAll(keyray);
                }
                // occupied endpoint
-               OcTreeKey key = convertCartesianCoordinateToKey(point);
+               OcTreeKey key = coordinateToKey(point);
                if (key != null)
                   occupiedCells.add(key);
             }
@@ -1116,7 +1116,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             if (isInBoundingBox(point) && (maxrange < 0.0 || length <= maxrange))
             {
                // occupied endpoint
-               OcTreeKey key = convertCartesianCoordinateToKey(point);
+               OcTreeKey key = coordinateToKey(point);
                if (key != null)
                   occupiedCells.add(key);
 
@@ -1161,9 +1161,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
       for (int i = 0; i < scan.size(); ++i)
       {
-         OcTreeKey key = convertCartesianCoordinateToKey(scan.getPoint(i));
+         OcTreeKey key = coordinateToKey(scan.getPoint(i));
          if (endpoints.add(key)) // insertion took place => key was not in set
-            discretePC.add(keyToCoord(key));
+            discretePC.add(keyToCoordinate(key));
       }
 
       computeUpdate(discretePC, origin, freeCells, occupiedCells, maxrange);

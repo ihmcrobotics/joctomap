@@ -6,7 +6,7 @@ import javax.vecmath.Point3f;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.robotics.MathTools;
 
-public abstract class OcTreeCoordinateConversionTools
+public abstract class OcTreeKeyConversionTools
 {
    /**
     * Converts a single coordinate into a discrete addressing key, with boundary checking.
@@ -15,9 +15,9 @@ public abstract class OcTreeCoordinateConversionTools
     * @param key discrete 16 bit addressing key, result
     * @return key if coordinate is within the octree bounds (valid), -1 otherwise
     */
-   public static int convertCartesianCoordinateToKey(double coordinate, double resolution, int maxDepth)
+   public static int coordinateToKey(double coordinate, double resolution, int maxDepth)
    {
-      return convertCartesianCoordinateToKey(coordinate, maxDepth, resolution, maxDepth);
+      return coordinateToKey(coordinate, maxDepth, resolution, maxDepth);
    }
 
    /**
@@ -28,7 +28,7 @@ public abstract class OcTreeCoordinateConversionTools
     * @param key discrete 16 bit addressing key, result
     * @return key if coordinate is within the octree bounds (valid), -1 otherwise
     */
-   public static int convertCartesianCoordinateToKey(double coordinate, int depth, double resolution, int maxDepth)
+   public static int coordinateToKey(double coordinate, int depth, double resolution, int maxDepth)
    {
       MathTools.checkIfLessOrEqual(depth, maxDepth);
 
@@ -47,7 +47,7 @@ public abstract class OcTreeCoordinateConversionTools
     * @param coord 3d coordinate of a point
     * @return key if point is within the octree (valid), null otherwise
     */
-   public static OcTreeKey convertCartesianCoordinateToKey(Point3f coord, double resolution, int maxDepth)
+   public static OcTreeKey coordinateToKey(Point3f coord, double resolution, int maxDepth)
    {
       return convertCartesianCoordinateToKey(coord.x, coord.y, coord.z, maxDepth, resolution, maxDepth);
    }
@@ -58,7 +58,7 @@ public abstract class OcTreeCoordinateConversionTools
     * @param coord 3d coordinate of a point
     * @return key if point is within the octree (valid), null otherwise
     */
-   public static OcTreeKey convertCartesianCoordinateToKey(Point3d coord, double resolution, int maxDepth)
+   public static OcTreeKey coordinateToKey(Point3d coord, double resolution, int maxDepth)
    {
       return convertCartesianCoordinateToKey(coord.x, coord.y, coord.z, maxDepth, resolution, maxDepth);
    }
@@ -70,7 +70,7 @@ public abstract class OcTreeCoordinateConversionTools
     * @param depth level of the key from the top
     * @return key if point is within the octree (valid), null otherwise
     */
-   public static OcTreeKey convertCartesianCoordinateToKey(Point3d coord, int depth, double resolution, int maxDepth)
+   public static OcTreeKey coordinateToKey(Point3d coord, int depth, double resolution, int maxDepth)
    {
       return convertCartesianCoordinateToKey(coord.x, coord.y, coord.z, depth, resolution, maxDepth);
    }
@@ -83,9 +83,9 @@ public abstract class OcTreeCoordinateConversionTools
     * @param keyToPack
     * @return true if point is within the octree (valid), false otherwise
     */
-   public static boolean convertCartesianCoordinateToKey(Point3d coord, double resolution, int maxDepth, OcTreeKey keyToPack)
+   public static boolean coordinateToKey(Point3d coord, double resolution, int maxDepth, OcTreeKey keyToPack)
    {
-      OcTreeKey key = convertCartesianCoordinateToKey(coord, maxDepth, resolution, maxDepth);
+      OcTreeKey key = coordinateToKey(coord, maxDepth, resolution, maxDepth);
       if (key == null)
          return false;
 
@@ -101,7 +101,7 @@ public abstract class OcTreeCoordinateConversionTools
     * @param z 3d coordinate of a point
     * @return key if point is within the octree (valid), null otherwise
     */
-   public static OcTreeKey convertCartesianCoordinateToKey(double x, double y, double z, double resolution, int maxDepth)
+   public static OcTreeKey coordinateToKey(double x, double y, double z, double resolution, int maxDepth)
    {
       return convertCartesianCoordinateToKey(x, y, z, maxDepth, resolution, maxDepth);
    }
@@ -117,13 +117,13 @@ public abstract class OcTreeCoordinateConversionTools
     */
    public static OcTreeKey convertCartesianCoordinateToKey(double x, double y, double z, int depth, double resolution, int maxDepth)
    {
-      int k0 = convertCartesianCoordinateToKey(x, depth, resolution, maxDepth);
+      int k0 = coordinateToKey(x, depth, resolution, maxDepth);
       if (k0 == -1)
          return null;
-      int k1 = convertCartesianCoordinateToKey(y, depth, resolution, maxDepth);
+      int k1 = coordinateToKey(y, depth, resolution, maxDepth);
       if (k1 == -1)
          return null;
-      int k2 = convertCartesianCoordinateToKey(z, depth, resolution, maxDepth);
+      int k2 = coordinateToKey(z, depth, resolution, maxDepth);
       if (k2 == -1)
          return null;
 
@@ -131,7 +131,7 @@ public abstract class OcTreeCoordinateConversionTools
    }
 
    /** converts from a discrete key at a given depth into a coordinate corresponding to the key's center */
-   public static double convertKeyToCartesianCoordinate(int key, int depth, double resolution, int maxDepth)
+   public static double keyToCoordinate(int key, int depth, double resolution, int maxDepth)
    {
       MathTools.checkIfLessOrEqual(depth, maxDepth);
 
@@ -142,7 +142,7 @@ public abstract class OcTreeCoordinateConversionTools
       }
       else if (depth == maxDepth)
       {
-         return convertKeyToCartesianCoordinate(key, resolution, maxDepth);
+         return keyToCoordinate(key, resolution, maxDepth);
       }
       else
       {
@@ -152,37 +152,37 @@ public abstract class OcTreeCoordinateConversionTools
    }
 
    /** converts from a discrete key at the lowest tree level into a coordinate corresponding to the key's center */
-   public static double convertKeyToCartesianCoordinate(int key, double resolution, int maxDepth)
+   public static double keyToCoordinate(int key, double resolution, int maxDepth)
    {
       return ((double) (key - (1 << (maxDepth - 1))) + 0.5) * resolution;
    }
 
    /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
-   public static Point3d convertKeyToCartesianCoordinate(OcTreeKey key, double resolution, int maxDepth)
+   public static Point3d keyToCoordinate(OcTreeKey key, double resolution, int maxDepth)
    {
-      return convertKeyToCartesianCoordinate(key, maxDepth, resolution, maxDepth);
+      return keyToCoordinate(key, maxDepth, resolution, maxDepth);
    }
 
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
-   public static Point3d convertKeyToCartesianCoordinate(OcTreeKey key, int depth, double resolution, int maxDepth)
+   public static Point3d keyToCoordinate(OcTreeKey key, int depth, double resolution, int maxDepth)
    {
-      double x = convertKeyToCartesianCoordinate(key.k[0], depth, resolution, maxDepth);
-      double y = convertKeyToCartesianCoordinate(key.k[1], depth, resolution, maxDepth);
-      double z = convertKeyToCartesianCoordinate(key.k[2], depth, resolution, maxDepth);
+      double x = keyToCoordinate(key.k[0], depth, resolution, maxDepth);
+      double y = keyToCoordinate(key.k[1], depth, resolution, maxDepth);
+      double z = keyToCoordinate(key.k[2], depth, resolution, maxDepth);
       return new Point3d(x, y, z);
    }
 
-   public static void convertKeyToCartesianCoordinate(OcTreeKey key, Point3d coordinateToPack, double resolution, int maxDepth)
+   public static void keyToCoordinate(OcTreeKey key, Point3d coordinateToPack, double resolution, int maxDepth)
    {
-      convertKeyToCartesianCoordinate(key, maxDepth, coordinateToPack, resolution, maxDepth);
+      keyToCoordinate(key, maxDepth, coordinateToPack, resolution, maxDepth);
    }
 
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
-   public static void convertKeyToCartesianCoordinate(OcTreeKey key, int depth, Point3d coordinateToPack, double resolution, int maxDepth)
+   public static void keyToCoordinate(OcTreeKey key, int depth, Point3d coordinateToPack, double resolution, int maxDepth)
    {
-      coordinateToPack.x = convertKeyToCartesianCoordinate(key.k[0], depth, resolution, maxDepth);
-      coordinateToPack.y = convertKeyToCartesianCoordinate(key.k[1], depth, resolution, maxDepth);
-      coordinateToPack.z = convertKeyToCartesianCoordinate(key.k[2], depth, resolution, maxDepth);
+      coordinateToPack.x = keyToCoordinate(key.k[0], depth, resolution, maxDepth);
+      coordinateToPack.y = keyToCoordinate(key.k[1], depth, resolution, maxDepth);
+      coordinateToPack.z = keyToCoordinate(key.k[2], depth, resolution, maxDepth);
    }
 
    public static double computeNodeSize(int depth, double resolution, int maxDepth)

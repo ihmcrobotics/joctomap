@@ -55,7 +55,7 @@ public class NormalOcTreeVisualizer extends Application
       System.out.println("Done computing normals: time it took = " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
 
       Point3d badNodeCoordinate = new Point3d(0.975, -0.025, -0.075);
-      OcTreeKey badNodeKey = ocTree.convertCartesianCoordinateToKey(badNodeCoordinate);
+      OcTreeKey badNodeKey = ocTree.coordinateToKey(badNodeCoordinate);
       
       HashSet<OcTreeKey> neighborKeySet = new HashSet<>();
 
@@ -90,7 +90,7 @@ public class NormalOcTreeVisualizer extends Application
       NumberFormat format = new DecimalFormat(" 0.000;-0.000");
       for (OcTreeKey key : neighborKeySet)
       {
-         Point3d coord = ocTree.keyToCoord(key);
+         Point3d coord = ocTree.keyToCoordinate(key);
          NormalOcTreeNode node = ocTree.search(key);
          System.out.println("(" + format.format(coord.x) + ", " + format.format(coord.y) + ", " + format.format(coord.z) +"), node: " + node);
       }

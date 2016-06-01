@@ -66,7 +66,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       
       if (node.getNormal() != null)
       {
-         Point3d center = keyToCoord(nodeKey);
+         Point3d center = keyToCoordinate(nodeKey);
          double computeNodeSize = getNodeSize(depth);
          intersectionPlaneBoxCalculator.setCube(computeNodeSize, center);
          intersectionPlaneBoxCalculator.setPlane(center, node.getNormal());
