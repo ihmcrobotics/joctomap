@@ -142,12 +142,22 @@ public class OcTreeKeyTools
 
    /**
     * Computes the center offset key for a given depth.
-    * It is the key at the center of the tree: all key are in [0, 2 * centerOffsetKey].
+    * It is the key at the center of the tree: all key are in [0, 2 * centerOffsetKey - 1].
     * @param depth depth at which the center offset key is to be computed.
-    * @return
+    * @return the center offset key
     */
    public static int computeCenterOffsetKeyAtDepth(int depth)
    {
       return 1 << (depth - 1);
+   }
+
+   /**
+    * Computes the maximum that a key can have at a certain depth.
+    * @param depth
+    * @return the key maximum value
+    */
+   public static int computeMaximumKeyValueAtDepth(int depth)
+   {
+      return (1 << depth) - 1;
    }
 }
