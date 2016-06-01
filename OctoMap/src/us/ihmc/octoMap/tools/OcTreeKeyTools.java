@@ -65,15 +65,17 @@ public class OcTreeKeyTools
     * @param key input indexing key (at lowest resolution / level)
     * @return key corresponding to the input key at the given level
     */
-   public static OcTreeKey computeIndexKey(int level, OcTreeKey key)
+   public static OcTreeKey computeIndexKey(int depth, OcTreeKey key, int maxDepth)
    {
+      int level = maxDepth - depth;
+
       if (level == 0)
       {
          return new OcTreeKey(key);
       }
       else
       {
-         int mask = 65535 << level;
+         int mask = ((1 << maxDepth) - 1) << level;
          OcTreeKey result = new OcTreeKey(key);
          result.setKey(0, result.getKey(0) & mask);
          result.setKey(1, result.getKey(1) & mask);
