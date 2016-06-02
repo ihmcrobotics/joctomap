@@ -1068,10 +1068,10 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return num_pruned;
    }
 
-   /// recursive call of expand()
-   protected void expandRecurs(NODE node, int depth, int max_depth)
+   /** recursive call of expand() */
+   protected void expandRecurs(NODE node, int depth, int maxDepth)
    {
-      if (depth >= max_depth)
+      if (depth >= maxDepth)
          return;
 
       if (node == null)
@@ -1087,7 +1087,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          if (OcTreeNodeTools.nodeChildExists(node, i))
          {
-            expandRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1, max_depth);
+            expandRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1, maxDepth);
          }
       }
    }

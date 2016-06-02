@@ -87,15 +87,11 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       OcTreeKey currentKey = new OcTreeKey();
       NormalOcTreeNode currentNode;
 
-      int kxOffset = 0;
-      int kyOffset = 0;
-      int kzOffset = 0;
-
-      for (kxOffset = -1; kxOffset <= 1; kxOffset++)
+      for (int kxOffset = -1; kxOffset <= 1; kxOffset++)
       {
-         for (kyOffset = -1; kyOffset <= 1; kyOffset++)
+         for (int kyOffset = -1; kyOffset <= 1; kyOffset++)
          {
-            for (kzOffset = -1; kzOffset <= 1; kzOffset++)
+            for (int kzOffset = -1; kzOffset <= 1; kzOffset++)
             {
                currentKey.setKey(0, key.getKey(0) + kxOffset);
                currentKey.setKey(1, key.getKey(1) + kyOffset);
@@ -139,19 +135,16 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       OcTreeKey currentKey = new OcTreeKey();
       NormalOcTreeNode currentNode;
 
-      int kxOffset = 0;
-      int kyOffset = 0;
-      int kzOffset = 0;
       int count = 0;
 
       double meanDifference = 0.0;
       Variance var = new Variance();
 
-      for (kxOffset = -1; kxOffset <= 1; kxOffset++)
+      for (int kxOffset = -1; kxOffset <= 1; kxOffset++)
       {
-         for (kyOffset = -1; kyOffset <= 1; kyOffset++)
+         for (int kyOffset = -1; kyOffset <= 1; kyOffset++)
          {
-            for (kzOffset = -1; kzOffset <= 1; kzOffset++)
+            for (int kzOffset = -1; kzOffset <= 1; kzOffset++)
             {
                if (kxOffset == 0 && kyOffset == 0 && kzOffset == 0)
                   continue;

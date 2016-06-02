@@ -1352,7 +1352,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       // follow down to last level
       if (depth < treeDepth)
       {
-         int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
+         int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - depth - 1);
          if (!OcTreeNodeTools.nodeChildExists(node, pos))
          {
             // child does not exist, but maybe it's a pruned node?
