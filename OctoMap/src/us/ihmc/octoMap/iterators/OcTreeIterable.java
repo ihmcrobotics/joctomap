@@ -1,5 +1,8 @@
 package us.ihmc.octoMap.iterators;
 
+import static us.ihmc.octoMap.iterators.OcTreeSuperNode.createChildSuperNode;
+import static us.ihmc.octoMap.iterators.OcTreeSuperNode.createRootSuperNode;
+
 import java.util.ArrayDeque;
 import java.util.Iterator;
 
@@ -32,7 +35,6 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
 
    public static class OcTreeIterator<NODE extends AbstractOcTreeNode<NODE>> implements Iterator<OcTreeSuperNode<NODE>>
    {
-      private final AbstractOcTreeBase<NODE> tree; ///< Octree this iterator is working on
       private final int maxDepth; ///< Maximum depth for depth-limited queries
 
       /// Internal recursion stack.
@@ -48,7 +50,6 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
          if (tree == null)
             throw new RuntimeException("Creating an iterator with no tree.");
 
-         this.tree = tree;
          if (maxDepth == 0)
             this.maxDepth = tree.getTreeDepth();
          else
@@ -56,7 +57,7 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
 
          if (tree.getRoot() != null)
          { // tree is not empty
-            stack.add(new OcTreeSuperNode<>(tree, this.maxDepth));
+            stack.add(createRootSuperNode(tree, this.maxDepth));
          }
       }
 
@@ -78,7 +79,7 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
             {
                if (OcTreeNodeTools.nodeChildExists(currentNode.getNode(), i))
                {
-                  OcTreeSuperNode<NODE> newNode = new OcTreeSuperNode<>(tree, currentNode, i, maxDepth);
+                  OcTreeSuperNode<NODE> newNode = createChildSuperNode(currentNode, i);
                   stack.add(newNode);
                   MathTools.checkIfLessOrEqual(newNode.getDepth(), maxDepth);
                }

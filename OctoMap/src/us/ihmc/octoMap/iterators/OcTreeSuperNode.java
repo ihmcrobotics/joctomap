@@ -11,29 +11,35 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
 {
    private final AbstractOcTreeBase<NODE> tree;
    private final NODE node;
-   private final OcTreeKey key = new OcTreeKey();
+   private final OcTreeKey key;
    private final int depth;
    private final int maxDepth;
 
-   /** Constructor for the root node */
-   OcTreeSuperNode(AbstractOcTreeBase<NODE> tree, int maxDepth)
+   private OcTreeSuperNode(AbstractOcTreeBase<NODE> tree, NODE node, OcTreeKey key, int depth, int maxDepth)
    {
       this.tree = tree;
+      this.node = node;
+      this.key = key;
+      this.depth = depth;
       this.maxDepth = maxDepth;
-
-      node = tree.getRoot();
-      OcTreeKeyTools.getRootKey(maxDepth, key);
-      depth = 0;
    }
 
-   /** Constructor for nodes inside the tree */
-   OcTreeSuperNode(AbstractOcTreeBase<NODE> tree, OcTreeSuperNode<NODE> parentNode, int childIndex, int maxDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeSuperNode<NODE> createRootSuperNode(AbstractOcTreeBase<NODE> tree, int maxDepth)
    {
-      this.tree = tree;
-      this.maxDepth = maxDepth;
-      depth = parentNode.depth + 1;
-      OcTreeKeyTools.computeChildKey(childIndex, parentNode.key, key, depth, tree.getTreeDepth());
-      node = parentNode.node.getChild(childIndex);
+      int rootDepth = 0;
+      OcTreeKey rootKey = OcTreeKeyTools.getRootKey(tree.getTreeDepth());
+      NODE rootNode = tree.getRoot();
+      return new OcTreeSuperNode<NODE>(tree, rootNode, rootKey, rootDepth, maxDepth);
+   }
+
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeSuperNode<NODE> createChildSuperNode(OcTreeSuperNode<NODE> parentNode, int childIndex)
+   {
+      AbstractOcTreeBase<NODE> tree = parentNode.tree;
+      int maxDepth = parentNode.maxDepth;
+      int childDepth = parentNode.depth + 1;
+      OcTreeKey childKey = OcTreeKeyTools.computeChildKey(childIndex, parentNode.key, childDepth, tree.getTreeDepth());
+      NODE childNode = parentNode.node.getChild(childIndex);
+      return new OcTreeSuperNode<>(tree, childNode, childKey, childDepth, maxDepth);
    }
 
    /** @return the center coordinate of this node */
