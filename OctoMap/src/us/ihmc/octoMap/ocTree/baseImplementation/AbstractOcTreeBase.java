@@ -46,15 +46,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    // constants of the tree
    /** Maximum tree depth (fixed to 16 usually) */
    protected final int treeDepth;
-   /** No documentation on this field, I assume it seems to be equal to 2^({@link #treeDepth}-1). */
-   protected final int treeMaximumValue;
    protected double resolution; ///< in meters
 
    protected int treeSize; ///< number of nodes in tree
    /** flag to denote whether the octree extent changed (for lazy min/max eval) */
    protected boolean size_changed;
-
-   protected Point3d tree_center = new Point3d(); // coordinate offset of tree
 
    protected double max_value[] = new double[3]; ///< max in x, y, z
    protected double min_value[] = new double[3]; ///< min in x, y, z
@@ -74,7 +70,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       root = null;
       this.resolution = resolution;
       this.treeDepth = treeDepth;
-      this.treeMaximumValue = OcTreeKeyTools.computeCenterOffsetKey(treeDepth);
       treeSize = 0;
 
       init();
@@ -85,7 +80,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
       resolution = other.resolution;
       treeDepth = other.treeDepth;
-      treeMaximumValue = other.treeMaximumValue;
       init();
       if (other.root != null)
          root = other.root.cloneRecursive();
@@ -112,7 +106,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /// nodes, and the structure must be identical
    public boolean epsilonEquals(AbstractOcTreeBase<NODE> other)
    {
-      if (treeDepth != other.treeDepth || treeMaximumValue != other.treeMaximumValue || resolution != other.resolution || treeSize != other.treeSize)
+      if (treeDepth != other.treeDepth || resolution != other.resolution || treeSize != other.treeSize)
       {
          return false;
       }
@@ -142,12 +136,9 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    /// Change the resolution of the octree, scaling all voxels.
    /// This will not preserve the (metric) scale!
-   public void setResolution(double r)
+   public void setResolution(double newResolution)
    {
-      resolution = r;
-
-      tree_center.x = tree_center.y = tree_center.z = (float) (treeMaximumValue * resolution);
-
+      resolution = newResolution;
       size_changed = true;
    }
 
@@ -159,11 +150,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public int getTreeDepth()
    {
       return treeDepth;
-   }
-
-   public int getTreeMaximumValue()
-   {
-      return treeMaximumValue;
    }
 
    public double getNodeSize(int depth)
@@ -691,9 +677,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          // advance in direction "dim"
          currentKey.addKey(dim, step[dim]);
          tMax[dim] += tDelta[dim];
-
-         if (currentKey.getKey(dim) >= 2 * treeMaximumValue)
-            throw new RuntimeException("Something went wrong.");
 
          // reached endpoint, key equv?
          if (currentKey.equals(keyEnd))

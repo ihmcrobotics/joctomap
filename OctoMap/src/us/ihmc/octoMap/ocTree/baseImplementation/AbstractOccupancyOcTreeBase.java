@@ -637,6 +637,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          PrintTools.error(this, "Raycasting in direction (0,0,0) is not possible!");
          return false;
       }
+      int keyMaxValue = OcTreeKeyTools.computeMaximumKey(treeDepth);
 
       // for speedup:
       double maxrange_sq = maxRange * maxRange;
@@ -666,7 +667,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          }
 
          // check for overflow:
-         if (step[dim] < 0 && current_key.getKey(dim) == 0 || step[dim] > 0 && current_key.getKey(dim) == 2 * treeMaximumValue - 1)
+         if (step[dim] < 0 && current_key.getKey(dim) == 0 || step[dim] > 0 && current_key.getKey(dim) == keyMaxValue)
          {
             PrintTools.warn(this, "Coordinate hit bounds in dim " + dim + ", aborting raycast");
             // return border point nevertheless:
