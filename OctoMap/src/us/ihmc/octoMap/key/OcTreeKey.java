@@ -7,7 +7,7 @@ import us.ihmc.robotics.random.RandomTools;
 
 public class OcTreeKey
 {
-   public int[] k = new int[3];
+   private int[] k = new int[3];
 
    public OcTreeKey()
    {
@@ -47,6 +47,11 @@ public class OcTreeKey
    public void setKey(int index, int keyValue)
    {
       k[index] = keyValue;
+   }
+
+   public void addKey(int index, int keyValue)
+   {
+      k[index] += keyValue;
    }
 
    public int getKey(int index)

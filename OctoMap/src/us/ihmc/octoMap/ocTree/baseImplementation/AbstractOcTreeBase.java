@@ -652,7 +652,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          if (step[i] != 0)
          {
             // corner point of voxel (in direction of ray)
-            double voxelBorder = keyToCoordinate(currentKey.k[i]);
+            double voxelBorder = keyToCoordinate(currentKey.getKey(i));
             voxelBorder += (float) (step[i] * resolution * 0.5);
 
             tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
@@ -689,10 +689,10 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          }
 
          // advance in direction "dim"
-         currentKey.k[dim] += step[dim];
+         currentKey.addKey(dim, step[dim]);
          tMax[dim] += tDelta[dim];
 
-         if (currentKey.k[dim] >= 2 * treeMaximumValue)
+         if (currentKey.getKey(dim) >= 2 * treeMaximumValue)
             throw new RuntimeException("Something went wrong.");
 
          // reached endpoint, key equv?

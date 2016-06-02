@@ -77,9 +77,9 @@ public class NormalOcTreeVisualizer extends Application
                for (int i = 0; i < 4; ++i)
                {
                   OcTreeKey currentKey = new OcTreeKey();
-                  currentKey.k[0] = badNodeKey.k[0] + xIndex[l][i];
-                  currentKey.k[1] = badNodeKey.k[1] + yIndex[l][i];
-                  currentKey.k[2] = badNodeKey.k[2] + zIndex[m][j];
+                  currentKey.setKey(0, badNodeKey.getKey(0) + xIndex[l][i]);
+                  currentKey.setKey(1, badNodeKey.getKey(1) + yIndex[l][i]);
+                  currentKey.setKey(2, badNodeKey.getKey(2) + zIndex[m][j]);
 
                   neighborKeySet.add(currentKey);
                }

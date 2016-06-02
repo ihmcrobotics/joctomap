@@ -147,9 +147,9 @@ public class OcTreeKeyTools
 
       MathTools.checkIfLessOrEqual(depth, treeDepth);
 
-      int k0 = adjustKeyAtDepth(key.k[0], depth, treeDepth);
-      int k1 = adjustKeyAtDepth(key.k[1], depth, treeDepth);
-      int k2 = adjustKeyAtDepth(key.k[2], depth, treeDepth);
+      int k0 = adjustKeyAtDepth(key.getKey(0), depth, treeDepth);
+      int k1 = adjustKeyAtDepth(key.getKey(1), depth, treeDepth);
+      int k2 = adjustKeyAtDepth(key.getKey(2), depth, treeDepth);
       return new OcTreeKey(k0, k1, k2);
    }
 

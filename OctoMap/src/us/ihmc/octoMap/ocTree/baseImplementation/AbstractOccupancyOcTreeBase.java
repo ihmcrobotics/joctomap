@@ -619,7 +619,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          if (step[i] != 0)
          {
             // corner point of voxel (in direction of ray)
-            double voxelBorder = keyToCoordinate(current_key.k[i]);
+            double voxelBorder = keyToCoordinate(current_key.getKey(i));
             voxelBorder += step[i] * resolution * 0.5;
 
             tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
@@ -666,7 +666,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          }
 
          // check for overflow:
-         if (step[dim] < 0 && current_key.k[dim] == 0 || step[dim] > 0 && current_key.k[dim] == 2 * treeMaximumValue - 1)
+         if (step[dim] < 0 && current_key.getKey(dim) == 0 || step[dim] > 0 && current_key.getKey(dim) == 2 * treeMaximumValue - 1)
          {
             PrintTools.warn(this, "Coordinate hit bounds in dim " + dim + ", aborting raycast");
             // return border point nevertheless:
@@ -675,7 +675,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          }
 
          // advance in direction "dim"
-         current_key.k[dim] += step[dim];
+         current_key.addKey(dim, step[dim]);
          tMax[dim] += tDelta[dim];
 
          // generate world coords from key
@@ -892,9 +892,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             {
                for (int i = 0; i < 4; ++i)
                {
-                  currentKey.k[0] = key.k[0] + xIndex[l][i];
-                  currentKey.k[1] = key.k[1] + yIndex[l][i];
-                  currentKey.k[2] = key.k[2] + zIndex[m][j];
+                  currentKey.setKey(0, key.getKey(0) + xIndex[l][i]);
+                  currentKey.setKey(1, key.getKey(1) + yIndex[l][i]);
+                  currentKey.setKey(2, key.getKey(2) + zIndex[m][j]);
                   currentNode = search(currentKey);
 
                   if (currentNode != null)
@@ -1033,8 +1033,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    /// @return true if key is in the currently set bounding box
    public boolean isInBoundingBox(OcTreeKey key)
    {
-      return key.k[0] >= boundingBoxMinKey.k[0] && key.k[1] >= boundingBoxMinKey.k[1] && key.k[2] >= boundingBoxMinKey.k[2] && key.k[0] <= boundingBoxMaxKey.k[0]
-            && key.k[1] <= boundingBoxMaxKey.k[1] && key.k[2] <= boundingBoxMaxKey.k[2];
+      return key.getKey(0) >= boundingBoxMinKey.getKey(0) && key.getKey(1) >= boundingBoxMinKey.getKey(1) && key.getKey(2) >= boundingBoxMinKey.getKey(2)
+            && key.getKey(0) <= boundingBoxMaxKey.getKey(0) && key.getKey(1) <= boundingBoxMaxKey.getKey(1) && key.getKey(2) <= boundingBoxMaxKey.getKey(2);
    }
 
    //-- change detection on occupancy:

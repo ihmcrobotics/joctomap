@@ -97,9 +97,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          {
             for (kzOffset = -1; kzOffset <= 1; kzOffset++)
             {
-               currentKey.k[0] = key.k[0] + kxOffset;
-               currentKey.k[1] = key.k[1] + kyOffset;
-               currentKey.k[2] = key.k[2] + kzOffset;
+               currentKey.setKey(0, key.getKey(0) + kxOffset);
+               currentKey.setKey(1, key.getKey(1) + kyOffset);
+               currentKey.setKey(2, key.getKey(2) + kzOffset);
                currentNode = search(currentKey);
 
                boolean nodeExists = currentNode == null;
@@ -156,9 +156,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
                if (kxOffset == 0 && kyOffset == 0 && kzOffset == 0)
                   continue;
 
-               currentKey.k[0] = key.k[0] + kxOffset;
-               currentKey.k[1] = key.k[1] + kyOffset;
-               currentKey.k[2] = key.k[2] + kzOffset;
+               currentKey.setKey(0, key.getKey(0) + kxOffset);
+               currentKey.setKey(1, key.getKey(1) + kyOffset);
+               currentKey.setKey(2, key.getKey(2) + kzOffset);
                currentNode = search(currentKey, depth);
 
                if (currentNode == null || !currentNode.isNormalSet())

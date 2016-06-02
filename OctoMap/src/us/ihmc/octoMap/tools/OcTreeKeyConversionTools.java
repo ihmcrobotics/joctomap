@@ -173,9 +173,9 @@ public abstract class OcTreeKeyConversionTools
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
    public static Point3d keyToCoordinate(OcTreeKey key, int depth, double resolution, int treeDepth)
    {
-      double x = keyToCoordinate(key.k[0], depth, resolution, treeDepth);
-      double y = keyToCoordinate(key.k[1], depth, resolution, treeDepth);
-      double z = keyToCoordinate(key.k[2], depth, resolution, treeDepth);
+      double x = keyToCoordinate(key.getKey(0), depth, resolution, treeDepth);
+      double y = keyToCoordinate(key.getKey(1), depth, resolution, treeDepth);
+      double z = keyToCoordinate(key.getKey(2), depth, resolution, treeDepth);
       return new Point3d(x, y, z);
    }
 
@@ -187,9 +187,9 @@ public abstract class OcTreeKeyConversionTools
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
    public static void keyToCoordinate(OcTreeKey key, int depth, Point3d coordinateToPack, double resolution, int treeDepth)
    {
-      coordinateToPack.x = keyToCoordinate(key.k[0], depth, resolution, treeDepth);
-      coordinateToPack.y = keyToCoordinate(key.k[1], depth, resolution, treeDepth);
-      coordinateToPack.z = keyToCoordinate(key.k[2], depth, resolution, treeDepth);
+      coordinateToPack.x = keyToCoordinate(key.getKey(0), depth, resolution, treeDepth);
+      coordinateToPack.y = keyToCoordinate(key.getKey(1), depth, resolution, treeDepth);
+      coordinateToPack.z = keyToCoordinate(key.getKey(2), depth, resolution, treeDepth);
    }
 
    public static double computeNodeSize(int depth, double resolution, int treeDepth)
