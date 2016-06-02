@@ -1,5 +1,6 @@
 package us.ihmc.octoMap.tools;
 
+import static us.ihmc.octoMap.tools.OcTreeKeyTools.adjustKeyAtDepth;
 import static us.ihmc.octoMap.tools.OcTreeKeyTools.computeCenterOffsetKeyAtDepth;
 
 import javax.vecmath.Point3d;
@@ -34,11 +35,11 @@ public abstract class OcTreeKeyConversionTools
    {
       MathTools.checkIfLessOrEqual(depth, maxDepth);
 
-      int maxValue = 1 << (maxDepth - 1);
-      // scale to resolution and shift center for tree_max_val
-      int scaledCoord = ((int) Math.floor(coordinate / resolution)) + maxValue;
-      if (scaledCoord >= 0 && scaledCoord < 2 * maxValue)
-         return OcTreeKeyTools.adjustKeyAtDepth(scaledCoord, depth, maxDepth);
+      int centerOffsetKey = computeCenterOffsetKeyAtDepth(maxDepth);
+      // scale to resolution and shift center
+      int scaledCoord = (int) Math.floor(coordinate / resolution) + centerOffsetKey;
+      if (scaledCoord >= 0 && scaledCoord < 2 * centerOffsetKey)
+         return adjustKeyAtDepth(scaledCoord, depth, maxDepth);
       else
          return -1;
    }
@@ -150,14 +151,17 @@ public abstract class OcTreeKeyConversionTools
       {
          double nodeSize = computeNodeSize(depth, resolution, maxDepth);
          int centerOffsetKey = computeCenterOffsetKeyAtDepth(maxDepth);
-         return (Math.floor(((double) (key - centerOffsetKey)) / (double) (1 << (maxDepth - depth))) + 0.5) * nodeSize;
+         int keyDivider = 1 << maxDepth - depth;
+         return (Math.floor((double) (key - centerOffsetKey) / (double) keyDivider) + 0.5) * nodeSize;
+//         return keyToCoordinate(adjustKeyAtDepth(key, depth, maxDepth), nodeSize, depth);
       }
    }
 
    /** converts from a discrete key at the lowest tree level into a coordinate corresponding to the key's center */
    public static double keyToCoordinate(int key, double resolution, int maxDepth)
    {
-      return ((double) (key - (1 << (maxDepth - 1))) + 0.5) * resolution;
+      int centerOffsetKey = computeCenterOffsetKeyAtDepth(maxDepth);
+      return (key - centerOffsetKey + 0.5) * resolution;
    }
 
    /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
@@ -191,6 +195,21 @@ public abstract class OcTreeKeyConversionTools
    public static double computeNodeSize(int depth, double resolution, int maxDepth)
    {
       MathTools.checkIfLessOrEqual(depth, maxDepth);
-      return (double) (1 << (maxDepth - depth)) * resolution;
+      return (1 << maxDepth - depth) * resolution;
+   }
+
+   public static void main(String[] args)
+   {
+      int key = 11515;
+      int maxDepth = 16;
+      int depth = maxDepth;
+      double resolution = 0.05;
+
+      double nodeSize = computeNodeSize(depth, resolution, maxDepth);
+      int centerOffsetKey = computeCenterOffsetKeyAtDepth(maxDepth);
+      double coordBad = (Math.floor((double) (key - centerOffsetKey) / (double) (1 << maxDepth - depth)) + 0.5) * nodeSize;
+      double coordGood = keyToCoordinate(key, resolution, maxDepth);
+      System.out.println("coordBad = " + coordBad);
+      System.out.println("coordGood = " + coordGood);
    }
 }

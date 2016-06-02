@@ -115,7 +115,10 @@ public class OcTreeKeyTools
       else
       {
          int centerOffsetKey = computeCenterOffsetKeyAtDepth(maxDepth);
-         return (((key - centerOffsetKey) >> diff) << diff) + (1 << (diff - 1)) + centerOffsetKey;
+         int returnedKey = (((key - centerOffsetKey) >> diff) << diff) + (1 << (diff - 1)) + centerOffsetKey;
+         if (returnedKey == 2 * centerOffsetKey)
+            returnedKey = 0;
+         return returnedKey;
       }
    }
 

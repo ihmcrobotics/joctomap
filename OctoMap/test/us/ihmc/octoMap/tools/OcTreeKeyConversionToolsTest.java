@@ -3,6 +3,7 @@ package us.ihmc.octoMap.tools;
 import static org.junit.Assert.*;
 import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.coordinateToKey;
 import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.keyToCoordinate;
+import static us.ihmc.octoMap.tools.OcTreeKeyTools.adjustKeyAtDepth;
 
 import java.util.Random;
 
@@ -15,6 +16,8 @@ import us.ihmc.robotics.random.RandomTools;
 
 public class OcTreeKeyConversionToolsTest
 {
+   private static final boolean DEBUG = false;
+
    @Test
    public void testConvertKeyCoordBackForthMaxDepth() throws Exception
    {
@@ -24,7 +27,7 @@ public class OcTreeKeyConversionToolsTest
 
       int keyMax = OcTreeKeyTools.computeMaximumKeyValueAtDepth(maxDepth);
 
-      for (int i = 0; i < 10000; i++)
+      for (int i = 0; i < 1000000; i++)
       {
          int expectedKey = RandomTools.generateRandomInt(random, 0, keyMax);
          double coordinate = keyToCoordinate(expectedKey, resolution, maxDepth);
@@ -44,26 +47,36 @@ public class OcTreeKeyConversionToolsTest
    @Test
    public void testConvertKeyCoordBackForthAtRandomDepth() throws Exception
    {
-      Random random = new Random(6574961L);
+      Random random = new Random(654961L);
       int maxDepth = 16;
-      double resolution = 0.05;
+      double resolution = 0.15;
 
       for (int i = 0; i < 10000; i++)
       {
          int depth = random.nextInt(maxDepth);
-         int keyMax = OcTreeKeyTools.computeMaximumKeyValueAtDepth(depth);
-         int expectedKey = RandomTools.generateRandomInt(random, 0, keyMax);
-         double coordinate = keyToCoordinate(expectedKey, depth, resolution, maxDepth);
-         int actualKey = coordinateToKey(coordinate, depth, resolution, maxDepth);
-         assertTrue(expectedKey == actualKey);
+         int keyMax = OcTreeKeyTools.computeMaximumKeyValueAtDepth(maxDepth);
+         int inputKey = RandomTools.generateRandomInt(random, 0, keyMax);
+         int expectedKey = adjustKeyAtDepth(inputKey, depth, maxDepth);
+         double expectedCoordinate = keyToCoordinate(inputKey, depth, resolution, maxDepth);
+         int actualKey = coordinateToKey(expectedCoordinate, depth, resolution, maxDepth);
+         if (DEBUG)
+         {
+            double actualCoordinate = keyToCoordinate(actualKey, depth, resolution, maxDepth);
+            System.out.print("expectedCoordinate = " + expectedCoordinate);
+            System.out.println(", actualCoordinate = " + actualCoordinate);
+            System.out.print("expectedKey = " + expectedKey);
+            System.out.println(", actualKey = " + actualKey);
+         }
+         assertEquals(expectedKey, actualKey);
       }
 
       for (int i = 0; i < 10000; i++)
       {
          int depth = random.nextInt(maxDepth);
-         int keyMax = OcTreeKeyTools.computeMaximumKeyValueAtDepth(depth);
-         OcTreeKey expectedKey = new OcTreeKey(random, keyMax);
-         Point3d coordinate = keyToCoordinate(expectedKey, depth, resolution, maxDepth);
+         int keyMax = OcTreeKeyTools.computeMaximumKeyValueAtDepth(maxDepth);
+         OcTreeKey inputKey = new OcTreeKey(random, keyMax);
+         OcTreeKey expectedKey = adjustKeyAtDepth(inputKey, depth, maxDepth);
+         Point3d coordinate = keyToCoordinate(inputKey, depth, resolution, maxDepth);
          OcTreeKey actualKey = coordinateToKey(coordinate, depth, resolution, maxDepth);
          assertEquals(expectedKey, actualKey);
       }
