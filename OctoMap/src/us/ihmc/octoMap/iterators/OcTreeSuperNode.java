@@ -98,14 +98,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
 
    public boolean isInsideBoundingBox(OcTreeKey minKey, OcTreeKey maxKey)
    {
-      int center_offset_key = tree.getTreeMaximumValue() >> depth;
-      if (key.getKey(0) < minKey.getKey(0) - center_offset_key) return false;
-      if (key.getKey(0) > maxKey.getKey(0) + center_offset_key) return false;
-      if (key.getKey(1) < minKey.getKey(1) - center_offset_key) return false;
-      if (key.getKey(1) > maxKey.getKey(1) + center_offset_key) return false;
-      if (key.getKey(2) < minKey.getKey(2) - center_offset_key) return false;
-      if (key.getKey(2) > maxKey.getKey(2) + center_offset_key) return false;
-      return true;
+      return OcTreeKeyTools.isInsideBoundingBox(minKey, maxKey, key, depth, tree.getTreeDepth());
    }
 
    public boolean epsilonEquals(OcTreeSuperNode<NODE> other)

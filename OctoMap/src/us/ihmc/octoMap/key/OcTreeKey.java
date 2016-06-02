@@ -15,9 +15,9 @@ public class OcTreeKey
 
    public OcTreeKey(int a, int b, int c)
    {
-      k[0] = a;
-      k[1] = b;
-      k[2] = c;
+      k[0] = (int) (char) a;
+      k[1] = (int) (char) b;
+      k[2] = (int) (char) c;
    }
 
    public OcTreeKey(OcTreeKey other)
@@ -28,30 +28,31 @@ public class OcTreeKey
    public void set(OcTreeKey other)
    {
       for (int i = 0; i < 3; i++)
-         k[i] = other.k[i];
+         k[i] = (int) (char) other.k[i];
    }
 
    public void set(int k0, int k1, int k2)
    {
-      k[0] = k0;
-      k[1] = k1;
-      k[2] = k2;
+      k[0] = (int) (char) k0;
+      k[1] = (int) (char) k1;
+      k[2] = (int) (char) k2;
    }
 
    public void set(int key[])
    {
       for (int i = 0; i < 3; i++)
-         k[i] = key[i];
+         k[i] = (int) (char) key[i];
    }
 
    public void setKey(int index, int keyValue)
    {
-      k[index] = keyValue;
+      k[index] = (int) (char) keyValue;
    }
 
    public void addKey(int index, int keyValue)
    {
       k[index] += keyValue;
+      k[index] = (int) (char) k[index];
    }
 
    public int getKey(int index)

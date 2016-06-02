@@ -25,7 +25,7 @@ public class OcTreeKeyConversionToolsTest
       int treeDepth = 16;
       double resolution = 0.05;
 
-      int keyMax = OcTreeKeyTools.computeMaximumKeyValue(treeDepth);
+      int keyMax = OcTreeKeyTools.computeMaximumKey(treeDepth);
 
       for (int i = 0; i < 1000000; i++)
       {
@@ -54,7 +54,7 @@ public class OcTreeKeyConversionToolsTest
       for (int i = 0; i < 10000; i++)
       {
          int depth = random.nextInt(treeDepth);
-         int keyMax = OcTreeKeyTools.computeMaximumKeyValue(treeDepth);
+         int keyMax = OcTreeKeyTools.computeMaximumKey(treeDepth);
          int inputKey = RandomTools.generateRandomInt(random, 0, keyMax);
          int expectedKey = adjustKeyAtDepth(inputKey, depth, treeDepth);
          double expectedCoordinate = keyToCoordinate(inputKey, depth, resolution, treeDepth);
@@ -73,7 +73,7 @@ public class OcTreeKeyConversionToolsTest
       for (int i = 0; i < 10000; i++)
       {
          int depth = random.nextInt(treeDepth);
-         int keyMax = OcTreeKeyTools.computeMaximumKeyValue(treeDepth);
+         int keyMax = OcTreeKeyTools.computeMaximumKey(treeDepth);
          OcTreeKey inputKey = new OcTreeKey(random, keyMax);
          OcTreeKey expectedKey = adjustKeyAtDepth(inputKey, depth, treeDepth);
          Point3d coordinate = keyToCoordinate(inputKey, depth, resolution, treeDepth);
@@ -95,6 +95,41 @@ public class OcTreeKeyConversionToolsTest
             double actualNodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
             assertEquals(expectedNodeSize, actualNodeSize, expectedNodeSize * 1.0e-7);
             expectedNodeSize *= 2.0;
+         }
+      }
+   }
+
+   @Test
+   public void testNavigatingWithKey() throws Exception
+   {
+      double resolution = 0.02;
+      int treeDepth = 16;
+
+      // test navigating at lowest level
+      int keyMin = 0;
+      int keyMax = OcTreeKeyTools.computeMaximumKey(treeDepth);
+      double coordinateMin = OcTreeKeyConversionTools.keyToCoordinate(keyMin, resolution, treeDepth);
+
+      for (int key = keyMin + 1; key <= keyMax; key++)
+      {
+         double expected = coordinateMin + key * resolution;
+         double actual = OcTreeKeyConversionTools.keyToCoordinate(key, resolution, treeDepth);
+         assertEquals(expected, actual, 1.0e-7);
+      }
+
+      // test navigating at all levels
+      for (int depth = 1; depth <= treeDepth; depth++)
+      {
+         keyMin = OcTreeKeyTools.computeMinimumKeyAtDepth(depth, treeDepth);
+         keyMax = OcTreeKeyTools.computeMaximumKeyValueAtDepth(depth, treeDepth);
+         int keyIncrement = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
+         coordinateMin = OcTreeKeyConversionTools.keyToCoordinate(keyMin, depth, resolution, treeDepth);
+
+         for (int key = keyMin; key <= keyMax; key += keyIncrement)
+         {
+            double expected = coordinateMin + (key - keyMin) * resolution;
+            double actual = OcTreeKeyConversionTools.keyToCoordinate(key, depth, resolution, treeDepth);
+            assertEquals(expected, actual, 1.0e-7);
          }
       }
    }

@@ -153,7 +153,6 @@ public abstract class OcTreeKeyConversionTools
          int centerOffsetKey = computeCenterOffsetKey(treeDepth);
          int keyDivider = 1 << treeDepth - depth;
          return (Math.floor((double) (key - centerOffsetKey) / (double) keyDivider) + 0.5) * nodeSize;
-//         return keyToCoordinate(adjustKeyAtDepth(key, depth, maxDepth), nodeSize, depth);
       }
    }
 
