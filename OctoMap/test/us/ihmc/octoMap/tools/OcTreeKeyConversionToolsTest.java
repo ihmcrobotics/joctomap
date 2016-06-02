@@ -5,9 +5,11 @@ import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.coordinateToKey;
 import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.keyToCoordinate;
 import static us.ihmc.octoMap.tools.OcTreeKeyTools.adjustKeyAtDepth;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import javax.vecmath.Point3d;
+import javax.vecmath.Vector3d;
 
 import org.junit.Test;
 
@@ -132,5 +134,53 @@ public class OcTreeKeyConversionToolsTest
             assertEquals(expected, actual, 1.0e-7);
          }
       }
+   }
+
+   @Test
+   public void testKeyToCoord() throws Exception
+   {
+      Random random = new Random(21651L);
+      int treeDepth = 16;
+      double resolution = 0.02;
+      Point3d rootCoordinate = new Point3d();
+      OcTreeKey rootKey = OcTreeKeyTools.getRootKey(treeDepth);
+      testKeyToCoordRecursive(rootKey, rootCoordinate, 0, resolution, treeDepth, random, 3);
+   }
+
+   private void testKeyToCoordRecursive(OcTreeKey parentKey, Point3d parentCoordinate, int parentDepth, double resolution, int treeDepth, Random random, int numberOfChildrenToTest)
+   {
+      if (parentDepth == treeDepth)
+         return;
+
+      // This list is used to pick random child indices only once.
+      ArrayList<Integer> childIndices = new ArrayList<>();
+      for (int childIndex = 0; childIndex < 8; childIndex++)
+         childIndices.add(childIndex);
+
+      while(childIndices.size() > (8 - numberOfChildrenToTest))
+      {
+         int childIndex = childIndices.remove(random.nextInt(childIndices.size()));
+         int childDepth = parentDepth + 1;
+         OcTreeKey childKey = OcTreeKeyTools.computeChildKey(childIndex, parentKey, childDepth, treeDepth);
+         Point3d actualChildCoordinate = OcTreeKeyConversionTools.keyToCoordinate(childKey, childDepth, resolution, treeDepth);
+         Point3d expectedChildCoordinate = new Point3d(parentCoordinate);
+         expectedChildCoordinate.add(computeCoordinateOffset(childIndex, childDepth, resolution, treeDepth));
+
+         assertTrue(expectedChildCoordinate.epsilonEquals(actualChildCoordinate, 1.0e-7));
+
+         testKeyToCoordRecursive(childKey, actualChildCoordinate, childDepth, resolution, treeDepth, random, numberOfChildrenToTest);
+      }
+   }
+
+   private Vector3d computeCoordinateOffset(int childIndex, int depth, double resolution, int treeDepth)
+   {
+      Vector3d offsetVector = new Vector3d();
+      double computeNodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
+      double offset = computeNodeSize / 2.0;
+      
+      offsetVector.x += (childIndex & 1) != 0 ? offset : -offset;
+      offsetVector.y += (childIndex & 2) != 0 ? offset : -offset;
+      offsetVector.z += (childIndex & 4) != 0 ? offset : -offset;
+      return offsetVector;
    }
 }

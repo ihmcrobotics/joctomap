@@ -141,9 +141,20 @@ public abstract class OcTreeKeyConversionTools
 
       // root is centered on 0 = 0.0
       if (depth == 0)
+      {
          return 0.0;
-      else
+      }
+      else if (depth == treeDepth)
+      {
          return keyToCoordinate(key, resolution, treeDepth);
+      }
+      else
+      {
+         double nodeSize = computeNodeSize(depth, resolution, treeDepth);
+         int centerOffsetKey = computeCenterOffsetKey(treeDepth);
+         int keyDivider = 1 << treeDepth - depth;
+         return (Math.floor((double) (key - centerOffsetKey) / (double) keyDivider) + 0.5) * nodeSize;
+      }
    }
 
    /** converts from a discrete key at the lowest tree level into a coordinate corresponding to the key's center */
