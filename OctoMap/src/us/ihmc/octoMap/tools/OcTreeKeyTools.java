@@ -98,7 +98,6 @@ public class OcTreeKeyTools
       else
       {
          int mask = (int)(char) (computeMaximumKey(treeDepth) << level);
-//         mask = (int)(char)(mask % (int) Character.MAX_VALUE);
          OcTreeKey result = new OcTreeKey(key);
          result.setKey(0, result.getKey(0) & mask);
          result.setKey(1, result.getKey(1) & mask);
@@ -117,6 +116,9 @@ public class OcTreeKeyTools
     */
    public static int adjustKeyAtDepth(int key, int depth, int treeDepth)
    {
+      if (depth == 0)
+         return computeCenterOffsetKey(treeDepth);
+
       int diff = treeDepth - depth;
 
       if (diff == 0)
@@ -166,14 +168,6 @@ public class OcTreeKeyTools
          return (int) (char) 1 << (treeDepth - 1);
    }
 
-   public static int computeCenterOffsetKey(int depth, int treeDepth)
-   {
-      if (depth == treeDepth)
-         return 0;
-      else
-         return (int) (char) 1 << (treeDepth - depth - 1);
-   }
-   
    /**
     * Computes the key of the root node for a given tree depth
     * @param treeDepth number of levels of the tree.
@@ -229,7 +223,10 @@ public class OcTreeKeyTools
     */
    public static int computeMinimumKeyAtDepth(int depth, int treeDepth)
    {
-      return computeCenterOffsetKey(depth, treeDepth);
+      if (depth == treeDepth)
+         return 0;
+      else
+         return (int) (char) 1 << (treeDepth - depth - 1);
    }
 
    /**
@@ -253,45 +250,5 @@ public class OcTreeKeyTools
       if (keyToTest.getKey(2) < minKey.getKey(2) - minKeyValue) return false;
       if (keyToTest.getKey(2) > maxKey.getKey(2) + minKeyValue) return false;
       return true;
-   }
-
-   public static void main(String[] args)
-   {
-      int treeDepth = 16;
-      OcTreeKey rootKey = getRootKey(treeDepth);
-      OcTreeKey currentKey = rootKey;
-      OcTreeKey tempKey = currentKey;
-      int count = 0;
-      System.out.println("depth = " + (count++) + ", " + currentKey);
-      for (int depth = 1; depth <= treeDepth; depth++)
-      {
-         tempKey = computeChildKey(0, currentKey, depth, treeDepth);
-         System.out.println("depth = " + (count++) + ", " + tempKey);
-
-         if (depth == 16)
-         {
-            System.out.println("Depth " + depth + ":");
-            for (int i = 0; i < 8; i++)
-               System.out.println(computeChildKey(i, currentKey, depth, treeDepth));
-         }
-         currentKey = tempKey;
-      }
-
-      System.out.println();
-
-      int depth = 15;
-      System.out.println(adjustKeyAtDepth(currentKey, depth, treeDepth));
-      System.out.println(computeIndexKey(currentKey, depth, treeDepth));
-      System.out.println();
-
-      for (depth = 0; depth <= treeDepth; depth++)
-         System.out.println((32768 >> depth) + ", " + computeCenterOffsetKey(depth, treeDepth));
-      
-      System.out.println(adjustKeyAtDepth(new OcTreeKey(65535, 1, 1), 15, treeDepth));
-      
-      System.out.println();
-      System.out.println();
-      System.out.println();
-
    }
 }

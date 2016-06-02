@@ -2,6 +2,7 @@ package us.ihmc.octoMap.tools;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.junit.Test;
@@ -11,7 +12,6 @@ import us.ihmc.octoMap.key.OcTreeKey;
 
 public class OcTreeKeyToolsTest
 {
-
    @Test
    public void testMaximumKeyValueAtDepth() throws Exception
    {
@@ -32,13 +32,17 @@ public class OcTreeKeyToolsTest
          int actual = OcTreeKeyTools.computeCenterOffsetKey(treeDepth);
          assertEquals(expected, actual);
       }
-
+   }
+   
+   @Test
+   public void testMinimumKey() throws Exception
+   {   
       for (int treeDepth = 0; treeDepth <= 16; treeDepth++)
       {
          for (int depth = 0; depth <= treeDepth; depth++)
          {
             int expected = (int) (Math.pow(2, treeDepth - depth) / 2.0);
-            int actual = OcTreeKeyTools.computeCenterOffsetKey(depth, treeDepth);
+            int actual = OcTreeKeyTools.computeMinimumKeyAtDepth(depth, treeDepth);
             assertEquals(expected, actual);
 
             // Original computation
@@ -53,7 +57,32 @@ public class OcTreeKeyToolsTest
    @Test
    public void testAdjustAndChildKey() throws Exception
    {
-      
+      Random random = new Random(21651L);
+      int treeDepth = 16;
+      OcTreeKey rootKey = OcTreeKeyTools.getRootKey(treeDepth);
+      testAdjustAndChildKeyRecursive(0, rootKey, treeDepth, random, 3);
+   }
+
+   private void testAdjustAndChildKeyRecursive(int parentDepth, OcTreeKey parentKey, int treeDepth, Random random, int numberOfChildrenToTest)
+   {
+      if (parentDepth == treeDepth)
+         return;
+
+      // This list is used to pick random child indices only once.
+      ArrayList<Integer> childIndices = new ArrayList<>();
+      for (int childIndex = 0; childIndex < 8; childIndex++)
+         childIndices.add(childIndex);
+
+      while(childIndices.size() > (8 - numberOfChildrenToTest))
+      {
+         int childIndex = childIndices.remove(random.nextInt(childIndices.size()));
+         int childDepth = parentDepth + 1;
+         OcTreeKey childKey = OcTreeKeyTools.computeChildKey(childIndex, parentKey, childDepth, treeDepth);
+         OcTreeKey expected = parentKey;
+         OcTreeKey actual = OcTreeKeyTools.adjustKeyAtDepth(childKey, parentDepth, treeDepth);
+         assertEquals(expected, actual);
+         testAdjustAndChildKeyRecursive(childDepth, childKey, treeDepth, random, numberOfChildrenToTest);
+      }
    }
 
    @Test
