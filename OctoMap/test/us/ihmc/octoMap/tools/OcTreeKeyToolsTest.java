@@ -2,8 +2,6 @@ package us.ihmc.octoMap.tools;
 
 import static org.junit.Assert.*;
 
-import java.util.Random;
-
 import org.junit.Test;
 
 public class OcTreeKeyToolsTest
@@ -30,11 +28,4 @@ public class OcTreeKeyToolsTest
          assertEquals(expected, actual);
       }
    }
-
-   @Test
-   public void test()
-   {
-      fail("Not yet implemented");
-   }
-
 }
