@@ -50,10 +50,10 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
       return curNode;
    }
 
-   public void getCentersMinHits(List<Point3d> node_centers, int min_hits)
+   public void getCentersMinHits(List<Point3d> nodeCenters, int minHits)
    {
-      OcTreeKey root_key = new OcTreeKey(treeMaximumValue, treeMaximumValue, treeMaximumValue);
-      getCentersMinHitsRecurs(node_centers, min_hits, treeDepth, root, 0, root_key);
+      OcTreeKey rootKey = OcTreeKeyTools.getRootKey(treeDepth);
+      getCentersMinHitsRecurs(nodeCenters, minHits, treeDepth, root, 0, rootKey);
    }
 
    protected void getCentersMinHitsRecurs(List<Point3d> node_centers, int min_hits, int max_depth, CountingOcTreeNode node, int depth, OcTreeKey parentKey)
@@ -67,7 +67,7 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
          {
             if (OcTreeNodeTools.nodeChildExists(node, i))
             {
-               OcTreeKeyTools.computeChildKey(i, centerOffsetKey, parentKey, searchKey);
+               OcTreeKeyTools.computeChildKey(i, parentKey, searchKey, depth + 1, treeDepth);
                getCentersMinHitsRecurs(node_centers, min_hits, max_depth, getNodeChild(node, i), depth + 1, searchKey);
             }
          }

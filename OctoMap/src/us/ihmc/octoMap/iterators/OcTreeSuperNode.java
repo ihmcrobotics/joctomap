@@ -22,7 +22,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
       this.maxDepth = maxDepth;
 
       node = tree.getRoot();
-      key.set(tree.getTreeMaximumValue(), tree.getTreeMaximumValue(), tree.getTreeMaximumValue());
+      OcTreeKeyTools.getRootKey(maxDepth, key);
       depth = 0;
    }
 
@@ -32,8 +32,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
       this.tree = tree;
       this.maxDepth = maxDepth;
       depth = parentNode.depth + 1;
-      int center_offset_key = tree.getTreeMaximumValue() >> depth;
-      OcTreeKeyTools.computeChildKey(childIndex, center_offset_key, parentNode.key, key);
+      OcTreeKeyTools.computeChildKey(childIndex, parentNode.key, key, depth, tree.getTreeDepth());
       node = parentNode.node.getChild(childIndex);
    }
 

@@ -28,7 +28,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    /// This usually requires a re-implementation of some core tree-traversal functions as well!
    protected AbstractOccupancyOcTree(double resolution, int tree_depth, int tree_max_val)
    {
-      super(resolution, tree_depth, tree_max_val);
+      super(resolution, tree_depth);
       setDefaultParameters();
    }
 

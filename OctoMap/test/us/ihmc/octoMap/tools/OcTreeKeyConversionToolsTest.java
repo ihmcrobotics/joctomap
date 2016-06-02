@@ -25,7 +25,7 @@ public class OcTreeKeyConversionToolsTest
       int maxDepth = 16;
       double resolution = 0.05;
 
-      int keyMax = OcTreeKeyTools.computeMaximumKeyValueAtDepth(maxDepth);
+      int keyMax = OcTreeKeyTools.computeMaximumKeyValue(maxDepth);
 
       for (int i = 0; i < 1000000; i++)
       {
@@ -54,7 +54,7 @@ public class OcTreeKeyConversionToolsTest
       for (int i = 0; i < 10000; i++)
       {
          int depth = random.nextInt(maxDepth);
-         int keyMax = OcTreeKeyTools.computeMaximumKeyValueAtDepth(maxDepth);
+         int keyMax = OcTreeKeyTools.computeMaximumKeyValue(maxDepth);
          int inputKey = RandomTools.generateRandomInt(random, 0, keyMax);
          int expectedKey = adjustKeyAtDepth(inputKey, depth, maxDepth);
          double expectedCoordinate = keyToCoordinate(inputKey, depth, resolution, maxDepth);
@@ -73,7 +73,7 @@ public class OcTreeKeyConversionToolsTest
       for (int i = 0; i < 10000; i++)
       {
          int depth = random.nextInt(maxDepth);
-         int keyMax = OcTreeKeyTools.computeMaximumKeyValueAtDepth(maxDepth);
+         int keyMax = OcTreeKeyTools.computeMaximumKeyValue(maxDepth);
          OcTreeKey inputKey = new OcTreeKey(random, keyMax);
          OcTreeKey expectedKey = adjustKeyAtDepth(inputKey, depth, maxDepth);
          Point3d coordinate = keyToCoordinate(inputKey, depth, resolution, maxDepth);

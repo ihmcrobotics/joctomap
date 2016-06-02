@@ -64,17 +64,17 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    public AbstractOcTreeBase(double resolution)
    {
-      this(resolution, 16, 32768);
+      this(resolution, 16);
    }
 
    /// Constructor to enable derived classes to change tree constants.
    /// This usually requires a re-implementation of some core tree-traversal functions as well!
-   protected AbstractOcTreeBase(double resolution, int tree_depth, int tree_max_val)
+   protected AbstractOcTreeBase(double resolution, int treeDepth)
    {
       root = null;
       this.resolution = resolution;
-      this.treeDepth = tree_depth;
-      this.treeMaximumValue = tree_max_val;
+      this.treeDepth = treeDepth;
+      this.treeMaximumValue = OcTreeKeyTools.computeCenterOffsetKey(treeDepth);
       treeSize = 0;
 
       init();

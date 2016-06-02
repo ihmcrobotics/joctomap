@@ -1,7 +1,7 @@
 package us.ihmc.octoMap.tools;
 
 import static us.ihmc.octoMap.tools.OcTreeKeyTools.adjustKeyAtDepth;
-import static us.ihmc.octoMap.tools.OcTreeKeyTools.computeCenterOffsetKeyAtDepth;
+import static us.ihmc.octoMap.tools.OcTreeKeyTools.computeCenterOffsetKey;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
@@ -35,7 +35,7 @@ public abstract class OcTreeKeyConversionTools
    {
       MathTools.checkIfLessOrEqual(depth, maxDepth);
 
-      int centerOffsetKey = computeCenterOffsetKeyAtDepth(maxDepth);
+      int centerOffsetKey = computeCenterOffsetKey(maxDepth);
       // scale to resolution and shift center
       int scaledCoord = (int) Math.floor(coordinate / resolution) + centerOffsetKey;
       if (scaledCoord >= 0 && scaledCoord < 2 * centerOffsetKey)
@@ -150,7 +150,7 @@ public abstract class OcTreeKeyConversionTools
       else
       {
          double nodeSize = computeNodeSize(depth, resolution, maxDepth);
-         int centerOffsetKey = computeCenterOffsetKeyAtDepth(maxDepth);
+         int centerOffsetKey = computeCenterOffsetKey(maxDepth);
          int keyDivider = 1 << maxDepth - depth;
          return (Math.floor((double) (key - centerOffsetKey) / (double) keyDivider) + 0.5) * nodeSize;
 //         return keyToCoordinate(adjustKeyAtDepth(key, depth, maxDepth), nodeSize, depth);
@@ -160,7 +160,7 @@ public abstract class OcTreeKeyConversionTools
    /** converts from a discrete key at the lowest tree level into a coordinate corresponding to the key's center */
    public static double keyToCoordinate(int key, double resolution, int maxDepth)
    {
-      int centerOffsetKey = computeCenterOffsetKeyAtDepth(maxDepth);
+      int centerOffsetKey = computeCenterOffsetKey(maxDepth);
       return (key - centerOffsetKey + 0.5) * resolution;
    }
 
@@ -206,7 +206,7 @@ public abstract class OcTreeKeyConversionTools
       double resolution = 0.05;
 
       double nodeSize = computeNodeSize(depth, resolution, maxDepth);
-      int centerOffsetKey = computeCenterOffsetKeyAtDepth(maxDepth);
+      int centerOffsetKey = computeCenterOffsetKey(maxDepth);
       double coordBad = (Math.floor((double) (key - centerOffsetKey) / (double) (1 << maxDepth - depth)) + 0.5) * nodeSize;
       double coordGood = keyToCoordinate(key, resolution, maxDepth);
       System.out.println("coordBad = " + coordBad);

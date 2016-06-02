@@ -18,7 +18,7 @@ public class OcTreeKeyToolsTest
       for (int depth = 0; depth <= 20; depth++)
       {
          int expected = (int) Math.pow(2, depth) - 1;
-         int actual = OcTreeKeyTools.computeMaximumKeyValueAtDepth(depth);
+         int actual = OcTreeKeyTools.computeMaximumKeyValue(depth);
          assertEquals(expected, actual);
       }
    }
@@ -26,11 +26,27 @@ public class OcTreeKeyToolsTest
    @Test
    public void testCenterOffsetKey() throws Exception
    {
-      for (int depth = 0; depth <= 20; depth++)
+      for (int maxDepth = 0; maxDepth <= 20; maxDepth++)
       {
-         int expected = (int) (Math.pow(2, depth) / 2.0);
-         int actual = OcTreeKeyTools.computeCenterOffsetKeyAtDepth(depth);
+         int expected = (int) (Math.pow(2, maxDepth) / 2.0);
+         int actual = OcTreeKeyTools.computeCenterOffsetKey(maxDepth);
          assertEquals(expected, actual);
+      }
+
+      for (int maxDepth = 0; maxDepth <= 20; maxDepth++)
+      {
+         for (int depth = 0; depth <= maxDepth; depth++)
+         {
+            int expected = (int) (Math.pow(2, maxDepth - depth) / 2.0);
+            int actual = OcTreeKeyTools.computeCenterOffsetKey(depth, maxDepth);
+            assertEquals(expected, actual);
+
+            // Original computation
+            int treeMaximumValue = 1 << (maxDepth-1);
+            if (treeMaximumValue < 0) treeMaximumValue = 0;
+            expected = treeMaximumValue >> depth;
+            assertEquals(expected, actual);
+         }
       }
    }
 
@@ -45,8 +61,7 @@ public class OcTreeKeyToolsTest
    {
       Random random = new Random(5616L);
       int maxDepth = 16;
-      int centerOffsetKey = OcTreeKeyTools.computeCenterOffsetKeyAtDepth(maxDepth);
-      int maxValue = OcTreeKeyTools.computeMaximumKeyValueAtDepth(maxDepth);
+      int maxValue = OcTreeKeyTools.computeMaximumKeyValue(maxDepth);
 
       for (int i = 0; i < 100000; i++)
       {
@@ -54,7 +69,8 @@ public class OcTreeKeyToolsTest
          OcTreeKey key = new OcTreeKey(random, maxValue);
          for (int childIndex = 0; childIndex < 8; childIndex++)
          {
-            OcTreeKey childKey = OcTreeKeyTools.computeChildKey(childIndex, centerOffsetKey, key);
+            int depth = random.nextInt(maxDepth + 1);
+            OcTreeKey childKey = OcTreeKeyTools.computeChildKey(childIndex, key, depth, maxDepth);
             assertFalse(keySet.contains(childKey));
             keySet.add(childKey);
          }

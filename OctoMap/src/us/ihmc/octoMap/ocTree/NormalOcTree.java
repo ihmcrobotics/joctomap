@@ -25,7 +25,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    {
       if (root != null)
       {
-         OcTreeKey rootKey = new OcTreeKey(treeMaximumValue, treeMaximumValue, treeMaximumValue);
+         OcTreeKey rootKey = OcTreeKeyTools.getRootKey(treeDepth);
          updateNormalsRecursively(root, rootKey, 0);
       }
    }
@@ -46,13 +46,12 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       if (node.hasAtLeastOneChild())
       {
          int childDepth = depth + 1;
-         int centerOffsetKey = treeMaximumValue >> childDepth;
 
          for (int childIndex = 0; childIndex < 8; childIndex++)
          {
             if (OcTreeNodeTools.nodeChildExists(node, childIndex))
             {
-               OcTreeKey childKey = OcTreeKeyTools.computeChildKey(childIndex, centerOffsetKey, nodeKey);
+               OcTreeKey childKey = OcTreeKeyTools.computeChildKey(childIndex, nodeKey, childDepth, treeDepth);
                NormalOcTreeNode childNode = OcTreeNodeTools.getNodeChild(node, childIndex);
                updateNormalsRecursively(childNode, childKey, childDepth);
             }
