@@ -17,14 +17,14 @@ public abstract class OcTreeSearchTools
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, double x, double y, double z, double resolution, int maxDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, double x, double y, double z, double resolution, int treeDepth)
    {
-      return search(rootNode, x, y, z, 0, resolution, maxDepth);
+      return search(rootNode, x, y, z, 0, resolution, treeDepth);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, double x, double y, double z, int depth, double resolution, int maxDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, double x, double y, double z, int depth, double resolution, int treeDepth)
    {
-      OcTreeKey key = coordinateToKey(x, y, z, resolution, maxDepth);
+      OcTreeKey key = coordinateToKey(x, y, z, resolution, treeDepth);
       if (key == null)
       {
          PrintTools.error(OcTreeSearchTools.class, "Error in search: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
@@ -32,7 +32,7 @@ public abstract class OcTreeSearchTools
       }
       else
       {
-         return search(rootNode, key, depth, maxDepth);
+         return search(rootNode, key, depth, treeDepth);
       }
    }
 
@@ -41,14 +41,14 @@ public abstract class OcTreeSearchTools
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, Point3d coord, double resolution, int maxDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, Point3d coord, double resolution, int treeDepth)
    {
-      return search(rootNode, coord, 0, resolution, maxDepth);
+      return search(rootNode, coord, 0, resolution, treeDepth);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, Point3d coord, int depth, double resolution, int maxDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, Point3d coord, int depth, double resolution, int treeDepth)
    {
-      OcTreeKey key = coordinateToKey(coord, resolution, maxDepth);
+      OcTreeKey key = coordinateToKey(coord, resolution, treeDepth);
       if (key == null)
       {
          PrintTools.error(OcTreeSearchTools.class, "Error in search: [" + coord + "] is out of OcTree bounds!");
@@ -56,13 +56,13 @@ public abstract class OcTreeSearchTools
       }
       else
       {
-         return search(rootNode, key, depth, maxDepth);
+         return search(rootNode, key, depth, treeDepth);
       }
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, OcTreeKey key, int maxDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, OcTreeKey key, int treeDepth)
    {
-      return search(rootNode, key, 0, maxDepth);
+      return search(rootNode, key, 0, treeDepth);
    }
 
    /**
@@ -70,28 +70,28 @@ public abstract class OcTreeSearchTools
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, OcTreeKey key, int depth, int maxDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, OcTreeKey key, int depth, int treeDepth)
    {
-      MathTools.checkIfLessOrEqual(depth, maxDepth);
+      MathTools.checkIfLessOrEqual(depth, treeDepth);
       if (rootNode == null)
          return null;
 
       if (depth == 0)
-         depth = maxDepth;
+         depth = treeDepth;
 
       // generate appropriate keyAtDepth for queried depth
       OcTreeKey keyAtDepth;
-      if (depth != maxDepth)
-         keyAtDepth = OcTreeKeyTools.adjustKeyAtDepth(key, depth, maxDepth);
+      if (depth != treeDepth)
+         keyAtDepth = OcTreeKeyTools.adjustKeyAtDepth(key, depth, treeDepth);
       else
          keyAtDepth = new OcTreeKey(key);
 
       NODE currentNode = rootNode;
 
-      int level = maxDepth - depth;
+      int level = treeDepth - depth;
 
       // follow nodes down to requested level (for level = 0 it's the last level)
-      for (int currentDepth = (maxDepth - 1); currentDepth >= level; --currentDepth)
+      for (int currentDepth = (treeDepth - 1); currentDepth >= level; --currentDepth)
       {
          int childIndex = OcTreeKeyTools.computeChildIndex(keyAtDepth, currentDepth);
 

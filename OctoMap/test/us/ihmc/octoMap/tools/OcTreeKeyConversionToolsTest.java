@@ -22,24 +22,24 @@ public class OcTreeKeyConversionToolsTest
    public void testConvertKeyCoordBackForthMaxDepth() throws Exception
    {
       Random random = new Random(6574961L);
-      int maxDepth = 16;
+      int treeDepth = 16;
       double resolution = 0.05;
 
-      int keyMax = OcTreeKeyTools.computeMaximumKeyValue(maxDepth);
+      int keyMax = OcTreeKeyTools.computeMaximumKeyValue(treeDepth);
 
       for (int i = 0; i < 1000000; i++)
       {
          int expectedKey = RandomTools.generateRandomInt(random, 0, keyMax);
-         double coordinate = keyToCoordinate(expectedKey, resolution, maxDepth);
-         int actualKey = coordinateToKey(coordinate, resolution, maxDepth);
+         double coordinate = keyToCoordinate(expectedKey, resolution, treeDepth);
+         int actualKey = coordinateToKey(coordinate, resolution, treeDepth);
          assertEquals(expectedKey, actualKey);
       }
 
       for (int i = 0; i < 10000; i++)
       {
          OcTreeKey expectedKey = new OcTreeKey(random, keyMax);
-         Point3d coordinate = keyToCoordinate(expectedKey, resolution, maxDepth);
-         OcTreeKey actualKey = coordinateToKey(coordinate, resolution, maxDepth);
+         Point3d coordinate = keyToCoordinate(expectedKey, resolution, treeDepth);
+         OcTreeKey actualKey = coordinateToKey(coordinate, resolution, treeDepth);
          assertEquals(expectedKey, actualKey);
       }
    }
@@ -48,20 +48,20 @@ public class OcTreeKeyConversionToolsTest
    public void testConvertKeyCoordBackForthAtRandomDepth() throws Exception
    {
       Random random = new Random(654961L);
-      int maxDepth = 16;
+      int treeDepth = 16;
       double resolution = 0.15;
 
       for (int i = 0; i < 10000; i++)
       {
-         int depth = random.nextInt(maxDepth);
-         int keyMax = OcTreeKeyTools.computeMaximumKeyValue(maxDepth);
+         int depth = random.nextInt(treeDepth);
+         int keyMax = OcTreeKeyTools.computeMaximumKeyValue(treeDepth);
          int inputKey = RandomTools.generateRandomInt(random, 0, keyMax);
-         int expectedKey = adjustKeyAtDepth(inputKey, depth, maxDepth);
-         double expectedCoordinate = keyToCoordinate(inputKey, depth, resolution, maxDepth);
-         int actualKey = coordinateToKey(expectedCoordinate, depth, resolution, maxDepth);
+         int expectedKey = adjustKeyAtDepth(inputKey, depth, treeDepth);
+         double expectedCoordinate = keyToCoordinate(inputKey, depth, resolution, treeDepth);
+         int actualKey = coordinateToKey(expectedCoordinate, depth, resolution, treeDepth);
          if (DEBUG)
          {
-            double actualCoordinate = keyToCoordinate(actualKey, depth, resolution, maxDepth);
+            double actualCoordinate = keyToCoordinate(actualKey, depth, resolution, treeDepth);
             System.out.print("expectedCoordinate = " + expectedCoordinate);
             System.out.println(", actualCoordinate = " + actualCoordinate);
             System.out.print("expectedKey = " + expectedKey);
@@ -72,12 +72,12 @@ public class OcTreeKeyConversionToolsTest
 
       for (int i = 0; i < 10000; i++)
       {
-         int depth = random.nextInt(maxDepth);
-         int keyMax = OcTreeKeyTools.computeMaximumKeyValue(maxDepth);
+         int depth = random.nextInt(treeDepth);
+         int keyMax = OcTreeKeyTools.computeMaximumKeyValue(treeDepth);
          OcTreeKey inputKey = new OcTreeKey(random, keyMax);
-         OcTreeKey expectedKey = adjustKeyAtDepth(inputKey, depth, maxDepth);
-         Point3d coordinate = keyToCoordinate(inputKey, depth, resolution, maxDepth);
-         OcTreeKey actualKey = coordinateToKey(coordinate, depth, resolution, maxDepth);
+         OcTreeKey expectedKey = adjustKeyAtDepth(inputKey, depth, treeDepth);
+         Point3d coordinate = keyToCoordinate(inputKey, depth, resolution, treeDepth);
+         OcTreeKey actualKey = coordinateToKey(coordinate, depth, resolution, treeDepth);
          assertEquals(expectedKey, actualKey);
       }
    }
@@ -85,14 +85,14 @@ public class OcTreeKeyConversionToolsTest
    @Test
    public void testComputeNodeSize() throws Exception
    {
-      for (int maxDepth = 2; maxDepth <= 20; maxDepth++)
+      for (int treeDepth = 2; treeDepth <= 20; treeDepth++)
       {
          double resolution = 0.05;
          double expectedNodeSize = resolution;
 
-         for (int depth = maxDepth; depth >= 0; depth--)
+         for (int depth = treeDepth; depth >= 0; depth--)
          {
-            double actualNodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, maxDepth);
+            double actualNodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
             assertEquals(expectedNodeSize, actualNodeSize, expectedNodeSize * 1.0e-7);
             expectedNodeSize *= 2.0;
          }

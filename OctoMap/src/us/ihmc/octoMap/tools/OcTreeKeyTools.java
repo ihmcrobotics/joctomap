@@ -1,7 +1,5 @@
 package us.ihmc.octoMap.tools;
 
-import java.util.Random;
-
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.robotics.MathTools;
 
@@ -23,10 +21,10 @@ public class OcTreeKeyTools
     * @param parentKey current (parent) key
     * @return
     */
-   public static OcTreeKey computeChildKey(int childIndex, OcTreeKey parentKey, int childDepth, int maxDepth)
+   public static OcTreeKey computeChildKey(int childIndex, OcTreeKey parentKey, int childDepth, int treeDepth)
    {
       OcTreeKey childKey = new OcTreeKey();
-      computeChildKey(childIndex, parentKey, childKey, childDepth, maxDepth);
+      computeChildKey(childIndex, parentKey, childKey, childDepth, treeDepth);
       return childKey;
    }
 
@@ -35,13 +33,12 @@ public class OcTreeKeyTools
     * child index and current key
     *
     * @param childIndex index of child node (0..7)
-    * @param centerOffsetKey constant offset of octree keys
     * @param parentKey current (parent) key
     * @param childKeyToPack  computed child key
     */
-   public static void computeChildKey(int childIndex, OcTreeKey parentKey, OcTreeKey childKeyToPack, int childDepth, int maxDepth)
+   public static void computeChildKey(int childIndex, OcTreeKey parentKey, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
    {
-      int centerOffsetKey = computeCenterOffsetKey(childDepth, maxDepth);
+      int centerOffsetKey = computeCenterOffsetKey(childDepth, treeDepth);
 
       // x-axis
       if ((childIndex & 1) != 0)
@@ -90,9 +87,9 @@ public class OcTreeKeyTools
     *
     * @return key corresponding to the input key at the given level
     */
-   public static OcTreeKey computeIndexKey(OcTreeKey key, int depth, int maxDepth)
+   public static OcTreeKey computeIndexKey(OcTreeKey key, int depth, int treeDepth)
    {
-      int level = maxDepth - depth;
+      int level = treeDepth - depth;
 
       if (level == 0)
       {
@@ -100,7 +97,7 @@ public class OcTreeKeyTools
       }
       else
       {
-         int mask = computeMaximumKeyValue(maxDepth) << level;
+         int mask = computeMaximumKeyValue(treeDepth) << level;
          OcTreeKey result = new OcTreeKey(key);
          result.setKey(0, result.getKey(0) & mask);
          result.setKey(1, result.getKey(1) & mask);
@@ -117,9 +114,9 @@ public class OcTreeKeyTools
     * @param depth Target depth level for the new key
     * @return Key for the new depth level
     */
-   public static int adjustKeyAtDepth(int key, int depth, int maxDepth)
+   public static int adjustKeyAtDepth(int key, int depth, int treeDepth)
    {
-      int diff = maxDepth - depth;
+      int diff = treeDepth - depth;
 
       if (diff == 0)
       {
@@ -127,7 +124,7 @@ public class OcTreeKeyTools
       }
       else
       {
-         int centerOffsetKey = computeCenterOffsetKey(maxDepth);
+         int centerOffsetKey = computeCenterOffsetKey(treeDepth);
          int returnedKey = (((key - centerOffsetKey) >> diff) << diff) + (1 << (diff - 1)) + centerOffsetKey;
          if (returnedKey == 2 * centerOffsetKey)
             returnedKey = 0;
@@ -143,16 +140,16 @@ public class OcTreeKeyTools
     * @param depth Target depth level for the new key
     * @return Key for the new depth level
     */
-   public static OcTreeKey adjustKeyAtDepth(OcTreeKey key, int depth, int maxDepth)
+   public static OcTreeKey adjustKeyAtDepth(OcTreeKey key, int depth, int treeDepth)
    {
-      if (depth == maxDepth)
+      if (depth == treeDepth)
          return key;
 
-      MathTools.checkIfLessOrEqual(depth, maxDepth);
+      MathTools.checkIfLessOrEqual(depth, treeDepth);
 
-      int k0 = adjustKeyAtDepth(key.k[0], depth, maxDepth);
-      int k1 = adjustKeyAtDepth(key.k[1], depth, maxDepth);
-      int k2 = adjustKeyAtDepth(key.k[2], depth, maxDepth);
+      int k0 = adjustKeyAtDepth(key.k[0], depth, treeDepth);
+      int k1 = adjustKeyAtDepth(key.k[1], depth, treeDepth);
+      int k2 = adjustKeyAtDepth(key.k[2], depth, treeDepth);
       return new OcTreeKey(k0, k1, k2);
    }
 
@@ -160,23 +157,23 @@ public class OcTreeKeyTools
     * Computes the center offset key at depth = 0 and for a given maximum depth (tree depth).
     * It is the key at the center of the tree: all keys are in [0, 2 * centerOffsetKey - 1].
     * It is also the key used for the root node key.
-    * @param maxDepth tree depth.
+    * @param treeDepth tree depth.
     * @return the center offset key
     */
-   public static int computeCenterOffsetKey(int maxDepth)
+   public static int computeCenterOffsetKey(int treeDepth)
    {
-      if (maxDepth == 0)
+      if (treeDepth == 0)
          return 0;
       else
-         return 1 << (maxDepth - 1);
+         return 1 << (treeDepth - 1);
    }
 
-   public static int computeCenterOffsetKey(int depth, int maxDepth)
+   public static int computeCenterOffsetKey(int depth, int treeDepth)
    {
-      if (depth == maxDepth)
+      if (depth == treeDepth)
          return 0;
       else
-         return 1 << (maxDepth - depth - 1);
+         return 1 << (treeDepth - depth - 1);
    }
 
    public static OcTreeKey getRootKey(int maxDepth)
@@ -193,31 +190,11 @@ public class OcTreeKeyTools
 
    /**
     * Computes the maximum that a key can have for a given maximum depth (tree depth).
-    * @param maxDepth tree depth.
+    * @param treeDepth tree depth.
     * @return the key maximum value
     */
-   public static int computeMaximumKeyValue(int maxDepth)
+   public static int computeMaximumKeyValue(int treeDepth)
    {
-      return (1 << maxDepth) - 1;
-   }
-
-   public static void main(String[] args)
-   {
-//      Random random = new Random(521L);
-      int maxDepth = 16;
-//      OcTreeKey rootKey = getRootKey(maxDepth);
-//      OcTreeKey currentKey = rootKey;
-//      System.out.println(currentKey);
-//
-//      for (int depth = 0; depth <= maxDepth; depth++)
-//      {
-//         int centerOffsetKey = computeCenterOffsetKey(depth, maxDepth);
-//         currentKey = computeChildKey(0, centerOffsetKey, currentKey);
-//         System.out.println(currentKey);
-//      }
-      for (int depth = 0; depth <= maxDepth; depth++)
-      {
-         System.out.println(computeCenterOffsetKey(depth, maxDepth));
-      }
+      return (1 << treeDepth) - 1;
    }
 }
