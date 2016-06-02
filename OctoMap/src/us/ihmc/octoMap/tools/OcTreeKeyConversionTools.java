@@ -137,6 +137,7 @@ public abstract class OcTreeKeyConversionTools
    public static double keyToCoordinate(int key, int depth, double resolution, int treeDepth)
    {
       MathTools.checkIfLessOrEqual(depth, treeDepth);
+      checkKeyIsValid(key, depth, treeDepth);
 
       // root is centered on 0 = 0.0
       if (depth == 0)
@@ -149,6 +150,7 @@ public abstract class OcTreeKeyConversionTools
    public static double keyToCoordinate(int key, double resolution, int treeDepth)
    {
       int centerOffsetKey = computeCenterOffsetKey(treeDepth);
+      checkKeyIsValid(key, treeDepth, treeDepth);
       return (key - centerOffsetKey + 0.5) * resolution;
    }
 
@@ -184,5 +186,11 @@ public abstract class OcTreeKeyConversionTools
    {
       MathTools.checkIfLessOrEqual(depth, treeDepth);
       return (1 << treeDepth - depth) * resolution;
+   }
+
+   public static void checkKeyIsValid(int keyToCheck, int depth, int treeDepth)
+   {
+      if (keyToCheck < 0 || keyToCheck > OcTreeKeyTools.computeMaximumKeyValueAtDepth(depth, treeDepth))
+         throw new RuntimeException("The key is invalid: " + keyToCheck + "(at depth: " + depth + ")");
    }
 }
