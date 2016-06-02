@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.tools;
 
+import static us.ihmc.octoMap.tools.OcTreeKeyTools.computeCenterOffsetKeyAtDepth;
+
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 
@@ -147,7 +149,8 @@ public abstract class OcTreeKeyConversionTools
       else
       {
          double nodeSize = computeNodeSize(depth, resolution, maxDepth);
-         return (Math.floor(((double) (key) - (double) (1 << (maxDepth - 1))) / (double) (1 << (maxDepth - depth))) + 0.5) * nodeSize;
+         int centerOffsetKey = computeCenterOffsetKeyAtDepth(maxDepth);
+         return (Math.floor(((double) (key - centerOffsetKey)) / (double) (1 << (maxDepth - depth))) + 0.5) * nodeSize;
       }
    }
 
