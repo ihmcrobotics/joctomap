@@ -151,7 +151,10 @@ public class OcTreeKeyTools
     */
    public static int computeCenterOffsetKeyAtDepth(int depth)
    {
-      return 1 << (depth - 1);
+      if (depth == 0)
+         return 0;
+      else
+         return 1 << (depth - 1);
    }
 
    /**
