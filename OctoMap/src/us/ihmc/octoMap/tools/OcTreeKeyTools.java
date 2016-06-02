@@ -1,8 +1,19 @@
 package us.ihmc.octoMap.tools;
 
+import java.util.Random;
+
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.robotics.MathTools;
 
+/**
+ * This class provides basic operations on {@linkplain OcTreeKey}.
+ * 
+ * Here are some notes on keys:
+ * <li> Index for a node child is in [0, 7]. Three bits can describe this index (2^0, 2^1, and 2^2).
+ * This characteristic is used to figure out where is located the child:
+ * 
+ *
+ */
 public class OcTreeKeyTools
 {
    /**
@@ -55,29 +66,29 @@ public class OcTreeKeyTools
     */
    public static int computeChildIndex(OcTreeKey key, int depth)
    {
-      int pos = 0;
+      int childIndex = 0;
       int temp = 1 << depth;
 
       if ((key.getKey(0) & temp) != 0)
-         pos += 1;
+         childIndex += 1;
 
       if ((key.getKey(1) & temp) != 0)
-         pos += 2;
+         childIndex += 2;
 
       if ((key.getKey(2) & temp) != 0)
-         pos += 4;
+         childIndex += 4;
 
-      return pos;
+      return childIndex;
    }
 
    /**
     * Generates a unique key for all keys on a certain level of the tree
-    *
-    * @param level from the bottom (= tree_depth - depth of key)
     * @param key input indexing key (at lowest resolution / level)
+    * @param level from the bottom (= tree_depth - depth of key)
+    *
     * @return key corresponding to the input key at the given level
     */
-   public static OcTreeKey computeIndexKey(int depth, OcTreeKey key, int maxDepth)
+   public static OcTreeKey computeIndexKey(OcTreeKey key, int depth, int maxDepth)
    {
       int level = maxDepth - depth;
 
@@ -87,7 +98,7 @@ public class OcTreeKeyTools
       }
       else
       {
-         int mask = (2 * computeCenterOffsetKeyAtDepth(maxDepth) - 1) << level;
+         int mask = computeMaximumKeyValueAtDepth(maxDepth) << level;
          OcTreeKey result = new OcTreeKey(key);
          result.setKey(0, result.getKey(0) & mask);
          result.setKey(1, result.getKey(1) & mask);
@@ -165,5 +176,27 @@ public class OcTreeKeyTools
    public static int computeMaximumKeyValueAtDepth(int depth)
    {
       return (1 << depth) - 1;
+   }
+
+   public static void main(String[] args)
+   {
+      Random random = new Random(521L);
+      int maxDepth = 16;
+      int depth = 14;
+      OcTreeKey key = new OcTreeKey(random, computeMaximumKeyValueAtDepth(maxDepth));
+      System.out.println("Original: " + key);
+      OcTreeKey adjusted = adjustKeyAtDepth(key, depth, maxDepth);
+      System.out.println("Adjusted: " + adjusted + ", at depth: " + depth);
+      OcTreeKey indexKey = computeIndexKey(key, depth, maxDepth);
+      System.out.println("Index: " + indexKey + ", at depth: " + depth);
+      OcTreeKey indexAdjustedKey = adjustKeyAtDepth(indexKey, depth, maxDepth);
+      System.out.println("Adjusted index: " + indexAdjustedKey + ", at depth: " + depth);
+
+      System.out.println("Children keys of adjusted:");
+      for (int i = 0; i < 8; i++)
+      {
+         int centerOffsetKey = computeCenterOffsetKeyAtDepth(maxDepth);
+         System.out.println(computeChildKey(i, centerOffsetKey, indexAdjustedKey));
+      }
    }
 }

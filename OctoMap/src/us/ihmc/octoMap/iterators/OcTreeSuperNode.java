@@ -88,7 +88,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
    /** @return the OcTreeKey of this node, for nodes with depth != maxDepth */
    public OcTreeKey getIndexKey()
    {
-      return OcTreeKeyTools.computeIndexKey(depth, key, tree.getTreeDepth());
+      return OcTreeKeyTools.computeIndexKey(key, depth, tree.getTreeDepth());
    }
 
    /** @return whether the current node is a leaf, i.e. has no children or is at max level */
