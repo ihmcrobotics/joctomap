@@ -60,7 +60,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
       else
       {
-         node.setNormal(computeNodeNormal(nodeKey, true));
+         node.setNormal(computeNodeNormal(nodeKey, depth, true));
       }
       
       if (node.getNormal() != null)
@@ -77,9 +77,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   public Vector3d computeNodeNormal(OcTreeKey key, boolean unknownStatus)
+   public Vector3d computeNodeNormal(OcTreeKey key, int depth, boolean unknownStatus)
    {
-      NormalOcTreeNode node = search(key);
+      NormalOcTreeNode node = search(key, depth);
       if (node == null)
          return null;
 
@@ -87,16 +87,20 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       OcTreeKey currentKey = new OcTreeKey();
       NormalOcTreeNode currentNode;
 
-      for (int kxOffset = -1; kxOffset <= 1; kxOffset++)
+      int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
+
+      int[] keyOffsets = {-keyInterval, 0, keyInterval};
+
+      for (int kxOffset : keyOffsets)
       {
-         for (int kyOffset = -1; kyOffset <= 1; kyOffset++)
+         for (int kyOffset : keyOffsets)
          {
-            for (int kzOffset = -1; kzOffset <= 1; kzOffset++)
+            for (int kzOffset : keyOffsets)
             {
                currentKey.setKey(0, key.getKey(0) + kxOffset);
                currentKey.setKey(1, key.getKey(1) + kyOffset);
                currentKey.setKey(2, key.getKey(2) + kzOffset);
-               currentNode = search(currentKey);
+               currentNode = search(currentKey, depth);
 
                boolean nodeExists = currentNode == null;
                boolean isOccupied = !nodeExists && isNodeOccupied(currentNode);
@@ -127,6 +131,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    public double computeNodeNeighborNormalDifference(OcTreeKey key, int depth)
    {
       NormalOcTreeNode node = search(key, depth);
+
       if (node == null || !node.isNormalSet())
          return Double.NaN;
 
@@ -139,12 +144,15 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
       double meanDifference = 0.0;
       Variance var = new Variance();
+      int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
 
-      for (int kxOffset = -1; kxOffset <= 1; kxOffset++)
+      int[] keyOffsets = {-keyInterval, 0, keyInterval};
+
+      for (int kxOffset : keyOffsets)
       {
-         for (int kyOffset = -1; kyOffset <= 1; kyOffset++)
+         for (int kyOffset : keyOffsets)
          {
-            for (int kzOffset = -1; kzOffset <= 1; kzOffset++)
+            for (int kzOffset : keyOffsets)
             {
                if (kxOffset == 0 && kyOffset == 0 && kzOffset == 0)
                   continue;
