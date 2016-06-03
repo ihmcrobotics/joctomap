@@ -1105,9 +1105,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             }
             else
             { // user set a maxrange and length is above
-               Point3d new_end = new Point3d();
-               new_end.scaleAdd(maxrange / length, direction, origin);
-               if (computeRayKeys(origin, new_end, keyray))
+               Point3d newEnd = new Point3d();
+               newEnd.scaleAdd(maxrange / length, direction, origin);
+               if (computeRayKeys(origin, newEnd, keyray))
                   freeCells.addAll(keyray);
             } // end if maxrange
          }
