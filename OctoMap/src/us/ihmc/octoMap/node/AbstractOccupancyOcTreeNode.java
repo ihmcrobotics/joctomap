@@ -3,7 +3,6 @@ package us.ihmc.octoMap.node;
 import java.util.Arrays;
 
 import us.ihmc.octoMap.tools.OctoMapTools;
-import us.ihmc.robotics.MathTools;
 
 public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcTreeNode<N>> extends AbstractOcTreeNode<N>
 {
@@ -120,7 +119,7 @@ public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcT
 
    public boolean epsilonEquals(N other, float epsilon)
    {
-      return MathTools.epsilonEquals(logOdds, other.logOdds, epsilon);
+      return Math.abs(logOdds - other.logOdds) <= epsilon;
    }
 
    @Override

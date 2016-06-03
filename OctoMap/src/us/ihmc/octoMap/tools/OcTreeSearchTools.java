@@ -7,8 +7,6 @@ import javax.vecmath.Point3d;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
-import us.ihmc.robotics.MathTools;
-import us.ihmc.tools.io.printing.PrintTools;
 
 public abstract class OcTreeSearchTools
 {
@@ -27,7 +25,7 @@ public abstract class OcTreeSearchTools
       OcTreeKey key = coordinateToKey(x, y, z, resolution, treeDepth);
       if (key == null)
       {
-         PrintTools.error(OcTreeSearchTools.class, "Error in search: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
+         System.err.println(OcTreeSearchTools.class.getSimpleName() + ": Error in search: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
          return null;
       }
       else
@@ -51,7 +49,7 @@ public abstract class OcTreeSearchTools
       OcTreeKey key = coordinateToKey(coord, resolution, treeDepth);
       if (key == null)
       {
-         PrintTools.error(OcTreeSearchTools.class, "Error in search: [" + coord + "] is out of OcTree bounds!");
+         System.err.println(OcTreeSearchTools.class.getSimpleName() + ": Error in search: [" + coord + "] is out of OcTree bounds!");
          return null;
       }
       else
@@ -72,7 +70,7 @@ public abstract class OcTreeSearchTools
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, OcTreeKey key, int depth, int treeDepth)
    {
-      MathTools.checkIfLessOrEqual(depth, treeDepth);
+      OctoMapTools.checkIfDepthValid(depth, treeDepth);
       if (rootNode == null)
          return null;
 

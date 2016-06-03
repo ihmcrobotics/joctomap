@@ -1,7 +1,5 @@
 package us.ihmc.octoMap;
 
-import us.ihmc.robotics.MathTools;
-
 public class OctoMapColor
 {
    private int red, green, blue, opacity;
@@ -79,7 +77,7 @@ public class OctoMapColor
 
    public void interpolate(double alpha, int red, int green, int blue, int opacity)
    {
-      MathTools.checkIfInRange(alpha, 0.0, 1.0);
+      checkIfAlphaValid(alpha);
       this.red = interpolate(alpha, this.red, red);
       this.green = interpolate(alpha, this.green, green);
       this.blue = interpolate(alpha, this.blue, blue);
@@ -93,11 +91,17 @@ public class OctoMapColor
 
    public void interpolate(double alpha, OctoMapColor firstColor, OctoMapColor secondColor)
    {
-      MathTools.checkIfInRange(alpha, 0.0, 1.0);
+      checkIfAlphaValid(alpha);
       red = interpolate(alpha, firstColor.red, secondColor.red);
       green = interpolate(alpha, firstColor.green, secondColor.green);
       blue = interpolate(alpha, firstColor.blue, secondColor.blue);
       opacity = interpolate(alpha, firstColor.opacity, secondColor.opacity);
+   }
+
+   private static void checkIfAlphaValid(double alpha)
+   {
+      if (alpha < 0.0 || alpha > 1.0)
+         throw new RuntimeException("Invalid interpolation alpha: " + alpha);
    }
 
    private static int interpolate(double alpha, int firstInteger, int secondInteger)

@@ -7,7 +7,6 @@ import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
-import us.ihmc.robotics.MathTools;
 
 public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOcTreeBase<NODE>
 {
@@ -158,17 +157,19 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    public void setHitProbabilityUpdate(double probability)
    {
       hitUpdateLogOdds = logodds(probability);
-      MathTools.checkIfPositive(hitUpdateLogOdds);
+      if (hitUpdateLogOdds < 0.0)
+         throw new RuntimeException("Invalid hit probability update: " + probability);
    }
 
    /**
     * Sets the probability for a "miss" (will be converted to logodds) - sensor model
-    * @param probabillity
+    * @param probability
     */
-   public void setMissProbabilityUpdate(double probabillity)
+   public void setMissProbabilityUpdate(double probability)
    {
-      missUpdateLogOdds = logodds(probabillity);
-      MathTools.checkIfNegative(missUpdateLogOdds);
+      missUpdateLogOdds = logodds(probability);
+      if (missUpdateLogOdds > 0.0)
+         throw new RuntimeException("Invalid miss probability update: " + probability);
    }
 
    /**

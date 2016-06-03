@@ -3,7 +3,7 @@ package us.ihmc.octoMap.key;
 import java.util.Arrays;
 import java.util.Random;
 
-import us.ihmc.robotics.random.RandomTools;
+import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class OcTreeKey
 {
@@ -89,8 +89,22 @@ public class OcTreeKey
       return "OcTreeKey: " + Arrays.toString(k);
    }
 
-   public OcTreeKey(Random random, int maxValue)
+   public OcTreeKey(Random random, int treeDepth)
    {
-      set(RandomTools.generateRandomIntArray(random, 3, 0, maxValue));
+      this(random, treeDepth, treeDepth);
+   }
+
+   public OcTreeKey(Random random, int depth, int treeDepth)
+   {
+      int numberOfNodes = OcTreeKeyTools.computeNumberOfNodesAtDepth(depth);
+      int keyMin = OcTreeKeyTools.computeMinimumKeyAtDepth(depth, treeDepth);
+      int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
+
+      for (int i = 0; i < 3; i++)
+      {
+         int key = (int) (char) (random.nextInt(numberOfNodes) * keyInterval - keyMin);
+         OcTreeKeyTools.checkKeyIsValid(key, depth, treeDepth);
+         setKey(i, key);
+      }
    }
 }

@@ -6,12 +6,10 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import us.ihmc.robotics.lists.GenericTypeBuilder;
-
 public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 {
    protected N[] children;
-   private final HashMap<Class<? extends AbstractOcTreeNode<?>>, GenericTypeBuilder<? extends AbstractOcTreeNode<?>>> builderCache = BUILDER_CACHE_THREAD_LOCAL.get();
+   private final HashMap<Class<? extends AbstractOcTreeNode<?>>, NodeBuilder<? extends AbstractOcTreeNode<?>>> builderCache = BUILDER_CACHE_THREAD_LOCAL.get();
 
    AbstractOcTreeNode()
    {
@@ -42,16 +40,16 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       return ret;
    }
 
-   @SuppressWarnings("unchecked")
+   @SuppressWarnings({"unchecked", "rawtypes"})
    public final N create()
    {
-      GenericTypeBuilder<N> builder = (GenericTypeBuilder<N>) builderCache.get(getClass());
+      NodeBuilder<N> builder = (NodeBuilder<N>) builderCache.get(getClass());
       if (builder == null)
       {
-         builder = (GenericTypeBuilder<N>) GenericTypeBuilder.createBuilderWithEmptyConstructor(getClass());
+         builder = (NodeBuilder<N>) new NodeBuilder(getClass());
          builderCache.put((Class<? extends AbstractOcTreeNode<?>>) getClass(), builder);
       }
-      N ret = builder.newInstance();
+      N ret = builder.createNode();
       return ret;
    }
 

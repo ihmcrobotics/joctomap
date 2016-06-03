@@ -1,13 +1,13 @@
 package us.ihmc.octoMap.tools;
 
 import static us.ihmc.octoMap.tools.OcTreeKeyTools.adjustKeyAtDepth;
+import static us.ihmc.octoMap.tools.OcTreeKeyTools.checkKeyIsValid;
 import static us.ihmc.octoMap.tools.OcTreeKeyTools.computeCenterOffsetKey;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.robotics.MathTools;
 
 public abstract class OcTreeKeyConversionTools
 {
@@ -33,7 +33,7 @@ public abstract class OcTreeKeyConversionTools
     */
    public static int coordinateToKey(double coordinate, int depth, double resolution, int treeDepth)
    {
-      MathTools.checkIfLessOrEqual(depth, treeDepth);
+      OctoMapTools.checkIfDepthValid(depth, treeDepth);
 
       int centerOffsetKey = computeCenterOffsetKey(treeDepth);
       // scale to resolution and shift center
@@ -136,8 +136,8 @@ public abstract class OcTreeKeyConversionTools
    /** converts from a discrete key at a given depth into a coordinate corresponding to the key's center */
    public static double keyToCoordinate(int key, int depth, double resolution, int treeDepth)
    {
-      MathTools.checkIfLessOrEqual(depth, treeDepth);
-      checkKeyIsValid(key, depth, treeDepth);
+      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      checkKeyIsValid(key, treeDepth, treeDepth);
 
       // root is centered on 0 = 0.0
       if (depth == 0)
@@ -195,13 +195,7 @@ public abstract class OcTreeKeyConversionTools
 
    public static double computeNodeSize(int depth, double resolution, int treeDepth)
    {
-      MathTools.checkIfLessOrEqual(depth, treeDepth);
+      OctoMapTools.checkIfDepthValid(depth, treeDepth);
       return (1 << treeDepth - depth) * resolution;
-   }
-
-   public static void checkKeyIsValid(int keyToCheck, int depth, int treeDepth)
-   {
-      if (keyToCheck < 0 || keyToCheck > OcTreeKeyTools.computeMaximumKeyValueAtDepth(depth, treeDepth))
-         throw new RuntimeException("The key is invalid: " + keyToCheck + "(at depth: " + depth + ")");
    }
 }

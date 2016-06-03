@@ -17,4 +17,15 @@ public class OctoMapTools
    {
       return 1.0 - (1.0 / (1.0 + Math.exp(logodds)));
    }
+
+   public static void checkIfDepthValid(int depthToCheck, int treeDepth)
+   {
+      if (depthToCheck < 0 || depthToCheck > treeDepth)
+         throw new RuntimeException("Given depth is invalid: " + depthToCheck);
+   }
+
+   public static double nanoSecondsToSeconds(long timeInNanoSeconds)
+   {
+      return ((double) timeInNanoSeconds)/1e9;
+   }
 }

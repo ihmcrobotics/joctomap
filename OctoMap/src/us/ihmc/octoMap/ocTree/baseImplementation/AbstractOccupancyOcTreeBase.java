@@ -21,7 +21,6 @@ import us.ihmc.octoMap.pointCloud.ScanNode;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
-import us.ihmc.tools.io.printing.PrintTools;
 
 public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOccupancyOcTree<NODE>
 {
@@ -570,7 +569,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       OcTreeKey current_key = coordinateToKey(origin);
       if (current_key == null)
       {
-         PrintTools.warn(this, "Coordinates out of bounds during ray casting");
+         System.err.println(AbstractOccupancyOcTreeBase.class.getSimpleName() + " (in castRay): Coordinates out of bounds during ray casting");
          return false;
       }
 
@@ -634,7 +633,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
       if (step[0] == 0 && step[1] == 0 && step[2] == 0)
       {
-         PrintTools.error(this, "Raycasting in direction (0,0,0) is not possible!");
+         System.err.println(AbstractOccupancyOcTreeBase.class.getSimpleName() + " (in castRay): Raycasting in direction (0,0,0) is not possible!");
          return false;
       }
       int keyMaxValue = OcTreeKeyTools.computeMaximumKey(treeDepth);
@@ -669,7 +668,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          // check for overflow:
          if (step[dim] < 0 && current_key.getKey(dim) == 0 || step[dim] > 0 && current_key.getKey(dim) == keyMaxValue)
          {
-            PrintTools.warn(this, "Coordinate hit bounds in dim " + dim + ", aborting raycast");
+            System.err.println(AbstractOccupancyOcTreeBase.class.getSimpleName() + " (in castRay): Coordinate hit bounds in dim " + dim + ", aborting raycast");
             // return border point nevertheless:
             keyToCoordinate(current_key, end);
             return false;
@@ -854,7 +853,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       OcTreeKey initKey = coordinateToKey(voxel);
       if (initKey == null)
       {
-         PrintTools.error(this, "Voxel out of bounds");
+         System.err.println(getClass().getSimpleName() + " (in getNormals): Voxel out of bounds");
          return false;
       }
 
@@ -977,7 +976,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       OcTreeKey newKey = coordinateToKey(boundingBoxMin);
       if (newKey == null)
       {
-         PrintTools.error(this, "ERROR while generating bbx min key.");
+         System.err.println(AbstractOccupancyOcTreeBase.class.getSimpleName() + " (in setBoundingBoxMin): ERROR while generating bbx min key.");
       }
       
       boundingBoxMin.set(min);
@@ -990,7 +989,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       OcTreeKey newKey = coordinateToKey(boundingBoxMax);
       if (newKey == null)
       {
-         PrintTools.error(this, "ERROR while generating bbx max key.");
+         System.err.println(AbstractOccupancyOcTreeBase.class.getSimpleName() + " (in setBoundingBoxMax): ERROR while generating bbx max key.");
       }
 
       boundingBoxMax.set(max);

@@ -9,7 +9,7 @@ import java.util.Iterator;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
-import us.ihmc.robotics.MathTools;
+import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
@@ -81,7 +81,7 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
                {
                   OcTreeSuperNode<NODE> newNode = createChildSuperNode(currentNode, i);
                   stack.add(newNode);
-                  MathTools.checkIfLessOrEqual(newNode.getDepth(), maxDepth);
+                  OctoMapTools.checkIfDepthValid(newNode.getDepth(), maxDepth);
                }
             }
          }

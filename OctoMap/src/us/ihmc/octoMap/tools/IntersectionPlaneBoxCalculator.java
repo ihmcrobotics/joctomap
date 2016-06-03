@@ -9,7 +9,6 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import javafx.util.Pair;
-import us.ihmc.robotics.MathTools;
 
 public class IntersectionPlaneBoxCalculator
 {
@@ -89,7 +88,7 @@ public class IntersectionPlaneBoxCalculator
             continue;
 
          double scaleFactor = planeNormal.dot(fromPlaneCenterToEdgeStart) / dotNormalEdge;
-         if (!MathTools.isInsideBoundsInclusive(scaleFactor, 0.0, 1.0))
+         if (scaleFactor < 0.0 || scaleFactor > 1.0)
             continue;
 
          intersection.scaleAdd(scaleFactor, edgeVector, edgeStart);

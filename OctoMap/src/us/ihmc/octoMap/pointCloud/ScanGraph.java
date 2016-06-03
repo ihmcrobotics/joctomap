@@ -7,7 +7,6 @@ import javax.vecmath.Point3d;
 
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
-import us.ihmc.tools.io.printing.PrintTools;
 
 public class ScanGraph
 {
@@ -50,7 +49,7 @@ public class ScanGraph
       }
       else
       {
-         PrintTools.error(this, "scan is invalid.\n");
+         System.err.println(getClass().getSimpleName() + " in addNode: scan is invalid.");
          return null;
       }
    }
@@ -75,7 +74,7 @@ public class ScanGraph
       }
       else
       {
-         PrintTools.error(this, "one or both nodes invalid.\n");
+         System.err.println(getClass().getSimpleName() + " in addEdge: one or both nodes invalid.");
          return null;
       }
    }
@@ -84,7 +83,7 @@ public class ScanGraph
    {
       if (edgeExists(first_id, second_id))
       {
-         PrintTools.error(this, "Edge exists!\n");
+         System.err.println(getClass().getSimpleName() + " in addEdge: Edge already exists!");
          return null;
       }
 
@@ -100,7 +99,7 @@ public class ScanGraph
       }
       else
       {
-         PrintTools.error(this, "one or both scans invalid.\n");
+         System.err.println(getClass().getSimpleName() + " in addEdge: one or both scans invalid.");
          return null;
       }
    }

@@ -90,12 +90,11 @@ public class OcTreeKeyToolsTest
    {
       Random random = new Random(5616L);
       int treeDepth = 16;
-      int maxValue = OcTreeKeyTools.computeMaximumKey(treeDepth);
 
       for (int i = 0; i < 100000; i++)
       {
          KeySet keySet = new KeySet();
-         OcTreeKey key = new OcTreeKey(random, maxValue);
+         OcTreeKey key = new OcTreeKey(random, random.nextInt(treeDepth), treeDepth);
          int depth = random.nextInt(treeDepth) + 1;
          for (int childIndex = 0; childIndex < 8; childIndex++)
          {

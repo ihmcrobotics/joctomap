@@ -1,7 +1,8 @@
 package us.ihmc.octoMap.tools;
 
+import java.util.Random;
+
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.robotics.MathTools;
 
 /**
  * This class provides basic operations on {@linkplain OcTreeKey}.
@@ -145,7 +146,7 @@ public class OcTreeKeyTools
       if (depth == treeDepth)
          return key;
 
-      MathTools.checkIfLessOrEqual(depth, treeDepth);
+      OctoMapTools.checkIfDepthValid(depth, treeDepth);
 
       int k0 = adjustKeyAtDepth(key.getKey(0), depth, treeDepth);
       int k1 = adjustKeyAtDepth(key.getKey(1), depth, treeDepth);
@@ -240,6 +241,11 @@ public class OcTreeKeyTools
       return (int) (char) (1 << treeDepth - depth);
    }
 
+   public static int computeNumberOfNodesAtDepth(int depth)
+   {
+      return 1 << depth;
+   }
+
    public static boolean isInsideBoundingBox(OcTreeKey minKey, OcTreeKey maxKey, OcTreeKey keyToTest, int depth, int treeDepth)
    {
       int minKeyValue = OcTreeKeyTools.computeMinimumKeyAtDepth(depth, treeDepth);
@@ -250,5 +256,22 @@ public class OcTreeKeyTools
       if (keyToTest.getKey(2) < minKey.getKey(2) - minKeyValue) return false;
       if (keyToTest.getKey(2) > maxKey.getKey(2) + minKeyValue) return false;
       return true;
+   }
+
+   public static int generateRandomKey(Random random, int depth, int treeDepth)
+   {
+      int numberOfNodes = OcTreeKeyTools.computeNumberOfNodesAtDepth(depth);
+      int keyMin = OcTreeKeyTools.computeMinimumKeyAtDepth(depth, treeDepth);
+      int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
+
+      int key = (int) (char) (random.nextInt(numberOfNodes) * keyInterval - keyMin);
+      OcTreeKeyTools.checkKeyIsValid(key, depth, treeDepth);
+      return key;
+   }
+
+   public static void checkKeyIsValid(int keyToCheck, int depth, int treeDepth)
+   {
+      if (keyToCheck < computeMinimumKeyAtDepth(depth, treeDepth) || keyToCheck > computeMaximumKeyValueAtDepth(depth, treeDepth))
+         throw new RuntimeException("The key is invalid: " + keyToCheck + " (at depth: " + depth + ")");
    }
 }

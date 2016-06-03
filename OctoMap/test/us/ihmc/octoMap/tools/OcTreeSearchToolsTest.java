@@ -23,11 +23,9 @@ public class OcTreeSearchToolsTest
       OcTree ocTree = new OcTree(resolution);
       int treeDepth = ocTree.getTreeDepth();
 
-      int keyMax = OcTreeKeyTools.computeMaximumKey(treeDepth);
-
       for (int i = 0; i < 100000; i++)
       {
-         OcTreeKey randomKey = new OcTreeKey(random, keyMax);
+         OcTreeKey randomKey = new OcTreeKey(random, treeDepth);
          ocTree.updateNode(randomKey, true);
       }
 
@@ -56,11 +54,9 @@ public class OcTreeSearchToolsTest
       OcTree ocTree = new OcTree(resolution);
       int treeDepth = ocTree.getTreeDepth();
 
-      int keyMax = OcTreeKeyTools.computeMaximumKey(treeDepth);
-
       for (int i = 0; i < 100000; i++)
       {
-         OcTreeKey randomKey = new OcTreeKey(random, keyMax);
+         OcTreeKey randomKey = new OcTreeKey(random, treeDepth);
          ocTree.updateNode(randomKey, true);
       }
 
@@ -81,11 +77,4 @@ public class OcTreeSearchToolsTest
          assertEquals(expectedNode, actualNode);
       }
    }
-
-   @Test
-   public void test()
-   {
-      fail("Not yet implemented");
-   }
-
 }

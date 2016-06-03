@@ -2,8 +2,6 @@ package us.ihmc.octoMap.node;
 
 import java.util.HashMap;
 
-import us.ihmc.robotics.lists.GenericTypeBuilder;
-
 /**
  * This tool class has to live in this package to be able to do operation on node's children field.
  * @author Sylvain
@@ -11,10 +9,10 @@ import us.ihmc.robotics.lists.GenericTypeBuilder;
  */
 public class OcTreeNodeTools
 {
-   static final ThreadLocal<HashMap<Class<? extends AbstractOcTreeNode<?>>, GenericTypeBuilder<? extends AbstractOcTreeNode<?>>>> BUILDER_CACHE_THREAD_LOCAL = new ThreadLocal<HashMap<Class<? extends AbstractOcTreeNode<?>>, GenericTypeBuilder<? extends AbstractOcTreeNode<?>>>>()
+   static final ThreadLocal<HashMap<Class<? extends AbstractOcTreeNode<?>>, NodeBuilder<? extends AbstractOcTreeNode<?>>>> BUILDER_CACHE_THREAD_LOCAL = new ThreadLocal<HashMap<Class<? extends AbstractOcTreeNode<?>>, NodeBuilder<? extends AbstractOcTreeNode<?>>>>()
    {
       @Override
-      public HashMap<Class<? extends AbstractOcTreeNode<?>>, GenericTypeBuilder<? extends AbstractOcTreeNode<?>>> initialValue()
+      public HashMap<Class<? extends AbstractOcTreeNode<?>>, NodeBuilder<? extends AbstractOcTreeNode<?>>> initialValue()
       {
          return new HashMap<>();
       }

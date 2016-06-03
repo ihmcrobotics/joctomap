@@ -14,7 +14,6 @@ import javax.vecmath.Vector3d;
 import org.junit.Test;
 
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.robotics.random.RandomTools;
 
 public class OcTreeKeyConversionToolsTest
 {
@@ -31,7 +30,7 @@ public class OcTreeKeyConversionToolsTest
 
       for (int i = 0; i < 1000000; i++)
       {
-         int expectedKey = RandomTools.generateRandomInt(random, 0, keyMax);
+         int expectedKey = random.nextInt(keyMax + 1);
          double coordinate = keyToCoordinate(expectedKey, resolution, treeDepth);
          int actualKey = coordinateToKey(coordinate, resolution, treeDepth);
          assertEquals(expectedKey, actualKey);
@@ -39,7 +38,7 @@ public class OcTreeKeyConversionToolsTest
 
       for (int i = 0; i < 10000; i++)
       {
-         OcTreeKey expectedKey = new OcTreeKey(random, keyMax);
+         OcTreeKey expectedKey = new OcTreeKey(random, treeDepth);
          Point3d coordinate = keyToCoordinate(expectedKey, resolution, treeDepth);
          OcTreeKey actualKey = coordinateToKey(coordinate, resolution, treeDepth);
          assertEquals(expectedKey, actualKey);
@@ -57,7 +56,7 @@ public class OcTreeKeyConversionToolsTest
       {
          int depth = random.nextInt(treeDepth);
          int keyMax = OcTreeKeyTools.computeMaximumKey(treeDepth);
-         int inputKey = RandomTools.generateRandomInt(random, 0, keyMax);
+         int inputKey = random.nextInt(keyMax + 1);
          int expectedKey = adjustKeyAtDepth(inputKey, depth, treeDepth);
          double expectedCoordinate = keyToCoordinate(inputKey, depth, resolution, treeDepth);
          int actualKey = coordinateToKey(expectedCoordinate, depth, resolution, treeDepth);
@@ -75,8 +74,7 @@ public class OcTreeKeyConversionToolsTest
       for (int i = 0; i < 10000; i++)
       {
          int depth = random.nextInt(treeDepth);
-         int keyMax = OcTreeKeyTools.computeMaximumKey(treeDepth);
-         OcTreeKey inputKey = new OcTreeKey(random, keyMax);
+         OcTreeKey inputKey = new OcTreeKey(random, treeDepth);
          OcTreeKey expectedKey = adjustKeyAtDepth(inputKey, depth, treeDepth);
          Point3d coordinate = keyToCoordinate(inputKey, depth, resolution, treeDepth);
          OcTreeKey actualKey = coordinateToKey(coordinate, depth, resolution, treeDepth);

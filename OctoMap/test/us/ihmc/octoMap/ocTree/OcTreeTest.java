@@ -16,8 +16,8 @@ import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.KeyRay;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.tools.OctoMapTools;
 import us.ihmc.robotics.random.RandomTools;
-import us.ihmc.robotics.time.TimeTools;
 
 public class OcTreeTest
 {
@@ -28,8 +28,8 @@ public class OcTreeTest
       Random random = new Random(126451L);
       double resolution = 0.05;
 
-      Vector3d scanDirection = RandomTools.generateRandomVector(random);
-      scanDirection.z = 0.0;
+      
+      Vector3d scanDirection = new Vector3d(random.nextDouble() - 0.5, random.nextDouble() - 0.5, 0.0);
       scanDirection.normalize();
 
       Point3d origin = new Point3d(0.01, 0.01, 1.02);
@@ -55,7 +55,7 @@ public class OcTreeTest
          long start = System.nanoTime();
          octree.insertPointCloud(pointcloud, origin);
          long endTime = System.nanoTime();
-         System.out.println(TimeTools.nanoSecondstoSeconds(endTime - start));
+         System.out.println(OctoMapTools.nanoSecondsToSeconds(endTime - start));
       }
    }
 
@@ -74,7 +74,7 @@ public class OcTreeTest
          long start = System.nanoTime();
          octree.computeRayKeys(origin, end, new KeyRay());
          long endTime = System.nanoTime();
-         System.out.println(TimeTools.nanoSecondstoSeconds(endTime - start));
+         System.out.println(OctoMapTools.nanoSecondsToSeconds(endTime - start));
          
       }
    }

@@ -19,8 +19,7 @@ import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;
-import us.ihmc.robotics.MathTools;
-import us.ihmc.tools.io.printing.PrintTools;
+import us.ihmc.octoMap.tools.OctoMapTools;
 
 /**
  * OcTree base class, to be used with with any kind of OcTreeDataNode.
@@ -345,7 +344,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       OcTreeKey key = coordinateToKey(x, y, z);
       if (key == null)
       {
-         PrintTools.error(this, "Error in deleteNode: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
+         System.err.println(AbstractOcTreeBase.class.getSimpleName() + " Error in deleteNode: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
          return false;
       }
       else
@@ -369,7 +368,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       OcTreeKey key = coordinateToKey(coord);
       if (key == null)
       {
-         PrintTools.error(this, "Error in deleteNode: [" + coord + "] is out of OcTree bounds!");
+         System.err.println(AbstractOcTreeBase.class.getSimpleName() + " Error in deleteNode: [" + coord + "] is out of OcTree bounds!");
          return false;
       }
       else
@@ -529,7 +528,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    public void getUnknownLeafCenters(List<Point3d> node_centers, Point3d pmin, Point3d pmax, int depth)
    {
-      MathTools.checkIfLessOrEqual(depth, treeDepth);
+      OctoMapTools.checkIfDepthValid(depth, treeDepth);
       if (depth == 0)
          depth = treeDepth;
 
@@ -596,7 +595,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       if (keyOrigin == null || keyEnd == null)
       {
-         PrintTools.error(this, "coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
+         System.err.println(AbstractOcTreeBase.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
          return false;
       }
 
