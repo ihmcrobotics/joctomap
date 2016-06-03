@@ -32,7 +32,9 @@ repositories {
 
 dependencies {
     compile group: 'javax.vecmath', name: 'vecmath', version: '1.5.2'
+    compile group: 'org.apache.commons', name: 'commons-math3', version: '3.3'
     compile ihmc.getProjectDependency(":IHMCRoboticsToolkit")
     compile ihmc.getProjectDependency(":IHMCJavaToolkit")
     compile ihmc.getProjectDependency(":IHMCJavaFXToolkit")
+    testCompile "org.junit:junit:4.11"
 }
