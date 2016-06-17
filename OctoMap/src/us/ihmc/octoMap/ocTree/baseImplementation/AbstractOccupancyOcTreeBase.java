@@ -195,7 +195,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       RigidBodyTransform frame_origin = new RigidBodyTransform(scan.getPose());
       frame_origin.invert();
       Vector3d tempVector = new Vector3d();
-      scan.getPose().get(tempVector);
+      scan.getPose().getTranslation(tempVector);
       Point3d sensorOrigin = new Point3d(tempVector);//frame_origin.inv().transform(scan.pose.trans()); // TODO Sylvain Double-check this transformation
       frame_origin.transform(sensorOrigin);
       insertPointCloud(cloud, sensorOrigin, frame_origin, maxRange, lazyEvaluation, discretize);
