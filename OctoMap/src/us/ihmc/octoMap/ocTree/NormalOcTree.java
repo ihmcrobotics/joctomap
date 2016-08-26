@@ -108,9 +108,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
                
                if (isOccupied || isUnknownConsideredOccupied)
                {
-                  normal.x -= kxOffset;
-                  normal.y -= kyOffset;
-                  normal.z -= kzOffset;
+                  normal.setX(normal.getX() - kxOffset);
+                  normal.setY(normal.getY() - kyOffset);
+                  normal.setZ(normal.getZ() - kzOffset);
                }
             }
          }

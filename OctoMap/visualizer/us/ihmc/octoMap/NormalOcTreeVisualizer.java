@@ -92,7 +92,7 @@ public class NormalOcTreeVisualizer extends Application
       {
          Point3d coord = ocTree.keyToCoordinate(key);
          NormalOcTreeNode node = ocTree.search(key);
-         System.out.println("(" + format.format(coord.x) + ", " + format.format(coord.y) + ", " + format.format(coord.z) +"), node: " + node);
+         System.out.println("(" + format.format(coord.getX()) + ", " + format.format(coord.getY()) + ", " + format.format(coord.getZ()) +"), node: " + node);
       }
 
       
@@ -186,7 +186,7 @@ public class NormalOcTreeVisualizer extends Application
             Matrix3d rotation = new Matrix3d();
             RotationTools.convertYawPitchRollToMatrix(0.0, Math.toRadians(pitch), Math.toRadians(roll), rotation);
             rotation.transform(point);
-            point.z += z;
+            point.setZ(point.getZ() + z);
 
             pointcloud.add(point);
          }
@@ -196,7 +196,7 @@ public class NormalOcTreeVisualizer extends Application
 
    public void createBowl(double radius, Point3d center)
    {
-      Point3d origin = new Point3d(0.0, 0.0, center.z + 0.0);
+      Point3d origin = new Point3d(0.0, 0.0, center.getZ() + 0.0);
 
 
       double res = 0.02;
@@ -204,9 +204,9 @@ public class NormalOcTreeVisualizer extends Application
       {
          for (double pitch = 0.0; pitch < 0.5 * Math.PI; pitch += res)
          {
-            double x = Math.cos(pitch) * Math.cos(yaw) * radius + center.x;
-            double y = Math.cos(pitch) * Math.sin(yaw) * radius + center.y;
-            double z = - Math.sin(pitch) * radius + center.z;
+            double x = Math.cos(pitch) * Math.cos(yaw) * radius + center.getX();
+            double y = Math.cos(pitch) * Math.sin(yaw) * radius + center.getY();
+            double z = - Math.sin(pitch) * radius + center.getZ();
             pointcloud.add(x, y, z);
          }
       }

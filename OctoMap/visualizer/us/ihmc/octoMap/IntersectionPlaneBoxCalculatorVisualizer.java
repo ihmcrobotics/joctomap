@@ -52,9 +52,9 @@ public class IntersectionPlaneBoxCalculatorVisualizer extends Application
       //(-0.78, 0.5, -0.30),
       //(-0.75, 0.54, -0.30)
       box = new Box(lx, ly, lz);
-      box.setTranslateX(boxCenter.x);
-      box.setTranslateY(boxCenter.y);
-      box.setTranslateZ(boxCenter.z);
+      box.setTranslateX(boxCenter.getX());
+      box.setTranslateY(boxCenter.getY());
+      box.setTranslateZ(boxCenter.getZ());
    }
 
    @Override

@@ -36,9 +36,9 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
          if (child != null && child.isNormalSet())
          {
             Vector3d childNormal = child.getNormal();
-            x += childNormal.x;
-            y += childNormal.y;
-            z += childNormal.z;
+            x += childNormal.getX();
+            y += childNormal.getY();
+            z += childNormal.getZ();
             count++;
          }
       }

@@ -128,9 +128,9 @@ public class PointCloud implements Iterable<Point3f>
 
       for (Point3f point : this)
       {
-         x = point.x;
-         y = point.y;
-         z = point.z;
+         x = point.getX();
+         y = point.getY();
+         z = point.getZ();
 
          if (x < min_x)
             min_x = x;
@@ -147,12 +147,12 @@ public class PointCloud implements Iterable<Point3f>
             max_z = z;
       }
 
-      lowerBound.x = min_x;
-      lowerBound.y = min_y;
-      lowerBound.z = min_z;
-      upperBound.x = max_x;
-      upperBound.y = max_y;
-      upperBound.z = max_z;
+      lowerBound.setX(min_x);
+      lowerBound.setY(min_y);
+      lowerBound.setZ(min_z);
+      upperBound.setX(max_x);
+      upperBound.setY(max_y);
+      upperBound.setZ(max_z);
    }
 
    /// Crop Pointcloud to given bounding box
@@ -164,18 +164,18 @@ public class PointCloud implements Iterable<Point3f>
       float max_x, max_y, max_z;
       float x, y, z;
 
-      min_x = (float) lowerBound.x;
-      min_y = (float) lowerBound.y;
-      min_z = (float) lowerBound.z;
-      max_x = (float) upperBound.x;
-      max_y = (float) upperBound.y;
-      max_z = (float) upperBound.z;
+      min_x = (float) lowerBound.getX();
+      min_y = (float) lowerBound.getY();
+      min_z = (float) lowerBound.getZ();
+      max_x = (float) upperBound.getX();
+      max_y = (float) upperBound.getY();
+      max_z = (float) upperBound.getZ();
 
       for (Point3f point : this)
       {
-         x = point.x;
-         y = point.y;
-         z = point.z;
+         x = point.getX();
+         y = point.getY();
+         z = point.getZ();
 
          if ((x >= min_x) && (y >= min_y) && (z >= min_z) && (x <= max_x) && (y <= max_y) && (z <= max_z))
          {
@@ -195,9 +195,9 @@ public class PointCloud implements Iterable<Point3f>
       float x, y, z;
       for (Point3f point : this)
       {
-         x = point.x;
-         y = point.y;
-         z = point.z;
+         x = point.getX();
+         y = point.getY();
+         z = point.getZ();
          float dist = (float) Math.sqrt(x * x + y * y + z * z);
          if (dist > thres)
             result.add(x, y, z);

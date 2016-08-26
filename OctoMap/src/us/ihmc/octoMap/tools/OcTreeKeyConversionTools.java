@@ -52,7 +52,7 @@ public abstract class OcTreeKeyConversionTools
     */
    public static OcTreeKey coordinateToKey(Point3f coord, double resolution, int treeDepth)
    {
-      return convertCartesianCoordinateToKey(coord.x, coord.y, coord.z, treeDepth, resolution, treeDepth);
+      return convertCartesianCoordinateToKey(coord.getX(), coord.getY(), coord.getZ(), treeDepth, resolution, treeDepth);
    }
    
    /**
@@ -63,7 +63,7 @@ public abstract class OcTreeKeyConversionTools
     */
    public static OcTreeKey coordinateToKey(Point3d coord, double resolution, int treeDepth)
    {
-      return convertCartesianCoordinateToKey(coord.x, coord.y, coord.z, treeDepth, resolution, treeDepth);
+      return convertCartesianCoordinateToKey(coord.getX(), coord.getY(), coord.getZ(), treeDepth, resolution, treeDepth);
    }
 
    /**
@@ -75,7 +75,7 @@ public abstract class OcTreeKeyConversionTools
     */
    public static OcTreeKey coordinateToKey(Point3d coord, int depth, double resolution, int treeDepth)
    {
-      return convertCartesianCoordinateToKey(coord.x, coord.y, coord.z, depth, resolution, treeDepth);
+      return convertCartesianCoordinateToKey(coord.getX(), coord.getY(), coord.getZ(), depth, resolution, treeDepth);
    }
 
    /**
@@ -188,9 +188,9 @@ public abstract class OcTreeKeyConversionTools
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
    public static void keyToCoordinate(OcTreeKey key, int depth, Point3d coordinateToPack, double resolution, int treeDepth)
    {
-      coordinateToPack.x = keyToCoordinate(key.getKey(0), depth, resolution, treeDepth);
-      coordinateToPack.y = keyToCoordinate(key.getKey(1), depth, resolution, treeDepth);
-      coordinateToPack.z = keyToCoordinate(key.getKey(2), depth, resolution, treeDepth);
+      coordinateToPack.setX(keyToCoordinate(key.getKey(0), depth, resolution, treeDepth));
+      coordinateToPack.setY(keyToCoordinate(key.getKey(1), depth, resolution, treeDepth));
+      coordinateToPack.setZ(keyToCoordinate(key.getKey(2), depth, resolution, treeDepth));
    }
 
    public static double computeNodeSize(int depth, double resolution, int treeDepth)

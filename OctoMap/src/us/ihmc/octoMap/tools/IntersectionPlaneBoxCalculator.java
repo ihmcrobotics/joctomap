@@ -92,9 +92,9 @@ public class IntersectionPlaneBoxCalculator
             continue;
 
          intersection.scaleAdd(scaleFactor, edgeVector, edgeStart);
-         intersection.x *= boxSize.x;
-         intersection.y *= boxSize.y;
-         intersection.z *= boxSize.z;
+         intersection.setX(intersection.getX() * boxSize.getX());
+         intersection.setY(intersection.getY() * boxSize.getY());
+         intersection.setZ(intersection.getZ() * boxSize.getZ());
          intersection.add(boxCenter);
          if (!listContains(intersections, intersection))
             intersections.add(intersection);
@@ -179,22 +179,22 @@ public class IntersectionPlaneBoxCalculator
    {
       double diff;
 
-      diff = point1.x - point2.x;
+      diff = point1.getX() - point2.getX();
       if (Double.isNaN(diff))
          return false;
-      if ((diff < 0 ? -diff : diff) > EPSILON * boxSize.x)
+      if ((diff < 0 ? -diff : diff) > EPSILON * boxSize.getX())
          return false;
 
-      diff = point1.y - point2.y;
+      diff = point1.getY() - point2.getY();
       if (Double.isNaN(diff))
          return false;
-      if ((diff < 0 ? -diff : diff) > EPSILON * boxSize.y)
+      if ((diff < 0 ? -diff : diff) > EPSILON * boxSize.getY())
          return false;
 
-      diff = point1.z - point2.z;
+      diff = point1.getZ() - point2.getZ();
       if (Double.isNaN(diff))
          return false;
-      if ((diff < 0 ? -diff : diff) > EPSILON * boxSize.z)
+      if ((diff < 0 ? -diff : diff) > EPSILON * boxSize.getZ())
          return false;
 
       return true;

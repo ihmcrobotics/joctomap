@@ -176,9 +176,9 @@ public class OcTreeKeyConversionToolsTest
       double computeNodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
       double offset = computeNodeSize / 2.0;
       
-      offsetVector.x += (childIndex & 1) != 0 ? offset : -offset;
-      offsetVector.y += (childIndex & 2) != 0 ? offset : -offset;
-      offsetVector.z += (childIndex & 4) != 0 ? offset : -offset;
+      offsetVector.setX(offsetVector.getX() + ((childIndex & 1) != 0 ? offset : -offset));
+      offsetVector.setY(offsetVector.getY() + ((childIndex & 2) != 0 ? offset : -offset));
+      offsetVector.setZ(offsetVector.getZ() + ((childIndex & 4) != 0 ? offset : -offset));
       return offsetVector;
    }
 }

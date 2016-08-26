@@ -189,7 +189,7 @@ public class OcTreeVisualizer extends Application
             Matrix3d rotation = new Matrix3d();
             RotationTools.convertYawPitchRollToMatrix(0.0, Math.toRadians(pitch), Math.toRadians(roll), rotation);
             rotation.transform(point);
-            point.z += z;
+            point.setZ(point.getZ() + z);
 
             pointcloud.add(point);
          }
