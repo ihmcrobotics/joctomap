@@ -83,7 +83,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, maxRange);
       }
 
-      freeCells.remove(occupiedCells);
+      freeCells.removeAll(occupiedCells);
 
       // insert data into tree  -----------------------
       for (OcTreeKey key : occupiedCells)
