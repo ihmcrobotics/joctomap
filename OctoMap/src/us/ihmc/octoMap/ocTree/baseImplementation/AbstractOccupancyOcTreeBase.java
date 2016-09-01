@@ -64,10 +64,15 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
    public void insertSweepCollection(SweepCollection sweepCollection)
    {
-      insertSweepCollection(sweepCollection, -1.0, false, false);
+      insertSweepCollection(sweepCollection, -1.0, -1.0, false, false);
    }
 
-   public void insertSweepCollection(SweepCollection sweepCollection, double maxRange, boolean lazyEvaluation, boolean discretize)
+   public void insertSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange)
+   {
+      insertSweepCollection(sweepCollection, minRange, maxRange, false, false);
+   }
+
+   public void insertSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
       KeySet freeCells = new KeySet();
       KeySet occupiedCells = new KeySet();
@@ -78,12 +83,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
 
          if (discretize)
-            computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, maxRange);
+            computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, minRange, maxRange);
          else
-            computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, maxRange);
+            computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, minRange, maxRange);
       }
-
-      freeCells.removeAll(occupiedCells);
 
       // insert data into tree  -----------------------
       for (OcTreeKey key : occupiedCells)
@@ -91,16 +94,18 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
       for (OcTreeKey key : freeCells)
          updateNode(key, false, lazyEvaluation);
+//      occupiedCells.parallelStream().forEach((key) -> updateNode(key, true, lazyEvaluation));
+//      freeCells.parallelStream().forEach((key) -> updateNode(key, false, lazyEvaluation));
    }
 
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)
    {
-      insertPointCloud(scan, sensorOrigin, -1.0, false, false);
+      insertPointCloud(scan, sensorOrigin, -1.0, -1.0, false, false);
    }
 
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, boolean lazyEvaluation, boolean discretize)
    {
-      insertPointCloud(scan, sensorOrigin, -1.0, lazyEvaluation, discretize);
+      insertPointCloud(scan, sensorOrigin, -1.0, -1.0, lazyEvaluation, discretize);
    }
 
    /**
@@ -120,15 +125,15 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     * @param discretize whether the scan is discretized first into octree key cells (default: false).
     *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.*
     */
-   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, double maxRange, boolean lazyEvaluation, boolean discretize)
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, double minRange, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
       KeySet freeCells = new KeySet();
       KeySet occupiedCells = new KeySet();
 
       if (discretize)
-         computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, maxRange);
+         computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, minRange, maxRange);
       else
-         computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, maxRange);
+         computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, minRange, maxRange);
 
       // insert data into tree  -----------------------
       for (OcTreeKey key : occupiedCells)
@@ -140,7 +145,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, RigidBodyTransform frameOrigin)
    {
-      insertPointCloud(scan, sensorOrigin, frameOrigin, -1.0, false, false);
+      insertPointCloud(scan, sensorOrigin, frameOrigin, -1.0, -1.0, false, false);
    }
 
    /**
@@ -161,19 +166,19 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    * @param discretize whether the scan is discretized first into octree key cells (default: false).
    *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.*
    */
-   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, RigidBodyTransform frameOrigin, double maxRange, boolean lazyEvaluation, boolean discretize)
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, RigidBodyTransform frameOrigin, double minRange, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
       // performs transformation to data and sensor origin first
       PointCloud transformedScan = new PointCloud(scan);
       transformedScan.transform(frameOrigin);
       Point3d transformed_sensorOrigin = new Point3d(sensorOrigin);
       frameOrigin.transform(transformed_sensorOrigin);
-      insertPointCloud(transformedScan, transformed_sensorOrigin, maxRange, lazyEvaluation, discretize);
+      insertPointCloud(transformedScan, transformed_sensorOrigin, minRange, maxRange, lazyEvaluation, discretize);
    }
 
    public void insertPointCloud(ScanNode scan)
    {
-      insertPointCloud(scan, -1.0, false, false);
+      insertPointCloud(scan, -1.0, -1.0, false, false);
    }
 
    /**
@@ -188,7 +193,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    * @param discretize whether the scan is discretized first into octree key cells (default: false).
    *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.
    */
-   public void insertPointCloud(ScanNode scan, double maxRange, boolean lazyEvaluation, boolean discretize)
+   public void insertPointCloud(ScanNode scan, double minRange, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
       // performs transformation to data and sensor origin first
       PointCloud cloud = scan.getScan();
@@ -198,7 +203,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       scan.getPose().getTranslation(tempVector);
       Point3d sensorOrigin = new Point3d(tempVector);//frame_origin.inv().transform(scan.pose.trans()); // TODO Sylvain Double-check this transformation
       frame_origin.transform(sensorOrigin);
-      insertPointCloud(cloud, sensorOrigin, frame_origin, maxRange, lazyEvaluation, discretize);
+      insertPointCloud(cloud, sensorOrigin, frame_origin, minRange, maxRange, lazyEvaluation, discretize);
    }
 
    public void insertPointCloudRays(PointCloud scan, Point3d sensorOrigin)
@@ -1077,7 +1082,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxrange maximum range for raycasting (-1: unlimited)
     */
-   public void computeUpdate(PointCloud scan, Point3d origin, KeySet freeCells, KeySet occupiedCells, double maxrange)
+   public void computeUpdate(PointCloud scan, Point3d origin, KeySet freeCells, KeySet occupiedCells, double minRange, double maxrange)
    {
       for (int i = 0; i < scan.size(); ++i)
       {
@@ -1087,6 +1092,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          Vector3d direction = new Vector3d();
          direction.sub(point, origin);
          double length = direction.length();
+
+         if (minRange >= 0.0 && length < minRange)
+            continue;
 
          if (!useBoundingBoxLimit)
          { // no BBX specified
@@ -1154,7 +1162,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxrange maximum range for raycasting (-1: unlimited)
     */
-   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, KeySet freeCells, KeySet occupiedCells, double maxrange)
+   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, KeySet freeCells, KeySet occupiedCells, double minRange, double maxrange)
    {
       PointCloud discretePC = new PointCloud();
       KeySet endpoints = new KeySet();
@@ -1166,7 +1174,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             discretePC.add(keyToCoordinate(key));
       }
 
-      computeUpdate(discretePC, origin, freeCells, occupiedCells, maxrange);
+      computeUpdate(discretePC, origin, freeCells, occupiedCells, minRange, maxrange);
    }
 
    /**

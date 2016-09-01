@@ -5,13 +5,33 @@ import java.util.List;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
+import us.ihmc.octoMap.ocTree.PlanarRegion;
+
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
 {
    private Vector3d normal = null;
    private List<Point3d> plane = null;
+   private int regionId = PlanarRegion.NO_REGION_ID;
 
    public NormalOcTreeNode()
    {
+   }
+
+   @Override
+   public void allocateChildren()
+   {
+      children = new NormalOcTreeNode[8];
+   }
+
+   @Override
+   public NormalOcTreeNode create()
+   {
+      return new NormalOcTreeNode();
+   }
+
+   public void resetRegionId()
+   {
+      regionId = PlanarRegion.NO_REGION_ID;
    }
 
    public void updateNormalChildren()
@@ -76,5 +96,20 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public void setPlane(List<Point3d> plane)
    {
       this.plane = plane;
+   }
+
+   public boolean isPartOfRegion()
+   {
+      return regionId != PlanarRegion.NO_REGION_ID;
+   }
+
+   public void setRegionId(int regionId)
+   {
+      this.regionId = regionId;
+   }
+
+   public int getRegionId()
+   {
+      return regionId;
    }
 }

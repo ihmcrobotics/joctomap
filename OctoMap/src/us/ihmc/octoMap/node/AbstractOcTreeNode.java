@@ -20,7 +20,7 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
    public abstract void updateOccupancyChildren();
 
    @SuppressWarnings("unchecked")
-   public final void allocateChildren()
+   public void allocateChildren()
    {
       children = (N[]) Array.newInstance(getClass(), 8);
    }
@@ -41,7 +41,7 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
    }
 
    @SuppressWarnings({"unchecked", "rawtypes"})
-   public final N create()
+   public N create()
    {
       NodeBuilder<N> builder = (NodeBuilder<N>) builderCache.get(getClass());
       if (builder == null)

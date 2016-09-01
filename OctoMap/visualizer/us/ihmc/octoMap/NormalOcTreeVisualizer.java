@@ -24,6 +24,7 @@ import us.ihmc.javaFXToolkit.cameraControllers.FocusBasedCameraMouseEventHandler
 import us.ihmc.javaFXToolkit.shapes.JavaFXCoordinateSystem;
 import us.ihmc.javaFXToolkit.shapes.MeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.MultiColorMeshBuilder;
+import us.ihmc.javaFXToolkit.shapes.TextureColorPalette1D;
 import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
@@ -230,7 +231,9 @@ public class NormalOcTreeVisualizer extends Application
       primaryStage.setScene(scene);
       primaryStage.show();
 
-      MultiColorMeshBuilder occupiedMeshBuilder = new MultiColorMeshBuilder();
+      TextureColorPalette1D palette = new TextureColorPalette1D();
+      palette.setHueBased(0.9, 0.8);
+      MultiColorMeshBuilder occupiedMeshBuilder = new MultiColorMeshBuilder(palette);
       MeshBuilder freeMeshBuilder = new MeshBuilder();
 
       LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree);

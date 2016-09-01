@@ -1,8 +1,11 @@
 package us.ihmc.octoMap.tools;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.robotics.MathTools;
 
 /**
  * This class provides basic operations on {@linkplain OcTreeKey}.
@@ -98,7 +101,7 @@ public class OcTreeKeyTools
       }
       else
       {
-         int mask = (int)(char) (computeMaximumKey(treeDepth) << level);
+         int mask = (int) (char) (computeMaximumKey(treeDepth) << level);
          OcTreeKey result = new OcTreeKey(key);
          result.setKey(0, result.getKey(0) & mask);
          result.setKey(1, result.getKey(1) & mask);
@@ -249,12 +252,18 @@ public class OcTreeKeyTools
    public static boolean isInsideBoundingBox(OcTreeKey minKey, OcTreeKey maxKey, OcTreeKey keyToTest, int depth, int treeDepth)
    {
       int minKeyValue = OcTreeKeyTools.computeMinimumKeyAtDepth(depth, treeDepth);
-      if (keyToTest.getKey(0) < minKey.getKey(0) - minKeyValue) return false;
-      if (keyToTest.getKey(0) > maxKey.getKey(0) + minKeyValue) return false;
-      if (keyToTest.getKey(1) < minKey.getKey(1) - minKeyValue) return false;
-      if (keyToTest.getKey(1) > maxKey.getKey(1) + minKeyValue) return false;
-      if (keyToTest.getKey(2) < minKey.getKey(2) - minKeyValue) return false;
-      if (keyToTest.getKey(2) > maxKey.getKey(2) + minKeyValue) return false;
+      if (keyToTest.getKey(0) < minKey.getKey(0) - minKeyValue)
+         return false;
+      if (keyToTest.getKey(0) > maxKey.getKey(0) + minKeyValue)
+         return false;
+      if (keyToTest.getKey(1) < minKey.getKey(1) - minKeyValue)
+         return false;
+      if (keyToTest.getKey(1) > maxKey.getKey(1) + minKeyValue)
+         return false;
+      if (keyToTest.getKey(2) < minKey.getKey(2) - minKeyValue)
+         return false;
+      if (keyToTest.getKey(2) > maxKey.getKey(2) + minKeyValue)
+         return false;
       return true;
    }
 
@@ -271,7 +280,64 @@ public class OcTreeKeyTools
 
    public static void checkKeyIsValid(int keyToCheck, int depth, int treeDepth)
    {
-      if (keyToCheck < computeMinimumKeyAtDepth(depth, treeDepth) || keyToCheck > computeMaximumKeyValueAtDepth(depth, treeDepth))
+      if (!isKeyValid(keyToCheck, depth, treeDepth))
          throw new RuntimeException("The key is invalid: " + keyToCheck + " (at depth: " + depth + ")");
+   }
+
+   public static boolean isKeyValid(int keyToCheck, int depth, int treeDepth)
+   {
+      return keyToCheck >= computeMinimumKeyAtDepth(depth, treeDepth) && keyToCheck <= computeMaximumKeyValueAtDepth(depth, treeDepth);
+   }
+
+   public static List<OcTreeKey> computeNeighborKeys(OcTreeKey key, int depth, double resolution, int treeDepth, double searchRadius)
+   {
+      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+
+      if (depth == 0)
+         depth = treeDepth;
+
+      List<OcTreeKey> neighborKeys = new ArrayList<>();
+      double nodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
+      int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
+
+      // generate appropriate keyAtDepth for queried depth
+      OcTreeKey keyAtDepth;
+      if (depth != treeDepth)
+         keyAtDepth = OcTreeKeyTools.adjustKeyAtDepth(key, depth, treeDepth);
+      else
+         keyAtDepth = new OcTreeKey(key);
+
+      int deltaKeyZMax = (int) (Math.floor(searchRadius / nodeSize));
+      
+      for (int deltaKeyZ = -deltaKeyZMax; deltaKeyZ <= deltaKeyZMax; deltaKeyZ += 1)
+      {
+         double radiusAtZ = Math.sqrt(MathTools.square(searchRadius) - MathTools.square(Math.abs(deltaKeyZ) * nodeSize));
+         int deltaKeyXMax = (int) (Math.floor(radiusAtZ / nodeSize));
+         int k2 = keyAtDepth.getKey(2) + deltaKeyZ * keyInterval;
+
+         if (!isKeyValid(k2, depth, treeDepth)) // Check if we are still in the octree
+            continue;
+
+         for (int deltaKeyX = -deltaKeyXMax; deltaKeyX <= deltaKeyXMax; deltaKeyX += 1)
+         {
+            double maxDistance = Math.sqrt(MathTools.square(radiusAtZ) - MathTools.square(Math.abs(deltaKeyX) * nodeSize));
+            int deltaKeyYMax = (int) (Math.floor(maxDistance / nodeSize));
+            int k0 = keyAtDepth.getKey(0) + deltaKeyX * keyInterval;
+
+            if (!isKeyValid(k0, depth, treeDepth)) // Check if we are still in the octree
+               continue;
+
+            for (int deltaKeyY = -deltaKeyYMax; deltaKeyY <= deltaKeyYMax; deltaKeyY += 1)
+            {
+               int k1 = keyAtDepth.getKey(1) + deltaKeyY * keyInterval;
+               
+               if (!isKeyValid(k1, depth, treeDepth)) // Check if we are still in the octree
+                  continue;
+
+               neighborKeys.add(new OcTreeKey(k0, k1, k2));
+            }
+         }
+      }
+      return neighborKeys;
    }
 }

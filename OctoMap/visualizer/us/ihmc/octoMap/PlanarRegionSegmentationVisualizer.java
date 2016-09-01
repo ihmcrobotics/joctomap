@@ -1,0 +1,213 @@
+package us.ihmc.octoMap;
+
+import java.util.List;
+
+import javax.vecmath.Matrix3d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3d;
+
+import javafx.application.Application;
+import javafx.event.Event;
+import javafx.scene.Group;
+import javafx.scene.PerspectiveCamera;
+import javafx.scene.Scene;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.MeshView;
+import javafx.stage.Stage;
+import us.ihmc.javaFXToolkit.cameraControllers.FocusBasedCameraMouseEventHandler;
+import us.ihmc.javaFXToolkit.shapes.JavaFXCoordinateSystem;
+import us.ihmc.javaFXToolkit.shapes.MultiColorMeshBuilder;
+import us.ihmc.javaFXToolkit.shapes.TextureColorPalette1D;
+import us.ihmc.octoMap.iterators.LeafIterable;
+import us.ihmc.octoMap.iterators.OcTreeSuperNode;
+import us.ihmc.octoMap.node.NormalOcTreeNode;
+import us.ihmc.octoMap.ocTree.NormalOcTree;
+import us.ihmc.octoMap.ocTree.PlanarRegion;
+import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.robotics.geometry.RotationTools;
+
+public class PlanarRegionSegmentationVisualizer extends Application
+{
+   public final NormalOcTree ocTree = new NormalOcTree(0.025);
+   private static final double TWO_PI = 2.0 * Math.PI;
+
+   public PlanarRegionSegmentationVisualizer()
+   {
+      Point3d lidarLocation = new Point3d(0.0, 0.0, 2.0);
+//      createPlane(-20.0, 0.0, new Vector3d(0.1, 0.0, 0.0), lidarLocation);
+      createSawToothPlanes(0.0, 0.0, new Vector3d(), lidarLocation);
+      ocTree.updateNormals();
+      ocTree.updatePlanarRegionSegmentation();
+   }
+   
+   PointCloud pointcloud = new PointCloud();
+
+   public void createPlane(double pitch, double roll, Vector3d planeOffset, Point3d lidarLocation)
+   {
+      Point3d origin = new Point3d(lidarLocation);
+      pointcloud.clear();
+
+      double planeSize = 2.0;
+
+      for (double x = -0.5 * planeSize; x < 0.5 * planeSize; x += 0.7 * ocTree.getResolution())
+      {
+         for (double y = -0.5 * planeSize; y < 0.5 * planeSize; y += 0.7 * ocTree.getResolution())
+         {
+            Point3d point = new Point3d(x, y, 0.0);
+            Matrix3d rotation = new Matrix3d();
+            RotationTools.convertYawPitchRollToMatrix(0.0, Math.toRadians(pitch), Math.toRadians(roll), rotation);
+            rotation.transform(point);
+            point.add(planeOffset);
+
+            pointcloud.add(point);
+         }
+      }
+      ocTree.insertPointCloud(pointcloud, origin);
+   }
+
+   public void createSawToothPlanes(double pitch, double roll, Vector3d planeOffset, Point3d lidarLocation)
+   {
+      Point3d origin = new Point3d(lidarLocation);
+      pointcloud.clear();
+
+      double toothAmplitude = 0.5;
+      double toothFrequency = 0.2;
+      double length = 10.0;
+      double planeWidth = 0.5;
+
+      for (double x = -0.5 * length; x < 0.5 * length; x += 0.7 * ocTree.getResolution())
+      {
+         for (double y = -0.5 * planeWidth; y < 0.5 * planeWidth; y += 0.7 * ocTree.getResolution())
+         {
+            Point3d point = new Point3d(x, y, 0.0);
+
+            double angle = (TWO_PI * toothFrequency * x) % TWO_PI;
+            if (angle < 0.0)
+               angle = angle + TWO_PI;
+
+            if (angle < Math.PI / 2.0)
+            {
+               double percentUp = angle / (Math.PI / 2.0);
+               point.setZ(toothAmplitude * percentUp);
+            }
+            else if (angle < 3.0 * Math.PI / 2.0)
+            {
+               double percentDown = (angle - Math.PI / 2.0) / (Math.PI / 2.0);
+               point.setZ(toothAmplitude * (1.0 - percentDown));
+            }
+            else if (angle < TWO_PI)
+            {
+               double percentUp = (angle - 3.0 * Math.PI / 2.0) / (Math.PI / 2.0);
+               point.setZ(toothAmplitude * (percentUp - 1.0));
+            }
+            else
+            {
+               point.setZ(0.0);
+            }
+            
+            Matrix3d rotation = new Matrix3d();
+            RotationTools.convertYawPitchRollToMatrix(0.0, Math.toRadians(pitch), Math.toRadians(roll), rotation);
+            rotation.transform(point);
+            point.add(planeOffset);
+
+            pointcloud.add(point);
+         }
+      }
+      ocTree.insertPointCloud(pointcloud, origin);
+   }
+
+   @Override
+   public void start(Stage primaryStage) throws Exception
+   {
+      primaryStage.setTitle("OcTree Visualizer");
+
+      Group rootNode = new Group();
+      Scene scene = new Scene(rootNode, 600, 400, true);
+      scene.setFill(Color.GRAY);
+      rootNode.setMouseTransparent(true);
+      setupCamera(rootNode, scene);
+      JavaFXCoordinateSystem worldCoordinateSystem = new JavaFXCoordinateSystem(0.3);
+      rootNode.getChildren().add(worldCoordinateSystem);
+
+      primaryStage.setScene(scene);
+      primaryStage.show();
+
+      TextureColorPalette1D palette = new TextureColorPalette1D();
+      palette.setHueBased(0.9, 0.8);
+      MultiColorMeshBuilder occupiedMeshBuilder = new MultiColorMeshBuilder(palette);
+
+      LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
+      for (OcTreeSuperNode<NormalOcTreeNode> node : leafIterable)
+      {
+         double boxSize = node.getSize();
+         Point3d boxCenter = node.getCoordinate();
+
+         if (ocTree.isNodeOccupied(node.getNode()))
+         {
+            int regionId = node.getNode().getRegionId();
+            Color normalBasedColor = getPlanarRegionBasedColor(regionId);
+            List<Point3d> plane = node.getNode().getPlane();
+            if (plane != null)
+               occupiedMeshBuilder.addPolyon(plane, normalBasedColor);
+            else
+               occupiedMeshBuilder.addCubeMesh((float) boxSize, new Point3f(boxCenter), normalBasedColor);
+         }
+      }
+
+      MeshView occupiedMeshView = new MeshView();
+      occupiedMeshView.setMesh(occupiedMeshBuilder.generateMesh());
+      occupiedMeshView.setMaterial(occupiedMeshBuilder.generateMaterial());
+      rootNode.getChildren().add(occupiedMeshView);
+   }
+
+   private static final Color DEFAULT_COLOR = Color.DARKCYAN;
+
+   public Color getPlanarRegionBasedColor(int regionId)
+   {
+      Color color = DEFAULT_COLOR;
+
+      if (regionId != PlanarRegion.NO_REGION_ID)
+      {
+         java.awt.Color awtColor = new java.awt.Color(regionId);
+         color = Color.rgb(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue());
+      }
+      return color;
+   }
+
+   public Color getNormalBasedColor(Vector3d normal)
+   {
+      Color color = DEFAULT_COLOR;
+
+      if (normal != null)
+      {
+         Vector3d zUp = new Vector3d(0.0, 0.0, 1.0);
+         normal.normalize();
+         double angle = Math.abs(zUp.dot(normal));
+         double hue = 120.0 * angle;
+         color = Color.hsb(hue, 1.0, 1.0);
+      }
+      return color;
+   }
+
+   private void setupCamera(Group root, Scene scene)
+   {
+      PerspectiveCamera camera = new PerspectiveCamera(true);
+      camera.setNearClip(0.05);
+      camera.setFarClip(50.0);
+      scene.setCamera(camera);
+
+      Vector3d up = new Vector3d(0.0, 0.0, 1.0);
+      FocusBasedCameraMouseEventHandler cameraController = new FocusBasedCameraMouseEventHandler(scene.widthProperty(), scene.heightProperty(), camera, up);
+      scene.addEventHandler(Event.ANY, cameraController);
+      root.getChildren().add(cameraController.getFocusPointViz());
+   }
+
+   public static void main(String[] args)
+   {
+
+      //      new OcTreeVisualizer();
+
+      Application.launch(args);
+   }
+}

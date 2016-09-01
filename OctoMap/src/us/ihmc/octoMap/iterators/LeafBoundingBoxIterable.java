@@ -66,7 +66,7 @@ public class LeafBoundingBoxIterable<NODE extends AbstractOcTreeNode<NODE>> impl
       {
          OcTreeSuperNode<NODE> currentNode = super.next();
 
-         while (!currentNode.isInsideBoundingBox(minKey, maxKey))
+         while (!currentNode.isInsideBoundingBox(minKey, maxKey) && hasNext())
             currentNode = super.next();
 
          return currentNode;
