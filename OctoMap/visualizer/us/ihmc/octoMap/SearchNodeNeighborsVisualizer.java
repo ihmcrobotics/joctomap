@@ -57,8 +57,9 @@ public class SearchNodeNeighborsVisualizer extends Application
       
 //      addFreeBox(0.2, new Point3d(0.1, 0.1, 0.1), rootNode);
 
-      for (OcTreeKey ocTreeKey : neighbors)
+      for (int i = 0; i < neighbors.size(); i++)
       {
+         OcTreeKey ocTreeKey = neighbors.get(i);
          double boxSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
          Point3d boxCenter = OcTreeKeyConversionTools.keyToCoordinate(ocTreeKey, depth, resolution, treeDepth);
 //         System.out.println(boxCenter);
