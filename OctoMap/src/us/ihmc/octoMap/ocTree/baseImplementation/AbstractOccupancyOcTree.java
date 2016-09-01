@@ -6,6 +6,7 @@ import static us.ihmc.octoMap.tools.OctoMapTools.probability;
 import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 
 public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOcTreeBase<NODE>
@@ -80,12 +81,12 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(OcTreeKey key, float log_odds_update)
+   public NODE updateNode(OcTreeKeyReadOnly key, float log_odds_update)
    {
       return updateNode(key, log_odds_update, false);
    }
 
-   public abstract NODE updateNode(OcTreeKey key, float log_odds_update, boolean lazy_eval);
+   public abstract NODE updateNode(OcTreeKeyReadOnly key, float log_odds_update, boolean lazy_eval);
 
    /**
     * Manipulate log_odds value of voxel directly.
@@ -113,12 +114,12 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(OcTreeKey key, boolean occupied)
+   public NODE updateNode(OcTreeKeyReadOnly key, boolean occupied)
    {
       return updateNode(key, occupied, false);
    }
 
-   public abstract NODE updateNode(OcTreeKey key, boolean occupied, boolean lazy_eval);
+   public abstract NODE updateNode(OcTreeKeyReadOnly key, boolean occupied, boolean lazy_eval);
 
    /**
     * Integrate occupancy measurement.

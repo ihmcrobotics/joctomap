@@ -14,6 +14,7 @@ import us.ihmc.octoMap.key.KeyBoolMap;
 import us.ihmc.octoMap.key.KeyRay;
 import us.ihmc.octoMap.key.KeySet;
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.pointCloud.PointCloud;
@@ -89,10 +90,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       }
 
       // insert data into tree  -----------------------
-      for (OcTreeKey key : occupiedCells)
+      for (OcTreeKeyReadOnly key : occupiedCells)
          updateNode(key, true, lazyEvaluation);
 
-      for (OcTreeKey key : freeCells)
+      for (OcTreeKeyReadOnly key : freeCells)
          updateNode(key, false, lazyEvaluation);
 //      occupiedCells.parallelStream().forEach((key) -> updateNode(key, true, lazyEvaluation));
 //      freeCells.parallelStream().forEach((key) -> updateNode(key, false, lazyEvaluation));
@@ -136,10 +137,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, minRange, maxRange);
 
       // insert data into tree  -----------------------
-      for (OcTreeKey key : occupiedCells)
+      for (OcTreeKeyReadOnly key : occupiedCells)
          updateNode(key, true, lazyEvaluation);
 
-      for (OcTreeKey key : freeCells)
+      for (OcTreeKeyReadOnly key : freeCells)
          updateNode(key, false, lazyEvaluation);
    }
 
@@ -243,7 +244,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       }
    }
 
-   public NODE setNodeValue(OcTreeKey key, float logOddsValue)
+   public NODE setNodeValue(OcTreeKeyReadOnly key, float logOddsValue)
    {
       return setNodeValue(key, logOddsValue, false);
    }
@@ -258,7 +259,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE setNodeValue(OcTreeKey key, float logOddsValue, boolean lazyEvaluation)
+   public NODE setNodeValue(OcTreeKeyReadOnly key, float logOddsValue, boolean lazyEvaluation)
    {
       // clamp log odds within range:
       logOddsValue = Math.min(Math.max(logOddsValue, minOccupancyLogOdds), maxOccupancyLogOdds);
@@ -334,7 +335,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     * @return pointer to the updated NODE
     */
    @Override
-   public NODE updateNode(OcTreeKey key, float logOddsUpdate, boolean lazyEvaluation)
+   public NODE updateNode(OcTreeKeyReadOnly key, float logOddsUpdate, boolean lazyEvaluation)
    {
       NODE leaf = search(key);
 
@@ -408,7 +409,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    }
 
    @Override
-   public NODE updateNode(OcTreeKey key, boolean occupied, boolean lazyEvaluation)
+   public NODE updateNode(OcTreeKeyReadOnly key, boolean occupied, boolean lazyEvaluation)
    {
       return updateNode(key, occupied, lazyEvaluation, false);
    }
@@ -422,7 +423,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(OcTreeKey key, boolean occupied, boolean lazyEvaluation, boolean enablePointCloudMode)
+   public NODE updateNode(OcTreeKeyReadOnly key, boolean occupied, boolean lazyEvaluation, boolean enablePointCloudMode)
    {
       float logOdds = missUpdateLogOdds;
       if (occupied)
@@ -865,12 +866,12 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       return getNormals(initKey, normals, unknownStatus);
    }
    
-   public boolean getNormals(OcTreeKey key, List<Vector3d> normals)
+   public boolean getNormals(OcTreeKeyReadOnly key, List<Vector3d> normals)
    {
       return getNormals(key, normals, true);
    }
 
-   public boolean getNormals(OcTreeKey key, List<Vector3d> normals, boolean unknownStatus)
+   public boolean getNormals(OcTreeKeyReadOnly key, List<Vector3d> normals, boolean unknownStatus)
    {
       normals.clear();
       // OCTOMAP_WARNING("Normal for %f, %f, %f\n", point.x(), point.y(), point.z());
@@ -1036,7 +1037,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    }
 
    /// @return true if key is in the currently set bounding box
-   public boolean isInBoundingBox(OcTreeKey key)
+   public boolean isInBoundingBox(OcTreeKeyReadOnly key)
    {
       return key.getKey(0) >= boundingBoxMinKey.getKey(0) && key.getKey(1) >= boundingBoxMinKey.getKey(1) && key.getKey(2) >= boundingBoxMinKey.getKey(2)
             && key.getKey(0) <= boundingBoxMaxKey.getKey(0) && key.getKey(1) <= boundingBoxMaxKey.getKey(1) && key.getKey(2) <= boundingBoxMaxKey.getKey(2);
@@ -1264,12 +1265,12 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
    // recursive calls ----------------------------
 
-   protected NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKey key, int depth, float logOddsUpdate)
+   protected NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, int depth, float logOddsUpdate)
    {
       return updateNodeRecurs(node, nodeJustCreated, key, depth, logOddsUpdate, false);
    }
 
-   protected NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKey key, int depth, float logOddsUpdate, boolean lazyEvaluation)
+   protected NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, int depth, float logOddsUpdate, boolean lazyEvaluation)
    {
       boolean createdNode = false;
 
@@ -1350,7 +1351,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       return setNodeValueRecurs(node, nodeJustCreated, key, depth, logOddsValue, false);
    }
 
-   protected NODE setNodeValueRecurs(NODE node, boolean nodeJustCreated, OcTreeKey key, int depth, float logOddsValue, boolean lazyEvaluation)
+   protected NODE setNodeValueRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, int depth, float logOddsValue, boolean lazyEvaluation)
    {
       boolean created_node = false;
 
