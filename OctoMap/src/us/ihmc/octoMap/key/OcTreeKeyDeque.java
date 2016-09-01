@@ -281,7 +281,7 @@ public class OcTreeKeyDeque extends ArrayDeque<OcTreeKey>
       return keyToReturn;
    }
 
-   private OcTreeKey copyAndReturnLocalKey(OcTreeKey keyToCopy)
+   private OcTreeKey copyAndReturnLocalKey(OcTreeKeyReadOnly keyToCopy)
    {
       OcTreeKey localKey = getOrCreateUnusedKey();
       localKey.set(keyToCopy);
