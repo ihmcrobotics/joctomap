@@ -338,13 +338,6 @@ public class OcTreeKeyDeque extends ArrayDeque<OcTreeKey>
 
    /** Unsupported operation. */
    @Override
-   public Iterator<OcTreeKey> iterator()
-   {
-      throw new UnsupportedOperationException();
-   }
-
-   /** Unsupported operation. */
-   @Override
    public Object[] toArray()
    {
       throw new UnsupportedOperationException();
@@ -360,20 +353,6 @@ public class OcTreeKeyDeque extends ArrayDeque<OcTreeKey>
    /** Unsupported operation. */
    @Override
    public boolean containsAll(Collection<?> c)
-   {
-      throw new UnsupportedOperationException();
-   }
-
-   /** Unsupported operation. */
-   @Override
-   public boolean addAll(Collection<? extends OcTreeKey> c)
-   {
-      throw new UnsupportedOperationException();
-   }
-
-   /** Unsupported operation. */
-   @Override
-   public boolean removeAll(Collection<?> c)
    {
       throw new UnsupportedOperationException();
    }
