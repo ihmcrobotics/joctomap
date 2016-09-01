@@ -7,6 +7,7 @@ import java.util.List;
 import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.CountingOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
@@ -27,7 +28,7 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
       return updateNode(key);
    }
 
-   public CountingOcTreeNode updateNode(OcTreeKey key)
+   public CountingOcTreeNode updateNode(OcTreeKeyReadOnly key)
    {
       CountingOcTreeNode curNode = root;
       curNode.increaseCount();
@@ -56,7 +57,7 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
       getCentersMinHitsRecurs(nodeCenters, minHits, treeDepth, root, 0, rootKey);
    }
 
-   protected void getCentersMinHitsRecurs(List<Point3d> nodeCenters, int minHits, int maxDepth, CountingOcTreeNode node, int depth, OcTreeKey parentKey)
+   protected void getCentersMinHitsRecurs(List<Point3d> nodeCenters, int minHits, int maxDepth, CountingOcTreeNode node, int depth, OcTreeKeyReadOnly parentKey)
    {
       if (depth < maxDepth && node.hasAtLeastOneChild())
       {
