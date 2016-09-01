@@ -11,9 +11,9 @@ import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.KeyBoolMap;
 import us.ihmc.octoMap.key.KeyRayReadOnly;
-import us.ihmc.octoMap.key.KeySet;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
+import us.ihmc.octoMap.key.OcTreeKeySet;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.pointCloud.PointCloud;
@@ -76,8 +76,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
    public void insertSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
-      KeySet freeCells = new KeySet();
-      KeySet occupiedCells = new KeySet();
+      OcTreeKeySet freeCells = new OcTreeKeySet();
+      OcTreeKeySet occupiedCells = new OcTreeKeySet();
 
       for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
       {
@@ -129,8 +129,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, double minRange, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
-      KeySet freeCells = new KeySet();
-      KeySet occupiedCells = new KeySet();
+      OcTreeKeySet freeCells = new OcTreeKeySet();
+      OcTreeKeySet occupiedCells = new OcTreeKeySet();
 
       if (discretize)
          computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, minRange, maxRange);
@@ -1084,7 +1084,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxrange maximum range for raycasting (-1: unlimited)
     */
-   public void computeUpdate(PointCloud scan, Point3d origin, KeySet freeCells, KeySet occupiedCells, double minRange, double maxrange)
+   public void computeUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, double minRange, double maxrange)
    {
       for (int i = 0; i < scan.size(); ++i)
       {
@@ -1163,10 +1163,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxrange maximum range for raycasting (-1: unlimited)
     */
-   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, KeySet freeCells, KeySet occupiedCells, double minRange, double maxrange)
+   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, double minRange, double maxrange)
    {
       PointCloud discretePC = new PointCloud();
-      KeySet endpoints = new KeySet();
+      OcTreeKeySet endpoints = new OcTreeKeySet();
 
       for (int i = 0; i < scan.size(); ++i)
       {

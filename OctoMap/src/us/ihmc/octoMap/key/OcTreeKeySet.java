@@ -2,16 +2,16 @@ package us.ihmc.octoMap.key;
 
 import java.util.HashSet;
 
-public class KeySet extends HashSet<OcTreeKey>
+public class OcTreeKeySet extends HashSet<OcTreeKey>
 {
    private static final long serialVersionUID = 2780317356917541560L;
 
-   public KeySet()
+   public OcTreeKeySet()
    {
       super();
    }
 
-   public KeySet(int initialCapacity)
+   public OcTreeKeySet(int initialCapacity)
    {
       super(initialCapacity);
    }
