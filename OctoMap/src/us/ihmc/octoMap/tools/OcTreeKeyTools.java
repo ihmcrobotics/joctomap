@@ -1,10 +1,9 @@
 package us.ihmc.octoMap.tools;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.robotics.MathTools;
 
 /**
@@ -289,14 +288,21 @@ public class OcTreeKeyTools
       return keyToCheck >= computeMinimumKeyAtDepth(depth, treeDepth) && keyToCheck <= computeMaximumKeyValueAtDepth(depth, treeDepth);
    }
 
-   public static List<OcTreeKey> computeNeighborKeys(OcTreeKey key, int depth, double resolution, int treeDepth, double searchRadius)
+   public static OcTreeKeyList computeNeighborKeys(OcTreeKey key, int depth, double resolution, int treeDepth, double searchRadius)
    {
+      OcTreeKeyList neighborKeys = new OcTreeKeyList();
+      computeNeighborKeys(key, depth, resolution, treeDepth, searchRadius, neighborKeys);
+      return neighborKeys;
+   }
+
+   public static void computeNeighborKeys(OcTreeKey key, int depth, double resolution, int treeDepth, double searchRadius, OcTreeKeyList neighborKeysToPack)
+   {
+      neighborKeysToPack.clear();
       OctoMapTools.checkIfDepthValid(depth, treeDepth);
 
       if (depth == 0)
          depth = treeDepth;
 
-      List<OcTreeKey> neighborKeys = new ArrayList<>();
       double nodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
       int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
 
@@ -334,10 +340,9 @@ public class OcTreeKeyTools
                if (!isKeyValid(k1, depth, treeDepth)) // Check if we are still in the octree
                   continue;
 
-               neighborKeys.add(new OcTreeKey(k0, k1, k2));
+               neighborKeysToPack.add(k0, k1, k2);
             }
          }
       }
-      return neighborKeys;
    }
 }

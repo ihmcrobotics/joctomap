@@ -12,6 +12,7 @@ import org.apache.commons.math3.stat.descriptive.moment.Variance;
 
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
@@ -147,8 +148,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
       List<OcTreeKey> neighborKeys = OcTreeKeyTools.computeNeighborKeys(key, depth, resolution, treeDepth, 0.10);
 
-      for (OcTreeKey currentKey : neighborKeys)
+      for (int i = 0; i < neighborKeys.size(); i++)
       {
+         OcTreeKey currentKey = neighborKeys.get(i);
          currentNode = search(currentKey, depth);
 
          boolean nodeExists = currentNode == null;
@@ -258,28 +260,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   private void growPlanarRegionRecursively(PlanarRegion planarRegion, OcTreeKey nodeKey, int depth, double searchRadius, double maxMistanceFromPlane,
-         double angleThreshold)
-   {
-      List<OcTreeKey> neighborKeys = OcTreeKeyTools.computeNeighborKeys(nodeKey, depth, resolution, treeDepth, searchRadius);
-
-      for (OcTreeKey currentKey : neighborKeys)
-      {
-         NormalOcTreeNode currentNode = search(currentKey, depth);
-         if (currentNode == null || currentNode.getRegionId() == planarRegion.getId()
-               || (currentNode.isPartOfRegion() && currentNode.getRegionId() != planarRegion.getId()) || !isNodeOccupied(currentNode))
-            continue;
-
-         Vector3d currentNodeNormal = currentNode.getNormal();
-         Point3d currentNodeCenter = keyToCoordinate(currentKey, depth);
-         if (planarRegion.absoluteDistance(currentNodeCenter) < maxMistanceFromPlane && planarRegion.absoluteAngle(currentNodeNormal) < angleThreshold)
-         {
-            planarRegion.update(currentNodeNormal, currentNodeCenter);
-            currentNode.setRegionId(planarRegion.getId());
-            growPlanarRegionRecursively(planarRegion, currentKey, depth, searchRadius, maxMistanceFromPlane, angleThreshold);
-         }
-      }
-   }
+   private final OcTreeKeyList tempNeighborKeys = new OcTreeKeyList();
 
    private void growPlanarRegionIteratively(PlanarRegion planarRegion, OcTreeKey nodeKey, int depth, double searchRadius, double maxMistanceFromPlane,
          double angleThreshold)
@@ -288,7 +269,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       exploredKeys.add(nodeKey);
 
       ArrayDeque<OcTreeKey> keysToExplore = new ArrayDeque<>();
-      keysToExplore.addAll(OcTreeKeyTools.computeNeighborKeys(nodeKey, depth, resolution, treeDepth, searchRadius));
+      OcTreeKeyTools.computeNeighborKeys(nodeKey, depth, resolution, treeDepth, searchRadius, tempNeighborKeys);
+      keysToExplore.addAll(tempNeighborKeys);
       keysToExplore.removeAll(exploredKeys);
 
       while (!keysToExplore.isEmpty())
@@ -305,7 +287,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          {
             planarRegion.update(currentNodeNormal, currentNodeCenter);
             currentNode.setRegionId(planarRegion.getId());
-            keysToExplore.addAll(OcTreeKeyTools.computeNeighborKeys(currentKey, depth, resolution, treeDepth, searchRadius));
+            OcTreeKeyTools.computeNeighborKeys(currentKey, depth, resolution, treeDepth, searchRadius, tempNeighborKeys);
+            keysToExplore.addAll(tempNeighborKeys);
             keysToExplore.removeAll(exploredKeys);
          }
       }
