@@ -603,7 +603,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (keyOrigin.equals(keyEnd))
          return true; // same tree cell, we're done.
 
-      ray.addKey(keyOrigin);
+      ray.add(keyOrigin);
 
       // Initialization phase -------------------------------------------------------
 
@@ -714,11 +714,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             }
             else
             { // continue to add freespace cells
-               ray.addKey(currentKey);
+               ray.add(currentKey);
             }
          }
 
-         if (ray.size() >= ray.sizeMax() - 1)
+//         if (ray.size() >= ray.sizeMax() - 1)
+         if (ray.size() >= 100000 - 1)
             break;
 
       } // end while

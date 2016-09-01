@@ -5,7 +5,6 @@ import static us.ihmc.octoMap.MarchingCubesTables.triTable;
 import static us.ihmc.octoMap.MarchingCubesTables.vertexList;
 
 import java.util.List;
-import java.util.ListIterator;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -1132,15 +1131,23 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
                // update freespace, break as soon as bbx limit is reached
                if (computeRayKeys(origin, point, keyray))
                {
-                  ListIterator<OcTreeKey> reverseIterator = keyray.reverseIterator();
-                  while (reverseIterator.hasPrevious())
+                  for (int j = keyray.size() - 1; j >= 0; j--)
                   {
-                     OcTreeKey currentKey = reverseIterator.previous();
+                     OcTreeKey currentKey = keyray.get(j);
                      if (isInBoundingBox(currentKey))
                         freeCells.add(currentKey);
                      else
                         break;
                   }
+//                  ListIterator<OcTreeKey> reverseIterator = keyray.reverseIterator();
+//                  while (reverseIterator.hasPrevious())
+//                  {
+//                     OcTreeKey currentKey = reverseIterator.previous();
+//                     if (isInBoundingBox(currentKey))
+//                        freeCells.add(currentKey);
+//                     else
+//                        break;
+//                  }
                } // end if compute ray
             } // end if in BBX and not maxrange
          } // end bbx case

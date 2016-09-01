@@ -39,7 +39,12 @@ public class KeySet extends HashSet<OcTreeKeyReadOnly>
       return changed;
    }
 
-   public boolean addAll(List<? extends OcTreeKey> keyList)
+   public boolean addAll(KeyRay keyRay)
+   {
+      return addAll((List<OcTreeKey>) keyRay);
+   }
+
+   public boolean addAll(List<? extends OcTreeKeyReadOnly> keyList)
    {
       boolean changed = false;
       for (int i = 0; i < keyList.size(); i++)
@@ -50,7 +55,7 @@ public class KeySet extends HashSet<OcTreeKeyReadOnly>
       return changed;
    }
 
-   public boolean removeAll(List<? extends OcTreeKey> keyList)
+   public boolean removeAll(List<? extends OcTreeKeyReadOnly> keyList)
    {
       boolean changed = false;
       for (int i = 0; i < keyList.size(); i++)
