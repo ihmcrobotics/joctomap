@@ -5,7 +5,7 @@ import java.util.Random;
 
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
-public class OcTreeKey
+public class OcTreeKey implements OcTreeKeyReadOnly
 {
    private int[] k = new int[3];
 
@@ -20,15 +20,15 @@ public class OcTreeKey
       k[2] = (int) (char) c;
    }
 
-   public OcTreeKey(OcTreeKey other)
+   public OcTreeKey(OcTreeKeyReadOnly other)
    {
       set(other);
    }
 
-   public void set(OcTreeKey other)
+   public void set(OcTreeKeyReadOnly other)
    {
       for (int i = 0; i < 3; i++)
-         k[i] = (int) (char) other.k[i];
+         k[i] = (int) (char) other.getKey(i);
    }
 
    public void set(int k0, int k1, int k2)
@@ -55,6 +55,7 @@ public class OcTreeKey
       k[index] = (int) (char) k[index];
    }
 
+   @Override
    public int getKey(int index)
    {
       return k[index];
@@ -69,6 +70,7 @@ public class OcTreeKey
          return false;
    }
 
+   @Override
    public boolean equals(OcTreeKey other)
    {
       return k[0] == other.k[0] && k[1] == other.k[1] && k[2] == other.k[2];
