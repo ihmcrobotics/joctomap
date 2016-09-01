@@ -12,6 +12,7 @@ import org.apache.commons.math3.stat.descriptive.moment.Variance;
 
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyDeque;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
@@ -153,9 +154,10 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          OcTreeKey currentKey = neighborKeys.get(i);
          currentNode = search(currentKey, depth);
 
-         boolean nodeExists = currentNode == null;
-         boolean isOccupied = !nodeExists && isNodeOccupied(currentNode);
-         boolean isUnknownConsideredOccupied = nodeExists && unknownStatus;
+         boolean nodeDoesNotExists = currentNode == null;
+         boolean isOccupied = !nodeDoesNotExists && isNodeOccupied(currentNode);
+//         boolean isFree = !nodeDoesNotExists && !isNodeOccupied(currentNode);
+         boolean isUnknownConsideredOccupied = nodeDoesNotExists && unknownStatus;
 
          if (isOccupied || isUnknownConsideredOccupied)
          {
@@ -163,6 +165,12 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
             normal.setY(normal.getY() + Math.signum(key.getKey(1) - currentKey.getKey(1)));
             normal.setZ(normal.getZ() + Math.signum(key.getKey(2) - currentKey.getKey(2)));
          }
+//         else if (isFree)
+//         {
+//            normal.setX(normal.getX() - Math.signum(key.getKey(0) - currentKey.getKey(0)));
+//            normal.setY(normal.getY() - Math.signum(key.getKey(1) - currentKey.getKey(1)));
+//            normal.setZ(normal.getZ() - Math.signum(key.getKey(2) - currentKey.getKey(2)));
+//         }
       }
 
       double lengthSquared = normal.lengthSquared();
@@ -268,7 +276,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       HashSet<OcTreeKey> exploredKeys = new HashSet<>();
       exploredKeys.add(nodeKey);
 
-      ArrayDeque<OcTreeKey> keysToExplore = new ArrayDeque<>();
+      OcTreeKeyDeque keysToExplore = new OcTreeKeyDeque();
       OcTreeKeyTools.computeNeighborKeys(nodeKey, depth, resolution, treeDepth, searchRadius, tempNeighborKeys);
       keysToExplore.addAll(tempNeighborKeys);
       keysToExplore.removeAll(exploredKeys);
