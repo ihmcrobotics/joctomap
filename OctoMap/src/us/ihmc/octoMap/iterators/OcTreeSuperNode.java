@@ -3,6 +3,7 @@ package us.ihmc.octoMap.iterators;
 import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
@@ -79,7 +80,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
    }
 
    /** @return the OcTreeKey of this node */
-   public OcTreeKey getKey()
+   public OcTreeKeyReadOnly getKey()
    {
       return key;
    }
@@ -91,7 +92,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
    }
 
    /** @return the OcTreeKey of this node, for nodes with depth != maxDepth */
-   public OcTreeKey getIndexKey()
+   public OcTreeKeyReadOnly getIndexKey()
    {
       return OcTreeKeyTools.computeIndexKey(key, depth, tree.getTreeDepth());
    }
@@ -102,7 +103,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
       return !node.hasAtLeastOneChild() || depth == maxDepth;
    }
 
-   public boolean isInsideBoundingBox(OcTreeKey minKey, OcTreeKey maxKey)
+   public boolean isInsideBoundingBox(OcTreeKeyReadOnly minKey, OcTreeKeyReadOnly maxKey)
    {
       return OcTreeKeyTools.isInsideBoundingBox(minKey, maxKey, key, depth, tree.getTreeDepth());
    }

@@ -1,6 +1,5 @@
 package us.ihmc.octoMap.ocTree;
 
-import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -14,6 +13,7 @@ import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyDeque;
 import us.ihmc.octoMap.key.OcTreeKeyList;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
@@ -185,9 +185,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   public double computeNodeNeighborNormalDifference(OcTreeKey key, int depth)
+   public double computeNodeNeighborNormalDifference(OcTreeKeyReadOnly ocTreeKeyReadOnly, int depth)
    {
-      NormalOcTreeNode node = search(key, depth);
+      NormalOcTreeNode node = search(ocTreeKeyReadOnly, depth);
 
       if (node == null || !node.isNormalSet())
          return Double.NaN;
@@ -214,9 +214,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
                if (kxOffset == 0 && kyOffset == 0 && kzOffset == 0)
                   continue;
 
-               currentKey.setKey(0, key.getKey(0) + kxOffset);
-               currentKey.setKey(1, key.getKey(1) + kyOffset);
-               currentKey.setKey(2, key.getKey(2) + kzOffset);
+               currentKey.setKey(0, ocTreeKeyReadOnly.getKey(0) + kxOffset);
+               currentKey.setKey(1, ocTreeKeyReadOnly.getKey(1) + kyOffset);
+               currentKey.setKey(2, ocTreeKeyReadOnly.getKey(2) + kzOffset);
                currentNode = search(currentKey, depth);
 
                if (currentNode == null || !currentNode.isNormalSet())
@@ -257,7 +257,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          if (node.isPartOfRegion() || !node.isNormalSet())
             continue;
 
-         OcTreeKey nodeKey = superNode.getKey();
+         OcTreeKeyReadOnly nodeKey = superNode.getKey();
          int regionId = random.nextInt(Integer.MAX_VALUE);
          PlanarRegion planarRegion = new PlanarRegion(regionId);
          planarRegion.update(node.getNormal(), keyToCoordinate(nodeKey, depth));
@@ -270,10 +270,10 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
    private final OcTreeKeyList tempNeighborKeys = new OcTreeKeyList();
 
-   private void growPlanarRegionIteratively(PlanarRegion planarRegion, OcTreeKey nodeKey, int depth, double searchRadius, double maxMistanceFromPlane,
+   private void growPlanarRegionIteratively(PlanarRegion planarRegion, OcTreeKeyReadOnly nodeKey, int depth, double searchRadius, double maxMistanceFromPlane,
          double angleThreshold)
    {
-      HashSet<OcTreeKey> exploredKeys = new HashSet<>();
+      HashSet<OcTreeKeyReadOnly> exploredKeys = new HashSet<>();
       exploredKeys.add(nodeKey);
 
       OcTreeKeyDeque keysToExplore = new OcTreeKeyDeque();

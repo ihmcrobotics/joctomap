@@ -14,6 +14,7 @@ import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.KeyRay;
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
@@ -319,12 +320,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public NODE search(OcTreeKey key)
+   public NODE search(OcTreeKeyReadOnly key)
    {
       return OcTreeSearchTools.search(root, key, treeDepth);
    }
 
-   public NODE search(OcTreeKey key, int depth)
+   public NODE search(OcTreeKeyReadOnly key, int depth)
    {
       return OcTreeSearchTools.search(root, key, depth, treeDepth);
    }
@@ -383,12 +384,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     *  delete at the lowest level unless depth !=0, and expand pruned inner nodes as needed.
     *  Pruned nodes at level "depth" will directly be deleted as a whole.
     */
-   public boolean deleteNode(OcTreeKey key)
+   public boolean deleteNode(OcTreeKeyReadOnly key)
    {
       return deleteNode(key, 0);
    }
 
-   public boolean deleteNode(OcTreeKey key, int depth)
+   public boolean deleteNode(OcTreeKeyReadOnly key, int depth)
    {
       if (root == null)
          return true;
@@ -780,7 +781,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return new OcTreeIterable<>(this, maxDepth);
    }
 
-   public Iterable<OcTreeSuperNode<NODE>> leafBoundingBoxIterable(OcTreeKey min, OcTreeKey max)
+   public Iterable<OcTreeSuperNode<NODE>> leafBoundingBoxIterable(OcTreeKeyReadOnly min, OcTreeKeyReadOnly max)
    {
       return new LeafBoundingBoxIterable<>(this, min, max, 0); // TODO Organize imports;
    }
@@ -849,25 +850,25 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
-   public Point3d keyToCoordinate(OcTreeKey key)
+   public Point3d keyToCoordinate(OcTreeKeyReadOnly key)
    {
       return OcTreeKeyConversionTools.keyToCoordinate(key, resolution, treeDepth);
    }
 
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
-   public Point3d keyToCoordinate(OcTreeKey key, int depth)
+   public Point3d keyToCoordinate(OcTreeKeyReadOnly key, int depth)
    {
       return OcTreeKeyConversionTools.keyToCoordinate(key, depth, resolution, treeDepth);
    }
 
    /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
-   public void keyToCoordinate(OcTreeKey key, Point3d coordinateToPack)
+   public void keyToCoordinate(OcTreeKeyReadOnly key, Point3d coordinateToPack)
    {
       OcTreeKeyConversionTools.keyToCoordinate(key, coordinateToPack, resolution, treeDepth);
    }
 
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
-   public void keyToCoordinate(OcTreeKey key, Point3d coordinateToPack, int depth)
+   public void keyToCoordinate(OcTreeKeyReadOnly key, Point3d coordinateToPack, int depth)
    {
       OcTreeKeyConversionTools.keyToCoordinate(key, depth, coordinateToPack, resolution, treeDepth);
    }
@@ -977,7 +978,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive call of deleteNode()
-   protected boolean deleteNodeRecurs(NODE node, int depth, int max_depth, OcTreeKey key)
+   protected boolean deleteNodeRecurs(NODE node, int depth, int max_depth, OcTreeKeyReadOnly key)
    {
       if (depth >= max_depth) // on last level: delete child when going up
          return true;
