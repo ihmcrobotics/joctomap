@@ -199,7 +199,6 @@ public class NormalOcTreeVisualizer extends Application
    {
       Point3d origin = new Point3d(0.0, 0.0, center.getZ() + 0.0);
 
-
       double res = 0.01;
       for (double yaw = 0.0; yaw < 2.0 * Math.PI; yaw += res)
       {

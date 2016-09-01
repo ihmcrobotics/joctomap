@@ -10,7 +10,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.KeyBoolMap;
-import us.ihmc.octoMap.key.KeyRay;
+import us.ihmc.octoMap.key.KeyRayReadOnly;
 import us.ihmc.octoMap.key.KeySet;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
@@ -33,6 +33,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    protected boolean useChangeDetection;
    /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
    protected KeyBoolMap changedKeys = new KeyBoolMap();
+
+   protected RayTracer rayTracer = new RayTracer();
 
    public AbstractOccupancyOcTreeBase(double resolution)
    {
@@ -231,12 +233,12 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       for (int i = 0; i < scan.size(); i++)
       {
          Point3d point = new Point3d(scan.getPoint(i));
-         KeyRay keyRay = keyrays.get(0);
-         if (computeRayKeys(sensorOrigin, point, keyRay))
+         if (rayTracer.computeRayKeys(sensorOrigin, point, resolution, treeDepth))
          {
-            for (OcTreeKey key : keyRay)
+            KeyRayReadOnly ray = rayTracer.getResult();
+            for (int j = 0; j < ray.size(); j++)
             {
-               updateNode(key, false, lazyEvaluation); // insert freespace measurement
+               updateNode(ray.get(j), false, lazyEvaluation); // insert freespace measurement
             }
             updateNode(point, true, lazyEvaluation); // update endpoint to be occupied
          }
@@ -1087,7 +1089,6 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       for (int i = 0; i < scan.size(); ++i)
       {
          Point3d point = new Point3d(scan.getPoint(i));
-         KeyRay keyray = new KeyRay();
 
          Vector3d direction = new Vector3d();
          direction.sub(point, origin);
@@ -1101,9 +1102,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             if (maxrange < 0.0 || length <= maxrange)
             { // is not maxrange meas.
                  // free cells
-               if (computeRayKeys(origin, point, keyray))
+               if (rayTracer.computeRayKeys(origin, point, resolution, treeDepth))
                {
-                  freeCells.addAll(keyray);
+                  freeCells.addAll(rayTracer.getResult());
                }
                // occupied endpoint
                OcTreeKey key = coordinateToKey(point);
@@ -1114,8 +1115,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             { // user set a maxrange and length is above
                Point3d newEnd = new Point3d();
                newEnd.scaleAdd(maxrange / length, direction, origin);
-               if (computeRayKeys(origin, newEnd, keyray))
-                  freeCells.addAll(keyray);
+               if (rayTracer.computeRayKeys(origin, point, resolution, treeDepth))
+                  freeCells.addAll(rayTracer.getResult());
             } // end if maxrange
          }
          else
@@ -1129,25 +1130,17 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
                   occupiedCells.add(key);
 
                // update freespace, break as soon as bbx limit is reached
-               if (computeRayKeys(origin, point, keyray))
+               if (rayTracer.computeRayKeys(origin, point, resolution, treeDepth))
                {
-                  for (int j = keyray.size() - 1; j >= 0; j--)
+                  KeyRayReadOnly ray = rayTracer.getResult();
+                  for (int j = ray.size() - 1; j >= 0; j--)
                   {
-                     OcTreeKey currentKey = keyray.get(j);
+                     OcTreeKeyReadOnly currentKey = ray.get(j);
                      if (isInBoundingBox(currentKey))
                         freeCells.add(currentKey);
                      else
                         break;
                   }
-//                  ListIterator<OcTreeKey> reverseIterator = keyray.reverseIterator();
-//                  while (reverseIterator.hasPrevious())
-//                  {
-//                     OcTreeKey currentKey = reverseIterator.previous();
-//                     if (isInBoundingBox(currentKey))
-//                        freeCells.add(currentKey);
-//                     else
-//                        break;
-//                  }
                } // end if compute ray
             } // end if in BBX and not maxrange
          } // end bbx case
@@ -1256,15 +1249,16 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    protected boolean integrateMissOnRay(Point3d origin, Point3d end, boolean lazyEvaluation)
    {
-      KeyRay keyRay = keyrays.get(0);
-      if (!computeRayKeys(origin, end, keyRay))
+      if (!rayTracer.computeRayKeys(origin, end, resolution, treeDepth))
       {
          return false;
       }
 
-      for (OcTreeKey key : keyRay)
+      KeyRayReadOnly ray = rayTracer.getResult();
+
+      for (int i = 0; i < ray.size(); i++)
       {
-         updateNode(key, false, lazyEvaluation); // insert freespace measurement
+         updateNode(ray.get(i), false, lazyEvaluation); // insert freespace measurement
       }
 
       return true;

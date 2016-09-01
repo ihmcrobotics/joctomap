@@ -1,6 +1,5 @@
 package us.ihmc.octoMap.ocTree.baseImplementation;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -12,7 +11,6 @@ import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
 import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
-import us.ihmc.octoMap.key.KeyRay;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
@@ -56,7 +54,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    protected double min_value[] = new double[3]; ///< min in x, y, z
 
    /// data structure for ray casting, array for multithreading
-   protected List<KeyRay> keyrays = new ArrayList<>();
 
    public AbstractOcTreeBase(double resolution)
    {
@@ -155,16 +152,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public double getNodeSize(int depth)
    {
       return OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
-   }
-
-   /**
-    * Clear KeyRay vector to minimize unneeded memory. This is only
-    * useful for the StaticMemberInitializer classes, don't call it for
-    * an octree that is actually used.
-    */
-   public void clearKeyRays()
-   {
-      keyrays.clear();
    }
 
    // -- Tree structure operations formerly contained in the nodes ---
@@ -572,185 +559,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
    }
 
-   // -- raytracing  -----------------------
-
-   /**
-   * Traces a ray from origin to end (excluding), returning an
-   * OcTreeKey of all nodes traversed by the beam. You still need to check
-   * if a node at that coordinate exists (e.g. with search()).
-   *
-   * @param origin start coordinate of ray
-   * @param end end coordinate of ray
-   * @param ray KeyRay structure that holds the keys of all nodes traversed by the ray, excluding "end"
-   * @return Success of operation. Returning false usually means that one of the coordinates is out of the OcTree's range
-   */
-   public boolean computeRayKeys(Point3d origin, Point3d end, KeyRay ray)
-   {
-      // see "A Faster Voxel Traversal Algorithm for Ray Tracing" by Amanatides & Woo
-      // basically: DDA in 3D
-
-      ray.clear();
-
-      OcTreeKey keyOrigin = coordinateToKey(origin);
-      OcTreeKey keyEnd = coordinateToKey(end);
-
-      if (keyOrigin == null || keyEnd == null)
-      {
-         System.err.println(AbstractOcTreeBase.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
-         return false;
-      }
-
-      if (keyOrigin.equals(keyEnd))
-         return true; // same tree cell, we're done.
-
-      ray.add(keyOrigin);
-
-      // Initialization phase -------------------------------------------------------
-
-      Vector3d direction = new Vector3d();
-      direction.sub(end, origin);
-      double length = direction.length();
-      direction.scale(1.0 / length);
-
-      double[] directionArray = new double[3];
-      double[] originArray = new double[3];
-
-      direction.get(directionArray);
-      origin.get(originArray);
-
-      int[] step = new int[3];
-      double[] tMax = new double[3];
-      double[] tDelta = new double[3];
-
-      OcTreeKey currentKey = new OcTreeKey(keyOrigin);
-
-      for (int i = 0; i < 3; ++i)
-      {
-         // compute step direction
-         if (directionArray[i] > 0.0)
-            step[i] = 1;
-         else if (directionArray[i] < 0.0)
-            step[i] = -1;
-         else
-            step[i] = 0;
-
-         // compute tMax, tDelta
-         if (step[i] != 0)
-         {
-            // corner point of voxel (in direction of ray)
-            double voxelBorder = keyToCoordinate(currentKey.getKey(i));
-            voxelBorder += (float) (step[i] * resolution * 0.5);
-
-            tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
-            tDelta[i] = resolution / Math.abs(directionArray[i]);
-         }
-         else
-         {
-            tMax[i] = Double.POSITIVE_INFINITY;
-            tDelta[i] = Double.POSITIVE_INFINITY;
-         }
-      }
-
-      // Incremental phase  ---------------------------------------------------------
-
-      boolean done = false;
-      while (!done)
-      {
-         int dim;
-
-         // find minimum tMax:
-         if (tMax[0] < tMax[1])
-         {
-            if (tMax[0] < tMax[2])
-               dim = 0;
-            else
-               dim = 2;
-         }
-         else
-         {
-            if (tMax[1] < tMax[2])
-               dim = 1;
-            else
-               dim = 2;
-         }
-
-         // advance in direction "dim"
-         currentKey.addKey(dim, step[dim]);
-         tMax[dim] += tDelta[dim];
-
-         // reached endpoint, key equv?
-         if (currentKey.equals(keyEnd))
-         {
-            done = true;
-            break;
-         }
-         else
-         {
-            // reached endpoint world coords?
-            // dist_from_origin now contains the length of the ray when traveled until the border of the current voxel
-            double distanceFromOrigin;// = Math.min(Math.min(tMax[0], tMax[1]), tMax[2]);
-
-            if (tMax[0] < tMax[1])
-            {
-               if (tMax[0] < tMax[2])
-                  distanceFromOrigin = tMax[0];
-               else
-                  distanceFromOrigin = tMax[2];
-            }
-            else
-            {
-               if (tMax[1] < tMax[2])
-                  distanceFromOrigin = tMax[1];
-               else
-                  distanceFromOrigin = tMax[2];
-            }
-            
-            // if this is longer than the expected ray length, we should have already hit the voxel containing the end point with the code above (key_end).
-            // However, we did not hit it due to accumulating discretization errors, so this is the point here to stop the ray as we would never reach the voxel key_end
-            if (distanceFromOrigin > length)
-            {
-               done = true;
-               break;
-            }
-            else
-            { // continue to add freespace cells
-               ray.add(currentKey);
-            }
-         }
-
-//         if (ray.size() >= ray.sizeMax() - 1)
-         if (ray.size() >= 100000 - 1)
-            break;
-
-      } // end while
-
-      return true;
-   }
-
-   /**
-   * Traces a ray from origin to end (excluding), returning the
-   * coordinates of all nodes traversed by the beam. You still need to check
-   * if a node at that coordinate exists (e.g. with search()).
-   * @note: use the faster computeRayKeys method if possible.
-   * 
-   * @param origin start coordinate of ray
-   * @param end end coordinate of ray
-   * @param ray KeyRay structure that holds the keys of all nodes traversed by the ray, excluding "end"
-   * @return Success of operation. Returning false usually means that one of the coordinates is out of the OcTree's range
-   */
-   public boolean computeRay(Point3d origin, Point3d end, List<Point3d> ray)
-   {
-      ray.clear();
-
-      if (!computeRayKeys(origin, end, keyrays.get(0)))
-         return false;
-      for (OcTreeKey key : keyrays.get(0))
-      {
-         ray.add(keyToCoordinate(key));
-      }
-      return true;
-   }
-
    @Override
    public Iterator<OcTreeSuperNode<NODE>> iterator()
    {
@@ -884,9 +692,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          min_value[i] = Double.POSITIVE_INFINITY;
       }
       size_changed = true;
-
-      keyrays.clear();
-      keyrays.add(new KeyRay(1000));
    }
 
    /// recalculates min and max in x, y, z. Does nothing when tree size didn't change.
