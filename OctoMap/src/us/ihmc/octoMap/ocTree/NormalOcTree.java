@@ -38,7 +38,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   private void updateNormalsRecursively(NormalOcTreeNode node, OcTreeKey nodeKey, int depth)
+   private void updateNormalsRecursively(NormalOcTreeNode node, OcTreeKeyReadOnly nodeKey, int depth)
    {
       if (depth > treeDepth)
          throw new RuntimeException("Something went wrong.");
@@ -87,7 +87,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   public Vector3d computeNodeNormal(OcTreeKey key, int depth, boolean unknownStatus)
+   public Vector3d computeNodeNormal(OcTreeKeyReadOnly key, int depth, boolean unknownStatus)
    {
       NormalOcTreeNode node = search(key, depth);
       if (node == null)
@@ -138,7 +138,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   public Vector3d computeNodeNormal2(OcTreeKey key, int depth, boolean unknownStatus)
+   public Vector3d computeNodeNormal2(OcTreeKeyReadOnly key, int depth, boolean unknownStatus)
    {
       NormalOcTreeNode node = search(key, depth);
       if (node == null)
@@ -185,9 +185,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   public double computeNodeNeighborNormalDifference(OcTreeKeyReadOnly ocTreeKeyReadOnly, int depth)
+   public double computeNodeNeighborNormalDifference(OcTreeKeyReadOnly key, int depth)
    {
-      NormalOcTreeNode node = search(ocTreeKeyReadOnly, depth);
+      NormalOcTreeNode node = search(key, depth);
 
       if (node == null || !node.isNormalSet())
          return Double.NaN;
@@ -214,9 +214,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
                if (kxOffset == 0 && kyOffset == 0 && kzOffset == 0)
                   continue;
 
-               currentKey.setKey(0, ocTreeKeyReadOnly.getKey(0) + kxOffset);
-               currentKey.setKey(1, ocTreeKeyReadOnly.getKey(1) + kyOffset);
-               currentKey.setKey(2, ocTreeKeyReadOnly.getKey(2) + kzOffset);
+               currentKey.setKey(0, key.getKey(0) + kxOffset);
+               currentKey.setKey(1, key.getKey(1) + kyOffset);
+               currentKey.setKey(2, key.getKey(2) + kzOffset);
                currentNode = search(currentKey, depth);
 
                if (currentNode == null || !currentNode.isNormalSet())
