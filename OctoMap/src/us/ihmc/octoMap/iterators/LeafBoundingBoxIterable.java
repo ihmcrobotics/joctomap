@@ -6,6 +6,7 @@ import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.iterators.LeafIterable.LeafIterator;
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 
@@ -30,12 +31,12 @@ public class LeafBoundingBoxIterable<NODE extends AbstractOcTreeNode<NODE>> impl
       this(tree, tree.coordinateToKey(min), tree.coordinateToKey(max), maxDepth);
    }
 
-   public LeafBoundingBoxIterable(AbstractOcTreeBase<NODE> tree, OcTreeKey min, OcTreeKey max)
+   public LeafBoundingBoxIterable(AbstractOcTreeBase<NODE> tree, OcTreeKeyReadOnly min, OcTreeKeyReadOnly max)
    {
       this(tree, min, max, 0);
    }
 
-   public LeafBoundingBoxIterable(AbstractOcTreeBase<NODE> tree, OcTreeKey min, OcTreeKey max, int maxDepth)
+   public LeafBoundingBoxIterable(AbstractOcTreeBase<NODE> tree, OcTreeKeyReadOnly min, OcTreeKeyReadOnly max, int maxDepth)
    {
       this.tree = tree;
       this.maxDepth = maxDepth;
@@ -54,7 +55,7 @@ public class LeafBoundingBoxIterable<NODE extends AbstractOcTreeNode<NODE>> impl
       private final OcTreeKey minKey = new OcTreeKey();
       private final OcTreeKey maxKey = new OcTreeKey();
 
-      public LeafBoundingBoxIterator(AbstractOcTreeBase<NODE> tree, OcTreeKey min, OcTreeKey max, int maxDepth)
+      public LeafBoundingBoxIterator(AbstractOcTreeBase<NODE> tree, OcTreeKeyReadOnly min, OcTreeKeyReadOnly max, int maxDepth)
       {
          super(tree, maxDepth);
          minKey.set(min);
