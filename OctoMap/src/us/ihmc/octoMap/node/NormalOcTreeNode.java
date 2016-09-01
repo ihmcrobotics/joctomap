@@ -1,5 +1,6 @@
 package us.ihmc.octoMap.node;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.vecmath.Point3d;
@@ -15,6 +16,29 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    public NormalOcTreeNode()
    {
+   }
+
+   @Override
+   public void copyData(NormalOcTreeNode other)
+   {
+      super.copyData(other);
+      if (other.normal != null)
+      {
+         if (normal == null)
+            normal = new Vector3d();
+         normal.set(other.normal);
+      }
+      if (other.plane != null)
+      {
+         if (plane == null)
+            plane = new ArrayList<>();
+         while (plane.size() < other.plane.size())
+            plane.add(new Point3d());
+         while (plane.size() > other.plane.size())
+            plane.remove(plane.size() - 1);
+         for (int i = 0; i < other.plane.size(); i++)
+            plane.get(i).set(other.plane.get(i));
+      }
    }
 
    @Override
