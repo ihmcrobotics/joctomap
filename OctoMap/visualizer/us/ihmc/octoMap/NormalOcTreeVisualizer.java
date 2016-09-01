@@ -36,7 +36,7 @@ import us.ihmc.robotics.time.TimeTools;
 
 public class NormalOcTreeVisualizer extends Application
 {
-   public final NormalOcTree ocTree = new NormalOcTree(0.15);
+   public final NormalOcTree ocTree = new NormalOcTree(0.025);
    private static final boolean SHOW_FREE_CELLS = false;
    private static final Color FREE_COLOR = new Color(Color.YELLOW.getRed(), Color.YELLOW.getGreen(), Color.YELLOW.getBlue(), 0.0);
 
@@ -46,7 +46,7 @@ public class NormalOcTreeVisualizer extends Application
       //      callUpdateNode();
       //      callInsertPointCloud();
 //      createPlane(0.0, 0.0, -0.05);
-      createBowl(5.0, new Point3d());
+      createBowl(2.5, new Point3d());
       System.out.println("Number of leafs: " + ocTree.getNumLeafNodes());
       System.out.println("Initialized octree");
       System.out.println("Computing normals");
@@ -200,7 +200,7 @@ public class NormalOcTreeVisualizer extends Application
       Point3d origin = new Point3d(0.0, 0.0, center.getZ() + 0.0);
 
 
-      double res = 0.02;
+      double res = 0.01;
       for (double yaw = 0.0; yaw < 2.0 * Math.PI; yaw += res)
       {
          for (double pitch = 0.0; pitch < 0.5 * Math.PI; pitch += res)
