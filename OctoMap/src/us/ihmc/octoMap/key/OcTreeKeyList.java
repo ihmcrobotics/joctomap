@@ -8,7 +8,7 @@ import java.util.ListIterator;
 
 import us.ihmc.robotics.lists.RecyclingArrayList;
 
-public class OcTreeKeyList implements List<OcTreeKey>
+public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
 {
    private static final int DEFAULT_INITIAL_SIZE = 0;
 
@@ -69,6 +69,20 @@ public class OcTreeKeyList implements List<OcTreeKey>
       return getAndGrowIfNeeded(size);
    }
 
+   /** Unsupported operation. */
+   @Override
+   public boolean add(OcTreeKey key)
+   {
+      add((OcTreeKeyReadOnly) key);
+      return true;
+   }
+
+   /** Add a new element at the end of this list and set to the given key. */
+   public void add(OcTreeKeyReadOnly key)
+   {
+      add().set(key);
+   }
+
    public void add(int k0, int k1, int k2)
    {
       add().set(k0, k1, k2);
@@ -84,12 +98,12 @@ public class OcTreeKeyList implements List<OcTreeKey>
     * @throws IndexOutOfBoundsException if the index is out of range
     *         (<tt>index &lt; 0 || index &gt;= size()</tt>)
     */
-   public OcTreeKey insertAtIndex(int index)
+   public OcTreeKeyReadOnly insertAtIndex(int index)
    {
       rangeCheckForInsert(index);
 
       // First add new element at last index
-      OcTreeKey ret = add();
+      OcTreeKeyReadOnly ret = add();
 
       // Then go trough the list by swapping elements two by two to reach the desired index
       for (int i = size - 1; i > index; i--)
@@ -118,7 +132,22 @@ public class OcTreeKeyList implements List<OcTreeKey>
     * If the list is empty, it returns {@code null}.
     * @return the last element of this list
     */
-   public OcTreeKey getLast()
+   @Override
+   public OcTreeKeyReadOnly getFirst()
+   {
+      if (isEmpty())
+         return null;
+      else
+         return unsafeGet(0);
+   }
+
+   /**
+    * Returns the last element of this list.
+    * If the list is empty, it returns {@code null}.
+    * @return the last element of this list
+    */
+   @Override
+   public OcTreeKeyReadOnly getLast()
    {
       if (isEmpty())
          return null;
@@ -403,13 +432,6 @@ public class OcTreeKeyList implements List<OcTreeKey>
    /** Unsupported operation. */
    @Override
    public <X> X[] toArray(X[] a)
-   {
-      throw new UnsupportedOperationException();
-   }
-
-   /** Unsupported operation. */
-   @Override
-   public boolean add(OcTreeKey e)
    {
       throw new UnsupportedOperationException();
    }
