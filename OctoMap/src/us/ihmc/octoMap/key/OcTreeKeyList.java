@@ -88,6 +88,12 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
       add().set(k0, k1, k2);
    }
 
+   public void addAll(OcTreeKeyListReadOnly keyList)
+   {
+      for (int i = 0; i < keyList.size(); i++)
+         add(keyList.get(i));
+   }
+
    /**
     * Inserts a new element at the specified position in this
     * list. Shifts the element currently at that position (if any) and
