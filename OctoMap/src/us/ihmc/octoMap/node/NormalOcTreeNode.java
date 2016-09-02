@@ -6,7 +6,9 @@ import us.ihmc.octoMap.ocTree.PlanarRegion;
 
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
 {
-   private Vector3d normal = null;
+   private float normalX = Float.NaN;
+   private float normalY = Float.NaN;
+   private float normalZ = Float.NaN;
    private int regionId = PlanarRegion.NO_REGION_ID;
 
    public NormalOcTreeNode()
@@ -17,12 +19,9 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public void copyData(NormalOcTreeNode other)
    {
       super.copyData(other);
-      if (other.normal != null)
-      {
-         if (normal == null)
-            normal = new Vector3d();
-         normal.set(other.normal);
-      }
+      normalX = other.normalX;
+      normalY = other.normalY;
+      normalZ = other.normalZ;
    }
 
    @Override
@@ -31,13 +30,9 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       children = new NormalOcTreeNode[8];
    }
 
-   private static long count = 0L;
-
    @Override
    public NormalOcTreeNode create()
    {
-      if (++count % 100000 == 0)
-         System.out.println("Number of nodes created: " + count);
       return new NormalOcTreeNode();
    }
 
@@ -56,17 +51,15 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    public void updateNormalChildren()
    {
-      setNormal(getAverageChildNormal());
-   }
-
-   public Vector3d getAverageChildNormal()
-   {
       if (children == null)
-         return null;
+      {
+         resetNormal();
+         return;
+      }
 
-      double x = 0.0;
-      double y = 0.0;
-      double z = 0.0;
+      normalX = 0.0f;
+      normalY = 0.0f;
+      normalZ = 0.0f;
       int count = 0;
 
       for (int i = 0; i < 8; i++)
@@ -75,45 +68,47 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
          if (child != null && child.isNormalSet())
          {
-            Vector3d childNormal = child.normal;
-            x += childNormal.getX();
-            y += childNormal.getY();
-            z += childNormal.getZ();
+            normalX += child.normalX;
+            normalY += child.normalY;
+            normalZ += child.normalZ;
             count++;
          }
       }
 
       if (count == 0)
-         return null;
-      x /= count;
-      y /= count;
-      z /= count;
-      Vector3d normal = new Vector3d(x, y, z);
-      normal.normalize();
-      return normal;
+      {
+         resetNormal();
+         return;
+      }
+
+      float invNorm = (float) (1.0 / Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ));
+      normalX *= invNorm;
+      normalY *= invNorm;
+      normalZ *= invNorm;
    }
 
    public void getNormal(Vector3d normalToPack)
    {
-      normalToPack.set(normal);
+      normalToPack.set(normalX, normalY, normalZ);
    }
 
    public void setNormal(Vector3d normal)
    {
-      if (this.normal == null)
-         this.normal = new Vector3d();
-      this.normal.set(normal);
+      normalX = (float) normal.getX();
+      normalY = (float) normal.getY();
+      normalZ = (float) normal.getZ();
    }
 
    public void resetNormal()
    {
-      if (normal != null)
-         normal.set(Double.NaN, Double.NaN, Double.NaN);
+      normalX = Float.NaN;
+      normalY = Float.NaN;
+      normalZ = Float.NaN;
    }
 
    public boolean isNormalSet()
    {
-      return normal != null && !Double.isNaN(normal.getX()) && !Double.isNaN(normal.getY()) && !Double.isNaN(normal.getZ());
+      return !Float.isNaN(normalX) && !Float.isNaN(normalY) && !Float.isNaN(normalZ);
    }
 
    public boolean isPartOfRegion()
