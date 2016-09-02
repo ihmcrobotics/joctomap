@@ -11,6 +11,13 @@ public final class ColorOcTreeNode extends AbstractOccupancyOcTreeNode<ColorOcTr
       super();
    }
 
+   @Override
+   public void clear()
+   {
+      super.resetLogOdds();
+      color.set(255, 255, 255);
+   }
+
    public void setColor(OctoMapColor color)
    {
       this.color.set(color);

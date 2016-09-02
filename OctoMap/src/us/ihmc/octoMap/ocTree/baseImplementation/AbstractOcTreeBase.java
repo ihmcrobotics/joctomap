@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.ocTree.baseImplementation;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -40,6 +42,8 @@ import us.ihmc.octoMap.tools.OctoMapTools;
 public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
    protected NODE root; ///< root NODE, null for empty tree
+   private List<NODE> unusedNodes = new ArrayList<>(50000000);
+   private List<NODE[]> unusedNodeArrays = new ArrayList<>(50000000 / 8);
 
    // constants of the tree
    /** Maximum tree depth (fixed to 16 usually) */
@@ -71,6 +75,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       init();
       // no longer create an empty root node - only on demand
+      ensureCapacityUnusedPools(2000000);
    }
 
    public AbstractOcTreeBase(AbstractOcTreeBase<NODE> other)
@@ -80,6 +85,17 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       init();
       if (other.root != null)
          root = other.root.cloneRecursive();
+   }
+
+   @SuppressWarnings("unchecked")
+   public void ensureCapacityUnusedPools(int minCapacity)
+   {
+      while (unusedNodes.size() < minCapacity)
+         unusedNodes.add(createEmptyNode());
+      
+      NODE node = root != null ? root : createEmptyNode();
+      while (unusedNodeArrays.size() < minCapacity)
+         unusedNodeArrays.add((NODE[]) Array.newInstance(node.getClass(), 8));
    }
 
    /**
@@ -161,11 +177,16 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
       OcTreeNodeTools.checkChildIndex(childIndex);
       if (!node.hasArrayForChildren())
-         node.allocateChildren();
+      {
+         if (unusedNodeArrays.isEmpty())
+            node.allocateChildren();
+         else
+            node.assignChildren(unusedNodeArrays.remove(unusedNodeArrays.size() - 1));
+      }
 
       if (node.getChildUnsafe(childIndex) != null)
          throw new RuntimeException("Something went wrong.");
-      NODE newChildNode = node.create();
+      NODE newChildNode = unusedNodes.isEmpty() ? node.create() : unusedNodes.remove(unusedNodes.size() - 1);
       node.setChild(childIndex, newChildNode);
 
       treeSize++;
@@ -181,7 +202,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       OcTreeNodeTools.checkNodeHasChildren(node);
       OcTreeNodeTools.checkNodeChildNotNull(node, childIndex);
 
-      node.removeChild(childIndex);
+      unusedNodes.add(node.removeChild(childIndex));
 
       treeSize--;
       size_changed = true;
@@ -195,26 +216,42 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     */
    public boolean isNodeCollapsible(NODE node)
    {
-      // all children must exist, must not have children of
-      // their own and have the same occupancy probability
-      if (!OcTreeNodeTools.nodeChildExists(node, 0))
+//      // all children must exist, must not have children of
+//      // their own and have the same occupancy probability
+//      if (!OcTreeNodeTools.nodeChildExists(node, 0))
+//         return false;
+//
+//      NODE firstChild = OcTreeNodeTools.getNodeChild(node, 0);
+//      if (firstChild.hasAtLeastOneChild())
+//         return false;
+//
+//      for (int i = 1; i < 8; i++)
+//      {
+//         if (!OcTreeNodeTools.nodeChildExists(node, i))
+//            return false;
+//
+//         NODE currentChild = OcTreeNodeTools.getNodeChild(node, i);
+//
+//         if (currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
+//            return false;
+//      }
+//
+//      return true;
+
+      if (!node.hasArrayForChildren())
          return false;
 
-      NODE firstChild = OcTreeNodeTools.getNodeChild(node, 0);
-      if (firstChild.hasAtLeastOneChild())
+      NODE firstChild = node.getChildUnsafe(0);
+      if (firstChild == null || firstChild.hasAtLeastOneChild())
          return false;
 
       for (int i = 1; i < 8; i++)
       {
-         if (!OcTreeNodeTools.nodeChildExists(node, i))
-            return false;
+         NODE currentChild = node.getChildUnsafe(i);
 
-         NODE currentChild = OcTreeNodeTools.getNodeChild(node, i);
-
-         if (currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
+         if (currentChild == null || currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
             return false;
       }
-
       return true;
    }
 
@@ -255,7 +292,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          deleteNodeChild(node, i);
       }
-      node.removeChildren();
+      unusedNodeArrays.add(node.removeChildren());
 
       return true;
    }
@@ -775,11 +812,15 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          for (int i = 0; i < 8; i++)
          {
-            NODE child = node.getChildUnsafe(i);
+            NODE child = node.removeChildUnsafe(i);
             if (child != null)
+            {
+               unusedNodes.add(child);
                deleteNodeRecurs(child);
+            }
          }
-         node.removeChildren();
+
+         unusedNodeArrays.add(node.removeChildren());
       } // else: node has no children
    }
 

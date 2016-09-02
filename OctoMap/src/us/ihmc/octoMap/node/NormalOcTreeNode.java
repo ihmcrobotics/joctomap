@@ -53,6 +53,14 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       return new NormalOcTreeNode();
    }
 
+   @Override
+   public void clear()
+   {
+      super.resetLogOdds();
+      resetNormal();
+      resetRegionId();
+   }
+
    public void resetRegionId()
    {
       regionId = PlanarRegion.NO_REGION_ID;

@@ -16,6 +16,12 @@ public class CountingOcTreeNode extends AbstractOcTreeNode<CountingOcTreeNode>
       count = other.count;
    }
 
+   @Override
+   public void clear()
+   {
+      count = 0;
+   }
+
    public void increaseCount()
    {
       count++;

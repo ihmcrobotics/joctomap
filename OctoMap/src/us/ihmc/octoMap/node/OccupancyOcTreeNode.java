@@ -11,4 +11,10 @@ public final class OccupancyOcTreeNode extends AbstractOccupancyOcTreeNode<Occup
    {
       super(initialValue);
    }
+
+   @Override
+   public void clear()
+   {
+      super.resetLogOdds();
+   }
 }
