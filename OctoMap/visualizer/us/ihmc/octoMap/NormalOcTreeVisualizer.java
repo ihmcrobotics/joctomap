@@ -236,16 +236,17 @@ public class NormalOcTreeVisualizer extends Application
       MeshBuilder freeMeshBuilder = new MeshBuilder();
 
       LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
-      for (OcTreeSuperNode<NormalOcTreeNode> node : leafIterable)
+      for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
-         double boxSize = node.getSize();
-         Point3d boxCenter = node.getCoordinate();
+         double boxSize = superNode.getSize();
+         Point3d boxCenter = superNode.getCoordinate();
 
-         if (ocTree.isNodeOccupied(node.getNode()))
+         NormalOcTreeNode node = superNode.getNode();
+         if (ocTree.isNodeOccupied(node))
          {
-            Vector3d normal = node.getNode().getNormal();
-            Color normalBasedColor = getNormalBasedColor(normal);
-            List<Point3d> plane = node.getNode().getPlane();
+            Vector3d normal = node.getNormal();
+            Color normalBasedColor = getNormalBasedColor(normal, node.isNormalSet());
+            List<Point3d> plane = node.getPlane();
             if (plane != null)
                occupiedMeshBuilder.addPolyon(plane, normalBasedColor);
             else
@@ -275,11 +276,11 @@ public class NormalOcTreeVisualizer extends Application
 
    private static final Color DEFAULT_COLOR = Color.DARKCYAN;
 
-   public Color getNormalBasedColor(Vector3d normal)
+   public Color getNormalBasedColor(Vector3d normal, boolean isNormalSet)
    {
       Color color = DEFAULT_COLOR;
 
-      if (normal != null)
+      if (isNormalSet)
       {
          Vector3d zUp = new Vector3d(0.0, 0.0, 1.0);
          normal.normalize();

@@ -104,12 +104,20 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    public void setNormal(Vector3d normal)
    {
-      this.normal = normal;
+      if (this.normal == null)
+         this.normal = new Vector3d();
+      this.normal.set(normal);
+   }
+
+   public void resetNormal()
+   {
+      if (normal != null)
+         normal.set(Double.NaN, Double.NaN, Double.NaN);
    }
 
    public boolean isNormalSet()
    {
-      return normal != null;
+      return normal != null && !Double.isNaN(normal.getX()) && !Double.isNaN(normal.getY()) && !Double.isNaN(normal.getZ());
    }
    
    public List<Point3d> getPlane()

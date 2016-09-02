@@ -1,7 +1,6 @@
 package us.ihmc.octoMap.ocTree;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Random;
 
 import javax.vecmath.Point3d;
@@ -38,6 +37,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
+   private final Vector3d tempNormal = new Vector3d();
+
    private void updateNormalsRecursively(NormalOcTreeNode node, OcTreeKeyReadOnly nodeKey, int depth)
    {
       if (depth > treeDepth)
@@ -49,7 +50,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
       if (!isNodeOccupied(node))
       {
-         node.setNormal(null);
+         node.resetNormal();
          return;
       }
 
@@ -70,10 +71,13 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
       else
       {
-         node.setNormal(computeNodeNormal2(nodeKey, depth, true));
+         if (computeNodeNormal2(nodeKey, depth, true, tempNormal))
+            node.setNormal(tempNormal);
+         else
+            node.resetNormal();
       }
 
-      if (node.getNormal() != null)
+      if (node.isNormalSet())
       {
          Point3d center = keyToCoordinate(nodeKey);
          double computeNodeSize = getNodeSize(depth);
@@ -138,20 +142,28 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
+   private final OcTreeKeyList tempNeighborKeysForNormal = new OcTreeKeyList();
+
    public Vector3d computeNodeNormal2(OcTreeKeyReadOnly key, int depth, boolean unknownStatus)
+   {
+      Vector3d normal = new Vector3d();
+      boolean success = computeNodeNormal2(key, depth, unknownStatus, normal);
+      return success ? normal : null;
+   }
+
+   public boolean computeNodeNormal2(OcTreeKeyReadOnly key, int depth, boolean unknownStatus, Vector3d normalToPack)
    {
       NormalOcTreeNode node = search(key, depth);
       if (node == null)
-         return null;
+         return false;
 
-      Vector3d normal = new Vector3d();
       NormalOcTreeNode currentNode;
 
-      List<OcTreeKey> neighborKeys = OcTreeKeyTools.computeNeighborKeys(key, depth, resolution, treeDepth, 0.10);
+      OcTreeKeyTools.computeNeighborKeys(key, depth, resolution, treeDepth, 0.10, tempNeighborKeysForNormal);
 
-      for (int i = 0; i < neighborKeys.size(); i++)
+      for (int i = 0; i < tempNeighborKeysForNormal.size(); i++)
       {
-         OcTreeKey currentKey = neighborKeys.get(i);
+         OcTreeKey currentKey = tempNeighborKeysForNormal.get(i);
          currentNode = search(currentKey, depth);
 
          boolean nodeDoesNotExists = currentNode == null;
@@ -161,27 +173,27 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
          if (isOccupied || isUnknownConsideredOccupied)
          {
-            normal.setX(normal.getX() + Math.signum(key.getKey(0) - currentKey.getKey(0)));
-            normal.setY(normal.getY() + Math.signum(key.getKey(1) - currentKey.getKey(1)));
-            normal.setZ(normal.getZ() + Math.signum(key.getKey(2) - currentKey.getKey(2)));
+            normalToPack.setX(normalToPack.getX() + Math.signum(key.getKey(0) - currentKey.getKey(0)));
+            normalToPack.setY(normalToPack.getY() + Math.signum(key.getKey(1) - currentKey.getKey(1)));
+            normalToPack.setZ(normalToPack.getZ() + Math.signum(key.getKey(2) - currentKey.getKey(2)));
          }
 //         else if (isFree)
 //         {
-//            normal.setX(normal.getX() - Math.signum(key.getKey(0) - currentKey.getKey(0)));
-//            normal.setY(normal.getY() - Math.signum(key.getKey(1) - currentKey.getKey(1)));
-//            normal.setZ(normal.getZ() - Math.signum(key.getKey(2) - currentKey.getKey(2)));
+//            normalToPack.setX(normalToPack.getX() - Math.signum(key.getKey(0) - currentKey.getKey(0)));
+//            normalToPack.setY(normalToPack.getY() - Math.signum(key.getKey(1) - currentKey.getKey(1)));
+//            normalToPack.setZ(normalToPack.getZ() - Math.signum(key.getKey(2) - currentKey.getKey(2)));
 //         }
       }
 
-      double lengthSquared = normal.lengthSquared();
+      double lengthSquared = normalToPack.lengthSquared();
       if (lengthSquared > 1.0e-3)
       {
-         normal.scale(1.0 / Math.sqrt(lengthSquared));
-         return normal;
+         normalToPack.scale(1.0 / Math.sqrt(lengthSquared));
+         return true;
       }
       else
       {
-         return null;
+         return false;
       }
    }
 
@@ -268,7 +280,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   private final OcTreeKeyList tempNeighborKeys = new OcTreeKeyList();
+   private final OcTreeKeyList tempNeighborKeysForPlanarRegion = new OcTreeKeyList();
 
    private void growPlanarRegionIteratively(PlanarRegion planarRegion, OcTreeKeyReadOnly nodeKey, int depth, double searchRadius, double maxMistanceFromPlane,
          double angleThreshold)
@@ -277,8 +289,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       exploredKeys.add(nodeKey);
 
       OcTreeKeyDeque keysToExplore = new OcTreeKeyDeque();
-      OcTreeKeyTools.computeNeighborKeys(nodeKey, depth, resolution, treeDepth, searchRadius, tempNeighborKeys);
-      keysToExplore.addAll(tempNeighborKeys);
+      OcTreeKeyTools.computeNeighborKeys(nodeKey, depth, resolution, treeDepth, searchRadius, tempNeighborKeysForPlanarRegion);
+      keysToExplore.addAll(tempNeighborKeysForPlanarRegion);
       keysToExplore.removeAll(exploredKeys);
 
       while (!keysToExplore.isEmpty())
@@ -295,8 +307,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          {
             planarRegion.update(currentNodeNormal, currentNodeCenter);
             currentNode.setRegionId(planarRegion.getId());
-            OcTreeKeyTools.computeNeighborKeys(currentKey, depth, resolution, treeDepth, searchRadius, tempNeighborKeys);
-            keysToExplore.addAll(tempNeighborKeys);
+            OcTreeKeyTools.computeNeighborKeys(currentKey, depth, resolution, treeDepth, searchRadius, tempNeighborKeysForPlanarRegion);
+            keysToExplore.addAll(tempNeighborKeysForPlanarRegion);
             keysToExplore.removeAll(exploredKeys);
          }
       }
