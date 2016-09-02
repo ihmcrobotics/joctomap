@@ -31,9 +31,13 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       children = new NormalOcTreeNode[8];
    }
 
+   private static long count = 0L;
+
    @Override
    public NormalOcTreeNode create()
    {
+      if (++count % 100000 == 0)
+         System.out.println("Number of nodes created: " + count);
       return new NormalOcTreeNode();
    }
 
@@ -71,7 +75,7 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
          if (child != null && child.isNormalSet())
          {
-            Vector3d childNormal = child.getNormal();
+            Vector3d childNormal = child.normal;
             x += childNormal.getX();
             y += childNormal.getY();
             z += childNormal.getZ();
@@ -89,9 +93,9 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       return normal;
    }
 
-   public Vector3d getNormal()
+   public void getNormal(Vector3d normalToPack)
    {
-      return normal;
+      normalToPack.set(normal);
    }
 
    public void setNormal(Vector3d normal)

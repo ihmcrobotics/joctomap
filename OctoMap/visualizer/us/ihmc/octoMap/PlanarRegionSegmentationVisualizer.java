@@ -141,6 +141,8 @@ public class PlanarRegionSegmentationVisualizer extends Application
       palette.setHueBased(0.9, 0.8);
       MultiColorMeshBuilder occupiedMeshBuilder = new MultiColorMeshBuilder(palette);
 
+      Vector3d nodeNormal = new Vector3d();
+
       LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
@@ -154,8 +156,9 @@ public class PlanarRegionSegmentationVisualizer extends Application
             Color normalBasedColor = getPlanarRegionBasedColor(regionId);
             if (node.isNormalSet())
             {
+               node.getNormal(nodeNormal);
                intersectionPlaneBoxCalculator.setCube(boxSize, boxCenter);
-               intersectionPlaneBoxCalculator.setPlane(boxCenter, node.getNormal());
+               intersectionPlaneBoxCalculator.setPlane(boxCenter, nodeNormal);
                intersectionPlaneBoxCalculator.computeIntersections(plane);
                occupiedMeshBuilder.addPolyon(plane, normalBasedColor);
             }

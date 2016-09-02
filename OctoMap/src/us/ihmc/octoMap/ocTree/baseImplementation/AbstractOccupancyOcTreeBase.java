@@ -21,6 +21,7 @@ import us.ihmc.octoMap.pointCloud.ScanNode;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
+import us.ihmc.robotics.time.TimeTools;
 
 public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOccupancyOcTree<NODE>
 {
@@ -75,7 +76,13 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
    public void insertSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange)
    {
+      System.out.println("Entering insertSweepCollection sweep size: " + sweepCollection.getNumberOfSweeps());
+      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
+         System.out.println("Point cloud size: " + sweepCollection.getSweep(i).size());
+      long startTime = System.nanoTime();
       insertSweepCollection(sweepCollection, minRange, maxRange, false, false);
+      long endTime = System.nanoTime();
+      System.out.println("Exiting  insertSweepCollection took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
    }
 
    public void insertSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange, boolean lazyEvaluation, boolean discretize)

@@ -247,13 +247,14 @@ public class NormalOcTreeVisualizer extends Application
          NormalOcTreeNode node = superNode.getNode();
          if (ocTree.isNodeOccupied(node))
          {
-            Vector3d normal = node.getNormal();
+            Vector3d normal = new Vector3d();
+            node.getNormal(normal);
             boolean isNormalSet = node.isNormalSet();
             Color normalBasedColor = getNormalBasedColor(normal, isNormalSet);
             if (isNormalSet)
             {
                intersectionPlaneBoxCalculator.setCube(boxSize, boxCenter);
-               intersectionPlaneBoxCalculator.setPlane(boxCenter, node.getNormal());
+               intersectionPlaneBoxCalculator.setPlane(boxCenter, normal);
                intersectionPlaneBoxCalculator.computeIntersections(plane);
                occupiedMeshBuilder.addPolyon(plane, normalBasedColor);
             }
