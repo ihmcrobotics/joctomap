@@ -14,6 +14,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
 
    private OcTreeKey[] elementData;
    protected int size = 0;
+   protected double growthFactor = 1.25;
 
    public OcTreeKeyList()
    {
@@ -27,6 +28,11 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
 
       fillElementDataIfNeeded();
       clear();
+   }
+
+   public void setGrowthFactor(double growthFactor)
+   {
+      this.growthFactor = growthFactor;
    }
 
    /**
@@ -312,6 +318,8 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    {
       if (minCapacity <= elementData.length)
          return;
+
+      minCapacity *= growthFactor;
 
       int previousArraySize = elementData.length;
       elementData = Arrays.copyOf(elementData, minCapacity);
