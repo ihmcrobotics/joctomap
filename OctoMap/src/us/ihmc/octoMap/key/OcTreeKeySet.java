@@ -1,51 +1,49 @@
 package us.ihmc.octoMap.key;
 
-import java.util.HashSet;
+import gnu.trove.set.hash.TIntHashSet;
 
-public class OcTreeKeySet extends HashSet<OcTreeKey>
+public class OcTreeKeySet
 {
-   private static final long serialVersionUID = 2780317356917541560L;
+   private final TIntHashSet hashCodeSet;
+   private final OcTreeKeyList keyData;
 
    public OcTreeKeySet()
    {
-      super();
+      this(100);
    }
 
    public OcTreeKeySet(int initialCapacity)
    {
-      super(initialCapacity);
+      hashCodeSet = new TIntHashSet(initialCapacity);
+      keyData = new OcTreeKeyList(initialCapacity);
    }
 
-   @Override
-   public boolean add(OcTreeKey key)
+   public void clear()
    {
-      return add((OcTreeKeyReadOnly) key);
+      hashCodeSet.clear();
+      keyData.clear();
+   }
+
+   public int size()
+   {
+      return keyData.size();
    }
 
    public boolean add(OcTreeKeyReadOnly key)
    {
-      return super.add(new OcTreeKey(key));
+      if (hashCodeSet.add(key.hashCode()))
+      {
+         keyData.add(key);
+         return true;
+      }
+      return false;
    }
 
    public boolean addAll(OcTreeKeyListReadOnly keyList)
    {
       boolean changed = false;
       for (int i = 0; i < keyList.size(); i++)
-      {
-         if (add(keyList.get(i)))
-            changed = true;
-      }
-      return changed;
-   }
-
-   public boolean removeAll(OcTreeKeyListReadOnly keyList)
-   {
-      boolean changed = false;
-      for (int i = 0; i < keyList.size(); i++)
-      {
-         if (remove(keyList.get(i)))
-            changed = true;
-      }
+         changed |= add(keyList.get(i));
       return changed;
    }
 
@@ -53,21 +51,17 @@ public class OcTreeKeySet extends HashSet<OcTreeKey>
    {
       boolean changed = false;
       for (int i = 0; i < keyRay.size(); i++)
-      {
-         if (add(keyRay.get(i)))
-            changed = true;
-      }
+         changed |= add(keyRay.get(i));
       return changed;
    }
 
-   public boolean removeAll(KeyRay keyRay)
+   public boolean contains(OcTreeKeyReadOnly key)
    {
-      boolean changed = false;
-      for (int i = 0; i < keyRay.size(); i++)
-      {
-         if (remove(keyRay.get(i)))
-            changed = true;
-      }
-      return changed;
+      return hashCodeSet.contains(key.hashCode());
+   }
+
+   public OcTreeKeyReadOnly get(int index)
+   {
+      return keyData.get(index);
    }
 }
