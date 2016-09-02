@@ -11,7 +11,7 @@ public class OcTree extends AbstractOccupancyOcTreeBase<OccupancyOcTreeNode>
    }
 
    @Override
-   protected OccupancyOcTreeNode createRootNode()
+   protected OccupancyOcTreeNode createEmptyNode()
    {
       return new OccupancyOcTreeNode();
    }

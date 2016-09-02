@@ -14,7 +14,7 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
    }
 
    @Override
-   protected ColorOcTreeNode createRootNode()
+   protected ColorOcTreeNode createEmptyNode()
    {
       return new ColorOcTreeNode();
    }

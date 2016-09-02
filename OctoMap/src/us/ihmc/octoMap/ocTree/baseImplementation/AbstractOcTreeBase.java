@@ -900,5 +900,5 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return sumLeafsChildren;
    }
 
-   protected abstract NODE createRootNode();
+   protected abstract NODE createEmptyNode();
 }

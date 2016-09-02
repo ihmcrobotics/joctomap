@@ -268,7 +268,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       boolean createdRoot = false;
       if (root == null)
       {
-         root = createRootNode();
+         root = createEmptyNode();
          treeSize++;
          createdRoot = true;
       }
@@ -355,7 +355,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       boolean createdRoot = false;
       if (root == null)
       {
-         root = createRootNode();
+         root = createEmptyNode();
          treeSize++;
          createdRoot = true;
       }

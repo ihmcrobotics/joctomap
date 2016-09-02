@@ -315,7 +315,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    }
 
    @Override
-   protected NormalOcTreeNode createRootNode()
+   protected NormalOcTreeNode createEmptyNode()
    {
       return new NormalOcTreeNode();
    }
