@@ -32,7 +32,7 @@ public class OcTreeKeySet extends HashSet<OcTreeKey>
       boolean changed = false;
       for (int i = 0; i < keyList.size(); i++)
       {
-         if (add(new OcTreeKey(keyList.get(i))))
+         if (add(keyList.get(i)))
             changed = true;
       }
       return changed;
@@ -43,7 +43,7 @@ public class OcTreeKeySet extends HashSet<OcTreeKey>
       boolean changed = false;
       for (int i = 0; i < keyList.size(); i++)
       {
-         if (remove(new OcTreeKey(keyList.get(i))))
+         if (remove(keyList.get(i)))
             changed = true;
       }
       return changed;
@@ -54,7 +54,7 @@ public class OcTreeKeySet extends HashSet<OcTreeKey>
       boolean changed = false;
       for (int i = 0; i < keyRay.size(); i++)
       {
-         if (add(new OcTreeKey(keyRay.get(i))))
+         if (add(keyRay.get(i)))
             changed = true;
       }
       return changed;
@@ -65,7 +65,7 @@ public class OcTreeKeySet extends HashSet<OcTreeKey>
       boolean changed = false;
       for (int i = 0; i < keyRay.size(); i++)
       {
-         if (remove(new OcTreeKey(keyRay.get(i))))
+         if (remove(keyRay.get(i)))
             changed = true;
       }
       return changed;

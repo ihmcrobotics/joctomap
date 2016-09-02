@@ -79,11 +79,11 @@ public abstract class OcTreeSearchTools
          depth = treeDepth;
 
       // generate appropriate keyAtDepth for queried depth
-      OcTreeKey keyAtDepth;
+      OcTreeKeyReadOnly keyAtDepth;
       if (depth != treeDepth)
          keyAtDepth = OcTreeKeyTools.adjustKeyAtDepth(key, depth, treeDepth);
       else
-         keyAtDepth = new OcTreeKey(key);
+         keyAtDepth = key;
 
       NODE currentNode = rootNode;
 
