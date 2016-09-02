@@ -16,13 +16,10 @@ import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
-import us.ihmc.octoMap.tools.IntersectionPlaneBoxCalculator;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 {
-   private final IntersectionPlaneBoxCalculator intersectionPlaneBoxCalculator = new IntersectionPlaneBoxCalculator();
-
    public NormalOcTree(double resolution)
    {
       super(resolution);
@@ -75,19 +72,6 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
             node.setNormal(tempNormal);
          else
             node.resetNormal();
-      }
-
-      if (node.isNormalSet())
-      {
-         Point3d center = keyToCoordinate(nodeKey);
-         double computeNodeSize = getNodeSize(depth);
-         intersectionPlaneBoxCalculator.setCube(computeNodeSize, center);
-         intersectionPlaneBoxCalculator.setPlane(center, node.getNormal());
-         node.setPlane(intersectionPlaneBoxCalculator.computeIntersections());
-      }
-      else
-      {
-         node.setPlane(null);
       }
    }
 

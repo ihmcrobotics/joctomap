@@ -1,9 +1,5 @@
 package us.ihmc.octoMap.node;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.ocTree.PlanarRegion;
@@ -11,7 +7,6 @@ import us.ihmc.octoMap.ocTree.PlanarRegion;
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
 {
    private Vector3d normal = null;
-   private List<Point3d> plane = null;
    private int regionId = PlanarRegion.NO_REGION_ID;
 
    public NormalOcTreeNode()
@@ -27,17 +22,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
          if (normal == null)
             normal = new Vector3d();
          normal.set(other.normal);
-      }
-      if (other.plane != null)
-      {
-         if (plane == null)
-            plane = new ArrayList<>();
-         while (plane.size() < other.plane.size())
-            plane.add(new Point3d());
-         while (plane.size() > other.plane.size())
-            plane.remove(plane.size() - 1);
-         for (int i = 0; i < other.plane.size(); i++)
-            plane.get(i).set(other.plane.get(i));
       }
    }
 
@@ -126,16 +110,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public boolean isNormalSet()
    {
       return normal != null && !Double.isNaN(normal.getX()) && !Double.isNaN(normal.getY()) && !Double.isNaN(normal.getZ());
-   }
-   
-   public List<Point3d> getPlane()
-   {
-      return plane;
-   }
-   
-   public void setPlane(List<Point3d> plane)
-   {
-      this.plane = plane;
    }
 
    public boolean isPartOfRegion()

@@ -31,7 +31,10 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.NormalOcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.tools.IntersectionPlaneBoxCalculator;
 import us.ihmc.robotics.geometry.RotationTools;
+import us.ihmc.robotics.lists.GenericTypeBuilder;
+import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.time.TimeTools;
 
 public class NormalOcTreeVisualizer extends Application
@@ -46,7 +49,7 @@ public class NormalOcTreeVisualizer extends Application
       //      callUpdateNode();
       //      callInsertPointCloud();
 //      createPlane(0.0, 0.0, -0.05);
-      createBowl(2.5, new Point3d());
+      createBowl(0.5, new Point3d());
       System.out.println("Number of leafs: " + ocTree.getNumLeafNodes());
       System.out.println("Initialized octree");
       System.out.println("Computing normals");
@@ -107,9 +110,6 @@ public class NormalOcTreeVisualizer extends Application
       direction.normalize();
       ocTree.castRay(new Point3d(), direction, end);
       
-      NormalOcTreeNode search = ocTree.search(end);
-      if (search != null)
-         System.out.println(search.getPlane());
    }
    
    PointCloud pointcloud = new PointCloud();
@@ -199,7 +199,7 @@ public class NormalOcTreeVisualizer extends Application
    {
       Point3d origin = new Point3d(0.0, 0.0, center.getZ() + 0.0);
 
-      double res = 0.01;
+      double res = 0.05;
       for (double yaw = 0.0; yaw < 2.0 * Math.PI; yaw += res)
       {
          for (double pitch = 0.0; pitch < 0.5 * Math.PI; pitch += res)
@@ -213,6 +213,9 @@ public class NormalOcTreeVisualizer extends Application
 
       ocTree.insertPointCloud(pointcloud, origin);
    }
+
+   private final RecyclingArrayList<Point3d> plane = new RecyclingArrayList<>(GenericTypeBuilder.createBuilderWithEmptyConstructor(Point3d.class));
+   private final IntersectionPlaneBoxCalculator intersectionPlaneBoxCalculator = new IntersectionPlaneBoxCalculator();
 
    @Override
    public void start(Stage primaryStage) throws Exception
@@ -245,10 +248,15 @@ public class NormalOcTreeVisualizer extends Application
          if (ocTree.isNodeOccupied(node))
          {
             Vector3d normal = node.getNormal();
-            Color normalBasedColor = getNormalBasedColor(normal, node.isNormalSet());
-            List<Point3d> plane = node.getPlane();
-            if (plane != null)
+            boolean isNormalSet = node.isNormalSet();
+            Color normalBasedColor = getNormalBasedColor(normal, isNormalSet);
+            if (isNormalSet)
+            {
+               intersectionPlaneBoxCalculator.setCube(boxSize, boxCenter);
+               intersectionPlaneBoxCalculator.setPlane(boxCenter, node.getNormal());
+               intersectionPlaneBoxCalculator.computeIntersections(plane);
                occupiedMeshBuilder.addPolyon(plane, normalBasedColor);
+            }
             else
                occupiedMeshBuilder.addCubeMesh((float) boxSize, new Point3f(boxCenter), normalBasedColor);
          }
