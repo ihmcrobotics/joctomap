@@ -26,6 +26,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
       size = initialSize;
 
       fillElementDataIfNeeded();
+      clear();
    }
 
    /**
