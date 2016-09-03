@@ -67,9 +67,9 @@ public class IntersectionPlaneBoxCalculator
       this.planeNormal.set(planeNormal);
    }
 
-   Vector3d edgeVector = new Vector3d();
-   Vector3d fromPlaneCenterToEdgeStart = new Vector3d();
-   RecyclingArrayList<Point3d> unorderedIntersections = new RecyclingArrayList<>(GenericTypeBuilder.createBuilderWithEmptyConstructor(Point3d.class));
+   private final Vector3d edgeVector = new Vector3d();
+   private final Vector3d fromPlaneCenterToEdgeStart = new Vector3d();
+   private final RecyclingArrayList<Point3d> unorderedIntersections = new RecyclingArrayList<>(GenericTypeBuilder.createBuilderWithEmptyConstructor(Point3d.class));
 
    public List<Point3d> computeIntersections()
    {
