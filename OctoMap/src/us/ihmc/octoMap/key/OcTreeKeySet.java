@@ -64,4 +64,9 @@ public class OcTreeKeySet
    {
       return keyData.get(index);
    }
+
+   public OcTreeKeyReadOnly unsafeGet(int index)
+   {
+      return keyData.unsafeGet(index);
+   }
 }

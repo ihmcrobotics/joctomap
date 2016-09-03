@@ -168,7 +168,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
          return unsafeGet(size - 1);
    }
 
-   protected OcTreeKey unsafeGet(int i)
+   public OcTreeKey unsafeGet(int i)
    {
       return elementData[i];
    }
