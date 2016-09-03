@@ -4,6 +4,7 @@ import static us.ihmc.octoMap.MarchingCubesTables.edgeTable;
 import static us.ihmc.octoMap.MarchingCubesTables.triTable;
 import static us.ihmc.octoMap.MarchingCubesTables.vertexList;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.vecmath.Point3d;
@@ -25,6 +26,8 @@ import us.ihmc.robotics.time.TimeTools;
 
 public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOccupancyOcTree<NODE>
 {
+   private static final boolean USE_UPDATE_NODE_ITERATIVE = false;
+
    protected boolean useBoundingBoxLimit; ///< use bounding box for queries (needs to be set)?
    protected final Point3d boundingBoxMin = new Point3d();
    protected final Point3d boundingBoxMax = new Point3d();
@@ -367,7 +370,15 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          createdRoot = true;
       }
 
-      return updateNodeRecurs(root, createdRoot, key, 0, logOddsUpdate, lazyEvaluation);
+      if (USE_UPDATE_NODE_ITERATIVE)
+      {
+         updateNodeIterative(root, createdRoot, key, logOddsUpdate, lazyEvaluation);
+         return root;
+      }
+      else
+      {
+         return updateNodeRecurs(root, createdRoot, key, 0, logOddsUpdate, lazyEvaluation);
+      }
    }
 
    /**
@@ -1362,6 +1373,56 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             updateNodeLogOdds(node, logOddsUpdate);
          }
          return node;
+      }
+   }
+
+   private final List<NODE> tempNodeArray = new ArrayList<>();
+
+   protected void updateNodeIterative(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, float logOddsUpdate, boolean lazyEvaluation)
+   {
+      NODE parentNode = node;
+      boolean parentNodeJustCreated = nodeJustCreated;
+      tempNodeArray.clear();
+      
+      for (int depth = 0; depth < treeDepth; depth++)
+      {
+         int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
+
+         if (!OcTreeNodeTools.nodeChildExists(parentNode, childIndex))
+         {
+            // child does not exist, but maybe it's a pruned node?
+            if (!parentNode.hasAtLeastOneChild() && !parentNodeJustCreated)
+            {
+               // current node does not have children AND it is not a new node 
+               // -> expand pruned node
+               float updatedLogOdds = computeUpdatedLogOdds(parentNode, logOddsUpdate);
+               if (Math.abs(updatedLogOdds - parentNode.getLogOdds()) > 1.0e-3f)
+                  expandNode(parentNode);
+               else
+                  break;
+            }
+            else
+            {
+               // not a pruned node, create requested child
+               createNodeChild(parentNode, childIndex);
+               parentNodeJustCreated = true;
+            }
+         }
+
+         tempNodeArray.add(parentNode = parentNode.getChildUnsafe(childIndex));
+      }
+
+      updateNodeLogOdds(tempNodeArray.get(tempNodeArray.size() - 1), logOddsUpdate);
+
+      if (!lazyEvaluation)
+      {
+         for (int depth = tempNodeArray.size() - 2; depth >= 0; depth--)
+         {
+            NODE currentNode = tempNodeArray.get(depth);
+            if (!pruneNode(currentNode))
+               currentNode.updateOccupancyChildren();
+         }
+         node.updateOccupancyChildren();
       }
    }
 
