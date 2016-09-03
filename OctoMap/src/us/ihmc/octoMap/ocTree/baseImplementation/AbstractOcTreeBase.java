@@ -629,7 +629,9 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    public Iterable<OcTreeSuperNode<NODE>> leafBoundingBoxIterable(OcTreeKeyReadOnly min, OcTreeKeyReadOnly max)
    {
-      return new LeafBoundingBoxIterable<>(this, min, max, 0); // TODO Organize imports;
+      LeafBoundingBoxIterable<NODE> iterable = new LeafBoundingBoxIterable<>(this, 0);
+      iterable.setBoundingBox(min, max);
+      return iterable; // TODO Organize imports;
    }
 
    //
