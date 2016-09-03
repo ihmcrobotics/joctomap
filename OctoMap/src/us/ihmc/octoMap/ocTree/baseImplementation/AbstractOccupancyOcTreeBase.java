@@ -100,12 +100,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
       // insert data into tree  -----------------------
       for (int i = 0; i < occupiedCells.size(); i++)
-         updateNode(occupiedCells.get(i), true, lazyEvaluation);
+         updateNode(occupiedCells.unsafeGet(i), true, lazyEvaluation);
 
       for (int i = 0; i < freeCells.size(); i++)
-         updateNode(freeCells.get(i), false, lazyEvaluation);
-//      occupiedCells.parallelStream().forEach((key) -> updateNode(key, true, lazyEvaluation));
-//      freeCells.parallelStream().forEach((key) -> updateNode(key, false, lazyEvaluation));
+         updateNode(freeCells.unsafeGet(i), false, lazyEvaluation);
    }
 
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)
@@ -148,10 +146,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
       // insert data into tree  -----------------------
       for (int i = 0; i < occupiedCells.size(); i++)
-         updateNode(occupiedCells.get(i), true, lazyEvaluation);
+         updateNode(occupiedCells.unsafeGet(i), true, lazyEvaluation);
 
       for (int i = 0; i < freeCells.size(); i++)
-         updateNode(freeCells.get(i), false, lazyEvaluation);
+         updateNode(freeCells.unsafeGet(i), false, lazyEvaluation);
    }
 
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, RigidBodyTransform frameOrigin)
@@ -1161,7 +1159,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       // prefer occupied cells over free ones (and make sets disjunct)
       for (int i = 0; i < unfilteredFreeCells.size(); i++)
       {
-         OcTreeKeyReadOnly possibleFreeCell = unfilteredFreeCells.get(i);
+         OcTreeKeyReadOnly possibleFreeCell = unfilteredFreeCells.unsafeGet(i);
          if (!occupiedCells.contains(possibleFreeCell))
             freeCells.add(possibleFreeCell);
       }
@@ -1230,16 +1228,19 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public void updateNodeLogOdds(NODE occupancyNode, float update)
    {
-      occupancyNode.addValue(update);
-      if (occupancyNode.getLogOdds() < minOccupancyLogOdds)
+      occupancyNode.setLogOdds(computeUpdatedLogOdds(occupancyNode, update));
+   }
+
+   public float computeUpdatedLogOdds(NODE occupancyNode, float update)
+   {
+      float logOdds = occupancyNode.getLogOdds() + update;
+      if (logOdds < minOccupancyLogOdds)
+         logOdds = minOccupancyLogOdds;
+      else if (logOdds > maxOccupancyLogOdds)
       {
-         occupancyNode.setLogOdds(minOccupancyLogOdds);
-         return;
+         logOdds = maxOccupancyLogOdds;
       }
-      if (occupancyNode.getLogOdds() > maxOccupancyLogOdds)
-      {
-         occupancyNode.setLogOdds(maxOccupancyLogOdds);
-      }
+      return logOdds;
    }
 
    /**
@@ -1458,10 +1459,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          {
             for (int i = 0; i < 8; i++)
             {
-               if (OcTreeNodeTools.nodeChildExists(node, i))
-               {
-                  updateInnerOccupancyRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1);
-               }
+               NODE childNode;
+               if ((childNode = node.getChildUnsafe(i)) != null)
+                  updateInnerOccupancyRecurs(childNode, depth + 1);
             }
          }
          node.updateOccupancyChildren();

@@ -873,19 +873,21 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive call of prune()
-   protected int pruneRecurs(NODE node, int depth, int max_depth, int num_pruned)
+   protected int pruneRecurs(NODE node, int depth, int max_depth, int numberOfPrunedNode)
    {
       if (node == null)
          throw new RuntimeException("The given node is null");
+
+      if (!node.hasAtLeastOneChild())
+         return numberOfPrunedNode;
 
       if (depth < max_depth)
       {
          for (int i = 0; i < 8; i++)
          {
-            if (OcTreeNodeTools.nodeChildExists(node, i))
-            {
-               num_pruned = pruneRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1, max_depth, num_pruned);
-            }
+            NODE childNode;
+            if ((childNode = node.getChildUnsafe(i)) != null)
+               numberOfPrunedNode = pruneRecurs(childNode, depth + 1, max_depth, numberOfPrunedNode);
          }
       } // end if depth
       else
@@ -893,11 +895,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          // max level reached
          if (pruneNode(node))
          {
-            num_pruned++;
+            numberOfPrunedNode++;
          }
       }
 
-      return num_pruned;
+      return numberOfPrunedNode;
    }
 
    /** recursive call of expand() */

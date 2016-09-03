@@ -7,7 +7,6 @@ import javax.vecmath.Point3d;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
-import us.ihmc.octoMap.node.OcTreeNodeTools;
 
 public abstract class OcTreeSearchTools
 {
@@ -93,10 +92,11 @@ public abstract class OcTreeSearchTools
       for (int currentDepth = (treeDepth - 1); currentDepth >= level; --currentDepth)
       {
          int childIndex = OcTreeKeyTools.computeChildIndex(keyAtDepth, currentDepth);
+         NODE childNode;
 
-         if (OcTreeNodeTools.nodeChildExists(currentNode, childIndex))
+         if (currentNode.hasArrayForChildren() && (childNode = currentNode.getChildUnsafe(childIndex)) != null)
          {
-            currentNode = OcTreeNodeTools.getNodeChild(currentNode, childIndex);
+            currentNode = childNode;
          }
          else
          {
