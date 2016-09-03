@@ -884,7 +884,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
       return getNormals(initKey, normals, unknownStatus);
    }
-   
+
    public boolean getNormals(OcTreeKeyReadOnly key, List<Vector3d> normals)
    {
       return getNormals(key, normals, true);
@@ -902,7 +902,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
       // There is 8 neighbouring sets
       // The current cube can be at any of the 8 vertex
-      int[][] xIndex = new int[][] {{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0, - 1, -1}, {0, 0, - 1, -1}};
+      int[][] xIndex = new int[][] {{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0, -1, -1}, {0, 0, -1, -1}};
       int[][] yIndex = new int[][] {{1, 0, 0, 1}, {0, -1, -1, 0}, {0, -1, -1, 0}, {1, 0, 0, 1}};
       int[][] zIndex = new int[][] {{0, 1}, {-1, 0}};
 
@@ -1003,7 +1003,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       {
          System.err.println(AbstractOccupancyOcTreeBase.class.getSimpleName() + " (in setBoundingBoxMin): ERROR while generating bbx min key.");
       }
-      
+
       boundingBoxMin.set(min);
       boundingBoxMinKey.set(newKey);
    }
@@ -1328,10 +1328,11 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          }
 
          if (lazyEvaluation)
+         {
             return updateNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), createdNode, key, depth + 1, logOddsUpdate, lazyEvaluation);
+         }
          else
          {
-//            NODE retval = updateNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), createdNode, key, depth + 1, logOddsUpdate, lazyEvaluation);
             NODE retval = updateNodeRecurs(node.getChildUnsafe(pos), createdNode, key, depth + 1, logOddsUpdate, lazyEvaluation);
             // prune node if possible, otherwise set own probability
             // note: combining both did not lead to a speedup!
@@ -1383,7 +1384,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       NODE parentNode = node;
       boolean parentNodeJustCreated = nodeJustCreated;
       tempNodeArray.clear();
-      
+
       for (int depth = 0; depth < treeDepth; depth++)
       {
          int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
