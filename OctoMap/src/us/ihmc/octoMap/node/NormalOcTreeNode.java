@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.node;
 
+import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.ocTree.PlanarRegion;
@@ -9,6 +11,9 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    private float normalX = Float.NaN;
    private float normalY = Float.NaN;
    private float normalZ = Float.NaN;
+   private float centerX = Float.NaN;
+   private float centerY = Float.NaN;
+   private float centerZ = Float.NaN;
    private int regionId = PlanarRegion.NO_REGION_ID;
 
    public NormalOcTreeNode()
@@ -109,6 +114,99 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public boolean isNormalSet()
    {
       return !Float.isNaN(normalX) && !Float.isNaN(normalY) && !Float.isNaN(normalZ);
+   }
+
+   public void resetCenter()
+   {
+      centerX = Float.NaN;
+      centerY = Float.NaN;
+      centerZ = Float.NaN;
+   }
+
+   public boolean isCenterSet()
+   {
+      return !Float.isNaN(centerX) && !Float.isNaN(centerY) && !Float.isNaN(centerY);
+   }
+
+   public void getCenter(Point3d centerToPack)
+   {
+      centerToPack.set(centerX, centerY, centerZ);
+   }
+
+   public void setCenter(Point3d center)
+   {
+      centerX = (float) center.getX();
+      centerY = (float) center.getY();
+      centerZ = (float) center.getZ();
+   }
+
+   public void updateCenter(Point3d centerUpdate, double alphaUpdate)
+   {
+      float xUpdate = (float) centerUpdate.getX();
+      float yUpdate = (float) centerUpdate.getY();
+      float zUpdate = (float) centerUpdate.getZ();
+      updateCenter(xUpdate, yUpdate, zUpdate, (float) alphaUpdate);
+   }
+
+   public void updateCenter(Point3f centerUpdate, double alphaUpdate)
+   {
+      float xUpdate = centerUpdate.getX();
+      float yUpdate = centerUpdate.getY();
+      float zUpdate = centerUpdate.getZ();
+      updateCenter(xUpdate, yUpdate, zUpdate, (float) alphaUpdate);
+   }
+
+   public void updateCenter(float xUpdate, float yUpdate, float zUpdate, float alphaUpdate)
+   {
+      if (!isCenterSet())
+      {
+         centerX = xUpdate;
+         centerY = yUpdate;
+         centerZ = zUpdate;
+      }
+      else
+      {
+         centerX = alphaUpdate * xUpdate + (1.0f - alphaUpdate) * centerX;
+         centerY = alphaUpdate * yUpdate + (1.0f - alphaUpdate) * centerY;
+         centerZ = alphaUpdate * zUpdate + (1.0f - alphaUpdate) * centerZ;
+      }
+   }
+
+   public void updateCenterChildren()
+   {
+      if (children == null)
+      {
+         resetNormal();
+         return;
+      }
+
+      centerX = 0.0f;
+      centerY = 0.0f;
+      centerZ = 0.0f;
+      int count = 0;
+
+      for (int i = 0; i < 8; i++)
+      {
+         NormalOcTreeNode child = children[i];
+
+         if (child != null && child.isCenterSet())
+         {
+            centerX += child.centerX;
+            centerY += child.centerY;
+            centerZ += child.centerZ;
+            count++;
+         }
+      }
+
+      if (count == 0)
+      {
+         resetCenter();
+         return;
+      }
+      double invCount = 1.0 / count;
+      centerX *= invCount;
+      centerY *= invCount;
+      centerZ *= invCount;
    }
 
    public boolean isPartOfRegion()

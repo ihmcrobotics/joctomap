@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Random;
 
 import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
@@ -16,6 +17,8 @@ import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
+import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
@@ -301,6 +304,50 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
             keysToExplore.addAll(tempNeighborKeysForPlanarRegion);
             keysToExplore.removeAll(exploredKeys);
          }
+      }
+   }
+
+
+   public void updateSweepCollectionHitLocations(SweepCollection sweepCollection, double alphaUpdate, boolean lazyEvaluation)
+   {
+      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i ++)
+         updateHitLocations(sweepCollection.getSweep(i), alphaUpdate, lazyEvaluation);
+   }
+
+   public void updateHitLocations(PointCloud pointCloud, double alphaUpdate, boolean lazyEvaluation)
+   {
+      for (int i = 0; i < pointCloud.size(); i++)
+      {
+         Point3f point = pointCloud.getPoint(i);
+         OcTreeKey key = coordinateToKey(point);
+         updateNodeCenter(root, key, 0, point, alphaUpdate, lazyEvaluation);
+      }
+   }
+
+   private void updateNodeCenter(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, Point3f centerUpdate, double alphaUpdate, boolean lazyEvaluation)
+   {
+      if (depth < treeDepth)
+      {
+         int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
+         NormalOcTreeNode child;
+         if (node.hasArrayForChildren() && (child = node.getChildUnsafe(childIndex)) != null)
+         {
+            updateNodeCenter(child, key, depth + 1, centerUpdate, alphaUpdate, lazyEvaluation);
+            
+            if (!lazyEvaluation)
+               node.updateCenterChildren();
+            return;
+         }
+         else
+         {
+            node.updateCenter(centerUpdate, alphaUpdate);
+            return;
+         }
+      }
+      else
+      {
+         node.updateCenter(centerUpdate, alphaUpdate);
+         return;
       }
    }
 
