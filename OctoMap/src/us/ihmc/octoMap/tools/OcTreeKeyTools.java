@@ -1,10 +1,10 @@
 package us.ihmc.octoMap.tools;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyList;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.robotics.MathTools;
 
 /**
@@ -25,7 +25,7 @@ public class OcTreeKeyTools
     * @param parentKey current (parent) key
     * @return
     */
-   public static OcTreeKey computeChildKey(int childIndex, OcTreeKey parentKey, int childDepth, int treeDepth)
+   public static OcTreeKey computeChildKey(int childIndex, OcTreeKeyReadOnly parentKey, int childDepth, int treeDepth)
    {
       OcTreeKey childKey = new OcTreeKey();
       computeChildKey(childIndex, parentKey, childKey, childDepth, treeDepth);
@@ -40,7 +40,7 @@ public class OcTreeKeyTools
     * @param parentKey current (parent) key
     * @param childKeyToPack  computed child key
     */
-   public static void computeChildKey(int childIndex, OcTreeKey parentKey, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
+   public static void computeChildKey(int childIndex, OcTreeKeyReadOnly parentKey, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
    {
       int keyMin = computeMinimumKeyAtDepth(childDepth, treeDepth);
 
@@ -67,7 +67,7 @@ public class OcTreeKeyTools
     * @param depth
     * @return
     */
-   public static int computeChildIndex(OcTreeKey key, int depth)
+   public static int computeChildIndex(OcTreeKeyReadOnly key, int depth)
    {
       int childIndex = 0;
       int temp = (int) ((char) (1 << depth) % Character.MAX_VALUE);
@@ -91,7 +91,7 @@ public class OcTreeKeyTools
     *
     * @return key corresponding to the input key at the given level
     */
-   public static OcTreeKey computeIndexKey(OcTreeKey key, int depth, int treeDepth)
+   public static OcTreeKey computeIndexKey(OcTreeKeyReadOnly key, int depth, int treeDepth)
    {
       int level = treeDepth - depth;
 
@@ -144,10 +144,10 @@ public class OcTreeKeyTools
     * @param depth Target depth level for the new key
     * @return Key for the new depth level
     */
-   public static OcTreeKey adjustKeyAtDepth(OcTreeKey key, int depth, int treeDepth)
+   public static OcTreeKey adjustKeyAtDepth(OcTreeKeyReadOnly key, int depth, int treeDepth)
    {
       if (depth == treeDepth)
-         return key;
+         return new OcTreeKey(key);
 
       OctoMapTools.checkIfDepthValid(depth, treeDepth);
 
@@ -249,7 +249,7 @@ public class OcTreeKeyTools
       return 1 << depth;
    }
 
-   public static boolean isInsideBoundingBox(OcTreeKey minKey, OcTreeKey maxKey, OcTreeKey keyToTest, int depth, int treeDepth)
+   public static boolean isInsideBoundingBox(OcTreeKeyReadOnly minKey, OcTreeKeyReadOnly maxKey, OcTreeKeyReadOnly keyToTest, int depth, int treeDepth)
    {
       int minKeyValue = OcTreeKeyTools.computeMinimumKeyAtDepth(depth, treeDepth);
       if (keyToTest.getKey(0) < minKey.getKey(0) - minKeyValue)
@@ -289,14 +289,21 @@ public class OcTreeKeyTools
       return keyToCheck >= computeMinimumKeyAtDepth(depth, treeDepth) && keyToCheck <= computeMaximumKeyValueAtDepth(depth, treeDepth);
    }
 
-   public static List<OcTreeKey> computeNeighborKeys(OcTreeKey key, int depth, double resolution, int treeDepth, double searchRadius)
+   public static OcTreeKeyList computeNeighborKeys(OcTreeKeyReadOnly key, int depth, double resolution, int treeDepth, double searchRadius)
    {
+      OcTreeKeyList neighborKeys = new OcTreeKeyList();
+      computeNeighborKeys(key, depth, resolution, treeDepth, searchRadius, neighborKeys);
+      return neighborKeys;
+   }
+
+   public static void computeNeighborKeys(OcTreeKeyReadOnly key, int depth, double resolution, int treeDepth, double searchRadius, OcTreeKeyList neighborKeysToPack)
+   {
+      neighborKeysToPack.clear();
       OctoMapTools.checkIfDepthValid(depth, treeDepth);
 
       if (depth == 0)
          depth = treeDepth;
 
-      List<OcTreeKey> neighborKeys = new ArrayList<>();
       double nodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
       int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
 
@@ -334,10 +341,9 @@ public class OcTreeKeyTools
                if (!isKeyValid(k1, depth, treeDepth)) // Check if we are still in the octree
                   continue;
 
-               neighborKeys.add(new OcTreeKey(k0, k1, k2));
+               neighborKeysToPack.add(k0, k1, k2);
             }
          }
       }
-      return neighborKeys;
    }
 }

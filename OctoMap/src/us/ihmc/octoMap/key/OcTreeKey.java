@@ -5,9 +5,9 @@ import java.util.Random;
 
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
-public class OcTreeKey
+public class OcTreeKey implements OcTreeKeyReadOnly
 {
-   private int[] k = new int[3];
+   private char[] k = new char[3];
 
    public OcTreeKey()
    {
@@ -15,46 +15,47 @@ public class OcTreeKey
 
    public OcTreeKey(int a, int b, int c)
    {
-      k[0] = (int) (char) a;
-      k[1] = (int) (char) b;
-      k[2] = (int) (char) c;
+      k[0] = (char) a;
+      k[1] = (char) b;
+      k[2] = (char) c;
    }
 
-   public OcTreeKey(OcTreeKey other)
+   public OcTreeKey(OcTreeKeyReadOnly other)
    {
       set(other);
    }
 
-   public void set(OcTreeKey other)
+   public void set(OcTreeKeyReadOnly other)
    {
       for (int i = 0; i < 3; i++)
-         k[i] = (int) (char) other.k[i];
+         k[i] = (char) other.getKey(i);
    }
 
    public void set(int k0, int k1, int k2)
    {
-      k[0] = (int) (char) k0;
-      k[1] = (int) (char) k1;
-      k[2] = (int) (char) k2;
+      k[0] = (char) k0;
+      k[1] = (char) k1;
+      k[2] = (char) k2;
    }
 
    public void set(int key[])
    {
       for (int i = 0; i < 3; i++)
-         k[i] = (int) (char) key[i];
+         k[i] = (char) key[i];
    }
 
    public void setKey(int index, int keyValue)
    {
-      k[index] = (int) (char) keyValue;
+      k[index] = (char) keyValue;
    }
 
    public void addKey(int index, int keyValue)
    {
       k[index] += keyValue;
-      k[index] = (int) (char) k[index];
+      k[index] = (char) k[index];
    }
 
+   @Override
    public int getKey(int index)
    {
       return k[index];
@@ -69,6 +70,7 @@ public class OcTreeKey
          return false;
    }
 
+   @Override
    public boolean equals(OcTreeKey other)
    {
       return k[0] == other.k[0] && k[1] == other.k[1] && k[2] == other.k[2];

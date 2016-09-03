@@ -1,5 +1,6 @@
 package us.ihmc.octoMap.ocTree.baseImplementation;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -12,8 +13,8 @@ import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
 import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
-import us.ihmc.octoMap.key.KeyRay;
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
@@ -41,6 +42,8 @@ import us.ihmc.octoMap.tools.OctoMapTools;
 public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
    protected NODE root; ///< root NODE, null for empty tree
+   private List<NODE> unusedNodes = new ArrayList<>(50000000);
+   private List<NODE[]> unusedNodeArrays = new ArrayList<>(50000000 / 8);
 
    // constants of the tree
    /** Maximum tree depth (fixed to 16 usually) */
@@ -55,7 +58,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    protected double min_value[] = new double[3]; ///< min in x, y, z
 
    /// data structure for ray casting, array for multithreading
-   protected List<KeyRay> keyrays = new ArrayList<>();
 
    public AbstractOcTreeBase(double resolution)
    {
@@ -73,6 +75,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       init();
       // no longer create an empty root node - only on demand
+      ensureCapacityUnusedPools(2000000);
    }
 
    public AbstractOcTreeBase(AbstractOcTreeBase<NODE> other)
@@ -82,6 +85,17 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       init();
       if (other.root != null)
          root = other.root.cloneRecursive();
+   }
+
+   @SuppressWarnings("unchecked")
+   public void ensureCapacityUnusedPools(int minCapacity)
+   {
+      while (unusedNodes.size() < minCapacity)
+         unusedNodes.add(createEmptyNode());
+      
+      NODE node = root != null ? root : createEmptyNode();
+      while (unusedNodeArrays.size() < minCapacity)
+         unusedNodeArrays.add((NODE[]) Array.newInstance(node.getClass(), 8));
    }
 
    /**
@@ -156,16 +170,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
    }
 
-   /**
-    * Clear KeyRay vector to minimize unneeded memory. This is only
-    * useful for the StaticMemberInitializer classes, don't call it for
-    * an octree that is actually used.
-    */
-   public void clearKeyRays()
-   {
-      keyrays.clear();
-   }
-
    // -- Tree structure operations formerly contained in the nodes ---
 
    /// Creates (allocates) the i-th child of the node. @return ptr to newly create NODE
@@ -173,11 +177,16 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
       OcTreeNodeTools.checkChildIndex(childIndex);
       if (!node.hasArrayForChildren())
-         node.allocateChildren();
+      {
+         if (unusedNodeArrays.isEmpty())
+            node.allocateChildren();
+         else
+            node.assignChildren(unusedNodeArrays.remove(unusedNodeArrays.size() - 1));
+      }
 
       if (node.getChildUnsafe(childIndex) != null)
          throw new RuntimeException("Something went wrong.");
-      NODE newChildNode = node.create();
+      NODE newChildNode = unusedNodes.isEmpty() ? node.create() : unusedNodes.remove(unusedNodes.size() - 1);
       node.setChild(childIndex, newChildNode);
 
       treeSize++;
@@ -193,7 +202,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       OcTreeNodeTools.checkNodeHasChildren(node);
       OcTreeNodeTools.checkNodeChildNotNull(node, childIndex);
 
-      node.removeChild(childIndex);
+      unusedNodes.add(node.removeChild(childIndex));
 
       treeSize--;
       size_changed = true;
@@ -207,26 +216,42 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     */
    public boolean isNodeCollapsible(NODE node)
    {
-      // all children must exist, must not have children of
-      // their own and have the same occupancy probability
-      if (!OcTreeNodeTools.nodeChildExists(node, 0))
+//      // all children must exist, must not have children of
+//      // their own and have the same occupancy probability
+//      if (!OcTreeNodeTools.nodeChildExists(node, 0))
+//         return false;
+//
+//      NODE firstChild = OcTreeNodeTools.getNodeChild(node, 0);
+//      if (firstChild.hasAtLeastOneChild())
+//         return false;
+//
+//      for (int i = 1; i < 8; i++)
+//      {
+//         if (!OcTreeNodeTools.nodeChildExists(node, i))
+//            return false;
+//
+//         NODE currentChild = OcTreeNodeTools.getNodeChild(node, i);
+//
+//         if (currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
+//            return false;
+//      }
+//
+//      return true;
+
+      if (!node.hasArrayForChildren())
          return false;
 
-      NODE firstChild = OcTreeNodeTools.getNodeChild(node, 0);
-      if (firstChild.hasAtLeastOneChild())
+      NODE firstChild = node.getChildUnsafe(0);
+      if (firstChild == null || firstChild.hasAtLeastOneChild())
          return false;
 
       for (int i = 1; i < 8; i++)
       {
-         if (!OcTreeNodeTools.nodeChildExists(node, i))
-            return false;
+         NODE currentChild = node.getChildUnsafe(i);
 
-         NODE currentChild = OcTreeNodeTools.getNodeChild(node, i);
-
-         if (currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
+         if (currentChild == null || currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
             return false;
       }
-
       return true;
    }
 
@@ -267,7 +292,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          deleteNodeChild(node, i);
       }
-      node.removeChildren();
+      unusedNodeArrays.add(node.removeChildren());
 
       return true;
    }
@@ -319,12 +344,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public NODE search(OcTreeKey key)
+   public NODE search(OcTreeKeyReadOnly key)
    {
       return OcTreeSearchTools.search(root, key, treeDepth);
    }
 
-   public NODE search(OcTreeKey key, int depth)
+   public NODE search(OcTreeKeyReadOnly key, int depth)
    {
       return OcTreeSearchTools.search(root, key, depth, treeDepth);
    }
@@ -383,12 +408,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     *  delete at the lowest level unless depth !=0, and expand pruned inner nodes as needed.
     *  Pruned nodes at level "depth" will directly be deleted as a whole.
     */
-   public boolean deleteNode(OcTreeKey key)
+   public boolean deleteNode(OcTreeKeyReadOnly key)
    {
       return deleteNode(key, 0);
    }
 
-   public boolean deleteNode(OcTreeKey key, int depth)
+   public boolean deleteNode(OcTreeKeyReadOnly key, int depth)
    {
       if (root == null)
          return true;
@@ -571,184 +596,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
    }
 
-   // -- raytracing  -----------------------
-
-   /**
-   * Traces a ray from origin to end (excluding), returning an
-   * OcTreeKey of all nodes traversed by the beam. You still need to check
-   * if a node at that coordinate exists (e.g. with search()).
-   *
-   * @param origin start coordinate of ray
-   * @param end end coordinate of ray
-   * @param ray KeyRay structure that holds the keys of all nodes traversed by the ray, excluding "end"
-   * @return Success of operation. Returning false usually means that one of the coordinates is out of the OcTree's range
-   */
-   public boolean computeRayKeys(Point3d origin, Point3d end, KeyRay ray)
-   {
-      // see "A Faster Voxel Traversal Algorithm for Ray Tracing" by Amanatides & Woo
-      // basically: DDA in 3D
-
-      ray.clear();
-
-      OcTreeKey keyOrigin = coordinateToKey(origin);
-      OcTreeKey keyEnd = coordinateToKey(end);
-
-      if (keyOrigin == null || keyEnd == null)
-      {
-         System.err.println(AbstractOcTreeBase.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
-         return false;
-      }
-
-      if (keyOrigin.equals(keyEnd))
-         return true; // same tree cell, we're done.
-
-      ray.addKey(keyOrigin);
-
-      // Initialization phase -------------------------------------------------------
-
-      Vector3d direction = new Vector3d();
-      direction.sub(end, origin);
-      double length = direction.length();
-      direction.scale(1.0 / length);
-
-      double[] directionArray = new double[3];
-      double[] originArray = new double[3];
-
-      direction.get(directionArray);
-      origin.get(originArray);
-
-      int[] step = new int[3];
-      double[] tMax = new double[3];
-      double[] tDelta = new double[3];
-
-      OcTreeKey currentKey = new OcTreeKey(keyOrigin);
-
-      for (int i = 0; i < 3; ++i)
-      {
-         // compute step direction
-         if (directionArray[i] > 0.0)
-            step[i] = 1;
-         else if (directionArray[i] < 0.0)
-            step[i] = -1;
-         else
-            step[i] = 0;
-
-         // compute tMax, tDelta
-         if (step[i] != 0)
-         {
-            // corner point of voxel (in direction of ray)
-            double voxelBorder = keyToCoordinate(currentKey.getKey(i));
-            voxelBorder += (float) (step[i] * resolution * 0.5);
-
-            tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
-            tDelta[i] = resolution / Math.abs(directionArray[i]);
-         }
-         else
-         {
-            tMax[i] = Double.POSITIVE_INFINITY;
-            tDelta[i] = Double.POSITIVE_INFINITY;
-         }
-      }
-
-      // Incremental phase  ---------------------------------------------------------
-
-      boolean done = false;
-      while (!done)
-      {
-         int dim;
-
-         // find minimum tMax:
-         if (tMax[0] < tMax[1])
-         {
-            if (tMax[0] < tMax[2])
-               dim = 0;
-            else
-               dim = 2;
-         }
-         else
-         {
-            if (tMax[1] < tMax[2])
-               dim = 1;
-            else
-               dim = 2;
-         }
-
-         // advance in direction "dim"
-         currentKey.addKey(dim, step[dim]);
-         tMax[dim] += tDelta[dim];
-
-         // reached endpoint, key equv?
-         if (currentKey.equals(keyEnd))
-         {
-            done = true;
-            break;
-         }
-         else
-         {
-            // reached endpoint world coords?
-            // dist_from_origin now contains the length of the ray when traveled until the border of the current voxel
-            double distanceFromOrigin;// = Math.min(Math.min(tMax[0], tMax[1]), tMax[2]);
-
-            if (tMax[0] < tMax[1])
-            {
-               if (tMax[0] < tMax[2])
-                  distanceFromOrigin = tMax[0];
-               else
-                  distanceFromOrigin = tMax[2];
-            }
-            else
-            {
-               if (tMax[1] < tMax[2])
-                  distanceFromOrigin = tMax[1];
-               else
-                  distanceFromOrigin = tMax[2];
-            }
-            
-            // if this is longer than the expected ray length, we should have already hit the voxel containing the end point with the code above (key_end).
-            // However, we did not hit it due to accumulating discretization errors, so this is the point here to stop the ray as we would never reach the voxel key_end
-            if (distanceFromOrigin > length)
-            {
-               done = true;
-               break;
-            }
-            else
-            { // continue to add freespace cells
-               ray.addKey(currentKey);
-            }
-         }
-
-         if (ray.size() >= ray.sizeMax() - 1)
-            break;
-
-      } // end while
-
-      return true;
-   }
-
-   /**
-   * Traces a ray from origin to end (excluding), returning the
-   * coordinates of all nodes traversed by the beam. You still need to check
-   * if a node at that coordinate exists (e.g. with search()).
-   * @note: use the faster computeRayKeys method if possible.
-   * 
-   * @param origin start coordinate of ray
-   * @param end end coordinate of ray
-   * @param ray KeyRay structure that holds the keys of all nodes traversed by the ray, excluding "end"
-   * @return Success of operation. Returning false usually means that one of the coordinates is out of the OcTree's range
-   */
-   public boolean computeRay(Point3d origin, Point3d end, List<Point3d> ray)
-   {
-      ray.clear();
-
-      if (!computeRayKeys(origin, end, keyrays.get(0)))
-         return false;
-      for (OcTreeKey key : keyrays.get(0))
-      {
-         ray.add(keyToCoordinate(key));
-      }
-      return true;
-   }
-
    @Override
    public Iterator<OcTreeSuperNode<NODE>> iterator()
    {
@@ -780,9 +627,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return new OcTreeIterable<>(this, maxDepth);
    }
 
-   public Iterable<OcTreeSuperNode<NODE>> leafBoundingBoxIterable(OcTreeKey min, OcTreeKey max)
+   public Iterable<OcTreeSuperNode<NODE>> leafBoundingBoxIterable(OcTreeKeyReadOnly min, OcTreeKeyReadOnly max)
    {
-      return new LeafBoundingBoxIterable<>(this, min, max, 0); // TODO Organize imports;
+      LeafBoundingBoxIterable<NODE> iterable = new LeafBoundingBoxIterable<>(this, 0);
+      iterable.setBoundingBox(min, max);
+      return iterable; // TODO Organize imports;
    }
 
    //
@@ -849,25 +698,25 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
-   public Point3d keyToCoordinate(OcTreeKey key)
+   public Point3d keyToCoordinate(OcTreeKeyReadOnly key)
    {
       return OcTreeKeyConversionTools.keyToCoordinate(key, resolution, treeDepth);
    }
 
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
-   public Point3d keyToCoordinate(OcTreeKey key, int depth)
+   public Point3d keyToCoordinate(OcTreeKeyReadOnly key, int depth)
    {
       return OcTreeKeyConversionTools.keyToCoordinate(key, depth, resolution, treeDepth);
    }
 
    /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
-   public void keyToCoordinate(OcTreeKey key, Point3d coordinateToPack)
+   public void keyToCoordinate(OcTreeKeyReadOnly key, Point3d coordinateToPack)
    {
       OcTreeKeyConversionTools.keyToCoordinate(key, coordinateToPack, resolution, treeDepth);
    }
 
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
-   public void keyToCoordinate(OcTreeKey key, Point3d coordinateToPack, int depth)
+   public void keyToCoordinate(OcTreeKeyReadOnly key, Point3d coordinateToPack, int depth)
    {
       OcTreeKeyConversionTools.keyToCoordinate(key, depth, coordinateToPack, resolution, treeDepth);
    }
@@ -882,9 +731,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          min_value[i] = Double.POSITIVE_INFINITY;
       }
       size_changed = true;
-
-      keyrays.clear();
-      keyrays.add(new KeyRay(1000));
    }
 
    /// recalculates min and max in x, y, z. Does nothing when tree size didn't change.
@@ -968,16 +814,20 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          for (int i = 0; i < 8; i++)
          {
-            NODE child = node.getChildUnsafe(i);
+            NODE child = node.removeChildUnsafe(i);
             if (child != null)
+            {
+               unusedNodes.add(child);
                deleteNodeRecurs(child);
+            }
          }
-         node.removeChildren();
+
+         unusedNodeArrays.add(node.removeChildren());
       } // else: node has no children
    }
 
    /// recursive call of deleteNode()
-   protected boolean deleteNodeRecurs(NODE node, int depth, int max_depth, OcTreeKey key)
+   protected boolean deleteNodeRecurs(NODE node, int depth, int max_depth, OcTreeKeyReadOnly key)
    {
       if (depth >= max_depth) // on last level: delete child when going up
          return true;
@@ -1093,5 +943,5 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return sumLeafsChildren;
    }
 
-   protected abstract NODE createRootNode();
+   protected abstract NODE createEmptyNode();
 }

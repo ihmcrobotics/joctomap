@@ -23,6 +23,11 @@ public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcT
       logOdds = other.logOdds;
    }
 
+   public void resetLogOdds()
+   {
+      logOdds = 0;
+   }
+
    /**
     * Return occupancy probability of node
     */

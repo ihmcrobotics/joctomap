@@ -1,14 +1,15 @@
 package us.ihmc.octoMap.tools;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.ArrayList;
 import java.util.Random;
 
 import org.junit.Test;
 
-import us.ihmc.octoMap.key.KeySet;
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeySet;
 
 public class OcTreeKeyToolsTest
 {
@@ -93,7 +94,7 @@ public class OcTreeKeyToolsTest
 
       for (int i = 0; i < 100000; i++)
       {
-         KeySet keySet = new KeySet();
+         OcTreeKeySet keySet = new OcTreeKeySet();
          OcTreeKey key = new OcTreeKey(random, random.nextInt(treeDepth), treeDepth);
          int depth = random.nextInt(treeDepth) + 1;
          for (int childIndex = 0; childIndex < 8; childIndex++)

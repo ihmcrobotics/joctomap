@@ -5,6 +5,7 @@ import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.coordinateToKey;
 import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 
@@ -58,7 +59,7 @@ public abstract class OcTreeSearchTools
       }
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, OcTreeKey key, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, OcTreeKeyReadOnly key, int treeDepth)
    {
       return search(rootNode, key, 0, treeDepth);
    }
@@ -68,7 +69,7 @@ public abstract class OcTreeSearchTools
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, OcTreeKey key, int depth, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, OcTreeKeyReadOnly key, int depth, int treeDepth)
    {
       OctoMapTools.checkIfDepthValid(depth, treeDepth);
       if (rootNode == null)
@@ -78,11 +79,11 @@ public abstract class OcTreeSearchTools
          depth = treeDepth;
 
       // generate appropriate keyAtDepth for queried depth
-      OcTreeKey keyAtDepth;
+      OcTreeKeyReadOnly keyAtDepth;
       if (depth != treeDepth)
          keyAtDepth = OcTreeKeyTools.adjustKeyAtDepth(key, depth, treeDepth);
       else
-         keyAtDepth = new OcTreeKey(key);
+         keyAtDepth = key;
 
       NODE currentNode = rootNode;
 

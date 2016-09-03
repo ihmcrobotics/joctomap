@@ -3,43 +3,50 @@ package us.ihmc.octoMap.iterators;
 import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
 {
-   private final AbstractOcTreeBase<NODE> tree;
-   private final NODE node;
-   private final OcTreeKey key;
-   private final int depth;
-   private final int maxDepth;
+   private AbstractOcTreeBase<NODE> tree;
+   private NODE node;
+   private OcTreeKey key = new OcTreeKey();
+   private int depth = -1;
+   private int maxDepth = -1;
 
-   private OcTreeSuperNode(AbstractOcTreeBase<NODE> tree, NODE node, OcTreeKey key, int depth, int maxDepth)
+   public OcTreeSuperNode()
+   {
+      clear();
+   }
+
+   public void clear()
+   {
+      tree = null;
+      node = null;
+      key.set(0, 0, 0);
+      depth = -1;
+      maxDepth = -1;
+   }
+
+   public void setAsRootSuperNode(AbstractOcTreeBase<NODE> tree, int maxDepth)
    {
       this.tree = tree;
-      this.node = node;
-      this.key = key;
-      this.depth = depth;
       this.maxDepth = maxDepth;
+
+      node = tree.getRoot();
+      depth = 0;
+      OcTreeKeyTools.getRootKey(tree.getTreeDepth(), key);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeSuperNode<NODE> createRootSuperNode(AbstractOcTreeBase<NODE> tree, int maxDepth)
+   public void setAsChildSuperNode(OcTreeSuperNode<NODE> parentNode, int childIndex)
    {
-      int rootDepth = 0;
-      OcTreeKey rootKey = OcTreeKeyTools.getRootKey(tree.getTreeDepth());
-      NODE rootNode = tree.getRoot();
-      return new OcTreeSuperNode<NODE>(tree, rootNode, rootKey, rootDepth, maxDepth);
-   }
-
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeSuperNode<NODE> createChildSuperNode(OcTreeSuperNode<NODE> parentNode, int childIndex)
-   {
-      AbstractOcTreeBase<NODE> tree = parentNode.tree;
-      int maxDepth = parentNode.maxDepth;
-      int childDepth = parentNode.depth + 1;
-      OcTreeKey childKey = OcTreeKeyTools.computeChildKey(childIndex, parentNode.key, childDepth, tree.getTreeDepth());
-      NODE childNode = parentNode.node.getChild(childIndex);
-      return new OcTreeSuperNode<>(tree, childNode, childKey, childDepth, maxDepth);
+      this.tree = parentNode.tree;
+      this.maxDepth = parentNode.maxDepth;
+      this.depth = parentNode.depth + 1;
+      OcTreeKeyTools.computeChildKey(childIndex, parentNode.key, key, depth, tree.getTreeDepth());
+      node = parentNode.node.getChild(childIndex);
    }
 
    /** @return the center coordinate of this node */
@@ -79,7 +86,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
    }
 
    /** @return the OcTreeKey of this node */
-   public OcTreeKey getKey()
+   public OcTreeKeyReadOnly getKey()
    {
       return key;
    }
@@ -91,7 +98,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
    }
 
    /** @return the OcTreeKey of this node, for nodes with depth != maxDepth */
-   public OcTreeKey getIndexKey()
+   public OcTreeKeyReadOnly getIndexKey()
    {
       return OcTreeKeyTools.computeIndexKey(key, depth, tree.getTreeDepth());
    }
@@ -102,7 +109,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
       return !node.hasAtLeastOneChild() || depth == maxDepth;
    }
 
-   public boolean isInsideBoundingBox(OcTreeKey minKey, OcTreeKey maxKey)
+   public boolean isInsideBoundingBox(OcTreeKeyReadOnly minKey, OcTreeKeyReadOnly maxKey)
    {
       return OcTreeKeyTools.isInsideBoundingBox(minKey, maxKey, key, depth, tree.getTreeDepth());
    }

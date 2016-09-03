@@ -19,10 +19,17 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 
    public abstract void updateOccupancyChildren();
 
+   public abstract void clear();
+
    @SuppressWarnings("unchecked")
    public void allocateChildren()
    {
       children = (N[]) Array.newInstance(getClass(), 8);
+   }
+
+   public void assignChildren(N[] newChildren)
+   {
+      children = newChildren;
    }
 
    @SuppressWarnings("unchecked")
@@ -99,13 +106,16 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
    public final N removeChildUnsafe(int childIndex)
    {
       N removedChild = children[childIndex];
+      removedChild.clear();
       children[childIndex] = null;
       return removedChild;
    }
 
-   public final void removeChildren()
+   public final N[] removeChildren()
    {
+      N[] removedChildren = children;
       children = null;
+      return removedChildren;
    }
 
    public abstract boolean epsilonEquals(N other);

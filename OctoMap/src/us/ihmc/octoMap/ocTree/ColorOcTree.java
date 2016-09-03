@@ -1,6 +1,7 @@
 package us.ihmc.octoMap.ocTree;
 
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.ColorOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
@@ -13,7 +14,7 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
    }
 
    @Override
-   protected ColorOcTreeNode createRootNode()
+   protected ColorOcTreeNode createEmptyNode()
    {
       return new ColorOcTreeNode();
    }
@@ -79,7 +80,7 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
    }
 
    // set node color at given key or coordinate. Replaces previous color.
-   public ColorOcTreeNode setNodeColor(OcTreeKey key, int red, int green, int blue)
+   public ColorOcTreeNode setNodeColor(OcTreeKeyReadOnly key, int red, int green, int blue)
    {
       ColorOcTreeNode n = search(key);
       if (n != null)
@@ -98,7 +99,7 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
    }
 
    // integrate color measurement at given key or coordinate. Average with previous color
-   public ColorOcTreeNode averageNodeColor(OcTreeKey key, int red, int green, int blue)
+   public ColorOcTreeNode averageNodeColor(OcTreeKeyReadOnly key, int red, int green, int blue)
    {
       ColorOcTreeNode node = search(key);
       if (node != null)
@@ -124,7 +125,7 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
    }
 
    // integrate color measurement at given key or coordinate. Average with previous color
-   public ColorOcTreeNode integrateNodeColor(OcTreeKey key, int red, int green, int blue)
+   public ColorOcTreeNode integrateNodeColor(OcTreeKeyReadOnly key, int red, int green, int blue)
    {
       ColorOcTreeNode node = search(key);
       if (node != null)

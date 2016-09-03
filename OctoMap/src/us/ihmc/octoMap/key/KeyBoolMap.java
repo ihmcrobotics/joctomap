@@ -7,7 +7,7 @@ import java.util.HashMap;
  * OcTreeKeys and a bool flag (to denote newly created nodes)
  *
  */
-public class KeyBoolMap extends HashMap<OcTreeKey, Boolean>
+public class KeyBoolMap extends HashMap<OcTreeKeyReadOnly, Boolean>
 {
    private static final long serialVersionUID = 2656234567169415329L;
 }

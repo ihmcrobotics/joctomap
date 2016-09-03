@@ -1,17 +1,14 @@
 package us.ihmc.octoMap.node;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.ocTree.PlanarRegion;
 
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
 {
-   private Vector3d normal = null;
-   private List<Point3d> plane = null;
+   private float normalX = Float.NaN;
+   private float normalY = Float.NaN;
+   private float normalZ = Float.NaN;
    private int regionId = PlanarRegion.NO_REGION_ID;
 
    public NormalOcTreeNode()
@@ -22,23 +19,9 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public void copyData(NormalOcTreeNode other)
    {
       super.copyData(other);
-      if (other.normal != null)
-      {
-         if (normal == null)
-            normal = new Vector3d();
-         normal.set(other.normal);
-      }
-      if (other.plane != null)
-      {
-         if (plane == null)
-            plane = new ArrayList<>();
-         while (plane.size() < other.plane.size())
-            plane.add(new Point3d());
-         while (plane.size() > other.plane.size())
-            plane.remove(plane.size() - 1);
-         for (int i = 0; i < other.plane.size(); i++)
-            plane.get(i).set(other.plane.get(i));
-      }
+      normalX = other.normalX;
+      normalY = other.normalY;
+      normalZ = other.normalZ;
    }
 
    @Override
@@ -53,6 +36,14 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       return new NormalOcTreeNode();
    }
 
+   @Override
+   public void clear()
+   {
+      super.resetLogOdds();
+      resetNormal();
+      resetRegionId();
+   }
+
    public void resetRegionId()
    {
       regionId = PlanarRegion.NO_REGION_ID;
@@ -60,17 +51,15 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    public void updateNormalChildren()
    {
-      setNormal(getAverageChildNormal());
-   }
-
-   public Vector3d getAverageChildNormal()
-   {
       if (children == null)
-         return null;
+      {
+         resetNormal();
+         return;
+      }
 
-      double x = 0.0;
-      double y = 0.0;
-      double z = 0.0;
+      normalX = 0.0f;
+      normalY = 0.0f;
+      normalZ = 0.0f;
       int count = 0;
 
       for (int i = 0; i < 8; i++)
@@ -79,47 +68,47 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
          if (child != null && child.isNormalSet())
          {
-            Vector3d childNormal = child.getNormal();
-            x += childNormal.getX();
-            y += childNormal.getY();
-            z += childNormal.getZ();
+            normalX += child.normalX;
+            normalY += child.normalY;
+            normalZ += child.normalZ;
             count++;
          }
       }
 
       if (count == 0)
-         return null;
-      x /= count;
-      y /= count;
-      z /= count;
-      Vector3d normal = new Vector3d(x, y, z);
-      normal.normalize();
-      return normal;
+      {
+         resetNormal();
+         return;
+      }
+
+      float invNorm = (float) (1.0 / Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ));
+      normalX *= invNorm;
+      normalY *= invNorm;
+      normalZ *= invNorm;
    }
 
-   public Vector3d getNormal()
+   public void getNormal(Vector3d normalToPack)
    {
-      return normal;
+      normalToPack.set(normalX, normalY, normalZ);
    }
 
    public void setNormal(Vector3d normal)
    {
-      this.normal = normal;
+      normalX = (float) normal.getX();
+      normalY = (float) normal.getY();
+      normalZ = (float) normal.getZ();
+   }
+
+   public void resetNormal()
+   {
+      normalX = Float.NaN;
+      normalY = Float.NaN;
+      normalZ = Float.NaN;
    }
 
    public boolean isNormalSet()
    {
-      return normal != null;
-   }
-   
-   public List<Point3d> getPlane()
-   {
-      return plane;
-   }
-   
-   public void setPlane(List<Point3d> plane)
-   {
-      this.plane = plane;
+      return !Float.isNaN(normalX) && !Float.isNaN(normalY) && !Float.isNaN(normalZ);
    }
 
    public boolean isPartOfRegion()

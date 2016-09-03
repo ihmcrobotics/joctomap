@@ -16,6 +16,13 @@ public class OcTreeNodeStamped extends AbstractOccupancyOcTreeNode<OcTreeNodeSta
       timestamp = other.timestamp;
    }
 
+   @Override
+   public void clear()
+   {
+      super.resetLogOdds();
+      timestamp = 0L;
+   }
+
    public void updateTimestamp()
    {
       timestamp = System.currentTimeMillis();

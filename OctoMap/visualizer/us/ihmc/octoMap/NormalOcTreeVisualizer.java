@@ -31,12 +31,15 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.NormalOcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.tools.IntersectionPlaneBoxCalculator;
 import us.ihmc.robotics.geometry.RotationTools;
+import us.ihmc.robotics.lists.GenericTypeBuilder;
+import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.time.TimeTools;
 
 public class NormalOcTreeVisualizer extends Application
 {
-   public final NormalOcTree ocTree = new NormalOcTree(0.15);
+   public final NormalOcTree ocTree = new NormalOcTree(0.025);
    private static final boolean SHOW_FREE_CELLS = false;
    private static final Color FREE_COLOR = new Color(Color.YELLOW.getRed(), Color.YELLOW.getGreen(), Color.YELLOW.getBlue(), 0.0);
 
@@ -46,7 +49,7 @@ public class NormalOcTreeVisualizer extends Application
       //      callUpdateNode();
       //      callInsertPointCloud();
 //      createPlane(0.0, 0.0, -0.05);
-      createBowl(5.0, new Point3d());
+      createBowl(0.5, new Point3d());
       System.out.println("Number of leafs: " + ocTree.getNumLeafNodes());
       System.out.println("Initialized octree");
       System.out.println("Computing normals");
@@ -107,9 +110,6 @@ public class NormalOcTreeVisualizer extends Application
       direction.normalize();
       ocTree.castRay(new Point3d(), direction, end);
       
-      NormalOcTreeNode search = ocTree.search(end);
-      if (search != null)
-         System.out.println(search.getPlane());
    }
    
    PointCloud pointcloud = new PointCloud();
@@ -199,8 +199,7 @@ public class NormalOcTreeVisualizer extends Application
    {
       Point3d origin = new Point3d(0.0, 0.0, center.getZ() + 0.0);
 
-
-      double res = 0.02;
+      double res = 0.05;
       for (double yaw = 0.0; yaw < 2.0 * Math.PI; yaw += res)
       {
          for (double pitch = 0.0; pitch < 0.5 * Math.PI; pitch += res)
@@ -214,6 +213,9 @@ public class NormalOcTreeVisualizer extends Application
 
       ocTree.insertPointCloud(pointcloud, origin);
    }
+
+   private final RecyclingArrayList<Point3d> plane = new RecyclingArrayList<>(GenericTypeBuilder.createBuilderWithEmptyConstructor(Point3d.class));
+   private final IntersectionPlaneBoxCalculator intersectionPlaneBoxCalculator = new IntersectionPlaneBoxCalculator();
 
    @Override
    public void start(Stage primaryStage) throws Exception
@@ -237,18 +239,25 @@ public class NormalOcTreeVisualizer extends Application
       MeshBuilder freeMeshBuilder = new MeshBuilder();
 
       LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
-      for (OcTreeSuperNode<NormalOcTreeNode> node : leafIterable)
+      for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
-         double boxSize = node.getSize();
-         Point3d boxCenter = node.getCoordinate();
+         double boxSize = superNode.getSize();
+         Point3d boxCenter = superNode.getCoordinate();
 
-         if (ocTree.isNodeOccupied(node.getNode()))
+         NormalOcTreeNode node = superNode.getNode();
+         if (ocTree.isNodeOccupied(node))
          {
-            Vector3d normal = node.getNode().getNormal();
-            Color normalBasedColor = getNormalBasedColor(normal);
-            List<Point3d> plane = node.getNode().getPlane();
-            if (plane != null)
+            Vector3d normal = new Vector3d();
+            node.getNormal(normal);
+            boolean isNormalSet = node.isNormalSet();
+            Color normalBasedColor = getNormalBasedColor(normal, isNormalSet);
+            if (isNormalSet)
+            {
+               intersectionPlaneBoxCalculator.setCube(boxSize, boxCenter);
+               intersectionPlaneBoxCalculator.setPlane(boxCenter, normal);
+               intersectionPlaneBoxCalculator.computeIntersections(plane);
                occupiedMeshBuilder.addPolyon(plane, normalBasedColor);
+            }
             else
                occupiedMeshBuilder.addCubeMesh((float) boxSize, new Point3f(boxCenter), normalBasedColor);
          }
@@ -276,11 +285,11 @@ public class NormalOcTreeVisualizer extends Application
 
    private static final Color DEFAULT_COLOR = Color.DARKCYAN;
 
-   public Color getNormalBasedColor(Vector3d normal)
+   public Color getNormalBasedColor(Vector3d normal, boolean isNormalSet)
    {
       Color color = DEFAULT_COLOR;
 
-      if (normal != null)
+      if (isNormalSet)
       {
          Vector3d zUp = new Vector3d(0.0, 0.0, 1.0);
          normal.normalize();

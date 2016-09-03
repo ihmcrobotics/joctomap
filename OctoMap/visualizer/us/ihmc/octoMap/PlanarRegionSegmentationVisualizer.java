@@ -1,7 +1,5 @@
 package us.ihmc.octoMap;
 
-import java.util.List;
-
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
@@ -25,7 +23,10 @@ import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.NormalOcTree;
 import us.ihmc.octoMap.ocTree.PlanarRegion;
 import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.tools.IntersectionPlaneBoxCalculator;
 import us.ihmc.robotics.geometry.RotationTools;
+import us.ihmc.robotics.lists.GenericTypeBuilder;
+import us.ihmc.robotics.lists.RecyclingArrayList;
 
 public class PlanarRegionSegmentationVisualizer extends Application
 {
@@ -117,6 +118,9 @@ public class PlanarRegionSegmentationVisualizer extends Application
       ocTree.insertPointCloud(pointcloud, origin);
    }
 
+   private final RecyclingArrayList<Point3d> plane = new RecyclingArrayList<>(GenericTypeBuilder.createBuilderWithEmptyConstructor(Point3d.class));
+   private final IntersectionPlaneBoxCalculator intersectionPlaneBoxCalculator = new IntersectionPlaneBoxCalculator();
+
    @Override
    public void start(Stage primaryStage) throws Exception
    {
@@ -137,19 +141,27 @@ public class PlanarRegionSegmentationVisualizer extends Application
       palette.setHueBased(0.9, 0.8);
       MultiColorMeshBuilder occupiedMeshBuilder = new MultiColorMeshBuilder(palette);
 
-      LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
-      for (OcTreeSuperNode<NormalOcTreeNode> node : leafIterable)
-      {
-         double boxSize = node.getSize();
-         Point3d boxCenter = node.getCoordinate();
+      Vector3d nodeNormal = new Vector3d();
 
-         if (ocTree.isNodeOccupied(node.getNode()))
+      LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
+      for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
+      {
+         double boxSize = superNode.getSize();
+         Point3d boxCenter = superNode.getCoordinate();
+
+         NormalOcTreeNode node = superNode.getNode();
+         if (ocTree.isNodeOccupied(node))
          {
-            int regionId = node.getNode().getRegionId();
+            int regionId = node.getRegionId();
             Color normalBasedColor = getPlanarRegionBasedColor(regionId);
-            List<Point3d> plane = node.getNode().getPlane();
-            if (plane != null)
+            if (node.isNormalSet())
+            {
+               node.getNormal(nodeNormal);
+               intersectionPlaneBoxCalculator.setCube(boxSize, boxCenter);
+               intersectionPlaneBoxCalculator.setPlane(boxCenter, nodeNormal);
+               intersectionPlaneBoxCalculator.computeIntersections(plane);
                occupiedMeshBuilder.addPolyon(plane, normalBasedColor);
+            }
             else
                occupiedMeshBuilder.addCubeMesh((float) boxSize, new Point3f(boxCenter), normalBasedColor);
          }
