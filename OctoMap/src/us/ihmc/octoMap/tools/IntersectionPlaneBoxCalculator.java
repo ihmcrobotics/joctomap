@@ -120,6 +120,7 @@ public class IntersectionPlaneBoxCalculator
    private final Vector3d v0 = new Vector3d();
    private final Vector3d vi = new Vector3d();
    private final Vector3d vCross = new Vector3d();
+   private final Point3d average = new Point3d();
 
    private void reorderIntersections(List<Point3d> unorderedIntersections, RecyclingArrayList<Point3d> intersectionsToPack)
    {
@@ -131,13 +132,17 @@ public class IntersectionPlaneBoxCalculator
       intersectionsToPack.add().set(unorderedIntersections.get(0));
       orderedAngles.add(0.0);
 
-      v0.sub(unorderedIntersections.get(0), pointOnPlane);
-      v0.normalize();
+      average.set(0.0, 0.0, 0.0);
+      for (int i = 0; i < unorderedIntersections.size(); i++)
+         average.add(unorderedIntersections.get(i));
+      average.scale(1.0 / unorderedIntersections.size());
 
+      v0.sub(unorderedIntersections.get(0), average);
+      v0.normalize();
 
       for (int i = 1; i < unorderedIntersections.size(); i++)
       {
-         vi.sub(unorderedIntersections.get(i), pointOnPlane);
+         vi.sub(unorderedIntersections.get(i), average);
          vi.normalize();
 
          double angle = v0.dot(vi); // Gives [1.0, -1.0] for an angle in [0, Pi]
@@ -146,7 +151,8 @@ public class IntersectionPlaneBoxCalculator
          if (vCross.dot(planeNormal) < 0.0) // Allows to make a difference between the two angle ranges: [0, Pi] and [Pi, 2*Pi]
             angle = -2 - angle; // We're in the range [Pi, 2*Pi], this transform the dot original range [1, -1] to [-1, -3] where -3 is when vi & v0 point in the same direction. 
          // We obtained an "angle" that goes from 1 down to -3. It is transformed to be in the range [0, 4].
-         angle = - (angle - 1.0);
+         angle -= 1.0;
+         angle *= -1.0;
 
          // Binary search to figure out where the vertex should go in the list.
          int index = angleBinarySearch(orderedAngles, angle);
