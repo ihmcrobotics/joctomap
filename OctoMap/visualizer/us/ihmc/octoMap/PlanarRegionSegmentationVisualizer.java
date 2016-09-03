@@ -32,12 +32,14 @@ public class PlanarRegionSegmentationVisualizer extends Application
 {
    public final NormalOcTree ocTree = new NormalOcTree(0.025);
    private static final double TWO_PI = 2.0 * Math.PI;
+   private static final boolean SHOW_POINT_CLOUD = false;
 
    public PlanarRegionSegmentationVisualizer()
    {
       Point3d lidarLocation = new Point3d(0.0, 0.0, 2.0);
 //      createPlane(-20.0, 0.0, new Vector3d(0.1, 0.0, 0.0), lidarLocation);
       createSawToothPlanes(0.0, 0.0, new Vector3d(), lidarLocation);
+      ocTree.updateHitLocations(pointcloud, 0.05, false);
       ocTree.updateNormals();
       ocTree.updatePlanarRegionSegmentation();
    }
@@ -142,8 +144,9 @@ public class PlanarRegionSegmentationVisualizer extends Application
       MultiColorMeshBuilder occupiedMeshBuilder = new MultiColorMeshBuilder(palette);
 
       Vector3d nodeNormal = new Vector3d();
+      Point3d pointOnPlane = new Point3d();
 
-      LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
+      LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree, 16);
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
          double boxSize = superNode.getSize();
@@ -157,13 +160,31 @@ public class PlanarRegionSegmentationVisualizer extends Application
             if (node.isNormalSet())
             {
                node.getNormal(nodeNormal);
+               if (node.isCenterSet())
+               {
+                  node.getCenter(pointOnPlane);
+//                  occupiedMeshBuilder.addCubeMesh(0.005, pointOnPlane, normalBasedColor);
+               }
+               else
+                  pointOnPlane.set(boxCenter);
                intersectionPlaneBoxCalculator.setCube(boxSize, boxCenter);
-               intersectionPlaneBoxCalculator.setPlane(boxCenter, nodeNormal);
+               intersectionPlaneBoxCalculator.setPlane(pointOnPlane, nodeNormal);
                intersectionPlaneBoxCalculator.computeIntersections(plane);
                occupiedMeshBuilder.addPolyon(plane, normalBasedColor);
             }
             else
-               occupiedMeshBuilder.addCubeMesh((float) boxSize, new Point3f(boxCenter), normalBasedColor);
+            {
+
+               if (node.isCenterSet())
+               {
+                  node.getCenter(pointOnPlane);
+                  occupiedMeshBuilder.addCubeMesh(0.005, pointOnPlane, normalBasedColor);
+               }
+               else
+               {
+                  occupiedMeshBuilder.addCubeMesh((float) boxSize, new Point3f(boxCenter), normalBasedColor);
+               }
+            }
          }
       }
 
@@ -171,6 +192,18 @@ public class PlanarRegionSegmentationVisualizer extends Application
       occupiedMeshView.setMesh(occupiedMeshBuilder.generateMesh());
       occupiedMeshView.setMaterial(occupiedMeshBuilder.generateMaterial());
       rootNode.getChildren().add(occupiedMeshView);
+
+      if (SHOW_POINT_CLOUD)
+      {
+         for (int i = 0; i < pointcloud.size(); i++)
+         {
+            Sphere sphere = new Sphere(0.0025);
+            sphere.setTranslateX(pointcloud.getPoint(i).getX());
+            sphere.setTranslateY(pointcloud.getPoint(i).getY());
+            sphere.setTranslateZ(pointcloud.getPoint(i).getZ());
+            rootNode.getChildren().add(sphere);
+         }
+      }
    }
 
    private static final Color DEFAULT_COLOR = Color.DARKCYAN;
