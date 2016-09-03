@@ -1055,6 +1055,13 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             && p.getY() <= boundingBoxMax.getY() && p.getZ() <= boundingBoxMax.getZ();
    }
 
+   /// @return true if point is in the currently set bounding box
+   public boolean isInBoundingBox(Point3f p)
+   {
+      return p.getX() >= boundingBoxMin.getX() && p.getY() >= boundingBoxMin.getY() && p.getZ() >= boundingBoxMin.getZ() && p.getX() <= boundingBoxMax.getX()
+            && p.getY() <= boundingBoxMax.getY() && p.getZ() <= boundingBoxMax.getZ();
+   }
+
    /// @return true if key is in the currently set bounding box
    public boolean isInBoundingBox(OcTreeKeyReadOnly key)
    {
