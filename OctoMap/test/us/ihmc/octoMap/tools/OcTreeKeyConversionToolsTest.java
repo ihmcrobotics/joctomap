@@ -1,7 +1,6 @@
 package us.ihmc.octoMap.tools;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.coordinateToKey;
 import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.keyToCoordinate;
 import static us.ihmc.octoMap.tools.OcTreeKeyTools.adjustKeyAtDepth;
@@ -15,6 +14,7 @@ import javax.vecmath.Vector3d;
 import org.junit.Test;
 
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.robotics.random.RandomTools;
 
 public class OcTreeKeyConversionToolsTest
 {
@@ -181,5 +181,26 @@ public class OcTreeKeyConversionToolsTest
       offsetVector.setY(offsetVector.getY() + ((childIndex & 2) != 0 ? offset : -offset));
       offsetVector.setZ(offsetVector.getZ() + ((childIndex & 4) != 0 ? offset : -offset));
       return offsetVector;
+   }
+
+   @Test
+   public void testCoordinateToKeyAssertInsideNode() throws Exception
+   {
+      Random random = new Random(234234L);
+      int treeDepth = 16;
+      double resolution = 0.02;
+
+      for (int i = 0; i < 100000; i++)
+      {
+         Point3d randomPoint = RandomTools.generateRandomPoint(random, 50.0, 50.0, 50.0);
+         OcTreeKey key = OcTreeKeyConversionTools.coordinateToKey(randomPoint, resolution, treeDepth);
+         Point3d nodeCoordinate = keyToCoordinate(key, resolution, treeDepth);
+         boolean xInside = Math.abs(randomPoint.getX() - nodeCoordinate.getX()) <= 0.5 * resolution;
+         boolean yInside = Math.abs(randomPoint.getY() - nodeCoordinate.getY()) <= 0.5 * resolution;
+         boolean zInside = Math.abs(randomPoint.getZ() - nodeCoordinate.getZ()) <= 0.5 * resolution;
+         assertTrue(xInside);
+         assertTrue(yInside);
+         assertTrue(zInside);
+      }
    }
 }
