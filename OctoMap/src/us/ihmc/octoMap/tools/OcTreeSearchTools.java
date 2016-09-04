@@ -77,12 +77,17 @@ public abstract class OcTreeSearchTools
       if (depth == 0)
          depth = treeDepth;
 
+      int k0 = key.getKey(0);
+      int k1 = key.getKey(1);
+      int k2 = key.getKey(2);
+
       // generate appropriate keyAtDepth for queried depth
-      OcTreeKeyReadOnly keyAtDepth;
       if (depth != treeDepth)
-         keyAtDepth = OcTreeKeyTools.adjustKeyAtDepth(key, depth, treeDepth);
-      else
-         keyAtDepth = key;
+      {
+         k0 = OcTreeKeyTools.adjustKeyAtDepth(k0, depth, treeDepth);
+         k1 = OcTreeKeyTools.adjustKeyAtDepth(k1, depth, treeDepth);
+         k2 = OcTreeKeyTools.adjustKeyAtDepth(k2, depth, treeDepth);
+      }
 
       NODE currentNode = rootNode;
 
@@ -91,7 +96,7 @@ public abstract class OcTreeSearchTools
       // follow nodes down to requested level (for level = 0 it's the last level)
       for (int currentDepth = (treeDepth - 1); currentDepth >= level; --currentDepth)
       {
-         int childIndex = OcTreeKeyTools.computeChildIndex(keyAtDepth, currentDepth);
+         int childIndex = OcTreeKeyTools.computeChildIndex(k0, k1, k2, currentDepth);
          NODE childNode;
 
          if (currentNode.hasArrayForChildren() && (childNode = currentNode.getChildUnsafe(childIndex)) != null)
