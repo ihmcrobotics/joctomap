@@ -359,7 +359,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       {
          NormalOcTreeNode node = superNode.getNode();
 
-         if (node.isPartOfRegion() || !node.isNormalSet())
+         if (!isNodeOccupied(node) || node.isPartOfRegion() || !node.isNormalSet())
             continue;
 
          OcTreeKeyReadOnly nodeKey = superNode.getKey();
