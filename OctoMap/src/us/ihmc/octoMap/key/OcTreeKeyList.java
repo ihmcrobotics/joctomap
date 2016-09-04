@@ -232,6 +232,12 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
       unsafeFastSwap(index, --size);
    }
 
+   public void removeLast()
+   {
+      if (!isEmpty())
+         size--;
+   }
+
    /**
     * Swap two objects of this list.
     * @param i index of the first object to swap
