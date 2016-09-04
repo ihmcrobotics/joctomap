@@ -15,7 +15,6 @@ import us.ihmc.octoMap.key.OcTreeKeyDeque;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
-import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
@@ -346,12 +345,11 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       //      return var.getResult();
    }
 
-   public void updatePlanarRegionSegmentation()
+   public void updatePlanarRegionSegmentation(int depth)
    {
-      double exploringRadius = 0.08;
-      double maxMistanceFromPlane = 0.07;
-      double angleThreshold = Math.toRadians(6.0);
-      int depth = treeDepth;
+      double exploringRadius = 2.0 * getNodeSize(depth);
+      double maxMistanceFromPlane = 0.05;
+      double angleThreshold = Math.toRadians(5.0);
       Random random = new Random(45561L);
       Vector3d nodeNormal = new Vector3d();
 

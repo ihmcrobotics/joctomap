@@ -91,6 +91,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
    public void insertSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
+      long startTime = System.nanoTime();
       for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
       {
          PointCloud scan = sweepCollection.getSweep(i);
@@ -101,13 +102,18 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          else
             computeUpdate(scan, sensorOrigin, unfilteredFreeCells, freeCells, occupiedCells, minRange, maxRange);
       }
+      long endTime = System.nanoTime();
+      System.out.println("Exiting  computeUpdate took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
 
+      startTime = System.nanoTime();
       // insert data into tree  -----------------------
       for (int i = 0; i < occupiedCells.size(); i++)
          updateNode(occupiedCells.unsafeGet(i), true, lazyEvaluation);
 
       for (int i = 0; i < freeCells.size(); i++)
          updateNode(freeCells.unsafeGet(i), false, lazyEvaluation);
+      endTime = System.nanoTime();
+      System.out.println("Exiting  updateNode took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
    }
 
    public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)

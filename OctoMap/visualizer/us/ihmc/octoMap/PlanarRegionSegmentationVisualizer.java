@@ -42,7 +42,7 @@ public class PlanarRegionSegmentationVisualizer extends Application
       createSawToothPlanes(0.0, 0.0, new Vector3d(), lidarLocation);
       ocTree.updateHitLocations(pointcloud, 0.05, false);
       ocTree.updateNormals();
-      ocTree.updatePlanarRegionSegmentation();
+      ocTree.updatePlanarRegionSegmentation(16);
    }
    
    PointCloud pointcloud = new PointCloud();
