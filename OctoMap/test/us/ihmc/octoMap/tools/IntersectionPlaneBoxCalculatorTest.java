@@ -200,4 +200,37 @@ public class IntersectionPlaneBoxCalculatorTest
          assertTrue("Intersections are not properly ordered", v3.dot(planeNormal) > 0.0);
       }
    }
+
+   @Test
+   public void testBug3() throws Exception
+   {
+      double cubeSize = 0.1;
+      IntersectionPlaneBoxCalculator calculator = new IntersectionPlaneBoxCalculator();
+
+      Point3d cubeCenter = new Point3d(-0.25, -0.45, -0.05);
+      Point3d pointOnPlane = new Point3d(-0.2242894023656845, -0.4647734463214874, -0.0023258039727807045);
+      Vector3d planeNormal = new Vector3d(0.20791170661191224, 1.503689309739766E-8, 0.9781475973766547);
+      calculator.setCube(cubeSize, cubeCenter);
+      calculator.setPlane(pointOnPlane, planeNormal);
+      List<Point3d> intersections = calculator.computeIntersections();
+
+      for (int j = 0; j < intersections.size(); j++)
+      {
+         Point3d intersection = intersections.get(j);
+         Vector3d sub = new Vector3d();
+         sub.sub(intersection, pointOnPlane);
+         assertEquals("Intersection is not on plane", 0.0, sub.dot(planeNormal), EPS);
+
+         Vector3d v0 = new Vector3d();
+         Vector3d v1 = new Vector3d();
+         Vector3d v3 = new Vector3d();
+         Point3d nextIntersection = intersections.get((j + 1) % intersections.size());
+         Point3d previousIntersection = intersections.get(j == 0 ? intersections.size() - 1 : j - 1);
+         v0.sub(intersection, nextIntersection);
+         v1.sub(intersection, previousIntersection);
+         v3.cross(v0, v1);
+         System.out.println(v3.dot(planeNormal) > 0.0);
+         assertTrue("Intersections are not properly ordered", v3.dot(planeNormal) > 0.0);
+      }
+   }
 }

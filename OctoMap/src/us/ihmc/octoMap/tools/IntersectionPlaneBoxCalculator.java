@@ -91,6 +91,9 @@ public class IntersectionPlaneBoxCalculator
          edgeVector.sub(edgeEnd, edgeStart);
 
          fromPlaneCenterToEdgeStart.sub(pointOnPlane, boxCenter);
+         fromPlaneCenterToEdgeStart.setX(fromPlaneCenterToEdgeStart.getX() / boxSize.getX());
+         fromPlaneCenterToEdgeStart.setY(fromPlaneCenterToEdgeStart.getY() / boxSize.getY());
+         fromPlaneCenterToEdgeStart.setZ(fromPlaneCenterToEdgeStart.getZ() / boxSize.getZ());
          fromPlaneCenterToEdgeStart.sub(edgeStart);
 
          double dotNormalEdge = planeNormal.dot(edgeVector);

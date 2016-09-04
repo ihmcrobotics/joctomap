@@ -31,14 +31,15 @@ public class IntersectionPlaneBoxCalculatorVisualizer extends Application
 
    public IntersectionPlaneBoxCalculatorVisualizer()
    {
-      double lx = 1.0;
-      double ly = 1.0;
-      double lz = 1.0;
+      double lx = 0.1;
+      double ly = 0.1;
+      double lz = 0.1;
 
-      Point3d cubeCenter = new Point3d(-4.5311850804994585, -4.933378120148582, 6.517879816335377);
-      Point3d pointOnPlane = new Point3d(-4.216341440000136, -4.90149655983476, 6.713644934521557);
-      Vector3d planeNormal = new Vector3d(-0.750449710466656, 0.40248521745139515, -0.5242431514036355);
+      Point3d cubeCenter = new Point3d(-0.25, -0.45, -0.05);
+      Point3d pointOnPlane = new Point3d(-0.2242894023656845, -0.4647734463214874, -0.0023258039727807045);
+      Vector3d planeNormal = new Vector3d(0.20791170661191224, 1.503689309739766E-8, 0.9781475973766547);
 
+//
 //      pointOnPlane.sub(cubeCenter);
 //      cubeCenter.set(0.0, 0.0, 0.0);
 
