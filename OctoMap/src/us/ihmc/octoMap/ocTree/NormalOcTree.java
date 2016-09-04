@@ -8,6 +8,9 @@ import javax.vecmath.Vector3d;
 
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
 
+import gnu.trove.map.hash.TDoubleObjectHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyDeque;
@@ -22,9 +25,13 @@ import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 {
+   private final TDoubleObjectHashMap<TIntObjectHashMap<OcTreeKeyList>> neighborOffsetsCached = new TDoubleObjectHashMap<>(4);
+   private final LeafIterable<NormalOcTreeNode> leafIterable;
+
    public NormalOcTree(double resolution)
    {
       super(resolution);
+      leafIterable = new LeafIterable<>(this, treeDepth, true);
    }
 
    public void updateNormals()
@@ -137,7 +144,17 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
       NormalOcTreeNode currentNode;
 
-      OcTreeKeyTools.computeNeighborKeys(key, depth, resolution, treeDepth, 0.10, tempNeighborKeysForNormal);
+      OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(depth, 0.10);
+      tempNeighborKeysForNormal.clear();
+      for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
+      {
+         OcTreeKey currentKey = tempNeighborKeysForNormal.add();
+         currentKey.set(key);
+         currentKey.add(cachedNeighborKeyOffsets.unsafeGet(i));
+         if (!OcTreeKeyTools.isKeyValid(currentKey, depth, treeDepth))
+            tempNeighborKeysForNormal.removeLast();
+      }
+
       normal.set(0.0, 0.0, 0.0);
 
       for (int i = tempNeighborKeysForNormal.size() - 1; i >= 0; i--)
@@ -218,7 +235,18 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
       NormalOcTreeNode currentNode;
 
-      OcTreeKeyTools.computeNeighborKeys(key, depth, resolution, treeDepth, 0.10, tempNeighborKeysForNormal);
+      OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(depth, 0.10);
+
+      tempNeighborKeysForNormal.clear();
+      for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
+      {
+         OcTreeKey currentKey = tempNeighborKeysForNormal.add();
+         currentKey.set(key);
+         currentKey.add(cachedNeighborKeyOffsets.unsafeGet(i));
+         if (!OcTreeKeyTools.isKeyValid(currentKey, depth, treeDepth))
+            tempNeighborKeysForNormal.removeLast();
+      }
+
       normalCandidate.set(0.0, 0.0, 0.0);
 
       int index = 0;
@@ -282,6 +310,25 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          node.setNormal(normalCandidate);
          node.setNormalQuality(normalQuality);
       }
+   }
+
+   public OcTreeKeyList getCachedNeighborKeyOffsets(int depth, double searchRadius)
+   {
+      TIntObjectHashMap<OcTreeKeyList> radiusBasedCache = neighborOffsetsCached.get(searchRadius);
+      if (radiusBasedCache == null)
+      {
+         radiusBasedCache = new TIntObjectHashMap<>(4);
+         neighborOffsetsCached.put(searchRadius, radiusBasedCache);
+      }
+
+      OcTreeKeyList cachedNeighborOffsets = radiusBasedCache.get(depth);
+      if (cachedNeighborOffsets == null)
+      {
+         cachedNeighborOffsets = new OcTreeKeyList();
+         radiusBasedCache.put(depth, cachedNeighborOffsets);
+         OcTreeKeyTools.computeNeighborKeyOffsets(depth, resolution, treeDepth, searchRadius, cachedNeighborOffsets);
+      }
+      return cachedNeighborOffsets;
    }
 
    public double computeNodeNeighborNormalDifference(OcTreeKeyReadOnly key, int depth)
@@ -352,7 +399,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       Random random = new Random(45561L);
       Vector3d nodeNormal = new Vector3d();
 
-      for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable(treeDepth))
+      leafIterable.setMaxDepth(depth);
+
+      for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
          NormalOcTreeNode node = superNode.getNode();
 
@@ -370,11 +419,11 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   private final OcTreeKeyList tempNeighborKeysForPlanarRegion = new OcTreeKeyList();
    private final Vector3d normalCandidateToCurrentRegion = new Vector3d();
    private final Point3d centerCandidateToCurrentRegion = new Point3d();
    private final OcTreeKeySet exploredKeys = new OcTreeKeySet();
    private final OcTreeKeyDeque keysToExplore = new OcTreeKeyDeque();
+   private final OcTreeKey neighborKey = new OcTreeKey();
 
    private void growPlanarRegionIteratively(PlanarRegion planarRegion, OcTreeKeyReadOnly nodeKey, int depth, double searchRadius, double maxMistanceFromPlane,
          double angleThreshold)
@@ -384,9 +433,14 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
       exploredKeys.add(nodeKey);
 
-      OcTreeKeyTools.computeNeighborKeys(nodeKey, depth, resolution, treeDepth, searchRadius, tempNeighborKeysForPlanarRegion);
-      keysToExplore.addAll(tempNeighborKeysForPlanarRegion);
-      keysToExplore.removeAll(exploredKeys);
+      OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(depth, searchRadius);
+
+      for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
+      {
+         neighborKey.add(nodeKey, cachedNeighborKeyOffsets.unsafeGet(i));
+         if (OcTreeKeyTools.isKeyValid(neighborKey, depth, treeDepth) && !exploredKeys.contains(neighborKey))
+            keysToExplore.add(neighborKey);
+      }
 
       while (!keysToExplore.isEmpty())
       {
@@ -404,9 +458,13 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          {
             planarRegion.update(normalCandidateToCurrentRegion, centerCandidateToCurrentRegion);
             currentNode.setRegionId(planarRegion.getId());
-            OcTreeKeyTools.computeNeighborKeys(currentKey, depth, resolution, treeDepth, searchRadius, tempNeighborKeysForPlanarRegion);
-            keysToExplore.addAll(tempNeighborKeysForPlanarRegion);
-            keysToExplore.removeAll(exploredKeys);
+
+            for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
+            {
+               neighborKey.add(currentKey, cachedNeighborKeyOffsets.unsafeGet(i));
+               if (OcTreeKeyTools.isKeyValid(neighborKey, depth, treeDepth) && !exploredKeys.contains(neighborKey))
+                  keysToExplore.add(neighborKey);
+            }
          }
       }
    }
