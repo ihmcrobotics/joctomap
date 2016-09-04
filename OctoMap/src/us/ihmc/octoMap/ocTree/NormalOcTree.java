@@ -140,7 +140,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       OcTreeKeyTools.computeNeighborKeys(key, depth, resolution, treeDepth, 0.10, tempNeighborKeysForNormal);
       normal.set(0.0, 0.0, 0.0);
 
-      for (int i = tempNeighborKeysForNormal.size() - 1; i >= 0 ; i--)
+      for (int i = tempNeighborKeysForNormal.size() - 1; i >= 0; i--)
       {
          OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(i);
          currentNode = search(currentKey, depth);
@@ -235,7 +235,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          int nextInt = random.nextInt(tempNeighborKeysForNormal.size());
          OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(nextInt);
          currentNode = search(currentKey, depth);
-         
+
          if (currentNode != null && currentNode.isCenterSet())
          {
             currentNode.getCenter(randomDraw[index++]);
@@ -255,7 +255,6 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       normalCandidate.setY(v2_x * v1_z - v2_z * v1_x);
       normalCandidate.setZ(v1_x * v2_y - v1_y * v2_x);
       normalCandidate.normalize();
-
 
       float normalQuality = 0.0f;
       int numberOfPoints = 3; // The three points picked randomly are on the plane
@@ -388,7 +387,6 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       OcTreeKeyTools.computeNeighborKeys(nodeKey, depth, resolution, treeDepth, searchRadius, tempNeighborKeysForPlanarRegion);
       keysToExplore.addAll(tempNeighborKeysForPlanarRegion);
       keysToExplore.removeAll(exploredKeys);
-      
 
       while (!keysToExplore.isEmpty())
       {
@@ -413,10 +411,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
-
    public void updateSweepCollectionHitLocations(SweepCollection sweepCollection, double alphaUpdate, boolean lazyEvaluation)
    {
-      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i ++)
+      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
          updateHitLocations(sweepCollection.getSweep(i), alphaUpdate, lazyEvaluation);
    }
 
