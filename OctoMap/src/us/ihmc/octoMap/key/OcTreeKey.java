@@ -49,6 +49,18 @@ public class OcTreeKey implements OcTreeKeyReadOnly
       k[index] = (char) keyValue;
    }
 
+   public void add(OcTreeKeyReadOnly other)
+   {
+      for (int i = 0; i < 3; i++)
+         k[i] += (char) other.getKey(i);
+   }
+   
+   public void add(OcTreeKeyReadOnly k1, OcTreeKeyReadOnly k2)
+   {
+      for (int i = 0; i < 3; i++)
+         k[i] = (char) (k1.getKey(i) + k2.getKey(i));
+   }
+
    public void addKey(int index, int keyValue)
    {
       k[index] += keyValue;
