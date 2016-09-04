@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 public class OcTreeKeyDeque extends ArrayDeque<OcTreeKey>
 {
@@ -231,6 +232,22 @@ public class OcTreeKeyDeque extends ArrayDeque<OcTreeKey>
       OcTreeKey keyToReturn = super.remove();
       unusedKeys.add(keyToReturn);
       return keyToReturn;
+   }
+
+   public boolean removeAll(OcTreeKeySet keySet)
+   {
+      Objects.requireNonNull(keySet);
+      boolean modified = false;
+      Iterator<OcTreeKey> it = iterator();
+      while (it.hasNext())
+      {
+         if (keySet.contains(it.next()))
+         {
+            it.remove();
+            modified = true;
+         }
+      }
+      return modified;
    }
 
    /**
