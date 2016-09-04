@@ -79,6 +79,11 @@ public abstract class OcTreeKeyConversionTools
       return convertCartesianCoordinateToKey(coord.getX(), coord.getY(), coord.getZ(), depth, resolution, treeDepth);
    }
 
+   public static boolean coordinateToKey(Point3d coord, int depth, double resolution, int treeDepth, OcTreeKey keyToPack)
+   {
+      return convertCartesianCoordinateToKey(coord.getX(), coord.getY(), coord.getZ(), depth, resolution, treeDepth, keyToPack);
+   }
+
    /**
     * Converts a 3D coordinate into a 3D OcTreeKey, with boundary checking.
     *
@@ -89,12 +94,7 @@ public abstract class OcTreeKeyConversionTools
     */
    public static boolean coordinateToKey(Point3d coord, double resolution, int treeDepth, OcTreeKey keyToPack)
    {
-      OcTreeKey key = coordinateToKey(coord, treeDepth, resolution, treeDepth);
-      if (key == null)
-         return false;
-
-      keyToPack.set(key);
-      return true;
+      return coordinateToKey(coord, treeDepth, resolution, treeDepth, keyToPack);
    }
 
    /**
@@ -119,19 +119,29 @@ public abstract class OcTreeKeyConversionTools
     * @param depth level of the key from the top
     * @return key if point is within the octree (valid), null otherwise
     */
-   public static OcTreeKey convertCartesianCoordinateToKey(double x, double y, double z, int depth, double resolution, int treeDepth)
+   public static boolean convertCartesianCoordinateToKey(double x, double y, double z, int depth, double resolution, int treeDepth, OcTreeKey keyToPack)
    {
       int k0 = coordinateToKey(x, depth, resolution, treeDepth);
       if (k0 == -1)
-         return null;
+         return false;
       int k1 = coordinateToKey(y, depth, resolution, treeDepth);
       if (k1 == -1)
-         return null;
+         return false;
       int k2 = coordinateToKey(z, depth, resolution, treeDepth);
       if (k2 == -1)
-         return null;
+         return false;
 
-      return new OcTreeKey(k0, k1, k2);
+      keyToPack.set(k0, k1, k2);
+      return true;
+   }
+
+   public static OcTreeKey convertCartesianCoordinateToKey(double x, double y, double z, int depth, double resolution, int treeDepth)
+   {
+      OcTreeKey ret = new OcTreeKey();
+      if (convertCartesianCoordinateToKey(x, y, z, depth, resolution, treeDepth, ret))
+         return ret;
+      else
+         return null;
    }
 
    /** converts from a discrete key at a given depth into a coordinate corresponding to the key's center */
