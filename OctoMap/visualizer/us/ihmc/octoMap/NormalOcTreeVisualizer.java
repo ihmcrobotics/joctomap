@@ -1,5 +1,7 @@
 package us.ihmc.octoMap;
 
+import static org.junit.Assert.assertEquals;
+
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -19,6 +21,7 @@ import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
+import javafx.scene.shape.Sphere;
 import javafx.stage.Stage;
 import us.ihmc.javaFXToolkit.cameraControllers.FocusBasedCameraMouseEventHandler;
 import us.ihmc.javaFXToolkit.shapes.JavaFXCoordinateSystem;
@@ -42,14 +45,16 @@ public class NormalOcTreeVisualizer extends Application
    public final NormalOcTree ocTree = new NormalOcTree(0.025);
    private static final boolean SHOW_FREE_CELLS = false;
    private static final Color FREE_COLOR = new Color(Color.YELLOW.getRed(), Color.YELLOW.getGreen(), Color.YELLOW.getBlue(), 0.0);
+   private static final boolean SHOW_POINT_CLOUD = true;
+   private static final boolean SHOW_HIT_LOCATIONS = true;
 
    public NormalOcTreeVisualizer()
    {
 
       //      callUpdateNode();
       //      callInsertPointCloud();
-//      createPlane(0.0, 0.0, -0.05);
-      createBowl(0.5, new Point3d());
+      createPlane(12.0, 0.0, -0.05);
+//      createBowl(0.5, new Point3d());
       System.out.println("Number of leafs: " + ocTree.getNumLeafNodes());
       System.out.println("Initialized octree");
       System.out.println("Computing normals");
@@ -64,46 +69,6 @@ public class NormalOcTreeVisualizer extends Application
       Point3d badNodeCoordinate = new Point3d(0.975, -0.025, -0.075);
       OcTreeKey badNodeKey = ocTree.coordinateToKey(badNodeCoordinate);
       
-      HashSet<OcTreeKey> neighborKeySet = new HashSet<>();
-
-      // There is 8 neighbouring sets
-      // The current cube can be at any of the 8 vertex
-      int[][] xIndex = new int[][] {{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0, - 1, -1}, {0, 0, - 1, -1}};
-      int[][] yIndex = new int[][] {{1, 0, 0, 1}, {0, -1, -1, 0}, {0, -1, -1, 0}, {1, 0, 0, 1}};
-      int[][] zIndex = new int[][] {{0, 1}, {-1, 0}};
-
-      // Iterate over the 8 neighboring sets
-      for (int m = 0; m < 2; ++m)
-      {
-         for (int l = 0; l < 4; ++l)
-         {
-            int k = 0;
-            // Iterate over the cubes
-            for (int j = 0; j < 2; ++j)
-            {
-               for (int i = 0; i < 4; ++i)
-               {
-                  OcTreeKey currentKey = new OcTreeKey();
-                  currentKey.setKey(0, badNodeKey.getKey(0) + xIndex[l][i]);
-                  currentKey.setKey(1, badNodeKey.getKey(1) + yIndex[l][i]);
-                  currentKey.setKey(2, badNodeKey.getKey(2) + zIndex[m][j]);
-
-                  neighborKeySet.add(currentKey);
-               }
-            }
-         }
-      }
-
-      NumberFormat format = new DecimalFormat(" 0.000;-0.000");
-      for (OcTreeKey key : neighborKeySet)
-      {
-         Point3d coord = ocTree.keyToCoordinate(key);
-         NormalOcTreeNode node = ocTree.search(key);
-         System.out.println("(" + format.format(coord.getX()) + ", " + format.format(coord.getY()) + ", " + format.format(coord.getZ()) +"), node: " + node);
-      }
-
-      
-      System.out.println("in getNormals()");
       List<Vector3d> normals = new ArrayList<>();
       ocTree.getNormals(badNodeKey, normals, true);
       System.out.println(normals);
@@ -180,7 +145,7 @@ public class NormalOcTreeVisualizer extends Application
       Point3d origin = new Point3d(0.0, 0.0, z + 2.0);
       pointcloud.clear();
 
-      double planeSize = 4.0;
+      double planeSize = 1.00;
 
       for (double x = -0.5 * planeSize; x < 0.5 * planeSize; x += 0.7 * ocTree.getResolution())
       {
@@ -241,32 +206,70 @@ public class NormalOcTreeVisualizer extends Application
       MultiColorMeshBuilder occupiedMeshBuilder = new MultiColorMeshBuilder(palette);
       MeshBuilder freeMeshBuilder = new MeshBuilder();
 
-      LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree);
+      LeafIterable<NormalOcTreeNode> leafIterable = new LeafIterable<>(ocTree, 14);
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
          double boxSize = superNode.getSize();
-         Point3d boxCenter = superNode.getCoordinate();
+         Point3d nodeCenter = superNode.getCoordinate();
 
          NormalOcTreeNode node = superNode.getNode();
          if (ocTree.isNodeOccupied(node))
          {
-            Vector3d normal = new Vector3d();
-            node.getNormal(normal);
+            Vector3d planeNormal = new Vector3d();
+            node.getNormal(planeNormal);
             boolean isNormalSet = node.isNormalSet();
-            Color normalBasedColor = getNormalBasedColor(normal, isNormalSet);
+            Color normalBasedColor = getNormalBasedColor(planeNormal, isNormalSet);
             if (isNormalSet)
             {
-               intersectionPlaneBoxCalculator.setCube(boxSize, boxCenter);
-               intersectionPlaneBoxCalculator.setPlane(boxCenter, normal);
+               Point3d pointOnPlane = new Point3d();
+               if (node.isCenterSet())
+                  node.getCenter(pointOnPlane);
+               else
+                  pointOnPlane.set(nodeCenter);
+               intersectionPlaneBoxCalculator.setCube(boxSize, nodeCenter);
+               intersectionPlaneBoxCalculator.setPlane(pointOnPlane, planeNormal);
                intersectionPlaneBoxCalculator.computeIntersections(plane);
                occupiedMeshBuilder.addPolyon(plane, normalBasedColor);
+               if (SHOW_HIT_LOCATIONS)
+                  occupiedMeshBuilder.addCubeMesh(0.01, pointOnPlane, DEFAULT_COLOR);
+               
+               
+
+               for (int j = 0; j < plane.size(); j++)
+               {
+                  Point3d intersection = plane.get(j);
+
+                  Vector3d sub = new Vector3d();
+                  sub.sub(intersection, pointOnPlane);
+
+                  Vector3d v0 = new Vector3d();
+                  Vector3d v1 = new Vector3d();
+                  Vector3d v3 = new Vector3d();
+                  Point3d nextIntersection = plane.get((j + 1) % plane.size());
+                  Point3d previousIntersection = plane.get(j == 0 ? plane.size() - 1 : j - 1);
+                  v0.sub(intersection, nextIntersection);
+                  v1.sub(intersection, previousIntersection);
+                  v3.cross(v0, v1);
+                  if (v3.dot(planeNormal) < 0.0 || Math.abs(sub.dot(planeNormal)) > 0.01)
+                  {
+                     System.err.println("node size: " + boxSize);
+                     System.err.println("      Point3d cubeCenter = new Point3d" + nodeCenter + ";");
+                     System.err.println("      Point3d pointOnPlane = new Point3d" + pointOnPlane + ";");
+                     System.err.println("      Vector3d planeNormal = new Vector3d" + planeNormal + ";");
+                     System.out.println();
+                  }
+               }
+               
+               
+               
+               
             }
             else
-               occupiedMeshBuilder.addCubeMesh((float) boxSize, new Point3f(boxCenter), normalBasedColor);
+               occupiedMeshBuilder.addCubeMesh((float) boxSize, new Point3f(nodeCenter), normalBasedColor);
          }
          else if (SHOW_FREE_CELLS)
          {
-            freeMeshBuilder.addCubeMesh((float) boxSize, new Point3f(boxCenter));
+            freeMeshBuilder.addCubeMesh((float) boxSize, new Point3f(nodeCenter));
          }
       }
 
@@ -283,6 +286,18 @@ public class NormalOcTreeVisualizer extends Application
          material.setDiffuseColor(FREE_COLOR);
          freeMeshView.setMaterial(material);
          rootNode.getChildren().add(freeMeshView);
+      }
+
+      if (SHOW_POINT_CLOUD)
+      {
+         for (int i = 0; i < pointcloud.size(); i++)
+         {
+            Sphere sphere = new Sphere(0.0025);
+            sphere.setTranslateX(pointcloud.getPoint(i).getX());
+            sphere.setTranslateY(pointcloud.getPoint(i).getY());
+            sphere.setTranslateZ(pointcloud.getPoint(i).getZ());
+            rootNode.getChildren().add(sphere);
+         }
       }
    }
 

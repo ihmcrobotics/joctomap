@@ -42,6 +42,11 @@ public class PlanarRegionSegmentationVisualizer extends Application
       createSawToothPlanes(0.0, 0.0, new Vector3d(), lidarLocation);
       ocTree.updateHitLocations(pointcloud, 0.05, false);
       ocTree.updateNormals();
+      ocTree.updateNormals();
+      ocTree.updateNormals();
+      ocTree.updateNormals();
+      ocTree.updateNormals();
+      ocTree.updateNormals();
       ocTree.updatePlanarRegionSegmentation(16);
    }
    
@@ -52,11 +57,12 @@ public class PlanarRegionSegmentationVisualizer extends Application
       Point3d origin = new Point3d(lidarLocation);
       pointcloud.clear();
 
-      double planeSize = 2.0;
+      double planeSize = 0.5;
 
-      for (double x = -0.5 * planeSize; x < 0.5 * planeSize; x += 0.7 * ocTree.getResolution())
+      double d = 0.2 * ocTree.getResolution();
+      for (double x = -0.5 * planeSize; x < 0.5 * planeSize; x += d)
       {
-         for (double y = -0.5 * planeSize; y < 0.5 * planeSize; y += 0.7 * ocTree.getResolution())
+         for (double y = -0.5 * planeSize; y < 0.5 * planeSize; y += d)
          {
             Point3d point = new Point3d(x, y, 0.0);
             Matrix3d rotation = new Matrix3d();
