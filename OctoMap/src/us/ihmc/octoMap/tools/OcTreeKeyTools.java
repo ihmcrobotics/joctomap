@@ -299,6 +299,19 @@ public class OcTreeKeyTools
       return keyToCheck >= computeMinimumKeyAtDepth(depth, treeDepth) && keyToCheck <= computeMaximumKeyValueAtDepth(depth, treeDepth);
    }
 
+   public static boolean isKeyValid(OcTreeKey keyToCheck, int depth, int treeDepth)
+   {
+      int keyMin = computeMinimumKeyAtDepth(depth, treeDepth);
+      int keyMax = computeMaximumKeyValueAtDepth(depth, treeDepth);
+      for (int i = 0; i < 3; i++)
+      {
+         int key = keyToCheck.getKey(i);
+         if (key < keyMin || key > keyMax)
+            return false;
+      }
+      return true;
+   }
+
    public static OcTreeKeyList computeNeighborKeys(OcTreeKeyReadOnly key, int depth, double resolution, int treeDepth, double searchRadius)
    {
       OcTreeKeyList neighborKeys = new OcTreeKeyList();
@@ -306,16 +319,13 @@ public class OcTreeKeyTools
       return neighborKeys;
    }
 
-   public static void computeNeighborKeys(OcTreeKeyReadOnly key, int depth, double resolution, int treeDepth, double searchRadius, OcTreeKeyList neighborKeysToPack)
+   public static void computeNeighborKeys(OcTreeKeyReadOnly key, int depth, double resolution, int treeDepth, double searchRadius,
+         OcTreeKeyList neighborKeysToPack)
    {
-      neighborKeysToPack.clear();
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      computeNeighborKeyOffsets(depth, resolution, treeDepth, searchRadius, neighborKeysToPack);
 
       if (depth == 0)
          depth = treeDepth;
-
-      double nodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
-      int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
 
       // generate appropriate keyAtDepth for queried depth
       OcTreeKey keyAtDepth;
@@ -324,34 +334,45 @@ public class OcTreeKeyTools
       else
          keyAtDepth = new OcTreeKey(key);
 
+
+      for (int i = 0; i < neighborKeysToPack.size(); i++)
+      {
+         OcTreeKey currentKey = neighborKeysToPack.get(i);
+         currentKey.add(keyAtDepth);
+         if (!isKeyValid(currentKey, depth, treeDepth))
+            neighborKeysToPack.fastRemove(i);
+      }
+   }
+
+   public static void computeNeighborKeyOffsets(int depth, double resolution, int treeDepth, double searchRadius, OcTreeKeyList neighborKeyOffsetsToPack)
+   {
+      neighborKeyOffsetsToPack.clear();
+      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+
+      if (depth == 0)
+         depth = treeDepth;
+
+      double nodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
+      int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
+
       int deltaKeyZMax = (int) (Math.floor(searchRadius / nodeSize));
-      
+
       for (int deltaKeyZ = -deltaKeyZMax; deltaKeyZ <= deltaKeyZMax; deltaKeyZ += 1)
       {
          double radiusAtZ = Math.sqrt(MathTools.square(searchRadius) - MathTools.square(Math.abs(deltaKeyZ) * nodeSize));
          int deltaKeyXMax = (int) (Math.floor(radiusAtZ / nodeSize));
-         int k2 = keyAtDepth.getKey(2) + deltaKeyZ * keyInterval;
-
-         if (!isKeyValid(k2, depth, treeDepth)) // Check if we are still in the octree
-            continue;
+         int k2 = deltaKeyZ * keyInterval;
 
          for (int deltaKeyX = -deltaKeyXMax; deltaKeyX <= deltaKeyXMax; deltaKeyX += 1)
          {
             double maxDistance = Math.sqrt(MathTools.square(radiusAtZ) - MathTools.square(Math.abs(deltaKeyX) * nodeSize));
             int deltaKeyYMax = (int) (Math.floor(maxDistance / nodeSize));
-            int k0 = keyAtDepth.getKey(0) + deltaKeyX * keyInterval;
-
-            if (!isKeyValid(k0, depth, treeDepth)) // Check if we are still in the octree
-               continue;
+            int k0 = deltaKeyX * keyInterval;
 
             for (int deltaKeyY = -deltaKeyYMax; deltaKeyY <= deltaKeyYMax; deltaKeyY += 1)
             {
-               int k1 = keyAtDepth.getKey(1) + deltaKeyY * keyInterval;
-               
-               if (!isKeyValid(k1, depth, treeDepth)) // Check if we are still in the octree
-                  continue;
-
-               neighborKeysToPack.add(k0, k1, k2);
+               int k1 = deltaKeyY * keyInterval;
+               neighborKeyOffsetsToPack.add(k0, k1, k2);
             }
          }
       }
