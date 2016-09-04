@@ -69,18 +69,28 @@ public class OcTreeKeyTools
     */
    public static int computeChildIndex(OcTreeKeyReadOnly key, int depth)
    {
+      int k0 = key.getKey(0);
+      int k1 = key.getKey(1);
+      int k2 = key.getKey(2);
+
+      int childIndex = computeChildIndex(k0, k1, k2, depth);
+
+      return childIndex;
+   }
+
+   public static int computeChildIndex(int k0, int k1, int k2, int depth)
+   {
       int childIndex = 0;
       int temp = (int) ((char) (1 << depth) % Character.MAX_VALUE);
 
-      if ((key.getKey(0) & temp) != 0)
+      if ((k0 & temp) != 0)
          childIndex += 1;
 
-      if ((key.getKey(1) & temp) != 0)
+      if ((k1 & temp) != 0)
          childIndex += 2;
 
-      if ((key.getKey(2) & temp) != 0)
+      if ((k2 & temp) != 0)
          childIndex += 4;
-
       return childIndex;
    }
 
