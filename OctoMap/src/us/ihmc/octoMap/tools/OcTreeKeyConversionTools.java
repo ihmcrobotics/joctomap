@@ -55,6 +55,17 @@ public abstract class OcTreeKeyConversionTools
    {
       return convertCartesianCoordinateToKey(coord.getX(), coord.getY(), coord.getZ(), treeDepth, resolution, treeDepth);
    }
+
+   /**
+    * Converts a 3D coordinate into a 3D OcTreeKey, with boundary checking.
+    *
+    * @param coord 3d coordinate of a point
+    * @return key if point is within the octree (valid), null otherwise
+    */
+   public static boolean coordinateToKey(Point3f coord, double resolution, int treeDepth, OcTreeKey keyToPack)
+   {
+      return convertCartesianCoordinateToKey(coord.getX(), coord.getY(), coord.getZ(), treeDepth, resolution, treeDepth, keyToPack);
+   }
    
    /**
     * Converts a 3D coordinate into a 3D OcTreeKey, with boundary checking.
