@@ -334,7 +334,6 @@ public class OcTreeKeyTools
       else
          keyAtDepth = new OcTreeKey(key);
 
-
       for (int i = 0; i < neighborKeysToPack.size(); i++)
       {
          OcTreeKey currentKey = neighborKeysToPack.get(i);
