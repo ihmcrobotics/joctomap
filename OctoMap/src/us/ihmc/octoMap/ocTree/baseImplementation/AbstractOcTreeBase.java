@@ -657,6 +657,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /** Converts from a 3D coordinate into a 3D addressing key */
+   public boolean coordinateToKey(Point3f coord, OcTreeKey keyToPack)
+   {
+      return OcTreeKeyConversionTools.coordinateToKey(coord, resolution, treeDepth, keyToPack);
+   }
+
+   /** Converts from a 3D coordinate into a 3D addressing key */
    public OcTreeKey coordinateToKey(Point3d coord)
    {
       return OcTreeKeyConversionTools.coordinateToKey(coord, resolution, treeDepth);
@@ -806,10 +812,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /// recursive delete of node and all children (deallocates memory)
    protected void deleteNodeRecurs(NODE node)
    {
-      if (node == null)
-         throw new RuntimeException("The given node is null");
-      // TODO: maintain tree size?
-
       if (node.hasAtLeastOneChild())
       {
          for (int i = 0; i < 8; i++)
