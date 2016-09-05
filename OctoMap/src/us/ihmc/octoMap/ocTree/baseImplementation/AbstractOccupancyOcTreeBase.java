@@ -91,6 +91,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
    public void insertSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange, boolean lazyEvaluation, boolean discretize)
    {
+      unfilteredFreeCells.clear();
+      freeCells.clear();
+      occupiedCells.clear();
+
       long startTime = System.nanoTime();
       for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
       {
