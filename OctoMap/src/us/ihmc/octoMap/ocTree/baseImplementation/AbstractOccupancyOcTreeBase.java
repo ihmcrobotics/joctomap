@@ -1123,12 +1123,13 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    public void computeUpdate(PointCloud scan, Point3d origin, OcTreeKeySet unfilteredFreeCells, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, double minRange, double maxrange)
    {
       unfilteredFreeCells.clear();
+      OcTreeKey key = new OcTreeKey();
+      Vector3d direction = new Vector3d();
+      Point3d point = new Point3d();
 
       for (int i = 0; i < scan.size(); ++i)
       {
-         Point3d point = new Point3d(scan.getPoint(i));
-
-         Vector3d direction = new Vector3d();
+         point.set(scan.getPoint(i));
          direction.sub(point, origin);
          double length = direction.length();
 
@@ -1145,8 +1146,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
                   unfilteredFreeCells.addAll(rayTracer.getResult());
                }
                // occupied endpoint
-               OcTreeKey key = coordinateToKey(point);
-               if (key != null)
+               if (coordinateToKey(point, key))
                   occupiedCells.add(key);
             }
             else
@@ -1163,8 +1163,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             if (isInBoundingBox(point) && (maxrange < 0.0 || length <= maxrange))
             {
                // occupied endpoint
-               OcTreeKey key = coordinateToKey(point);
-               if (key != null)
+               if (coordinateToKey(point, key))
                   occupiedCells.add(key);
 
                // update freespace, break as soon as bbx limit is reached
