@@ -1,5 +1,6 @@
 package us.ihmc.octoMap.ocTree;
 
+import java.util.HashMap;
 import java.util.Random;
 
 import javax.vecmath.Point3d;
@@ -22,6 +23,7 @@ import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
+import us.ihmc.robotics.time.TimeTools;
 
 public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 {
@@ -37,11 +39,30 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       leafIterable = new LeafIterable<>(this, treeDepth, true);
    }
 
+   private final HashMap<Integer, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
+
+   public void updateNormalsAndPlanarRegions(int depth)
+   {
+      keyToNodeMap.clear();
+      for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
+         keyToNodeMap.put(superNode.getKey().hashCode(), superNode.getNode());
+
+      long startTime = System.nanoTime();
+      updateNormals();
+      long endTime = System.nanoTime();
+      System.out.println("Exiting  updateNormals took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
+
+      startTime = System.nanoTime();
+      updatePlanarRegionSegmentation(depth);
+      endTime = System.nanoTime();
+      System.out.println("Exiting  updatePlanarRegionSegmentation took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
+   }
+
    public void updateNormals()
    {
       leafIterable.setMaxDepth(treeDepth);
       boolean unknownStatus = true;
-      double searchRadius = 0.051;
+      double searchRadius = 2.1 * getNodeSize(treeDepth);
 
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
@@ -272,7 +293,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
          int nextInt = random.nextInt(tempNeighborKeysForNormal.size());
          OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(nextInt);
-         currentNode = search(currentKey, depth);
+         currentNode = keyToNodeMap.get(currentKey.hashCode());
+//         if (currentNode == null)
+//            currentNode = search(currentKey, depth);
 
          if (currentNode != null && currentNode.isCenterSet())
          {
@@ -300,7 +323,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       for (int i = 0; i < tempNeighborKeysForNormal.size(); i++)
       {
          OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(i);
-         currentNode = search(currentKey, depth);
+         currentNode = keyToNodeMap.get(currentKey.hashCode());
+//         if (currentNode == null)
+//            currentNode = search(currentKey, depth);
 
          if (currentNode != null && currentNode.isCenterSet())
          {
@@ -406,6 +431,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       double exploringRadius = 2.0 * getNodeSize(depth);
       double maxMistanceFromPlane = 0.05;
       double angleThreshold = Math.toRadians(5.0);
+      double dotThreshold = Math.cos(angleThreshold);
       Random random = new Random(45561L);
       Vector3d nodeNormal = new Vector3d();
 
@@ -425,7 +451,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          planarRegion.update(nodeNormal, keyToCoordinate(nodeKey, depth));
          node.setRegionId(planarRegion.getId());
 
-         growPlanarRegionIteratively(planarRegion, nodeKey, depth, exploringRadius, maxMistanceFromPlane, angleThreshold);
+         growPlanarRegionIteratively(planarRegion, nodeKey, depth, exploringRadius, maxMistanceFromPlane, dotThreshold);
       }
    }
 
@@ -435,8 +461,10 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    private final OcTreeKeyDeque keysToExplore = new OcTreeKeyDeque();
    private final OcTreeKey neighborKey = new OcTreeKey();
 
+   
+
    private void growPlanarRegionIteratively(PlanarRegion planarRegion, OcTreeKeyReadOnly nodeKey, int depth, double searchRadius, double maxMistanceFromPlane,
-         double angleThreshold)
+         double dotThreshold)
    {
       exploredKeys.clear();
       keysToExplore.clear();
@@ -457,14 +485,16 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          OcTreeKey currentKey = keysToExplore.poll();
          exploredKeys.add(currentKey);
 
-         NormalOcTreeNode currentNode = search(currentKey, depth);
+         NormalOcTreeNode currentNode = keyToNodeMap.get(currentKey.hashCode());
+//         if (currentNode == null)
+//            currentNode = search(currentKey, depth);
          if (currentNode == null || !currentNode.isNormalSet() || !currentNode.isCenterSet() || currentNode.isPartOfRegion() || !isNodeOccupied(currentNode))
             continue;
 
          currentNode.getNormal(normalCandidateToCurrentRegion);
          currentNode.getCenter(centerCandidateToCurrentRegion);
 
-         if (planarRegion.absoluteDistance(centerCandidateToCurrentRegion) < maxMistanceFromPlane && planarRegion.absoluteAngle(normalCandidateToCurrentRegion) < angleThreshold)
+         if (planarRegion.absoluteDistance(centerCandidateToCurrentRegion) < maxMistanceFromPlane && planarRegion.absoluteDot(normalCandidateToCurrentRegion) > dotThreshold)
          {
             planarRegion.update(normalCandidateToCurrentRegion, centerCandidateToCurrentRegion);
             currentNode.setRegionId(planarRegion.getId());

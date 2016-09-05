@@ -46,6 +46,16 @@ public class PlanarRegion
       return Math.abs(angle(normal));
    }
 
+   public double dot(Vector3d normal)
+   {
+      return this.normal.dot(normal);
+   }
+
+   public double absoluteDot(Vector3d normal)
+   {
+      return Math.abs(dot(normal));
+   }
+
    public int getId()
    {
       return id;
