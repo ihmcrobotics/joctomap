@@ -106,7 +106,8 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
    public final N removeChildUnsafe(int childIndex)
    {
       N removedChild = children[childIndex];
-      removedChild.clear();
+      if (removedChild != null)
+         removedChild.clear();
       children[childIndex] = null;
       return removedChild;
    }
