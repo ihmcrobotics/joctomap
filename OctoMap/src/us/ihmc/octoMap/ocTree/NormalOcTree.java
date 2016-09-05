@@ -25,6 +25,9 @@ import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 {
+   private enum NormalComputationMethod {DIRECT_NEIGHBORS, CLOSE_NEIGHBORS, RANSAC};
+   private static final NormalComputationMethod NORMAL_COMPUTATION_METHOD = NormalComputationMethod.RANSAC;
+
    private final TDoubleObjectHashMap<TIntObjectHashMap<OcTreeKeyList>> neighborOffsetsCached = new TDoubleObjectHashMap<>(4);
    private final LeafIterable<NormalOcTreeNode> leafIterable;
 
@@ -36,51 +39,66 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
    public void updateNormals()
    {
-      if (root != null)
+      leafIterable.setMaxDepth(treeDepth);
+      boolean unknownStatus = true;
+      double searchRadius = 0.051;
+
+      for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
-         OcTreeKey rootKey = OcTreeKeyTools.getRootKey(treeDepth);
-         updateNormalsRecursively(root, rootKey, 0);
+         NormalOcTreeNode node = superNode.getNode();
+         OcTreeKeyReadOnly key = superNode.getKey();
+         int depth = superNode.getDepth();
+
+         node.resetRegionId();
+
+         if (!isNodeOccupied(node))
+         {
+            node.resetNormal();
+            continue;
+         }
+
+         switch (NORMAL_COMPUTATION_METHOD)
+         {
+         case RANSAC:
+            computeNodeNormalRansac(node, key, depth, unknownStatus, searchRadius);
+            break;
+         case CLOSE_NEIGHBORS:
+            computeNodeNormalWithSphericalNeighborhood(node, key, depth, unknownStatus, searchRadius);
+            break;
+         case DIRECT_NEIGHBORS:
+            computeNodeNormalWithDirectNeighbors(node, key, depth, unknownStatus);
+            break;
+         default:
+            break;
+         }
       }
+
+      if (root != null)
+         updateInnerNormalsRecursive(root, 0);
    }
 
-   private void updateNormalsRecursively(NormalOcTreeNode node, OcTreeKeyReadOnly nodeKey, int depth)
+   private void updateInnerNormalsRecursive(NormalOcTreeNode node, int depth)
    {
-      node.resetRegionId();
-
-      if (!isNodeOccupied(node))
-      {
-         node.resetNormal();
-         return;
-      }
-
+      // only recurse and update for inner nodes:
       if (node.hasAtLeastOneChild())
       {
-         int childDepth = depth + 1;
-
-         for (int childIndex = 0; childIndex < 8; childIndex++)
+         // return early for last level:
+         if (depth < treeDepth - 1)
          {
-            NormalOcTreeNode childNode;
-            if ((childNode = node.getChildUnsafe(childIndex)) != null)
+            for (int i = 0; i < 8; i++)
             {
-               OcTreeKey childKey = OcTreeKeyTools.computeChildKey(childIndex, nodeKey, childDepth, treeDepth);
-               updateNormalsRecursively(childNode, childKey, childDepth);
+               NormalOcTreeNode childNode;
+               if ((childNode = node.getChildUnsafe(i)) != null)
+                  updateInnerNormalsRecursive(childNode, depth + 1);
             }
          }
+         node.resetRegionId();
          node.updateNormalChildren();
-      }
-      else
-      {
-//         computeNodeNormalWithSphericalNeighborhood(nodeKey, depth, true);
-         computeNodeNormalRansac(nodeKey, depth, true);
       }
    }
 
-   public void computeNodeNormalWithDirectNeighbors(OcTreeKeyReadOnly key, int depth, boolean unknownStatus)
+   private void computeNodeNormalWithDirectNeighbors(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, boolean unknownStatus)
    {
-      NormalOcTreeNode node = search(key, depth);
-      if (node == null)
-         return;
-
       OcTreeKey currentKey = new OcTreeKey();
       NormalOcTreeNode currentNode;
 
@@ -131,12 +149,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    private final Point3d nodeCenter = new Point3d();
    private final Point3d neighborCenter = new Point3d();
 
-   public void computeNodeNormalWithSphericalNeighborhood(OcTreeKeyReadOnly key, int depth, boolean unknownStatus)
+   private void computeNodeNormalWithSphericalNeighborhood(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, boolean unknownStatus, double searchRadius)
    {
-      NormalOcTreeNode node = search(key, depth);
-      if (node == null)
-         return;
-
       if (node.isCenterSet())
          node.getCenter(nodeCenter);
       else
@@ -144,7 +158,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
       NormalOcTreeNode currentNode;
 
-      OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(depth, 0.10);
+      OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(depth, searchRadius);
       tempNeighborKeysForNormal.clear();
       for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
       {
@@ -219,15 +233,11 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    private final Vector3d normalCandidate = new Vector3d();
    private final Point3d[] randomDraw = {new Point3d(), new Point3d(), new Point3d()};
 
-   public void computeNodeNormalRansac(OcTreeKeyReadOnly key, int depth, boolean unknownStatus)
+   private void computeNodeNormalRansac(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, boolean unknownStatus, double searchRadius)
    {
-      NormalOcTreeNode node = search(key, depth);
-      if (node == null)
-         return;
-
       if (!node.isCenterSet() || !node.isNormalQualitySet())
       {
-         computeNodeNormalWithSphericalNeighborhood(key, depth, unknownStatus);
+         computeNodeNormalWithSphericalNeighborhood(node, key, depth, unknownStatus, searchRadius);
          return;
       }
 
@@ -235,7 +245,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
       NormalOcTreeNode currentNode;
 
-      OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(depth, 0.10);
+      OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(depth, searchRadius);
 
       tempNeighborKeysForNormal.clear();
       for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
@@ -256,7 +266,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          // Did not find three points, just fall back to the naive way
          if (tempNeighborKeysForNormal.isEmpty())
          {
-            computeNodeNormalWithSphericalNeighborhood(key, depth, unknownStatus);
+            computeNodeNormalWithSphericalNeighborhood(node, key, depth, unknownStatus, searchRadius);
             return;
          }
 
@@ -475,6 +485,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          updateHitLocations(sweepCollection.getSweep(i), alphaUpdate, lazyEvaluation);
    }
 
+   private final OcTreeKey hitLocationKey = new OcTreeKey();
+
    public void updateHitLocations(PointCloud pointCloud, double alphaUpdate, boolean lazyEvaluation)
    {
       for (int i = 0; i < pointCloud.size(); i++)
@@ -482,8 +494,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          Point3f point = pointCloud.getPoint(i);
          if (useBoundingBoxLimit && !isInBoundingBox(point))
             continue;
-         OcTreeKey key = coordinateToKey(point);
-         updateNodeCenterRecursively(root, key, 0, point, alphaUpdate, lazyEvaluation);
+         if (coordinateToKey(point, hitLocationKey))
+            updateNodeCenterRecursively(root, hitLocationKey, 0, point, alphaUpdate, lazyEvaluation);
       }
    }
 
@@ -494,22 +506,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
          NormalOcTreeNode child;
          if (node.hasArrayForChildren() && (child = node.getChildUnsafe(childIndex)) != null)
-         {
-            node.updateCenter(centerUpdate, alphaUpdate);
             updateNodeCenterRecursively(child, key, depth + 1, centerUpdate, alphaUpdate, lazyEvaluation);
-            return;
-         }
-         else
-         {
-            node.updateCenter(centerUpdate, alphaUpdate);
-            return;
-         }
       }
-      else
-      {
-         node.updateCenter(centerUpdate, alphaUpdate);
-         return;
-      }
+      node.updateCenter(centerUpdate, alphaUpdate);
    }
 
    @Override
