@@ -281,6 +281,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       normalCandidate.set(0.0, 0.0, 0.0);
 
       int index = 0;
+      node.getCenter(randomDraw[index++]);
+      tempNeighborKeysForNormal.remove(key);
 
       while (index < 3)
       {
