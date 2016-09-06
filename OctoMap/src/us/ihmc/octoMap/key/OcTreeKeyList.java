@@ -6,8 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import us.ihmc.robotics.lists.RecyclingArrayList;
-
 public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
 {
    private static final int DEFAULT_INITIAL_SIZE = 0;
@@ -222,7 +220,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
 
    /**
     * Removes the element at the specified position in this list.
-    * This method is faster than {@link RecyclingArrayList#remove(int)} but the ith element is swapped with the last element changing the ordering of the list.
+    * This method is faster than {@link #remove(int)} but the ith element is swapped with the last element changing the ordering of the list.
     * 
     * @param index the index of the element to be removed
     */
@@ -235,6 +233,27 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
       }
       rangeCheck(index);
       unsafeFastSwap(index, --size);
+   }
+
+   /**
+    * Removes the first occurrence of the specified element from this list,
+    * if it is present.  If the list does not contain the element, it is
+    * unchanged.
+    * This method is faster than {@link #remove(Object)} but the found element is swapped with the last element changing the ordering of the list.
+    *
+    * @param keyToRemove element to be removed from this list, if present
+    * @return <tt>true</tt> if this list contained the specified element
+    */
+   public boolean fastRemove(OcTreeKeyReadOnly keyToRemove)
+   {
+      int index = indexOf(keyToRemove);
+      if (index == -1)
+         return false;
+      else
+      {
+         fastRemove(index);
+         return true;
+      }
    }
 
    public void removeLast()
