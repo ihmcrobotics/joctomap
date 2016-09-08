@@ -1339,7 +1339,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             else
             {
                // not a pruned node, create requested child
-               createNodeChild(node, pos);
+               createNodeChildUnsafe(node, pos);
                createdNode = true;
             }
          }
@@ -1422,7 +1422,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             else
             {
                // not a pruned node, create requested child
-               createNodeChild(parentNode, childIndex);
+               createNodeChildUnsafe(parentNode, childIndex);
                parentNodeJustCreated = true;
             }
          }
@@ -1472,7 +1472,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
             else
             {
                // not a pruned node, create requested child
-               createNodeChild(node, pos);
+               createNodeChildUnsafe(node, pos);
                created_node = true;
             }
          }

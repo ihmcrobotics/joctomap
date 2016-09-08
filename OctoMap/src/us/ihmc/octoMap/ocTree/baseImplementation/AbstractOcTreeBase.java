@@ -176,6 +176,15 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public NODE createNodeChild(NODE node, int childIndex)
    {
       OcTreeNodeTools.checkChildIndex(childIndex);
+
+      if (node.getChildUnsafe(childIndex) != null)
+         throw new RuntimeException("Something went wrong.");
+
+      return createNodeChildUnsafe(node, childIndex);
+   }
+
+   protected NODE createNodeChildUnsafe(NODE node, int childIndex)
+   {
       if (!node.hasArrayForChildren())
       {
          if (unusedNodeArrays.isEmpty())
@@ -184,10 +193,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             node.assignChildren(unusedNodeArrays.remove(unusedNodeArrays.size() - 1));
       }
 
-      if (node.getChildUnsafe(childIndex) != null)
-         throw new RuntimeException("Something went wrong.");
       NODE newChildNode = unusedNodes.isEmpty() ? node.create() : unusedNodes.remove(unusedNodes.size() - 1);
-      node.setChild(childIndex, newChildNode);
+      node.setChildUnsafe(childIndex, newChildNode);
 
       treeSize++;
       size_changed = true;
@@ -218,26 +225,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
 //      // all children must exist, must not have children of
 //      // their own and have the same occupancy probability
-//      if (!OcTreeNodeTools.nodeChildExists(node, 0))
-//         return false;
-//
-//      NODE firstChild = OcTreeNodeTools.getNodeChild(node, 0);
-//      if (firstChild.hasAtLeastOneChild())
-//         return false;
-//
-//      for (int i = 1; i < 8; i++)
-//      {
-//         if (!OcTreeNodeTools.nodeChildExists(node, i))
-//            return false;
-//
-//         NODE currentChild = OcTreeNodeTools.getNodeChild(node, i);
-//
-//         if (currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
-//            return false;
-//      }
-//
-//      return true;
-
       if (!node.hasArrayForChildren())
          return false;
 
@@ -270,7 +257,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       for (int k = 0; k < 8; k++)
       {
-         NODE newNode = createNodeChild(node, k);
+         NODE newNode = createNodeChildUnsafe(node, k);
          newNode.copyData(node);
       }
    }
@@ -285,7 +272,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          return false;
 
       // set value to children's values (all assumed equal)
-      node.copyData(OcTreeNodeTools.getNodeChild(node, 0));
+      node.copyData(node.getChildUnsafe(0));
 
       // delete children (known to be leafs at this point!)
       for (int i = 0; i < 8; i++)

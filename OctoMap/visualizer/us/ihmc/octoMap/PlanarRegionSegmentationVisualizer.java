@@ -31,23 +31,21 @@ import us.ihmc.robotics.lists.RecyclingArrayList;
 
 public class PlanarRegionSegmentationVisualizer extends Application
 {
-   public final NormalOcTree ocTree = new NormalOcTree(0.025);
+   public final NormalOcTree ocTree = new NormalOcTree(0.01);
    private static final double TWO_PI = 2.0 * Math.PI;
    private static final boolean SHOW_POINT_CLOUD = false;
 
    public PlanarRegionSegmentationVisualizer()
    {
-      Point3d lidarLocation = new Point3d(0.0, 0.0, 2.0);
+      Point3d lidarLocation = new Point3d(0.0, 0.0, 5.0);
 //      createPlane(-20.0, 0.0, new Vector3d(0.1, 0.0, 0.0), lidarLocation);
       createSawToothPlanes(0.0, 0.0, new Vector3d(), lidarLocation);
-      ocTree.updateHitLocations(pointcloud, 0.05, false);
-      ocTree.updateNormals();
-      ocTree.updateNormals();
-      ocTree.updateNormals();
-      ocTree.updateNormals();
-      ocTree.updateNormals();
-      ocTree.updateNormals();
-      ocTree.updatePlanarRegionSegmentation(16);
+      ocTree.updateHitLocations(lidarLocation, pointcloud, 0.05, false);
+      ocTree.updateNormalsAndPlanarRegions(16);
+      ocTree.updateNormalsAndPlanarRegions(16);
+      ocTree.updateNormalsAndPlanarRegions(16);
+      ocTree.updateNormalsAndPlanarRegions(16);
+      ocTree.updateNormalsAndPlanarRegions(16);
    }
    
    PointCloud pointcloud = new PointCloud();
@@ -81,8 +79,8 @@ public class PlanarRegionSegmentationVisualizer extends Application
       Point3d origin = new Point3d(lidarLocation);
       pointcloud.clear();
 
-      double toothAmplitude = 0.5;
-      double toothFrequency = 0.2;
+      double toothAmplitude = 0.12;
+      double toothFrequency = 0.6;
       double length = 10.0;
       double planeWidth = 0.5;
 

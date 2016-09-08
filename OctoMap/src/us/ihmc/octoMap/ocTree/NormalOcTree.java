@@ -17,7 +17,6 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyDeque;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
-import us.ihmc.octoMap.key.OcTreeKeySet;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
 import us.ihmc.octoMap.pointCloud.PointCloud;
@@ -45,7 +44,12 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    {
       keyToNodeMap.clear();
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
-         keyToNodeMap.put(superNode.getKey().hashCode(), superNode.getNode());
+      {
+         NormalOcTreeNode node = superNode.getNode();
+         node.resetRegionId();
+         node.resetHasBeenCandidateForRegion();
+         keyToNodeMap.put(superNode.getKey().hashCode(), node);
+      }
 
       long startTime = System.nanoTime();
       updateNormals();
@@ -58,19 +62,60 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       System.out.println("Exiting  updatePlanarRegionSegmentation took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
    }
 
+   public void updateSweepCollectionHitLocations(SweepCollection sweepCollection, double alphaUpdate, boolean lazyEvaluation)
+   {
+      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
+         updateHitLocations(sweepCollection.getSweepOrigin(i), sweepCollection.getSweep(i), alphaUpdate, lazyEvaluation);
+   }
+
+   private final OcTreeKey hitLocationKey = new OcTreeKey();
+
+   public void updateHitLocations(Point3d sensorOrigin, PointCloud pointCloud, double alphaUpdate, boolean lazyEvaluation)
+   {
+      for (int i = 0; i < pointCloud.size(); i++)
+      {
+         Point3f point = pointCloud.getPoint(i);
+         if (useBoundingBoxLimit && !isInBoundingBox(point))
+            continue;
+         if (coordinateToKey(point, hitLocationKey))
+            updateNodeCenterRecursively(root, hitLocationKey, 0, sensorOrigin, point, alphaUpdate, lazyEvaluation);
+      }
+   }
+
+   private final Vector3d tempInitialNormalGuess = new Vector3d();
+   private final Point3d tempCenterUpdate = new Point3d();
+
+   private void updateNodeCenterRecursively(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, Point3d sensorOrigin, Point3f centerUpdate, double alphaUpdate, boolean lazyEvaluation)
+   {
+      if (depth < treeDepth)
+      {
+         int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
+         NormalOcTreeNode child;
+         if (node.hasArrayForChildren() && (child = node.getChildUnsafe(childIndex)) != null)
+            updateNodeCenterRecursively(child, key, depth + 1, sensorOrigin, centerUpdate, alphaUpdate, lazyEvaluation);
+      }
+      node.updateCenter(centerUpdate, alphaUpdate);
+      if (!node.isNormalSet())
+      {
+         tempCenterUpdate.set(centerUpdate);
+         tempInitialNormalGuess.sub(sensorOrigin, tempCenterUpdate);
+         tempInitialNormalGuess.normalize();
+         node.setNormal(tempInitialNormalGuess);
+         node.setNormalQuality(Float.POSITIVE_INFINITY);
+      }
+   }
+
    public void updateNormals()
    {
       leafIterable.setMaxDepth(treeDepth);
       boolean unknownStatus = true;
-      double searchRadius = 2.1 * getNodeSize(treeDepth);
+      double searchRadius = 0.05; //2.1 * getNodeSize(treeDepth);
 
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
          NormalOcTreeNode node = superNode.getNode();
          OcTreeKeyReadOnly key = superNode.getKey();
          int depth = superNode.getDepth();
-
-         node.resetRegionId();
 
          if (!isNodeOccupied(node))
          {
@@ -195,7 +240,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       for (int i = tempNeighborKeysForNormal.size() - 1; i >= 0; i--)
       {
          OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(i);
-         currentNode = search(currentKey, depth);
+         currentNode = keyToNodeMap.get(currentKey.hashCode());
 
          if (currentNode == null)
          {
@@ -227,7 +272,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          for (int i = 0; i < tempNeighborKeysForNormal.size(); i++)
          {
             OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(i);
-            currentNode = search(currentKey, depth);
+            currentNode = keyToNodeMap.get(currentKey.hashCode());
 
             if (currentNode != null && currentNode.isCenterSet())
             {
@@ -282,7 +327,6 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
       int index = 0;
       node.getCenter(randomDraw[index++]);
-      tempNeighborKeysForNormal.remove(key);
 
       while (index < 3)
       {
@@ -430,9 +474,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
    public void updatePlanarRegionSegmentation(int depth)
    {
-      double exploringRadius = 2.0 * getNodeSize(depth);
+      double exploringRadius = 5.0 * getNodeSize(depth);
       double maxMistanceFromPlane = 0.05;
-      double angleThreshold = Math.toRadians(5.0);
+      double angleThreshold = Math.toRadians(10.0);
       double dotThreshold = Math.cos(angleThreshold);
       Random random = new Random(45561L);
       Vector3d nodeNormal = new Vector3d();
@@ -445,6 +489,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
          if (!isNodeOccupied(node) || node.isPartOfRegion() || !node.isNormalSet())
             continue;
+         if (node.getNormalQuality() > 0.005)
+            continue;
 
          OcTreeKeyReadOnly nodeKey = superNode.getKey();
          int regionId = random.nextInt(Integer.MAX_VALUE);
@@ -452,6 +498,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          node.getNormal(nodeNormal);
          planarRegion.update(nodeNormal, keyToCoordinate(nodeKey, depth));
          node.setRegionId(planarRegion.getId());
+         node.setHasBeenCandidateForRegion(planarRegion.getId());
 
          growPlanarRegionIteratively(planarRegion, nodeKey, depth, exploringRadius, maxMistanceFromPlane, dotThreshold);
       }
@@ -459,88 +506,56 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
    private final Vector3d normalCandidateToCurrentRegion = new Vector3d();
    private final Point3d centerCandidateToCurrentRegion = new Point3d();
-   private final OcTreeKeySet exploredKeys = new OcTreeKeySet();
    private final OcTreeKeyDeque keysToExplore = new OcTreeKeyDeque();
    private final OcTreeKey neighborKey = new OcTreeKey();
-
-   
 
    private void growPlanarRegionIteratively(PlanarRegion planarRegion, OcTreeKeyReadOnly nodeKey, int depth, double searchRadius, double maxMistanceFromPlane,
          double dotThreshold)
    {
-      exploredKeys.clear();
       keysToExplore.clear();
-
-      exploredKeys.add(nodeKey);
 
       OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(depth, searchRadius);
 
-      for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
-      {
-         neighborKey.add(nodeKey, cachedNeighborKeyOffsets.unsafeGet(i));
-         if (OcTreeKeyTools.isKeyValid(neighborKey, depth, treeDepth) && !exploredKeys.contains(neighborKey))
-            keysToExplore.add(neighborKey);
-      }
+      int planarRegionId = planarRegion.getId();
+      extendSearch(nodeKey, depth, cachedNeighborKeyOffsets, planarRegionId);
 
       while (!keysToExplore.isEmpty())
       {
          OcTreeKey currentKey = keysToExplore.poll();
-         exploredKeys.add(currentKey);
-
          NormalOcTreeNode currentNode = keyToNodeMap.get(currentKey.hashCode());
-//         if (currentNode == null)
-//            currentNode = search(currentKey, depth);
-         if (currentNode == null || !currentNode.isNormalSet() || !currentNode.isCenterSet() || currentNode.isPartOfRegion() || !isNodeOccupied(currentNode))
-            continue;
 
          currentNode.getNormal(normalCandidateToCurrentRegion);
          currentNode.getCenter(centerCandidateToCurrentRegion);
 
-         if (planarRegion.absoluteDistance(centerCandidateToCurrentRegion) < maxMistanceFromPlane && planarRegion.absoluteDot(normalCandidateToCurrentRegion) > dotThreshold)
+         double dot = planarRegion.dot(normalCandidateToCurrentRegion);
+         if (planarRegion.absoluteDistance(centerCandidateToCurrentRegion) < maxMistanceFromPlane && Math.abs(dot) > dotThreshold)
          {
             planarRegion.update(normalCandidateToCurrentRegion, centerCandidateToCurrentRegion);
-            currentNode.setRegionId(planarRegion.getId());
+            currentNode.setRegionId(planarRegionId);
 
-            for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
-            {
-               neighborKey.add(currentKey, cachedNeighborKeyOffsets.unsafeGet(i));
-               if (OcTreeKeyTools.isKeyValid(neighborKey, depth, treeDepth) && !exploredKeys.contains(neighborKey))
-                  keysToExplore.add(neighborKey);
-            }
+            if (dot < 0.0)
+               currentNode.negateNormal();
+
+            extendSearch(currentKey, depth, cachedNeighborKeyOffsets, planarRegionId);
          }
       }
    }
 
-   public void updateSweepCollectionHitLocations(SweepCollection sweepCollection, double alphaUpdate, boolean lazyEvaluation)
+   private void extendSearch(OcTreeKeyReadOnly nodeKey, int depth, OcTreeKeyList cachedNeighborKeyOffsets, int planarRegionId)
    {
-      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
-         updateHitLocations(sweepCollection.getSweep(i), alphaUpdate, lazyEvaluation);
-   }
-
-   private final OcTreeKey hitLocationKey = new OcTreeKey();
-
-   public void updateHitLocations(PointCloud pointCloud, double alphaUpdate, boolean lazyEvaluation)
-   {
-      for (int i = 0; i < pointCloud.size(); i++)
+      for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
       {
-         Point3f point = pointCloud.getPoint(i);
-         if (useBoundingBoxLimit && !isInBoundingBox(point))
+         neighborKey.add(nodeKey, cachedNeighborKeyOffsets.unsafeGet(i));
+         NormalOcTreeNode neighborNode = keyToNodeMap.get(neighborKey.hashCode());
+         if (neighborNode == null || !isNodeOccupied(neighborNode))
             continue;
-         if (coordinateToKey(point, hitLocationKey))
-            updateNodeCenterRecursively(root, hitLocationKey, 0, point, alphaUpdate, lazyEvaluation);
+         if (neighborNode.getHasBeenCandidateForRegion() == planarRegionId || neighborNode.isPartOfRegion())
+            continue;
+         if (!neighborNode.isNormalSet() || !neighborNode.isCenterSet())
+            continue;
+         neighborNode.setHasBeenCandidateForRegion(planarRegionId);
+         keysToExplore.add(neighborKey);
       }
-   }
-
-   private void updateNodeCenterRecursively(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, Point3f centerUpdate, double alphaUpdate, boolean lazyEvaluation)
-   {
-      if (depth < treeDepth)
-      {
-         int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
-         NormalOcTreeNode child;
-         if (node.hasArrayForChildren() && (child = node.getChildUnsafe(childIndex)) != null)
-            updateNodeCenterRecursively(child, key, depth + 1, centerUpdate, alphaUpdate, lazyEvaluation);
-      }
-      node.updateCenter(centerUpdate, alphaUpdate);
    }
 
    @Override

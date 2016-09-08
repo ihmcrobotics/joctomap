@@ -16,6 +16,7 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    private float centerY = Float.NaN;
    private float centerZ = Float.NaN;
    private int regionId = PlanarRegion.NO_REGION_ID;
+   private int hasBeenCandidateForRegion = PlanarRegion.NO_REGION_ID;
 
    public NormalOcTreeNode()
    {
@@ -28,6 +29,11 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       normalX = other.normalX;
       normalY = other.normalY;
       normalZ = other.normalZ;
+      normalQuality = other.normalQuality;
+      centerX = other.centerX;
+      centerY = other.centerY;
+      centerZ = other.centerZ;
+      regionId = other.regionId;
    }
 
    @Override
@@ -103,6 +109,13 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       normalX = (float) normal.getX();
       normalY = (float) normal.getY();
       normalZ = (float) normal.getZ();
+   }
+
+   public void negateNormal()
+   {
+      normalX = - normalX;
+      normalY = - normalY;
+      normalZ = - normalZ;
    }
 
    public void setNormalQuality(float quality)
@@ -239,5 +252,20 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public int getRegionId()
    {
       return regionId;
+   }
+
+   public int getHasBeenCandidateForRegion()
+   {
+      return hasBeenCandidateForRegion;
+   }
+
+   public void setHasBeenCandidateForRegion(int hasBeenCandidateForRegion)
+   {
+      this.hasBeenCandidateForRegion = hasBeenCandidateForRegion;
+   }
+
+   public void resetHasBeenCandidateForRegion()
+   {
+      hasBeenCandidateForRegion = PlanarRegion.NO_REGION_ID;
    }
 }

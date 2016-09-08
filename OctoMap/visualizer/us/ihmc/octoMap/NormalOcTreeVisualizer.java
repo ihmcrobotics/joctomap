@@ -1,11 +1,6 @@
 package us.ihmc.octoMap;
 
-import static org.junit.Assert.assertEquals;
-
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import javax.vecmath.Matrix3d;
@@ -51,15 +46,16 @@ public class NormalOcTreeVisualizer extends Application
    public NormalOcTreeVisualizer()
    {
 
+      Point3d lidarPosition = new Point3d(0.0, 0.0, 2.0);
       //      callUpdateNode();
       //      callInsertPointCloud();
-      createPlane(12.0, 0.0, -0.05);
+      createPlane(lidarPosition, 12.0, 0.0, -0.05);
 //      createBowl(0.5, new Point3d());
       System.out.println("Number of leafs: " + ocTree.getNumLeafNodes());
       System.out.println("Initialized octree");
       System.out.println("Computing normals");
       long startTime = System.nanoTime();
-      ocTree.updateHitLocations(pointcloud, 0.1, false);
+      ocTree.updateHitLocations(lidarPosition, pointcloud, 0.1, false);
       ocTree.updateNormals();
       ocTree.updateNormals();
       ocTree.updateNormals();
@@ -140,9 +136,8 @@ public class NormalOcTreeVisualizer extends Application
       ocTree.updateInnerOccupancy();
    }
 
-   public void createPlane(double pitch, double roll, double z)
+   public void createPlane(Point3d lidarPosition, double pitch, double roll, double z)
    {
-      Point3d origin = new Point3d(0.0, 0.0, z + 2.0);
       pointcloud.clear();
 
       double planeSize = 1.00;
@@ -160,7 +155,7 @@ public class NormalOcTreeVisualizer extends Application
             pointcloud.add(point);
          }
       }
-      ocTree.insertPointCloud(pointcloud, origin);
+      ocTree.insertPointCloud(pointcloud, lidarPosition);
    }
 
    public void createBowl(double radius, Point3d center)

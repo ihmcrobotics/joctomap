@@ -83,6 +83,11 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       OcTreeNodeTools.checkChildIndex(childIndex);
       if (!getClass().isInstance(newChild))
          throw new RuntimeException("Cannot add a child of a different type");
+      setChildUnsafe(childIndex, newChild);
+   }
+
+   public void setChildUnsafe(int childIndex, N newChild)
+   {
       children[childIndex] = newChild;
    }
 
