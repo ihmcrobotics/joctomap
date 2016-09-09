@@ -38,7 +38,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       leafIterable = new LeafIterable<>(this, treeDepth, true);
    }
 
-   private final HashMap<Integer, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
+   private final TIntObjectHashMap<NormalOcTreeNode> keyToNodeMap = new TIntObjectHashMap<>();
    private final Vector3d tempInitialNormalGuess = new Vector3d();
    private final Point3d tempCenterUpdate = new Point3d();
 
