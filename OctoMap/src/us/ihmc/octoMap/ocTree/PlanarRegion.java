@@ -24,6 +24,11 @@ public class PlanarRegion
       this.point.update(point);
    }
 
+   public double distanceFromCenterSquared(Point3d point)
+   {
+      return this.point.distanceSquared(point);
+   }
+
    public double orthogonalDistance(Point3d point)
    {
       temporaryVector.set(point);
