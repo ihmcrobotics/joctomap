@@ -24,16 +24,16 @@ public class PlanarRegion
       this.point.update(point);
    }
 
-   public double distance(Point3d point)
+   public double orthogonalDistance(Point3d point)
    {
       temporaryVector.set(point);
       temporaryVector.sub(this.point);
       return temporaryVector.dot(this.normal);
    }
 
-   public double absoluteDistance(Point3d point)
+   public double absoluteOrthogonalDistance(Point3d point)
    {
-      return Math.abs(distance(point));
+      return Math.abs(orthogonalDistance(point));
    }
 
    public double angle(Vector3d normal)

@@ -528,7 +528,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          currentNode.getCenter(centerCandidateToCurrentRegion);
 
          double dot = planarRegion.dot(normalCandidateToCurrentRegion);
-         if (planarRegion.absoluteDistance(centerCandidateToCurrentRegion) < maxMistanceFromPlane && Math.abs(dot) > dotThreshold)
+         if (planarRegion.absoluteOrthogonalDistance(centerCandidateToCurrentRegion) < maxMistanceFromPlane && Math.abs(dot) > dotThreshold)
          {
             planarRegion.update(normalCandidateToCurrentRegion, centerCandidateToCurrentRegion);
             currentNode.setRegionId(planarRegionId);
