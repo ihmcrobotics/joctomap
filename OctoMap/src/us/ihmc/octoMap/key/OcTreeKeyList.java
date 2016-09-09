@@ -78,7 +78,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    @Override
    public boolean add(OcTreeKey key)
    {
-      add((OcTreeKeyReadOnly) key);
+      add().set(key);
       return true;
    }
 
