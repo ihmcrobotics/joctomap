@@ -39,6 +39,48 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    }
 
    private final HashMap<Integer, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
+   private final Vector3d tempInitialNormalGuess = new Vector3d();
+   private final Point3d tempCenterUpdate = new Point3d();
+
+   public void updateNodeFromSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange)
+   {
+      System.out.println("Entering updateNodeFromSweepCollection sweep size: " + sweepCollection.getNumberOfSweeps());
+      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
+         System.out.println("Point cloud size: " + sweepCollection.getSweep(i).size());
+      long startTime = System.nanoTime();
+     
+      Point3d scanPoint = new Point3d();
+      double alphaCenterUpdate = 0.1;
+      double minRangeSquared = minRange * minRange;
+      double maxRangeSquared = maxRange * maxRange;
+
+      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
+      {
+         Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
+         PointCloud scan = sweepCollection.getSweep(i);
+         for (int j = 0; j < scan.size(); j++)
+         {
+            scanPoint.set(scan.getPoint(j));
+            double distanceSquared = scanPoint.distanceSquared(sensorOrigin);
+            if (distanceSquared < maxRangeSquared && distanceSquared > minRangeSquared)
+            {
+               NormalOcTreeNode node = updateNode(scanPoint, true);
+               node.updateCenter(scanPoint, alphaCenterUpdate);
+               if (!node.isNormalSet())
+               {
+                  tempCenterUpdate.set(scanPoint);
+                  tempInitialNormalGuess.sub(sensorOrigin, tempCenterUpdate);
+                  tempInitialNormalGuess.normalize();
+                  node.setNormal(tempInitialNormalGuess);
+                  node.setNormalQuality(Float.POSITIVE_INFINITY);
+               }
+            }
+         }
+      }
+
+      long endTime = System.nanoTime();
+      System.out.println("Exiting  updateNodeFromSweepCollection took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
+   }
 
    public void updateNormalsAndPlanarRegions(int depth)
    {
@@ -81,9 +123,6 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
             updateNodeCenterRecursively(root, hitLocationKey, 0, sensorOrigin, point, alphaUpdate, lazyEvaluation);
       }
    }
-
-   private final Vector3d tempInitialNormalGuess = new Vector3d();
-   private final Point3d tempCenterUpdate = new Point3d();
 
    private void updateNodeCenterRecursively(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, Point3d sensorOrigin, Point3f centerUpdate, double alphaUpdate, boolean lazyEvaluation)
    {
