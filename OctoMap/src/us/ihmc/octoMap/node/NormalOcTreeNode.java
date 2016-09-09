@@ -53,12 +53,34 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    {
       super.resetLogOdds();
       resetNormal();
+      resetCenter();
       resetRegionId();
+      resetHasBeenCandidateForRegion();
+   }
+
+   public void resetNormal()
+   {
+      normalX = Float.NaN;
+      normalY = Float.NaN;
+      normalZ = Float.NaN;
+      normalQuality = Float.NaN;
+   }
+
+   public void resetCenter()
+   {
+      centerX = Float.NaN;
+      centerY = Float.NaN;
+      centerZ = Float.NaN;
    }
 
    public void resetRegionId()
    {
       regionId = PlanarRegion.NO_REGION_ID;
+   }
+
+   public void resetHasBeenCandidateForRegion()
+   {
+      hasBeenCandidateForRegion = PlanarRegion.NO_REGION_ID;
    }
 
    public void updateNormalChildren()
@@ -128,14 +150,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       return normalQuality;
    }
 
-   public void resetNormal()
-   {
-      normalX = Float.NaN;
-      normalY = Float.NaN;
-      normalZ = Float.NaN;
-      normalQuality = Float.NaN;
-   }
-
    public boolean isNormalSet()
    {
       return !Float.isNaN(normalX) && !Float.isNaN(normalY) && !Float.isNaN(normalZ);
@@ -144,13 +158,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public boolean isNormalQualitySet()
    {
       return !Float.isNaN(normalQuality);
-   }
-
-   public void resetCenter()
-   {
-      centerX = Float.NaN;
-      centerY = Float.NaN;
-      centerZ = Float.NaN;
    }
 
    public boolean isCenterSet()
@@ -262,10 +269,5 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public void setHasBeenCandidateForRegion(int hasBeenCandidateForRegion)
    {
       this.hasBeenCandidateForRegion = hasBeenCandidateForRegion;
-   }
-
-   public void resetHasBeenCandidateForRegion()
-   {
-      hasBeenCandidateForRegion = PlanarRegion.NO_REGION_ID;
    }
 }
