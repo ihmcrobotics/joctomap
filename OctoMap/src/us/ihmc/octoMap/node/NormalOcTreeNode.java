@@ -34,6 +34,7 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       centerY = other.centerY;
       centerZ = other.centerZ;
       regionId = other.regionId;
+      hasBeenCandidateForRegion = other.hasBeenCandidateForRegion;
    }
 
    @Override
