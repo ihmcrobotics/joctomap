@@ -92,17 +92,17 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * Looks up the OcTreeKey corresponding to the coordinate and then calls udpateNode() with it.
     *
     * @param value 3d coordinate of the NODE that is to be updated
-    * @param log_odds_update value to be added (+) to log_odds value of node
+    * @param logOddsUpdate value to be added (+) to log_odds value of node
     * @param lazy_eval whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(Point3d value, float log_odds_update)
+   public NODE updateNode(Point3d value, float logOddsUpdate)
    {
-      return updateNode(value, log_odds_update, false);
+      return updateNode(value, logOddsUpdate, false);
    }
 
-   public abstract NODE updateNode(Point3d value, float log_odds_update, boolean lazy_eval);
+   public abstract NODE updateNode(Point3d value, float logOddsUpdate, boolean lazyEvaluation);
 
    /**
     * Integrate occupancy measurement.
@@ -118,7 +118,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       return updateNode(key, occupied, false);
    }
 
-   public abstract NODE updateNode(OcTreeKeyReadOnly key, boolean occupied, boolean lazy_eval);
+   public abstract NODE updateNode(OcTreeKeyReadOnly key, boolean occupied, boolean lazyEvaluation);
 
    /**
     * Integrate occupancy measurement.
@@ -135,7 +135,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       return updateNode(value, occupied, false);
    }
 
-   public abstract NODE updateNode(Point3d value, boolean occupied, boolean lazy_eval);
+   public abstract NODE updateNode(Point3d value, boolean occupied, boolean lazyEvaluation);
 
    public abstract void toMaxLikelihood();
 
