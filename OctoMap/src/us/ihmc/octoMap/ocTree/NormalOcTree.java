@@ -1,5 +1,8 @@
 package us.ihmc.octoMap.ocTree;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import javax.vecmath.Point3d;
@@ -254,6 +257,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    }
 
    private final OcTreeKeyList tempNeighborKeysForNormal = new OcTreeKeyList();
+   private final OcTreeKey tempKeyForNormal = new OcTreeKey();
    private final Vector3d normal = new Vector3d();
    private final Vector3d nodeCenterToNeighborCenter = new Vector3d();
    private final Point3d nodeCenter = new Point3d();
@@ -343,6 +347,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    private final Vector3d normalCandidate = new Vector3d();
    private final Point3d[] randomDraw = {new Point3d(), new Point3d(), new Point3d()};
 
+   private final List<NormalOcTreeNode> tempNeighborsForNormal = new ArrayList<>();
+
    private void computeNodeNormalRansac(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, boolean unknownStatus, double searchRadius)
    {
       if (!node.isCenterSet() || !node.isNormalQualitySet())
@@ -357,14 +363,21 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
 
       OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(depth, searchRadius);
 
-      tempNeighborKeysForNormal.clear();
+      tempNeighborsForNormal.clear();
       for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
       {
-         OcTreeKey currentKey = tempNeighborKeysForNormal.add();
-         currentKey.set(key);
-         currentKey.add(cachedNeighborKeyOffsets.unsafeGet(i));
-         if (!OcTreeKeyTools.isKeyValid(currentKey, depth, treeDepth))
-            tempNeighborKeysForNormal.removeLast();
+         tempKeyForNormal.add(key, cachedNeighborKeyOffsets.unsafeGet(i));
+         NormalOcTreeNode neighborNode = keyToNodeMap.get(tempKeyForNormal.hashCode());
+         if (neighborNode == null)
+            neighborNode = search(tempKeyForNormal);
+
+         if (neighborNode == null)
+            continue;
+         if (!isNodeOccupied(neighborNode))
+            continue;
+         if (!neighborNode.isCenterSet())
+            continue;
+         tempNeighborsForNormal.add(neighborNode);
       }
 
       normalCandidate.set(0.0, 0.0, 0.0);
@@ -375,23 +388,17 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       while (index < 3)
       {
          // Did not find three points, just fall back to the naive way
-         if (tempNeighborKeysForNormal.isEmpty())
+         if (tempNeighborsForNormal.isEmpty())
          {
             computeNodeNormalWithSphericalNeighborhood(node, key, depth, unknownStatus, searchRadius);
             return;
          }
 
-         int nextInt = random.nextInt(tempNeighborKeysForNormal.size());
-         OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(nextInt);
-         currentNode = keyToNodeMap.get(currentKey.hashCode());
-//         if (currentNode == null)
-//            currentNode = search(currentKey, depth);
-
-         if (currentNode != null && currentNode.isCenterSet())
-         {
-            currentNode.getCenter(randomDraw[index++]);
-         }
-         tempNeighborKeysForNormal.fastRemove(nextInt);
+         int nextInt = random.nextInt(tempNeighborsForNormal.size());
+         currentNode = tempNeighborsForNormal.get(nextInt);
+         currentNode.getCenter(randomDraw[index++]);
+         Collections.swap(tempNeighborsForNormal, nextInt, tempNeighborsForNormal.size() - 1);
+         tempNeighborsForNormal.remove(tempNeighborsForNormal.size() - 1);
       }
 
       double v1_x = randomDraw[1].getX() - randomDraw[0].getX();
@@ -410,20 +417,13 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       float normalQuality = 0.0f;
       int numberOfPoints = 3; // The three points picked randomly are on the plane
 
-      for (int i = 0; i < tempNeighborKeysForNormal.size(); i++)
+      for (int i = 0; i < tempNeighborsForNormal.size(); i++)
       {
-         OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(i);
-         currentNode = keyToNodeMap.get(currentKey.hashCode());
-//         if (currentNode == null)
-//            currentNode = search(currentKey, depth);
-
-         if (currentNode != null && currentNode.isCenterSet())
-         {
-            currentNode.getCenter(neighborCenter);
-            nodeCenterToNeighborCenter.sub(nodeCenter, neighborCenter);
-            normalQuality += Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
-            numberOfPoints++;
-         }
+         currentNode = tempNeighborsForNormal.get(i);
+         currentNode.getCenter(neighborCenter);
+         nodeCenterToNeighborCenter.sub(nodeCenter, neighborCenter);
+         normalQuality += Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
+         numberOfPoints++;
       }
 
       normalQuality /= numberOfPoints;
