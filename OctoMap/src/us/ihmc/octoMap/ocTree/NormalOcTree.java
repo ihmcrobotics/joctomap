@@ -1,6 +1,5 @@
 package us.ihmc.octoMap.ocTree;
 
-import java.util.HashMap;
 import java.util.Random;
 
 import javax.vecmath.Point3d;
@@ -49,37 +48,43 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          System.out.println("Point cloud size: " + sweepCollection.getSweep(i).size());
       long startTime = System.nanoTime();
      
-      Point3d scanPoint = new Point3d();
-      double alphaCenterUpdate = 0.1;
-      double minRangeSquared = minRange * minRange;
-      double maxRangeSquared = maxRange * maxRange;
-
       for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
       {
          Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
          PointCloud scan = sweepCollection.getSweep(i);
-         for (int j = 0; j < scan.size(); j++)
-         {
-            scanPoint.set(scan.getPoint(j));
-            double distanceSquared = scanPoint.distanceSquared(sensorOrigin);
-            if (distanceSquared < maxRangeSquared && distanceSquared > minRangeSquared)
-            {
-               NormalOcTreeNode node = updateNode(scanPoint, true);
-               node.updateCenter(scanPoint, alphaCenterUpdate);
-               if (!node.isNormalSet())
-               {
-                  tempCenterUpdate.set(scanPoint);
-                  tempInitialNormalGuess.sub(sensorOrigin, tempCenterUpdate);
-                  tempInitialNormalGuess.normalize();
-                  node.setNormal(tempInitialNormalGuess);
-                  node.setNormalQuality(Float.POSITIVE_INFINITY);
-               }
-            }
-         }
+
+         updateNodesFromPointCloud(sensorOrigin, scan, minRange, maxRange);
       }
 
       long endTime = System.nanoTime();
       System.out.println("Exiting  updateNodeFromSweepCollection took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
+   }
+
+   public void updateNodesFromPointCloud(Point3d sensorOrigin, PointCloud scan, double minRange, double maxRange)
+   {
+      Point3d scanPoint = new Point3d();
+      double alphaCenterUpdate = 0.1;
+      double minRangeSquared = minRange < 0 ? 0 : minRange * minRange;
+      double maxRangeSquared = maxRange < 0 ? Double.POSITIVE_INFINITY : maxRange * maxRange;
+
+      for (int i = 0; i < scan.size(); i++)
+      {
+         scanPoint.set(scan.getPoint(i));
+         double distanceSquared = scanPoint.distanceSquared(sensorOrigin);
+         if (distanceSquared < maxRangeSquared && distanceSquared > minRangeSquared)
+         {
+            NormalOcTreeNode node = updateNode(scanPoint, true);
+            node.updateCenter(scanPoint, alphaCenterUpdate);
+            if (!node.isNormalSet())
+            {
+               tempCenterUpdate.set(scanPoint);
+               tempInitialNormalGuess.sub(sensorOrigin, tempCenterUpdate);
+               tempInitialNormalGuess.normalize();
+               node.setNormal(tempInitialNormalGuess);
+               node.setNormalQuality(Float.POSITIVE_INFINITY);
+            }
+         }
+      }
    }
 
    public void updateNormalsAndPlanarRegions(int depth)
