@@ -555,9 +555,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       if (maxRange > 0 && length > maxRange)
       {
          direction.scale(1.0 / length);
-         Point3d new_end = new Point3d();
-         new_end.scaleAdd(maxRange, direction, origin);
-         return integrateMissOnRay(origin, new_end, lazyEvaluation);
+         Point3d newEnd = new Point3d();
+         newEnd.scaleAdd(maxRange, direction, origin);
+         return integrateMissOnRay(origin, newEnd, lazyEvaluation);
       }
       // insert complete ray
       else
