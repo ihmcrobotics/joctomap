@@ -1,5 +1,6 @@
 package us.ihmc.octoMap.ocTree;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -169,6 +170,11 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
             node.resetNormal();
             continue;
          }
+
+//         if (node.getNormalQuality() < 0.005 && random.nextInt(5) != 0)
+//         {
+//            continue;
+//         }
 
          switch (NORMAL_COMPUTATION_METHOD)
          {
@@ -353,7 +359,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    {
       if (!node.isCenterSet() || !node.isNormalQualitySet())
       {
-         computeNodeNormalWithSphericalNeighborhood(node, key, depth, unknownStatus, searchRadius);
+         node.resetNormal();
+//         computeNodeNormalWithSphericalNeighborhood(node, key, depth, unknownStatus, searchRadius);
          return;
       }
 
@@ -390,7 +397,9 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          // Did not find three points, just fall back to the naive way
          if (tempNeighborsForNormal.isEmpty())
          {
-            computeNodeNormalWithSphericalNeighborhood(node, key, depth, unknownStatus, searchRadius);
+//            System.err.println("Not more neighbos :/");
+            node.resetNormal();
+//          computeNodeNormalWithSphericalNeighborhood(node, key, depth, unknownStatus, searchRadius);
             return;
          }
 
@@ -551,6 +560,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    private final Vector3d normalCandidateToCurrentRegion = new Vector3d();
    private final Point3d centerCandidateToCurrentRegion = new Point3d();
    private final OcTreeKeyDeque keysToExplore = new OcTreeKeyDeque();
+   private final ArrayDeque<NormalOcTreeNode> nodesToExplore = new ArrayDeque<>();
    private final OcTreeKey neighborKey = new OcTreeKey();
 
    private void growPlanarRegionIteratively(PlanarRegion planarRegion, OcTreeKeyReadOnly nodeKey, int depth, double searchRadius, double maxMistanceFromPlane,
@@ -566,7 +576,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       while (!keysToExplore.isEmpty())
       {
          OcTreeKey currentKey = keysToExplore.poll();
-         NormalOcTreeNode currentNode = keyToNodeMap.get(currentKey.hashCode());
+         NormalOcTreeNode currentNode = nodesToExplore.poll(); //keyToNodeMap.get(currentKey.hashCode());
 
          currentNode.getNormal(normalCandidateToCurrentRegion);
          currentNode.getCenter(centerCandidateToCurrentRegion);
@@ -599,6 +609,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
             continue;
          neighborNode.setHasBeenCandidateForRegion(planarRegionId);
          keysToExplore.add(neighborKey);
+         nodesToExplore.add(neighborNode);
       }
    }
 
