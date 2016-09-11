@@ -126,7 +126,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       for (int i = 0; i < pointCloud.size(); i++)
       {
          Point3f point = pointCloud.getPoint(i);
-         if (useBoundingBoxLimit && !isInBoundingBox(point))
+         if (!isInBoundingBox(point))
             continue;
          if (coordinateToKey(point, hitLocationKey))
             updateNodeCenterRecursively(root, hitLocationKey, 0, sensorOrigin, point, alphaUpdate);

@@ -27,9 +27,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
 
    /// Constructor to enable derived classes to change tree constants.
    /// This usually requires a re-implementation of some core tree-traversal functions as well!
-   protected AbstractOccupancyOcTree(double resolution, int tree_depth, int tree_max_val)
+   protected AbstractOccupancyOcTree(double resolution, int treeDepth)
    {
-      super(resolution, tree_depth);
+      super(resolution, treeDepth);
       setDefaultParameters();
    }
 

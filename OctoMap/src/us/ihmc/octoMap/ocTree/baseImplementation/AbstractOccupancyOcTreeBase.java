@@ -29,11 +29,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 {
    private static final boolean USE_UPDATE_NODE_ITERATIVE = false;
 
-   protected boolean useBoundingBoxLimit; ///< use bounding box for queries (needs to be set)?
-   protected final Point3d boundingBoxMin = new Point3d();
-   protected final Point3d boundingBoxMax = new Point3d();
-   protected final OcTreeKey boundingBoxMinKey = new OcTreeKey();
-   protected final OcTreeKey boundingBoxMaxKey = new OcTreeKey();
+   protected OcTreeBoundingBox boundingBox;
 
    protected boolean useChangeDetection;
    /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
@@ -48,27 +44,21 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    public AbstractOccupancyOcTreeBase(double resolution)
    {
       super(resolution);
-      useBoundingBoxLimit = false;
       useChangeDetection = false;
    }
 
    /// Constructor to enable derived classes to change tree constants.
    /// This usually requires a re-implementation of some core tree-traversal functions as well!
-   protected AbstractOccupancyOcTreeBase(double resolution, int tree_depth, int tree_max_val)
+   protected AbstractOccupancyOcTreeBase(double resolution, int treeDepth)
    {
-      super(resolution, tree_depth, tree_max_val);
-      useBoundingBoxLimit = false;
+      super(resolution, treeDepth);
       useChangeDetection = false;
    }
 
    public AbstractOccupancyOcTreeBase(AbstractOccupancyOcTreeBase<NODE> other)
    {
       super(other);
-      useBoundingBoxLimit = other.useBoundingBoxLimit;
-      boundingBoxMin.set(other.boundingBoxMin);
-      boundingBoxMax.set(other.boundingBoxMax);
-      boundingBoxMinKey.set(other.boundingBoxMinKey);
-      boundingBoxMaxKey.set(other.boundingBoxMaxKey);
+      boundingBox = new OcTreeBoundingBox(other.boundingBox);
       changedKeys.putAll(other.changedKeys);
       useChangeDetection = other.useChangeDetection;
    }
@@ -944,89 +934,48 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
 
    //-- set BBX limit (limits tree updates to this bounding box)
 
-   ///  use or ignore BBX limit (default: ignore)
-   public void useBoundingBoxLimit(boolean enable)
+   public void disableBoundingBox()
    {
-      useBoundingBoxLimit = enable;
+      boundingBox = null;
    }
 
-   public boolean isUsingBoundingBox()
+   /**
+    * Bounding box to use for the next updates on this OcTree.
+    * If null, no limit will be applied.
+    * @param boundingBox
+    */
+   public void setBoundingBox(OcTreeBoundingBox boundingBox)
    {
-      return useBoundingBoxLimit;
+      this.boundingBox = boundingBox;
    }
 
-   /// sets the minimum for a query bounding box to use
-   public void setBoundingBoxMin(Point3d min)
+   public OcTreeBoundingBox getBoundingBox()
    {
-      OcTreeKey newKey = coordinateToKey(boundingBoxMin);
-      if (newKey == null)
-      {
-         System.err.println(AbstractOccupancyOcTreeBase.class.getSimpleName() + " (in setBoundingBoxMin): ERROR while generating bbx min key.");
-      }
-
-      boundingBoxMin.set(min);
-      boundingBoxMinKey.set(newKey);
+      return boundingBox;
    }
 
-   /// sets the maximum for a query bounding box to use
-   public void setBoundingBoxMax(Point3d max)
+   /**
+    * @return true if point is in the currently set bounding box or if there is no bounding box.
+    */
+   public boolean isInBoundingBox(Point3d candidate)
    {
-      OcTreeKey newKey = coordinateToKey(boundingBoxMax);
-      if (newKey == null)
-      {
-         System.err.println(AbstractOccupancyOcTreeBase.class.getSimpleName() + " (in setBoundingBoxMax): ERROR while generating bbx max key.");
-      }
-
-      boundingBoxMax.set(max);
-      boundingBoxMaxKey.set(newKey);
+      return boundingBox == null || boundingBox.isInBoundingBox(candidate);
    }
 
-   /// @return the currently set minimum for bounding box queries, if set
-   public Point3d getBoundingBoxMin()
+   /**
+    * @return true if point is in the currently set bounding box or if there is no bounding box.
+    */
+   public boolean isInBoundingBox(Point3f candidate)
    {
-      return boundingBoxMin;
+      return boundingBox == null || boundingBox.isInBoundingBox(candidate);
    }
 
-   /// @return the currently set maximum for bounding box queries, if set
-   public Point3d getBoundingBoxMax()
+   /**
+    * @return true if key is in the currently set bounding box or if there is no bounding box.
+    */
+   public boolean isInBoundingBox(OcTreeKeyReadOnly candidate)
    {
-      return boundingBoxMax;
-   }
-
-   public Point3d getBoundingBoxBounds()
-   {
-      Point3d obj_bounds = new Point3d();
-      obj_bounds.sub(boundingBoxMax, boundingBoxMin);
-      obj_bounds.scale(0.5);
-      return obj_bounds;
-   }
-
-   public Point3d getBoundingBoxCenter()
-   {
-      Point3d center = getBoundingBoxBounds();
-      center.add(boundingBoxMin);
-      return center;
-   }
-
-   /// @return true if point is in the currently set bounding box
-   public boolean isInBoundingBox(Point3d p)
-   {
-      return p.getX() >= boundingBoxMin.getX() && p.getY() >= boundingBoxMin.getY() && p.getZ() >= boundingBoxMin.getZ() && p.getX() <= boundingBoxMax.getX()
-            && p.getY() <= boundingBoxMax.getY() && p.getZ() <= boundingBoxMax.getZ();
-   }
-
-   /// @return true if point is in the currently set bounding box
-   public boolean isInBoundingBox(Point3f p)
-   {
-      return p.getX() >= boundingBoxMin.getX() && p.getY() >= boundingBoxMin.getY() && p.getZ() >= boundingBoxMin.getZ() && p.getX() <= boundingBoxMax.getX()
-            && p.getY() <= boundingBoxMax.getY() && p.getZ() <= boundingBoxMax.getZ();
-   }
-
-   /// @return true if key is in the currently set bounding box
-   public boolean isInBoundingBox(OcTreeKeyReadOnly key)
-   {
-      return key.getKey(0) >= boundingBoxMinKey.getKey(0) && key.getKey(1) >= boundingBoxMinKey.getKey(1) && key.getKey(2) >= boundingBoxMinKey.getKey(2)
-            && key.getKey(0) <= boundingBoxMaxKey.getKey(0) && key.getKey(1) <= boundingBoxMaxKey.getKey(1) && key.getKey(2) <= boundingBoxMaxKey.getKey(2);
+      return boundingBox == null || boundingBox.isInBoundingBox(candidate);
    }
 
    //-- change detection on occupancy:
@@ -1085,7 +1034,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          if (minRange >= 0.0 && length < minRange)
             continue;
 
-         if (!useBoundingBoxLimit)
+         if (boundingBox != null)
          { // no BBX specified
             if (maxrange < 0.0 || length <= maxrange)
             { // is not maxrange meas.
