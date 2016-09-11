@@ -82,10 +82,10 @@ public class NodeUpdater<NODE extends AbstractOcTreeNode<NODE>>
          }
       }
 
-      return updateNodeRecurs(root, createdRoot, key, 0, lazyEvaluation);
+      return updateNodeRecurs(root, createdRoot, key, 0);
    }
 
-   protected NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, int depth, boolean lazyEvaluation)
+   protected NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, int depth)
    {
       boolean createdNode = false;
 
@@ -110,13 +110,15 @@ public class NodeUpdater<NODE extends AbstractOcTreeNode<NODE>>
             }
          }
 
-         if (lazyEvaluation)
+         NODE nodeChild = OcTreeNodeTools.getNodeChild(node, pos);
+
+         if (updateRule.doLazyEvaluation())
          {
-            return updateNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), createdNode, key, depth + 1, lazyEvaluation);
+            return updateNodeRecurs(nodeChild, createdNode, key, depth + 1);
          }
          else
          {
-            NODE leafToReturn = updateNodeRecurs(node.getChildUnsafe(pos), createdNode, key, depth + 1, lazyEvaluation);
+            NODE leafToReturn = updateNodeRecurs(nodeChild, createdNode, key, depth + 1);
             // prune node if possible, otherwise set own probability
             // note: combining both did not lead to a speedup!
             if (pruneNode(node)) // return pointer to current parent (pruned), the just updated node no longer exists
@@ -205,13 +207,13 @@ public class NodeUpdater<NODE extends AbstractOcTreeNode<NODE>>
       if (!node.hasArrayForChildren())
          return false;
 
-      NODE firstChild = node.getChild(0);
+      NODE firstChild = OcTreeNodeTools.getNodeChild(node, 0);
       if (firstChild == null || firstChild.hasAtLeastOneChild())
          return false;
 
       for (int i = 1; i < 8; i++)
       {
-         NODE currentChild = node.getChild(i);
+         NODE currentChild = OcTreeNodeTools.getNodeChild(node, i);
 
          if (currentChild == null || currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
             return false;
@@ -226,6 +228,8 @@ public class NodeUpdater<NODE extends AbstractOcTreeNode<NODE>>
 
    public interface UpdateRule<NODE extends AbstractOcTreeNode<NODE>>
    {
+      public boolean doLazyEvaluation();
+
       public void updateLeaf(NODE leafToUpdate);
 
       public void updateInnerNode(NODE innerNodeToUpdate);

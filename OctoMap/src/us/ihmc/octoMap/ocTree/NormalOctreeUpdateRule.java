@@ -7,7 +7,7 @@ import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 
-public class NormalOctreeUpdateRule extends OccupancyOcTreeUpdateRule<NormalOcTreeNode>
+public class NormalOctreeUpdateRule extends UpdateOccupancyRule<NormalOcTreeNode>
 {
    private double alphaHitLocationUpdate;
    private final Point3d hitLocation = new Point3d();

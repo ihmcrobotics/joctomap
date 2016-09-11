@@ -4,13 +4,14 @@ import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.NodeUpdater.EarlyAbortRule;
 import us.ihmc.octoMap.ocTree.baseImplementation.NodeUpdater.UpdateRule;
 
-public class OccupancyOcTreeUpdateRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> implements UpdateRule<NODE>, EarlyAbortRule<NODE>
+public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> implements UpdateRule<NODE>, EarlyAbortRule<NODE>
 {
    private float updateLogOdds = Float.NaN;
    private float maxOccupancyLogOdds;
    private float minOccupancyLogOdds;
+   private boolean lazyEvaluation = false;
 
-   public OccupancyOcTreeUpdateRule(float minOccupancyLogOdds, float maxOccupancyLogOdds)
+   public UpdateOccupancyRule(float minOccupancyLogOdds, float maxOccupancyLogOdds)
    {
       this.minOccupancyLogOdds = minOccupancyLogOdds;
       this.maxOccupancyLogOdds = maxOccupancyLogOdds;
@@ -31,6 +32,17 @@ public class OccupancyOcTreeUpdateRule<NODE extends AbstractOccupancyOcTreeNode<
       this.updateLogOdds = updateLogOdds;
    }
 
+   public void setLazyEvaluation(boolean lazyEvaluation)
+   {
+      this.lazyEvaluation = lazyEvaluation;
+   }
+
+   @Override
+   public boolean doLazyEvaluation()
+   {
+      return lazyEvaluation;
+   }
+   
    @Override
    public void updateLeaf(NODE leafToUpdate)
    {
