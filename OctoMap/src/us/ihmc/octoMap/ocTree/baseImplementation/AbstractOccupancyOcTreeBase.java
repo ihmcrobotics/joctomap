@@ -541,37 +541,37 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     *
     * @param[in] origin starting coordinate of ray
     * @param[in] direction A vector pointing in the direction of the raycast (NOT a point in space). Does not need to be normalized.
-    * @param[out] end returns the center of the last cell on the ray. If the function returns true, it is occupied.
+    * @param[out] endToPack returns the center of the last cell on the ray. If the function returns true, it is occupied.
     * @param[in] ignoreUnknownCells whether unknown cells are ignored (= treated as free). If false (default), the raycast aborts when an unknown cell is hit and returns false.
     * @param[in] maxRange Maximum range after which the raycast is aborted (<= 0: no limit, default)
     * @return true if an occupied cell was hit, false if the maximum range or octree bounds are reached, or if an unknown node was hit.
     */
-   public boolean castRay(Point3d origin, Vector3d direction, Point3d end, boolean ignoreUnknownCells, double maxRange)
+   public boolean castRay(Point3d origin, Vector3d direction, Point3d endToPack, boolean ignoreUnknownCells, double maxRange)
    {
       /// ----------  see OcTreeBase::computeRayKeys  -----------
 
       // Initialization phase -------------------------------------------------------
-      OcTreeKey current_key = coordinateToKey(origin);
-      if (current_key == null)
+      OcTreeKey currentKey = coordinateToKey(origin);
+      if (currentKey == null)
       {
          System.err.println(AbstractOccupancyOcTreeBase.class.getSimpleName() + " (in castRay): Coordinates out of bounds during ray casting");
          return false;
       }
 
-      NODE startingNode = search(current_key);
+      NODE startingNode = search(currentKey);
       if (startingNode != null)
       {
          if (isNodeOccupied(startingNode))
          {
             // Occupied node found at origin 
             // (need to convert from key, since origin does not need to be a voxel center)
-            keyToCoordinate(current_key, end);
+            keyToCoordinate(currentKey, endToPack);
             return true;
          }
       }
       else if (!ignoreUnknownCells)
       {
-         keyToCoordinate(current_key, end);
+         keyToCoordinate(currentKey, endToPack);
          return false;
       }
 
@@ -582,7 +582,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       double[] originArray = new double[3];
       origin.get(originArray);
       double[] endArray = new double[3];
-      end.get(endArray);
+      endToPack.get(endArray);
       double[] directionArray = new double[3];
       direction.get(directionArray);
       int[] step = new int[3];
@@ -603,7 +603,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          if (step[i] != 0)
          {
             // corner point of voxel (in direction of ray)
-            double voxelBorder = keyToCoordinate(current_key.getKey(i));
+            double voxelBorder = keyToCoordinate(currentKey.getKey(i));
             voxelBorder += step[i] * resolution * 0.5;
 
             tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
@@ -651,35 +651,35 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          }
 
          // check for overflow:
-         if (step[dim] < 0 && current_key.getKey(dim) == 0 || step[dim] > 0 && current_key.getKey(dim) == keyMaxValue)
+         if (step[dim] < 0 && currentKey.getKey(dim) == 0 || step[dim] > 0 && currentKey.getKey(dim) == keyMaxValue)
          {
             System.err.println(AbstractOccupancyOcTreeBase.class.getSimpleName() + " (in castRay): Coordinate hit bounds in dim " + dim + ", aborting raycast");
             // return border point nevertheless:
-            keyToCoordinate(current_key, end);
+            keyToCoordinate(currentKey, endToPack);
             return false;
          }
 
          // advance in direction "dim"
-         current_key.addKey(dim, step[dim]);
+         currentKey.addKey(dim, step[dim]);
          tMax[dim] += tDelta[dim];
 
          // generate world coords from key
-         keyToCoordinate(current_key, end);
+         keyToCoordinate(currentKey, endToPack);
 
          // check for maxrange:
          if (max_range_set)
          {
-            double dist_from_origin_sq = 0.0;
+            double distanceFromOriginSquared = 0.0;
             for (int j = 0; j < 3; j++)
             {
-               dist_from_origin_sq += (endArray[j] - originArray[j]) * (endArray[j] - originArray[j]);
+               distanceFromOriginSquared += (endArray[j] - originArray[j]) * (endArray[j] - originArray[j]);
             }
-            if (dist_from_origin_sq > maxrange_sq)
+            if (distanceFromOriginSquared > maxrange_sq)
                return false;
 
          }
 
-         NODE currentNode = search(current_key);
+         NODE currentNode = search(currentKey);
          if (currentNode != null)
          {
             if (isNodeOccupied(currentNode))
@@ -710,11 +710,11 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     * @param[in] origin Starting point of ray
     * @param[in] direction A vector pointing in the direction of the raycast. Does not need to be normalized.
     * @param[in] center The center of the voxel where the ray terminated. This is the output of castRay.
-    * @param[out] intersection The entry point of the ray into the voxel, on the voxel surface.
-    * @param[in] delta A small increment to avoid ambiguity of beeing exactly on a voxel surface. A positive value will get the point out of the hit voxel, while a negative valuewill get it inside.
+    * @param[out] intersectionToPack The entry point of the ray into the voxel, on the voxel surface.
+    * @param[in] delta A small increment to avoid ambiguity of being exactly on a voxel surface. A positive value will get the point out of the hit voxel, while a negative value will get it inside.
     * @return Whether or not an intesection point has been found. Either, the ray never cross the voxel or the ray is exactly parallel to the only surface it intersect.
     */
-   public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersection, double delta)
+   public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersectionToPack, double delta)
    {
       // We only need three normals for the six planes
       Vector3d normalX = new Vector3d(1, 0, 0);
@@ -810,10 +810,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
          }
       }
 
-      // Substract (add) a fraction to ensure no ambiguity on the starting voxel
-      // Don't start on a bondary.
+      // Subtract (add) a fraction to ensure no ambiguity on the starting voxel
+      // Don't start on a boundary.
       if (found)
-         intersection.scaleAdd(outD + delta, direction, origin);
+         intersectionToPack.scaleAdd(outD + delta, direction, origin);
 
       return found;
    }
