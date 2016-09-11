@@ -55,7 +55,7 @@ public class NormalOcTreeVisualizer extends Application
       System.out.println("Initialized octree");
       System.out.println("Computing normals");
       long startTime = System.nanoTime();
-      ocTree.updateHitLocations(lidarPosition, pointcloud, 0.1, false);
+      ocTree.updateHitLocations(lidarPosition, pointcloud, 0.1);
       ocTree.updateNormalsAndPlanarRegions(16);
       ocTree.updateNormalsAndPlanarRegions(16);
       ocTree.updateNormalsAndPlanarRegions(16);

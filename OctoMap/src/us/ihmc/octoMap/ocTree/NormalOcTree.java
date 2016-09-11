@@ -113,15 +113,15 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       System.out.println("Exiting  updatePlanarRegionSegmentation took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
    }
 
-   public void updateSweepCollectionHitLocations(SweepCollection sweepCollection, double alphaUpdate, boolean lazyEvaluation)
+   public void updateSweepCollectionHitLocations(SweepCollection sweepCollection, double alphaUpdate)
    {
       for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
-         updateHitLocations(sweepCollection.getSweepOrigin(i), sweepCollection.getSweep(i), alphaUpdate, lazyEvaluation);
+         updateHitLocations(sweepCollection.getSweepOrigin(i), sweepCollection.getSweep(i), alphaUpdate);
    }
 
    private final OcTreeKey hitLocationKey = new OcTreeKey();
 
-   public void updateHitLocations(Point3d sensorOrigin, PointCloud pointCloud, double alphaUpdate, boolean lazyEvaluation)
+   public void updateHitLocations(Point3d sensorOrigin, PointCloud pointCloud, double alphaUpdate)
    {
       for (int i = 0; i < pointCloud.size(); i++)
       {
@@ -129,18 +129,18 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          if (useBoundingBoxLimit && !isInBoundingBox(point))
             continue;
          if (coordinateToKey(point, hitLocationKey))
-            updateNodeCenterRecursively(root, hitLocationKey, 0, sensorOrigin, point, alphaUpdate, lazyEvaluation);
+            updateNodeCenterRecursively(root, hitLocationKey, 0, sensorOrigin, point, alphaUpdate);
       }
    }
 
-   private void updateNodeCenterRecursively(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, Point3d sensorOrigin, Point3f centerUpdate, double alphaUpdate, boolean lazyEvaluation)
+   private void updateNodeCenterRecursively(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, Point3d sensorOrigin, Point3f centerUpdate, double alphaUpdate)
    {
       if (depth < treeDepth)
       {
          int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
          NormalOcTreeNode child;
          if (node.hasArrayForChildren() && (child = node.getChildUnsafe(childIndex)) != null)
-            updateNodeCenterRecursively(child, key, depth + 1, sensorOrigin, centerUpdate, alphaUpdate, lazyEvaluation);
+            updateNodeCenterRecursively(child, key, depth + 1, sensorOrigin, centerUpdate, alphaUpdate);
       }
       node.updateCenter(centerUpdate, alphaUpdate);
       if (!node.isNormalSet())

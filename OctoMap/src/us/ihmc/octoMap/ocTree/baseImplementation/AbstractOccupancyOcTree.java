@@ -17,6 +17,8 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    protected float missUpdateLogOdds;
    private float occupancyThresholdLogOdds;
 
+   protected boolean lazyEvaluation = false;
+
    public AbstractOccupancyOcTree(double resolution)
    {
       super(resolution);
@@ -53,6 +55,16 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    }
 
    /**
+    * Affect the methods like {@link #updateNode(OcTreeKeyReadOnly, float, boolean)}.
+    * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
+    *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
+    */
+   public void setLazyEvaluation(boolean lazyEvaluation)
+   {
+      this.lazyEvaluation = lazyEvaluation;
+   }
+
+   /**
     * Queries whether a node is occupied according to the tree's parameter for "occupancyThreshold"
     * @param occupancyNode
     * @return
@@ -75,17 +87,12 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * Manipulate log_odds value of voxel directly
     *
     * @param key of the NODE that is to be updated
-    * @param log_odds_update value to be added (+) to log_odds value of node
+    * @param logOddsUpdate value to be added (+) to log_odds value of node
     * @param lazy_eval whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(OcTreeKeyReadOnly key, float log_odds_update)
-   {
-      return updateNode(key, log_odds_update, false);
-   }
-
-   public abstract NODE updateNode(OcTreeKeyReadOnly key, float log_odds_update, boolean lazy_eval);
+   public abstract NODE updateNode(OcTreeKeyReadOnly key, float logOddsUpdate);
 
    /**
     * Manipulate log_odds value of voxel directly.
@@ -93,32 +100,18 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     *
     * @param value 3d coordinate of the NODE that is to be updated
     * @param logOddsUpdate value to be added (+) to log_odds value of node
-    * @param lazy_eval whether update of inner nodes is omitted after the update (default: false).
-    *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(Point3d value, float logOddsUpdate)
-   {
-      return updateNode(value, logOddsUpdate, false);
-   }
-
-   public abstract NODE updateNode(Point3d value, float logOddsUpdate, boolean lazyEvaluation);
+   public abstract NODE updateNode(Point3d value, float logOddsUpdate);
 
    /**
     * Integrate occupancy measurement.
     *
     * @param key of the NODE that is to be updated
     * @param occupied true if the node was measured occupied, else false
-    * @param lazy_eval whether update of inner nodes is omitted after the update (default: false).
-    *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(OcTreeKeyReadOnly key, boolean occupied)
-   {
-      return updateNode(key, occupied, false);
-   }
-
-   public abstract NODE updateNode(OcTreeKeyReadOnly key, boolean occupied, boolean lazyEvaluation);
+   public abstract NODE updateNode(OcTreeKeyReadOnly key, boolean occupied);
 
    /**
     * Integrate occupancy measurement.
@@ -126,16 +119,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     *
     * @param value 3d coordinate of the NODE that is to be updated
     * @param occupied true if the node was measured occupied, else false
-    * @param lazy_eval whether update of inner nodes is omitted after the update (default: false).
-    *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(Point3d value, boolean occupied)
-   {
-      return updateNode(value, occupied, false);
-   }
-
-   public abstract NODE updateNode(Point3d value, boolean occupied, boolean lazyEvaluation);
+   public abstract NODE updateNode(Point3d value, boolean occupied);
 
    public abstract void toMaxLikelihood();
 
