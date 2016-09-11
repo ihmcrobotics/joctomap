@@ -57,7 +57,7 @@ public class NodeUpdater<NODE extends AbstractOcTreeNode<NODE>>
       return root;
    }
 
-   public NODE updateNode(NODE root, OcTreeKeyReadOnly key, boolean lazyEvaluation)
+   public NODE updateNode(NODE root, OcTreeKeyReadOnly key)
    {
       numberOfNodeCreatedDeleted = 0;
 

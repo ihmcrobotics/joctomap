@@ -4,7 +4,6 @@ import static us.ihmc.octoMap.MarchingCubesTables.edgeTable;
 import static us.ihmc.octoMap.MarchingCubesTables.triTable;
 import static us.ihmc.octoMap.MarchingCubesTables.vertexList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.vecmath.Point3d;
@@ -27,8 +26,6 @@ import us.ihmc.robotics.time.TimeTools;
 
 public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOccupancyOcTree<NODE>
 {
-   private static final boolean USE_UPDATE_NODE_ITERATIVE = false;
-
    protected OcTreeBoundingBox boundingBox;
 
    protected boolean useChangeDetection;
@@ -262,14 +259,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       // clamp log odds within range:
       logOddsValue = Math.min(Math.max(logOddsValue, minOccupancyLogOdds), maxOccupancyLogOdds);
 
-      boolean createdRoot = false;
-      if (root == null)
-      {
-         root = createEmptyNode();
-         treeSize++;
-         createdRoot = true;
-      }
-      return setNodeValueRecurs(root, createdRoot, key, 0, logOddsValue);
+      setOccupancyRule.setNewLogOdds(logOddsValue);
+      nodeUpdater.setEarlyAbortRule(null);
+      nodeUpdater.setUpdateRule(setOccupancyRule);
+      return nodeUpdater.updateNode(root, key);
    }
 
    /**
@@ -282,11 +275,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public NODE setNodeValue(Point3d coordinate, float logOddsValue)
    {
-      OcTreeKey key = coordinateToKey(coordinate);
-      if (key == null)
-         return null;
-
-      return setNodeValue(key, logOddsValue);
+      return setNodeValue(coordinate.getX(), coordinate.getY(), coordinate.getZ(), logOddsValue);
    }
 
    /**
@@ -319,37 +308,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    @Override
    public NODE updateNode(OcTreeKeyReadOnly key, float logOddsUpdate)
    {
-      NODE leaf = search(key);
-
-      if (leaf != null)
-      {
-         // early abort (no change will happen).
-         // may cause an overhead in some configuration, but more often helps
-         // no change: node already at threshold
-         boolean reachedMaxThreshold = logOddsUpdate >= 0.0f && leaf.getLogOdds() >= maxOccupancyLogOdds;
-         boolean reachedMinThreshold = logOddsUpdate <= 0.0f && leaf.getLogOdds() <= minOccupancyLogOdds;
-
-         if (reachedMaxThreshold || reachedMinThreshold)
-            return leaf;
-      }
-
-      boolean createdRoot = false;
-      if (root == null)
-      {
-         root = createEmptyNode();
-         treeSize++;
-         createdRoot = true;
-      }
-
-      if (USE_UPDATE_NODE_ITERATIVE)
-      {
-         updateNodeIterative(root, createdRoot, key, logOddsUpdate);
-         return root;
-      }
-      else
-      {
-         return updateNodeRecurs(root, createdRoot, key, 0, logOddsUpdate);
-      }
+      updateOccupancyRule.setUpdateLogOdds(logOddsUpdate);
+      nodeUpdater.setEarlyAbortRule(updateOccupancyRule);
+      nodeUpdater.setUpdateRule(updateOccupancyRule);
+      return nodeUpdater.updateNode(root, key);
    }
 
    /**
@@ -363,11 +325,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    @Override
    public NODE updateNode(Point3d coordinate, float logOddsUpdate)
    {
-      OcTreeKey key = coordinateToKey(coordinate);
-      if (key == null)
-         return null;
-
-      return updateNode(key, logOddsUpdate);
+      return updateNode(coordinate.getX(), coordinate.getY(), coordinate.getZ(), logOddsUpdate);
    }
 
    /**
@@ -400,11 +358,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    @Override
    public NODE updateNode(OcTreeKeyReadOnly key, boolean occupied)
    {
-      float logOdds = missUpdateLogOdds;
-      if (occupied)
-         logOdds = hitUpdateLogOdds;
-
-      return updateNode(key, logOdds);
+      return updateNode(key, occupied ? hitUpdateLogOdds : missUpdateLogOdds);
    }
 
    /**
@@ -418,10 +372,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    @Override
    public NODE updateNode(Point3d coordinate, boolean occupied)
    {
-      OcTreeKey key = coordinateToKey(coordinate);
-      if (key == null)
-         return null;
-      return updateNode(key, occupied);
+      return updateNode(coordinate.getX(), coordinate.getY(), coordinate.getZ(), occupied);
    }
 
    /**
@@ -1086,212 +1037,6 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       }
 
       return true;
-   }
-
-   // recursive calls ----------------------------
-
-   protected NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, int depth, float logOddsUpdate)
-   {
-      boolean createdNode = false;
-
-      if (node == null)
-         throw new RuntimeException("The given node is null.");
-
-      // follow down to last level
-      if (depth < treeDepth)
-      {
-         int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
-         if (!OcTreeNodeTools.nodeChildExists(node, pos))
-         {
-            // child does not exist, but maybe it's a pruned node?
-            if (!node.hasAtLeastOneChild() && !nodeJustCreated)
-            {
-               // current node does not have children AND it is not a new node 
-               // -> expand pruned node
-               expandNode(node);
-            }
-            else
-            {
-               // not a pruned node, create requested child
-               createNodeChildUnsafe(node, pos);
-               createdNode = true;
-            }
-         }
-
-         if (lazyEvaluation)
-         {
-            return updateNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), createdNode, key, depth + 1, logOddsUpdate);
-         }
-         else
-         {
-            NODE retval = updateNodeRecurs(node.getChildUnsafe(pos), createdNode, key, depth + 1, logOddsUpdate);
-            // prune node if possible, otherwise set own probability
-            // note: combining both did not lead to a speedup!
-            if (pruneNode(node))
-            {
-               // return pointer to current parent (pruned), the just updated node no longer exists
-               retval = node;
-            }
-            else
-            {
-               node.updateOccupancyChildren();
-            }
-
-            return retval;
-         }
-      }
-      else // at last level, update node, end of recursion
-      {
-         if (useChangeDetection)
-         {
-            boolean occBefore = isNodeOccupied(node);
-            updateNodeLogOdds(node, logOddsUpdate);
-
-            if (nodeJustCreated)
-            { // new node
-               changedKeys.put(key, true);
-            }
-            else if (occBefore != isNodeOccupied(node))
-            { // occupancy changed, track it
-               Boolean changedKeyValue = changedKeys.get(key);
-               if (changedKeyValue == null)
-                  changedKeys.put(key, false);
-               else if (changedKeyValue == false)
-                  changedKeys.remove(key);
-            }
-         }
-         else
-         {
-            updateNodeLogOdds(node, logOddsUpdate);
-         }
-         return node;
-      }
-   }
-
-   private final List<NODE> tempNodeArray = new ArrayList<>();
-
-   protected void updateNodeIterative(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, float logOddsUpdate)
-   {
-      NODE parentNode = node;
-      boolean parentNodeJustCreated = nodeJustCreated;
-      tempNodeArray.clear();
-
-      for (int depth = 0; depth < treeDepth; depth++)
-      {
-         int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
-
-         if (!OcTreeNodeTools.nodeChildExists(parentNode, childIndex))
-         {
-            // child does not exist, but maybe it's a pruned node?
-            if (!parentNode.hasAtLeastOneChild() && !parentNodeJustCreated)
-            {
-               // current node does not have children AND it is not a new node 
-               // -> expand pruned node
-               float updatedLogOdds = computeUpdatedLogOdds(parentNode, logOddsUpdate);
-               if (Math.abs(updatedLogOdds - parentNode.getLogOdds()) > 1.0e-3f)
-                  expandNode(parentNode);
-               else
-                  break;
-            }
-            else
-            {
-               // not a pruned node, create requested child
-               createNodeChildUnsafe(parentNode, childIndex);
-               parentNodeJustCreated = true;
-            }
-         }
-
-         tempNodeArray.add(parentNode = parentNode.getChildUnsafe(childIndex));
-      }
-
-      updateNodeLogOdds(tempNodeArray.get(tempNodeArray.size() - 1), logOddsUpdate);
-
-      if (!lazyEvaluation)
-      {
-         for (int depth = tempNodeArray.size() - 2; depth >= 0; depth--)
-         {
-            NODE currentNode = tempNodeArray.get(depth);
-            if (!pruneNode(currentNode))
-               currentNode.updateOccupancyChildren();
-         }
-         node.updateOccupancyChildren();
-      }
-   }
-
-   protected NODE setNodeValueRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, int depth, float logOddsValue)
-   {
-      boolean created_node = false;
-
-      if (node == null)
-         throw new RuntimeException("The given node is null.");
-
-      // follow down to last level
-      if (depth < treeDepth)
-      {
-         int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - depth - 1);
-         if (!OcTreeNodeTools.nodeChildExists(node, pos))
-         {
-            // child does not exist, but maybe it's a pruned node?
-            if (!node.hasAtLeastOneChild() && !nodeJustCreated)
-            {
-               // current node does not have children AND it is not a new node
-               // -> expand pruned node
-               expandNode(node);
-            }
-            else
-            {
-               // not a pruned node, create requested child
-               createNodeChildUnsafe(node, pos);
-               created_node = true;
-            }
-         }
-
-         if (lazyEvaluation)
-            return setNodeValueRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, logOddsValue);
-         else
-         {
-            NODE retval = setNodeValueRecurs(OcTreeNodeTools.getNodeChild(node, pos), created_node, key, depth + 1, logOddsValue);
-            // prune node if possible, otherwise set own probability
-            // note: combining both did not lead to a speedup!
-            if (pruneNode(node))
-            {
-               // return pointer to current parent (pruned), the just updated node no longer exists
-               retval = node;
-            }
-            else
-            {
-               node.updateOccupancyChildren();
-            }
-
-            return retval;
-         }
-      }
-      else // at last level, update node, end of recursion
-      {
-         if (useChangeDetection)
-         {
-            boolean occBefore = isNodeOccupied(node);
-            node.setLogOdds(logOddsValue);
-
-            if (nodeJustCreated)
-            { // new node
-               changedKeys.put(key, true);
-            }
-            else if (occBefore != isNodeOccupied(node))
-            { // occupancy changed, track it
-               Boolean keyChangedValue = changedKeys.get(key);
-               if (keyChangedValue == null)
-                  changedKeys.put(key, false);
-               else if (keyChangedValue == false)
-                  changedKeys.remove(key);
-            }
-         }
-         else
-         {
-            node.setLogOdds(logOddsValue);
-         }
-         return node;
-      }
    }
 
    protected void updateInnerOccupancyRecurs(NODE node, int depth)
