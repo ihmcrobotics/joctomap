@@ -9,6 +9,10 @@ import javax.vecmath.Vector3d;
 import us.ihmc.octoMap.key.KeyRay;
 import us.ihmc.octoMap.key.KeyRayReadOnly;
 import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
+import us.ihmc.octoMap.key.OcTreeKeySet;
+import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 
 public class RayTracer
 {
@@ -17,6 +21,7 @@ public class RayTracer
    private final OcTreeKey keyOrigin = new OcTreeKey();
    private final OcTreeKey keyEnd = new OcTreeKey();
    private final OcTreeKey currentKey = new OcTreeKey();
+   private final OcTreeKeySet unfilteredFreeCells = new OcTreeKeySet();
 
    private final KeyRay ray = new KeyRay();
 
@@ -31,7 +36,117 @@ public class RayTracer
    {
    }
 
-   // -- raytracing  -----------------------
+   /**
+    * Helper for insertPointCloud(). Computes all octree nodes affected by the point cloud
+    * integration at once. Here, occupied nodes have a preference over free
+    * ones. This function first discretizes the scan with the octree grid, which results
+    * in fewer raycasts (=speedup) but a slightly different result than computeUpdate().
+    *
+    * @param scan point cloud measurement to be integrated
+    * @param origin origin of the sensor for ray casting
+    * @param freeCells keys of nodes to be cleared
+    * @param occupiedCells keys of nodes to be marked occupied
+    * @param maxRange maximum range for raycasting (-1: unlimited)
+    */
+   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBox boundingBox,
+         double minRange, double maxRange, double resolution, int treeDepth)
+   {
+      PointCloud discretePC = new PointCloud();
+      OcTreeKeySet endpoints = new OcTreeKeySet();
+
+      for (int i = 0; i < scan.size(); ++i)
+      {
+         OcTreeKey key = OcTreeKeyConversionTools.coordinateToKey(scan.getPoint(i), resolution, treeDepth);
+         if (endpoints.add(key)) // insertion took place => key was not in set
+            discretePC.add(OcTreeKeyConversionTools.keyToCoordinate(key, resolution, treeDepth));
+      }
+
+      computeUpdate(discretePC, origin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
+   }
+
+   /**
+    * Helper for insertPointCloud(). Computes all octree nodes affected by the point cloud
+    * integration at once. Here, occupied nodes have a preference over free
+    * ones.
+    *
+    * @param scan point cloud measurement to be integrated
+    * @param origin origin of the sensor for ray casting
+    * @param freeCells keys of nodes to be cleared
+    * @param occupiedCells keys of nodes to be marked occupied
+    * @param maxRange maximum range for raycasting (-1: unlimited)
+    */
+   public void computeUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBox boundingBox,
+         double minRange, double maxRange, double resolution, int treeDepth)
+   {
+      unfilteredFreeCells.clear();
+      OcTreeKey key = new OcTreeKey();
+      Vector3d direction = new Vector3d();
+      Point3d point = new Point3d();
+
+      for (int i = 0; i < scan.size(); ++i)
+      {
+         point.set(scan.getPoint(i));
+         direction.sub(point, origin);
+         double length = direction.length();
+
+         if (minRange >= 0.0 && length < minRange)
+            continue;
+
+         if (boundingBox == null)
+         { // no BBX specified
+            if (maxRange < 0.0 || length <= maxRange)
+            { // is not maxrange meas.
+                 // free cells
+               if (computeRayKeys(origin, point, resolution, treeDepth))
+               {
+                  unfilteredFreeCells.addAll(ray);
+               }
+               // occupied endpoint
+               if (OcTreeKeyConversionTools.coordinateToKey(point, resolution, treeDepth, key))
+                  occupiedCells.add(key);
+            }
+            else
+            { // user set a maxrange and length is above
+               Point3d newEnd = new Point3d();
+               newEnd.scaleAdd(maxRange / length, direction, origin);
+               if (computeRayKeys(origin, point, resolution, treeDepth))
+                  unfilteredFreeCells.addAll(ray);
+            } // end if maxrange
+         }
+         else
+         { // BBX was set
+              // endpoint in bbx and not maxrange?
+            if (boundingBox.isInBoundingBox(point) && (maxRange < 0.0 || length <= maxRange))
+            {
+               // occupied endpoint
+               if (OcTreeKeyConversionTools.coordinateToKey(point, resolution, treeDepth, key))
+                  occupiedCells.add(key);
+
+               // update freespace, break as soon as bbx limit is reached
+               if (computeRayKeys(origin, point, resolution, treeDepth))
+               {
+                  for (int j = ray.size() - 1; j >= 0; j--)
+                  {
+                     OcTreeKeyReadOnly currentKey = ray.get(j);
+                     if (boundingBox.isInBoundingBox(currentKey))
+                        unfilteredFreeCells.add(currentKey);
+                     else
+                        break;
+                  }
+               } // end if compute ray
+            } // end if in BBX and not maxrange
+         } // end bbx case
+
+      } // end for all points, end of parallel OMP loop
+
+      // prefer occupied cells over free ones (and make sets disjunct)
+      for (int i = 0; i < unfilteredFreeCells.size(); i++)
+      {
+         OcTreeKeyReadOnly possibleFreeCell = unfilteredFreeCells.unsafeGet(i);
+         if (!occupiedCells.contains(possibleFreeCell))
+            freeCells.add(possibleFreeCell);
+      }
+   }
 
    /**
    * Traces a ray from origin to end (excluding), returning an
