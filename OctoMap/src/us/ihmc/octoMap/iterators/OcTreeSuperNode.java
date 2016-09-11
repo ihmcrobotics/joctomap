@@ -5,6 +5,7 @@ import javax.vecmath.Point3d;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
@@ -46,7 +47,7 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
       this.maxDepth = parentNode.maxDepth;
       this.depth = parentNode.depth + 1;
       OcTreeKeyTools.computeChildKey(childIndex, parentNode.key, key, depth, tree.getTreeDepth());
-      node = parentNode.node.getChild(childIndex);
+      node = OcTreeNodeTools.getNodeChild(parentNode.node, childIndex);
    }
 
    /** @return the center coordinate of this node */
