@@ -263,8 +263,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       nodeUpdater.setEarlyAbortRule(null);
       nodeUpdater.setUpdateRule(setOccupancyRule);
       NODE updatedNode = nodeUpdater.updateNode(root, key);
-      root = nodeUpdater.getRoot();
       treeSize += nodeUpdater.getNumberOfNodeCreatedDeleted();
+      sizeChanged = nodeUpdater.getNumberOfNodeCreatedDeleted() != 0;
+      root = nodeUpdater.getRoot();
       return updatedNode;
    }
 
@@ -314,7 +315,11 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       updateOccupancyRule.setUpdateLogOdds(logOddsUpdate);
       nodeUpdater.setEarlyAbortRule(updateOccupancyRule);
       nodeUpdater.setUpdateRule(updateOccupancyRule);
-      return nodeUpdater.updateNode(root, key);
+      NODE updatedNode = nodeUpdater.updateNode(root, key);
+      treeSize += nodeUpdater.getNumberOfNodeCreatedDeleted();
+      sizeChanged = nodeUpdater.getNumberOfNodeCreatedDeleted() != 0;
+      root = nodeUpdater.getRoot();
+      return updatedNode;
    }
 
    /**
