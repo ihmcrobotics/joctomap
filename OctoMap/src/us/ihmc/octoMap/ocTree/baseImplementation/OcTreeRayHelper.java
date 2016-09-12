@@ -17,7 +17,7 @@ import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;
 
-public class RayTracer<NODE extends AbstractOcTreeNode<NODE>>
+public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
 {
    public static final int maxRaySize = 100000;
 
@@ -35,7 +35,7 @@ public class RayTracer<NODE extends AbstractOcTreeNode<NODE>>
    private final double[] tMax = new double[3];
    private final double[] tDelta = new double[3];
 
-   public RayTracer()
+   public OcTreeRayHelper()
    {
    }
 

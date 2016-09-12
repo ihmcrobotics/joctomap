@@ -45,7 +45,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    protected boolean useChangeDetection;
    /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
    protected final KeyBoolMap changedKeys = new KeyBoolMap();
-   protected final RayTracer<NODE> rayTracer = new RayTracer<>();
+   protected final OcTreeRayHelper<NODE> rayHelper = new OcTreeRayHelper<>();
    private final OcTreeKeySet freeCells = new OcTreeKeySet(1000000);
    private final OcTreeKeySet occupiedCells = new OcTreeKeySet(1000000);
 
@@ -289,9 +289,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
    
          if (discretize)
-            rayTracer.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
+            rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
          else
-            rayTracer.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
+            rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
       }
       long endTime = System.nanoTime();
       System.out.println("Exiting  computeUpdate took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
@@ -340,9 +340,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       occupiedCells.clear();
    
       if (discretize)
-         rayTracer.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
+         rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
       else
-         rayTracer.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
+         rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
    
       // insert data into tree  -----------------------
       for (int i = 0; i < occupiedCells.size(); i++)
@@ -436,7 +436,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       for (int i = 0; i < scan.size(); i++)
       {
          Point3d point = new Point3d(scan.getPoint(i));
-         KeyRayReadOnly ray = rayTracer.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
+         KeyRayReadOnly ray = rayHelper.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
          if (ray != null)
          {
             for (int j = 0; j < ray.size(); j++)
@@ -672,7 +672,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public boolean castRay(Point3d origin, Vector3d direction, Point3d endToPack, boolean ignoreUnknownCells, double maxRange)
    {
-      return rayTracer.castRay(root, origin, direction, endToPack, ignoreUnknownCells, maxRange, collidableRule, maxRange, treeDepth);
+      return rayHelper.castRay(root, origin, direction, endToPack, ignoreUnknownCells, maxRange, collidableRule, maxRange, treeDepth);
    }
 
    public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersection)
@@ -693,7 +693,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersectionToPack, double delta)
    {
-      return rayTracer.getRayIntersection(origin, direction, center, intersectionToPack, delta, resolution);
+      return rayHelper.getRayIntersection(origin, direction, center, intersectionToPack, delta, resolution);
    }
 
    public boolean getNormals(Point3d point, List<Vector3d> normals)
@@ -958,7 +958,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    protected boolean integrateMissOnRay(Point3d origin, Point3d end)
    {
-      KeyRayReadOnly ray = rayTracer.computeRayKeys(origin, end, resolution, treeDepth);
+      KeyRayReadOnly ray = rayHelper.computeRayKeys(origin, end, resolution, treeDepth);
 
       if (ray == null)
          return false;
