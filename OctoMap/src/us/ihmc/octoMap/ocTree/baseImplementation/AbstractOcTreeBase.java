@@ -961,7 +961,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
       else // at last level, update node, end of recursion
       {
-         updateRule.updateLeaf(node);
+         updateRule.updateLeaf(node, key);
          return node;
       }
    }

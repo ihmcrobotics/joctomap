@@ -1,5 +1,6 @@
 package us.ihmc.octoMap.ocTree;
 
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.UpdateRule;
 
@@ -29,7 +30,7 @@ public class SetOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> im
    }
    
    @Override
-   public void updateLeaf(NODE leafToUpdate)
+   public void updateLeaf(NODE leafToUpdate, OcTreeKeyReadOnly leafKey)
    {
 
       leafToUpdate.setLogOdds(newLogOdds);

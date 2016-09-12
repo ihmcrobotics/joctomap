@@ -1,5 +1,6 @@
 package us.ihmc.octoMap.ocTree;
 
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.EarlyAbortRule;
 import us.ihmc.octoMap.ocTree.baseImplementation.UpdateRule;
@@ -34,7 +35,7 @@ public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>>
    }
    
    @Override
-   public void updateLeaf(NODE leafToUpdate)
+   public void updateLeaf(NODE leafToUpdate, OcTreeKeyReadOnly leafKey)
    {
       float logOdds = leafToUpdate.getLogOdds() + updateLogOdds;
       if (logOdds < minOccupancyLogOdds.floatValue())

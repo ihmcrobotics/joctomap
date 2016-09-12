@@ -5,6 +5,7 @@ import javax.vecmath.Tuple3d;
 import javax.vecmath.Tuple3f;
 import javax.vecmath.Vector3d;
 
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 
 public class NormalOctreeUpdateRule extends UpdateOccupancyRule<NormalOcTreeNode>
@@ -37,9 +38,9 @@ public class NormalOctreeUpdateRule extends UpdateOccupancyRule<NormalOcTreeNode
    }
 
    @Override
-   public void updateLeaf(NormalOcTreeNode leafToUpdate)
+   public void updateLeaf(NormalOcTreeNode leafToUpdate, OcTreeKeyReadOnly leafKey)
    {
-      super.updateLeaf(leafToUpdate);
+      super.updateLeaf(leafToUpdate, leafKey);
 
       leafToUpdate.updateCenter(hitLocation, alphaHitLocationUpdate);
 
