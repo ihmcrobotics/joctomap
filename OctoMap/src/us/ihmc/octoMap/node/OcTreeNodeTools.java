@@ -57,7 +57,7 @@ public class OcTreeNodeTools
       if (!node.hasArrayForChildren())
          return false;
    
-      NODE firstChild = getNodeChild(node, 0);
+      NODE firstChild = node.getChildUnsafe(0);
       if (firstChild == null || firstChild.hasAtLeastOneChild())
          return false;
    
