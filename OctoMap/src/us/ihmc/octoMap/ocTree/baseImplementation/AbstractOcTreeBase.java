@@ -58,6 +58,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    protected double maxCoordinate[] = new double[3]; ///< max in x, y, z
    protected double minCoordinate[] = new double[3]; ///< min in x, y, z
+   protected boolean lazyUpdate = false;
 
    /// data structure for ray casting, array for multithreading
 
@@ -148,6 +149,16 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public final String getTreeType()
    {
       return getClass().getSimpleName();
+   }
+
+   /**
+    * Affect the methods using {@link #updateNodeInternal(OcTreeKeyReadOnly, UpdateRule, EarlyAbortRule)}.
+    * @param lazyUpdate whether update of inner nodes is omitted after the update (default: false).
+    *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
+    */
+   public void setLazyUpdate(boolean lazyUpdate)
+   {
+      this.lazyUpdate = lazyUpdate;
    }
 
    /// Change the resolution of the octree, scaling all voxels.
@@ -942,7 +953,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
          NODE nodeChild = OcTreeNodeTools.getNodeChild(node, pos);
 
-         if (updateRule.doLazyEvaluation())
+         if (lazyUpdate)
          {
             return updateNodeRecurs(nodeChild, createdNode, key, updateRule, depth + 1);
          }

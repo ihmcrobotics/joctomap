@@ -38,7 +38,6 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    protected float missUpdateLogOdds;
    private float occupancyThresholdLogOdds;
 
-   protected boolean lazyEvaluation = false;
    protected final UpdateOccupancyRule<NODE> updateOccupancyRule;
    protected final SetOccupancyRule<NODE> setOccupancyRule = new SetOccupancyRule<>();
    protected OcTreeBoundingBox boundingBox;
@@ -99,16 +98,6 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
 
       setMinProbability(0.1192); // = -2 in log odds
       setMaxProbability(0.971); // = 3.5 in log odds
-   }
-
-   /**
-    * Affect the methods like {@link #updateNode(OcTreeKeyReadOnly, float, boolean)}.
-    * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
-    *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
-    */
-   public void setLazyEvaluation(boolean lazyEvaluation)
-   {
-      this.lazyEvaluation = lazyEvaluation;
    }
 
    /**
