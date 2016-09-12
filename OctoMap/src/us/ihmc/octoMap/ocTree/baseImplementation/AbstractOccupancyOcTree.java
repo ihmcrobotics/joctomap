@@ -3,16 +3,12 @@ package us.ihmc.octoMap.ocTree.baseImplementation;
 import static us.ihmc.octoMap.MarchingCubesTables.edgeTable;
 import static us.ihmc.octoMap.MarchingCubesTables.triTable;
 import static us.ihmc.octoMap.MarchingCubesTables.vertexList;
-import static us.ihmc.octoMap.tools.OctoMapTools.logodds;
-import static us.ihmc.octoMap.tools.OctoMapTools.probability;
 
 import java.util.List;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
-
-import org.apache.commons.lang3.mutable.MutableFloat;
 
 import us.ihmc.octoMap.key.KeyBoolMap;
 import us.ihmc.octoMap.key.KeyRayReadOnly;
@@ -32,11 +28,7 @@ import us.ihmc.robotics.time.TimeTools;
 public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOcTreeBase<NODE>
 {
    // occupancy parameters of tree, stored in logodds:
-   protected final MutableFloat minOccupancyLogOdds = new MutableFloat();
-   protected final MutableFloat maxOccupancyLogOdds = new MutableFloat();
-   protected float hitUpdateLogOdds;
-   protected float missUpdateLogOdds;
-   private float occupancyThresholdLogOdds;
+   protected OccupancyParameters occupancyParameters = new OccupancyParameters();
 
    protected final UpdateOccupancyRule<NODE> updateOccupancyRule;
    protected final SetOccupancyRule<NODE> setOccupancyRule = new SetOccupancyRule<>();
@@ -60,8 +52,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    public AbstractOccupancyOcTree(double resolution)
    {
       super(resolution);
-      setDefaultParameters();
-      updateOccupancyRule = new UpdateOccupancyRule<>(minOccupancyLogOdds, maxOccupancyLogOdds);
+      updateOccupancyRule = new UpdateOccupancyRule<>(occupancyParameters);
       useChangeDetection = false;
    }
 
@@ -70,34 +61,28 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    protected AbstractOccupancyOcTree(double resolution, int treeDepth)
    {
       super(resolution, treeDepth);
-      setDefaultParameters();
-      updateOccupancyRule = new UpdateOccupancyRule<>(minOccupancyLogOdds, maxOccupancyLogOdds);
+      updateOccupancyRule = new UpdateOccupancyRule<>(occupancyParameters);
       useChangeDetection = false;
    }
 
    public AbstractOccupancyOcTree(AbstractOccupancyOcTree<NODE> other)
    {
       super(other);
-      minOccupancyLogOdds.setValue(other.minOccupancyLogOdds.floatValue());
-      maxOccupancyLogOdds.setValue(other.maxOccupancyLogOdds.floatValue());
-      hitUpdateLogOdds = other.hitUpdateLogOdds;
-      missUpdateLogOdds = other.missUpdateLogOdds;
-      occupancyThresholdLogOdds = other.occupancyThresholdLogOdds;
-      updateOccupancyRule = new UpdateOccupancyRule<>(minOccupancyLogOdds, maxOccupancyLogOdds);
+      occupancyParameters.set(other.occupancyParameters);
+      updateOccupancyRule = new UpdateOccupancyRule<>(occupancyParameters);
       boundingBox = new OcTreeBoundingBox(other.boundingBox);
       changedKeys.putAll(other.changedKeys);
       useChangeDetection = other.useChangeDetection;
    }
 
-   public void setDefaultParameters()
+   public void setOccupancyParameters(OccupancyParameters occupancyParameters)
    {
-      // some sane default values:
-      setOccupancyThreshold(0.5); // = 0.0 in logodds
-      setHitProbabilityUpdate(0.7); // = 0.85 in logodds
-      setMissProbabilityUpdate(0.4);//0.4);         // = -0.4 in logodds
+      this.occupancyParameters.set(occupancyParameters);
+   }
 
-      setMinProbability(0.1192); // = -2 in log odds
-      setMaxProbability(0.971); // = 3.5 in log odds
+   public OccupancyParametersReadOnly getOccupancyParameters()
+   {
+      return occupancyParameters;
    }
 
    /**
@@ -107,147 +92,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public boolean isNodeOccupied(NODE occupancyNode)
    {
-      return occupancyNode.getLogOdds() >= this.occupancyThresholdLogOdds;
-   }
-
-   /**
-    * Queries whether a node is at the clamping limit according to the tree's parameter
-    * @param occupancyNode
-    */
-   public boolean isNodeAtOccupancyLimit(NODE occupancyNode)
-   {
-      return occupancyNode.getLogOdds() >= this.maxOccupancyLogOdds.floatValue() || occupancyNode.getLogOdds() <= this.minOccupancyLogOdds.floatValue();
-   }
-
-   //-- parameters for occupancy and sensor model:
-
-   /**
-    * Sets the threshold for occupancy (sensor model)
-    * @param probability
-    */
-   public void setOccupancyThreshold(double probability)
-   {
-      occupancyThresholdLogOdds = logodds(probability);
-   }
-
-   /**
-    * Sets the probability for a "hit" (will be converted to logodds) - sensor model
-    * @param probability
-    */
-   public void setHitProbabilityUpdate(double probability)
-   {
-      hitUpdateLogOdds = logodds(probability);
-      if (hitUpdateLogOdds < 0.0)
-         throw new RuntimeException("Invalid hit probability update: " + probability);
-   }
-
-   /**
-    * Sets the probability for a "miss" (will be converted to logodds) - sensor model
-    * @param probability
-    */
-   public void setMissProbabilityUpdate(double probability)
-   {
-      missUpdateLogOdds = logodds(probability);
-      if (missUpdateLogOdds > 0.0)
-         throw new RuntimeException("Invalid miss probability update: " + probability);
-   }
-
-   /**
-    * Sets the minimum probability for occupancy clamping (sensor model)
-    * @param minimumProbability
-    */
-   public void setMinProbability(double minimumProbability)
-   {
-      minOccupancyLogOdds.setValue(logodds(minimumProbability));
-   }
-
-   /**
-    * Sets the maximum probability for occupancy clamping (sensor model)
-    * @param maximumProbability
-    */
-   public void setMaxProbability(double maximumProbability)
-   {
-      maxOccupancyLogOdds.setValue(logodds(maximumProbability));
-   }
-
-   /**
-    * @return threshold (probability) for occupancy - sensor model
-    */
-   public double getOccupancyThreshold()
-   {
-      return probability(occupancyThresholdLogOdds);
-   }
-
-   /**
-    * @return threshold (logodds) for occupancy - sensor model
-    */
-   public float getOccupancyThresholdLogOdds()
-   {
-      return occupancyThresholdLogOdds;
-   }
-
-   /**
-    * @return probability for a "hit" in the sensor model (probability)
-    */
-   public double getHitProbability()
-   {
-      return probability(hitUpdateLogOdds);
-   }
-
-   /**
-    * @return probability for a "hit" in the sensor model (logodds)
-    */
-   public float getHitProbabilityLogOdds()
-   {
-      return hitUpdateLogOdds;
-   }
-
-   /**
-    * @return probability for a "miss"  in the sensor model (probability)
-    */
-   public double getMissProbability()
-   {
-      return probability(missUpdateLogOdds);
-   }
-
-   /**
-    * @return probability for a "miss"  in the sensor model (logodds)
-    */
-   public float getMissProbabilityLogOdds()
-   {
-      return missUpdateLogOdds;
-   }
-
-   /**
-    * @return minimum probability for occupancy clamping in the sensor model
-    */
-   public double getMinProbability()
-   {
-      return probability(minOccupancyLogOdds.floatValue());
-   }
-
-   /**
-    * @return minimum logodds for occupancy clamping in the sensor model
-    */
-   public float getMinLogOdds()
-   {
-      return minOccupancyLogOdds.floatValue();
-   }
-
-   /**
-    * @return maximum probability for occupancy clamping in the sensor model
-    */
-   public double getMaxProbability()
-   {
-      return probability(maxOccupancyLogOdds.floatValue());
-   }
-
-   /**
-    * @return maximum logodds for occupancy clamping in the sensor model
-    */
-   public float getMaxLogOdds()
-   {
-      return maxOccupancyLogOdds.floatValue();
+      return OccupancyTools.isNodeOccupied(occupancyParameters, occupancyNode);
    }
 
    public void insertSweepCollection(SweepCollection sweepCollection)
@@ -448,7 +293,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    public NODE setNodeValue(OcTreeKeyReadOnly key, float logOddsValue)
    {
       // clamp log odds within range:
-      setOccupancyRule.setNewLogOdds(Math.min(Math.max(logOddsValue, minOccupancyLogOdds.floatValue()), maxOccupancyLogOdds.floatValue()));
+      setOccupancyRule.setNewLogOdds(OccupancyTools.clipLogOddsToMinMax(occupancyParameters, logOddsValue));
       return updateNodeInternal(key, setOccupancyRule, null);
    }
 
@@ -478,7 +323,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    public NODE setNodeValue(double x, double y, double z, float logOddsValue)
    {
       // clamp log odds within range:
-      setOccupancyRule.setNewLogOdds(Math.min(Math.max(logOddsValue, minOccupancyLogOdds.floatValue()), maxOccupancyLogOdds.floatValue()));
+      setOccupancyRule.setNewLogOdds(OccupancyTools.clipLogOddsToMinMax(occupancyParameters, logOddsValue));
       return updateNodeInternal(x, y, z, setOccupancyRule, null);
    }
 
@@ -535,7 +380,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public NODE updateNode(OcTreeKeyReadOnly key, boolean occupied)
    {
-      return updateNode(key, occupied ? hitUpdateLogOdds : missUpdateLogOdds);
+      return updateNode(key, occupancyParameters.getUpdateLogOdds(occupied));
    }
 
    /**
@@ -586,7 +431,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       }
 
       // convert root
-      nodeToMaxLikelihood(root);
+      OccupancyTools.nodeToMaxLikelihood(occupancyParameters, root);
    }
 
    public boolean insertRay(Point3d origin, Point3d end)
@@ -903,7 +748,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public void integrateHit(NODE occupancyNode)
    {
-      updateNodeLogOdds(occupancyNode, hitUpdateLogOdds);
+      OccupancyTools.updateNodeLogOdds(occupancyParameters, occupancyNode, occupancyParameters.getHitProbabilityLogOdds());
    }
 
    /**
@@ -912,7 +757,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public void integrateMiss(NODE occupancyNode)
    {
-      updateNodeLogOdds(occupancyNode, missUpdateLogOdds);
+      OccupancyTools.updateNodeLogOdds(occupancyParameters, occupancyNode, occupancyParameters.getMissProbabilityLogOdds());
    }
 
    /**
@@ -922,31 +767,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public void updateNodeLogOdds(NODE occupancyNode, float update)
    {
-      occupancyNode.setLogOdds(computeUpdatedLogOdds(occupancyNode, update));
-   }
-
-   public float computeUpdatedLogOdds(NODE occupancyNode, float update)
-   {
-      float logOdds = occupancyNode.getLogOdds() + update;
-      if (logOdds < minOccupancyLogOdds.floatValue())
-         logOdds = minOccupancyLogOdds.floatValue();
-      else if (logOdds > maxOccupancyLogOdds.floatValue())
-      {
-         logOdds = maxOccupancyLogOdds.floatValue();
-      }
-      return logOdds;
-   }
-
-   /**
-    * Converts the node to the maximum likelihood occupancy value according to the tree's parameter for min/max "occupancy"
-    * @param occupancyNode
-    */
-   public void nodeToMaxLikelihood(NODE occupancyNode)
-   {
-      if (isNodeOccupied(occupancyNode))
-         occupancyNode.setLogOdds(maxOccupancyLogOdds.floatValue());
-      else
-         occupancyNode.setLogOdds(minOccupancyLogOdds.floatValue());
+      OccupancyTools.updateNodeLogOdds(occupancyParameters, occupancyNode, update);
    }
 
    /**
@@ -1005,7 +826,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       }
       else
       { // max level reached
-         nodeToMaxLikelihood(node);
+         OccupancyTools.nodeToMaxLikelihood(occupancyParameters, node);
       }
    }
 }

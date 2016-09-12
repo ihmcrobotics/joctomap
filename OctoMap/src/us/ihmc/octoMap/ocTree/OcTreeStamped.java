@@ -37,13 +37,13 @@ public class OcTreeStamped extends AbstractOccupancyOcTree<OcTreeNodeStamped>
    @Override
    public void updateNodeLogOdds(OcTreeNodeStamped node, float update)
    {
-      updateNodeLogOdds(node, update);
+      super.updateNodeLogOdds(node, update);
       node.updateTimestamp();
    }
 
    public void integrateMissNoTime(OcTreeNodeStamped node)
    {
-      updateNodeLogOdds(node, missUpdateLogOdds);
+      updateNodeLogOdds(node, occupancyParameters.getMissProbabilityLogOdds());
    }
 
    @Override

@@ -7,6 +7,7 @@ import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
+import us.ihmc.octoMap.ocTree.baseImplementation.OccupancyParametersReadOnly;
 
 public class NormalOctreeUpdateRule extends UpdateOccupancyRule<NormalOcTreeNode>
 {
@@ -15,9 +16,9 @@ public class NormalOctreeUpdateRule extends UpdateOccupancyRule<NormalOcTreeNode
    private final Point3d sensorLocation = new Point3d();
    private final Vector3d initialGuessNormal = new Vector3d();
 
-   public NormalOctreeUpdateRule(float minOccupancyLogOdds, float maxOccupancyLogOdds)
+   public NormalOctreeUpdateRule(OccupancyParametersReadOnly occupancyParameters)
    {
-      super(minOccupancyLogOdds, maxOccupancyLogOdds);
+      super(occupancyParameters);
    }
 
    public void setAlphaHitLocationUpdate(double alphaHitLocationUpdate)

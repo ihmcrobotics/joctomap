@@ -26,6 +26,6 @@ public class OctoMapTools
 
    public static double nanoSecondsToSeconds(long timeInNanoSeconds)
    {
-      return ((double) timeInNanoSeconds)/1e9;
+      return ((double) timeInNanoSeconds) / 1e9;
    }
 }
