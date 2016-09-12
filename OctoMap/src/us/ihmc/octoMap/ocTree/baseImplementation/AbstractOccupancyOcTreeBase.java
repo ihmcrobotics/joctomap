@@ -257,16 +257,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    public NODE setNodeValue(OcTreeKeyReadOnly key, float logOddsValue)
    {
       // clamp log odds within range:
-      logOddsValue = Math.min(Math.max(logOddsValue, minOccupancyLogOdds), maxOccupancyLogOdds);
-
-      setOccupancyRule.setNewLogOdds(logOddsValue);
-      nodeUpdater.setEarlyAbortRule(null);
-      nodeUpdater.setUpdateRule(setOccupancyRule);
-      NODE updatedNode = nodeUpdater.updateNode(root, key);
-      treeSize += nodeUpdater.getNumberOfNodeCreatedDeleted();
-      sizeChanged = nodeUpdater.getNumberOfNodeCreatedDeleted() != 0;
-      root = nodeUpdater.getRoot();
-      return updatedNode;
+      setOccupancyRule.setNewLogOdds(Math.min(Math.max(logOddsValue, minOccupancyLogOdds), maxOccupancyLogOdds));
+      return updateNodeInternal(key, setOccupancyRule, null);
    }
 
    /**
@@ -294,11 +286,9 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public NODE setNodeValue(double x, double y, double z, float logOddsValue)
    {
-      OcTreeKey key = coordinateToKey(x, y, z);
-      if (key == null)
-         return null;
-
-      return setNodeValue(key, logOddsValue);
+      // clamp log odds within range:
+      setOccupancyRule.setNewLogOdds(Math.min(Math.max(logOddsValue, minOccupancyLogOdds), maxOccupancyLogOdds));
+      return updateNodeInternal(x, y, z, setOccupancyRule, null);
    }
 
    /**
@@ -313,13 +303,7 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    public NODE updateNode(OcTreeKeyReadOnly key, float logOddsUpdate)
    {
       updateOccupancyRule.setUpdateLogOdds(logOddsUpdate);
-      nodeUpdater.setEarlyAbortRule(updateOccupancyRule);
-      nodeUpdater.setUpdateRule(updateOccupancyRule);
-      NODE updatedNode = nodeUpdater.updateNode(root, key);
-      treeSize += nodeUpdater.getNumberOfNodeCreatedDeleted();
-      sizeChanged = nodeUpdater.getNumberOfNodeCreatedDeleted() != 0;
-      root = nodeUpdater.getRoot();
-      return updatedNode;
+      return updateNodeInternal(key, updateOccupancyRule, updateOccupancyRule);
    }
 
    /**
@@ -333,7 +317,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
    @Override
    public NODE updateNode(Point3d coordinate, float logOddsUpdate)
    {
-      return updateNode(coordinate.getX(), coordinate.getY(), coordinate.getZ(), logOddsUpdate);
+      updateOccupancyRule.setUpdateLogOdds(logOddsUpdate);
+      return updateNodeInternal(coordinate, updateOccupancyRule, updateOccupancyRule);
    }
 
    /**
@@ -348,11 +333,8 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
     */
    public NODE updateNode(double x, double y, double z, float logOddsUpdate)
    {
-      OcTreeKey key = coordinateToKey(x, y, z);
-      if (key == null)
-         return null;
-
-      return updateNode(key, logOddsUpdate);
+      updateOccupancyRule.setUpdateLogOdds(logOddsUpdate);
+      return updateNodeInternal(x, y, z, updateOccupancyRule, updateOccupancyRule);
    }
 
 

@@ -7,7 +7,6 @@ import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
-import us.ihmc.octoMap.node.NodeBuilder;
 import us.ihmc.octoMap.ocTree.SetOccupancyRule;
 import us.ihmc.octoMap.ocTree.UpdateOccupancyRule;
 
@@ -21,7 +20,6 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    private float occupancyThresholdLogOdds;
 
    protected boolean lazyEvaluation = false;
-   protected final NodeUpdater<NODE> nodeUpdater;
    protected final UpdateOccupancyRule<NODE> updateOccupancyRule;
    protected final SetOccupancyRule<NODE> setOccupancyRule = new SetOccupancyRule<>();
 
@@ -29,8 +27,6 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    {
       super(resolution);
       setDefaultParameters();
-      nodeUpdater = new NodeUpdater<>(treeDepth);
-      nodeUpdater.setNodeBuilder(new NodeBuilder<NODE>(getNodeClass()));
       updateOccupancyRule = new UpdateOccupancyRule<>(minOccupancyLogOdds, maxOccupancyLogOdds);
    }
 
@@ -40,8 +36,6 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    {
       super(resolution, treeDepth);
       setDefaultParameters();
-      nodeUpdater = new NodeUpdater<>(treeDepth);
-      nodeUpdater.setNodeBuilder(new NodeBuilder<NODE>(getNodeClass()));
       updateOccupancyRule = new UpdateOccupancyRule<>(minOccupancyLogOdds, maxOccupancyLogOdds);
    }
 
@@ -53,8 +47,6 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       hitUpdateLogOdds = other.hitUpdateLogOdds;
       missUpdateLogOdds = other.missUpdateLogOdds;
       occupancyThresholdLogOdds = other.occupancyThresholdLogOdds;
-      nodeUpdater = new NodeUpdater<>(treeDepth);
-      nodeUpdater.setNodeBuilder(new NodeBuilder<NODE>(getNodeClass()));
       updateOccupancyRule = new UpdateOccupancyRule<>(minOccupancyLogOdds, maxOccupancyLogOdds);
    }
 

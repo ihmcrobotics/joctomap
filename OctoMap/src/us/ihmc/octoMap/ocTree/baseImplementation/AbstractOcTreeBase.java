@@ -176,17 +176,24 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    // -- Tree structure operations formerly contained in the nodes ---
 
    /// Creates (allocates) the i-th child of the node. @return ptr to newly create NODE
-   public NODE createNodeChild(NODE node, int childIndex)
+   protected NODE createNodeChild(NODE node, int childIndex)
    {
       OcTreeNodeTools.checkChildIndex(childIndex);
+      assignChildrenArrayIfNecessary(node);
 
       if (node.getChildUnsafe(childIndex) != null)
          throw new RuntimeException("Something went wrong.");
 
-      return createNodeChildUnsafe(node, childIndex);
+      NODE newChildNode = getOrCreateNode();
+      node.setChildUnsafe(childIndex, newChildNode);
+
+      treeSize++;
+      sizeChanged = true;
+
+      return newChildNode;
    }
 
-   protected NODE createNodeChildUnsafe(NODE node, int childIndex)
+   private void assignChildrenArrayIfNecessary(NODE node)
    {
       if (!node.hasArrayForChildren())
       {
@@ -195,14 +202,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          else
             node.assignChildren(unusedNodeArrays.remove(unusedNodeArrays.size() - 1));
       }
+   }
 
-      NODE newChildNode = unusedNodes.isEmpty() ? nodeBuilder.createNode() : unusedNodes.remove(unusedNodes.size() - 1);
-      node.setChildUnsafe(childIndex, newChildNode);
-
-      treeSize++;
-      sizeChanged = true;
-
-      return newChildNode;
+   private NODE getOrCreateNode()
+   {
+      return unusedNodes.isEmpty() ? nodeBuilder.createNode() : unusedNodes.remove(unusedNodes.size() - 1);
    }
 
    /// Deletes the i-th child of the node
@@ -216,6 +220,93 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       treeSize--;
       sizeChanged = true;
+   }
+
+   /**
+    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
+    * <p>
+    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
+    * This only works if key is at the lowest octree level.
+    * @param coordinate 3d coordinate of the NODE that is to be updated
+    * @param updateRule Specifies how the NODE and its parents should be updated.
+    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
+    * @return the updated NODE
+    */
+   protected NODE updateNodeInternal(Point3f coordinate, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
+   {
+      return updateNodeInternal(coordinate.getX(), coordinate.getY(), coordinate.getZ(), updateRule, earlyAbortRule);
+   }
+
+   /**
+    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
+    * <p>
+    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
+    * This only works if key is at the lowest octree level.
+    * @param coordinate 3d coordinate of the NODE that is to be updated
+    * @param updateRule Specifies how the NODE and its parents should be updated.
+    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
+    * @return the updated NODE
+    */
+   protected NODE updateNodeInternal(Point3d coordinate, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
+   {
+      return updateNodeInternal(coordinate.getX(), coordinate.getY(), coordinate.getZ(), updateRule, earlyAbortRule);
+   }
+
+   /**
+    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
+    * <p>
+    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
+    * This only works if key is at the lowest octree level.
+    * @param x coordinate of the NODE that is to be updated
+    * @param y coordinate of the NODE that is to be updated
+    * @param z coordinate of the NODE that is to be updated
+    * @param updateRule Specifies how the NODE and its parents should be updated.
+    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
+    * @return the updated NODE
+    */
+   protected NODE updateNodeInternal(double x, double y, double z, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
+   {
+      OcTreeKey key = coordinateToKey(x, y, z);
+      if (key == null)
+         return null;
+      else
+         return updateNodeInternal(key, updateRule, earlyAbortRule);
+   }
+
+   /**
+    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
+    * <p>
+    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
+    * This only works if key is at the lowest octree level.
+    * @param key OcTreeKey of the NODE that is to be updated
+    * @param updateRule Specifies how the NODE and its parents should be updated.
+    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
+    * @return the updated NODE
+    */
+   protected NODE updateNodeInternal(OcTreeKeyReadOnly key, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
+   {
+      boolean createdRoot = false;
+
+      if (root == null)
+      {
+         root = getOrCreateNode();
+         treeSize++;
+         sizeChanged = true;
+         createdRoot = true;
+      }
+
+      if (earlyAbortRule != null)
+      {
+         NODE leaf = OcTreeSearchTools.search(root, key, treeDepth);
+
+         if (leaf != null)
+         {
+            if (earlyAbortRule.shouldAbortFullDepthUpdate(leaf))
+               return leaf;
+         }
+      }
+
+      return updateNodeRecurs(root, createdRoot, key, updateRule, 0);
    }
 
    /**
@@ -233,7 +324,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       for (int k = 0; k < 8; k++)
       {
-         NODE newNode = createNodeChildUnsafe(node, k);
+         NODE newNode = createNodeChild(node, k);
          newNode.copyData(node);
       }
    }
@@ -372,7 +463,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (depth == 0)
          depth = treeDepth;
 
-      return deleteNodeRecurs(root, 0, depth, key);
+      return deleteNodeRecursively(root, 0, depth, key);
    }
 
    /// Deletes the complete tree structure
@@ -380,7 +471,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
       if (root != null)
       {
-         deleteNodeRecurs(root);
+         deleteNodeRecursively(root);
          root = null;
          treeSize = 0;
          // max extent of tree changed:
@@ -414,7 +505,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public void expand()
    {
       if (root != null)
-         expandRecurs(root, 0, treeDepth);
+         expandRecursively(root, 0, treeDepth);
    }
 
    // -- statistics  ----------------------
@@ -760,7 +851,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive delete of node and all children (deallocates memory)
-   protected void deleteNodeRecurs(NODE node)
+   protected void deleteNodeRecursively(NODE node)
    {
       if (node.hasAtLeastOneChild())
       {
@@ -770,7 +861,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             if (child != null)
             {
                unusedNodes.add(child);
-               deleteNodeRecurs(child);
+               deleteNodeRecursively(child);
             }
          }
 
@@ -779,7 +870,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive call of deleteNode()
-   protected boolean deleteNodeRecurs(NODE node, int depth, int maxDepth, OcTreeKeyReadOnly key)
+   protected boolean deleteNodeRecursively(NODE node, int depth, int maxDepth, OcTreeKeyReadOnly key)
    {
       if (depth >= maxDepth) // on last level: delete child when going up
          return true;
@@ -806,7 +897,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
 
       // follow down further, fix inner nodes on way back up
-      boolean deleteChild = deleteNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), depth + 1, maxDepth, key);
+      boolean deleteChild = deleteNodeRecursively(OcTreeNodeTools.getNodeChild(node, pos), depth + 1, maxDepth, key);
       if (deleteChild)
       {
          // TODO: lazy eval?
@@ -822,6 +913,57 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
       // node did not lose a child, or still has other children
       return false;
+   }
+
+   private NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, UpdateRule<NODE> updateRule, int depth)
+   {
+      boolean createdNode = false;
+
+      if (node == null)
+         throw new RuntimeException("The given node is null.");
+
+      // follow down to last level
+      if (depth < treeDepth)
+      {
+         int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
+         if (!OcTreeNodeTools.nodeChildExists(node, pos))
+         {
+            // child does not exist, but maybe it's a pruned node?
+            if (!node.hasAtLeastOneChild() && !nodeJustCreated)
+            { // current node does not have children AND it is not a new node -> expand pruned node
+               expandNode(node);
+            }
+            else
+            { // not a pruned node, create requested child
+               createNodeChild(node, pos);
+               createdNode = true;
+            }
+         }
+
+         NODE nodeChild = OcTreeNodeTools.getNodeChild(node, pos);
+
+         if (updateRule.doLazyEvaluation())
+         {
+            return updateNodeRecurs(nodeChild, createdNode, key, updateRule, depth + 1);
+         }
+         else
+         {
+            NODE leafToReturn = updateNodeRecurs(nodeChild, createdNode, key, updateRule, depth + 1);
+            // prune node if possible, otherwise set own probability
+            // note: combining both did not lead to a speedup!
+            if (pruneNode(node)) // return pointer to current parent (pruned), the just updated node no longer exists
+               leafToReturn = node;
+            else // That's an inner node, apply the update rule
+               updateRule.updateInnerNode(node);
+
+            return leafToReturn;
+         }
+      }
+      else // at last level, update node, end of recursion
+      {
+         updateRule.updateLeaf(node);
+         return node;
+      }
    }
 
    /// recursive call of prune()
@@ -855,7 +997,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /** recursive call of expand() */
-   protected void expandRecurs(NODE node, int depth, int maxDepth)
+   protected void expandRecursively(NODE node, int depth, int maxDepth)
    {
       if (depth >= maxDepth)
          return;
@@ -873,7 +1015,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          if (OcTreeNodeTools.nodeChildExists(node, i))
          {
-            expandRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1, maxDepth);
+            expandRecursively(OcTreeNodeTools.getNodeChild(node, i), depth + 1, maxDepth);
          }
       }
    }

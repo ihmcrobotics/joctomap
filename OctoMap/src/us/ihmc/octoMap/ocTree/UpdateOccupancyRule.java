@@ -1,8 +1,8 @@
 package us.ihmc.octoMap.ocTree;
 
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.baseImplementation.NodeUpdater.EarlyAbortRule;
-import us.ihmc.octoMap.ocTree.baseImplementation.NodeUpdater.UpdateRule;
+import us.ihmc.octoMap.ocTree.baseImplementation.EarlyAbortRule;
+import us.ihmc.octoMap.ocTree.baseImplementation.UpdateRule;
 
 public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> implements UpdateRule<NODE>, EarlyAbortRule<NODE>
 {
