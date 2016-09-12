@@ -10,7 +10,6 @@ public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>>
    private float updateLogOdds = Float.NaN;
    private Number maxOccupancyLogOdds;
    private Number minOccupancyLogOdds;
-   private boolean lazyEvaluation = false;
 
    public UpdateOccupancyRule(Number minOccupancyLogOdds, Number maxOccupancyLogOdds)
    {
@@ -23,17 +22,6 @@ public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>>
       this.updateLogOdds = updateLogOdds;
    }
 
-   public void setLazyEvaluation(boolean lazyEvaluation)
-   {
-      this.lazyEvaluation = lazyEvaluation;
-   }
-
-   @Override
-   public boolean doLazyEvaluation()
-   {
-      return lazyEvaluation;
-   }
-   
    @Override
    public void updateLeaf(NODE leafToUpdate, OcTreeKeyReadOnly leafKey)
    {

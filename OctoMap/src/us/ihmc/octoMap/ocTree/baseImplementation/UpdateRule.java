@@ -5,8 +5,6 @@ import us.ihmc.octoMap.node.AbstractOcTreeNode;
 
 public interface UpdateRule<NODE extends AbstractOcTreeNode<NODE>>
 {
-   public boolean doLazyEvaluation();
-
    public void updateLeaf(NODE leafToUpdate, OcTreeKeyReadOnly leafKey);
 
    public void updateInnerNode(NODE innerNodeToUpdate);

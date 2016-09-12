@@ -7,7 +7,6 @@ import us.ihmc.octoMap.ocTree.baseImplementation.UpdateRule;
 public class SetOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> implements UpdateRule<NODE>
 {
    private float newLogOdds = Float.NaN;
-   private boolean lazyEvaluation = false;
 
    public SetOccupancyRule()
    {
@@ -18,17 +17,6 @@ public class SetOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> im
       this.newLogOdds = newLogOdds;
    }
 
-   public void setLazyEvaluation(boolean lazyEvaluation)
-   {
-      this.lazyEvaluation = lazyEvaluation;
-   }
-
-   @Override
-   public boolean doLazyEvaluation()
-   {
-      return lazyEvaluation;
-   }
-   
    @Override
    public void updateLeaf(NODE leafToUpdate, OcTreeKeyReadOnly leafKey)
    {
