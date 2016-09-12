@@ -97,7 +97,7 @@ public class RayTracer
             if (maxRange < 0.0 || length <= maxRange)
             { // is not maxrange meas.
                  // free cells
-               if (computeRayKeys(origin, point, resolution, treeDepth))
+               if (computeRayKeys(origin, point, resolution, treeDepth) != null)
                {
                   unfilteredFreeCells.addAll(ray);
                }
@@ -109,7 +109,7 @@ public class RayTracer
             { // user set a maxrange and length is above
                Point3d newEnd = new Point3d();
                newEnd.scaleAdd(maxRange / length, direction, origin);
-               if (computeRayKeys(origin, point, resolution, treeDepth))
+               if (computeRayKeys(origin, point, resolution, treeDepth) != null)
                   unfilteredFreeCells.addAll(ray);
             } // end if maxrange
          }
@@ -123,7 +123,7 @@ public class RayTracer
                   occupiedCells.add(key);
 
                // update freespace, break as soon as bbx limit is reached
-               if (computeRayKeys(origin, point, resolution, treeDepth))
+               if (computeRayKeys(origin, point, resolution, treeDepth) != null)
                {
                   for (int j = ray.size() - 1; j >= 0; j--)
                   {
@@ -158,7 +158,7 @@ public class RayTracer
    * @param ray KeyRay structure that holds the keys of all nodes traversed by the ray, excluding "end"
    * @return Success of operation. Returning false usually means that one of the coordinates is out of the OcTree's range
    */
-   public boolean computeRayKeys(Point3d origin, Point3d end, double resolution, int treeDepth)
+   public KeyRayReadOnly computeRayKeys(Point3d origin, Point3d end, double resolution, int treeDepth)
    {
       // see "A Faster Voxel Traversal Algorithm for Ray Tracing" by Amanatides & Woo
       // basically: DDA in 3D
@@ -171,11 +171,11 @@ public class RayTracer
       if (!foundKeyOrigin || !foundKeyEnd)
       {
          System.err.println(AbstractOcTreeBase.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
-         return false;
+         return null;
       }
 
       if (keyOrigin.equals(keyEnd))
-         return true; // same tree cell, we're done.
+         return ray; // same tree cell, we're done.
 
       ray.add(keyOrigin);
 
@@ -288,11 +288,6 @@ public class RayTracer
 
       } // end while
 
-      return true;
-   }
-
-   public KeyRayReadOnly getResult()
-   {
       return ray;
    }
 }

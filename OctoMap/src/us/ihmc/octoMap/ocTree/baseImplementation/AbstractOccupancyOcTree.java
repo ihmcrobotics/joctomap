@@ -428,9 +428,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       for (int i = 0; i < scan.size(); i++)
       {
          Point3d point = new Point3d(scan.getPoint(i));
-         if (rayTracer.computeRayKeys(sensorOrigin, point, resolution, treeDepth))
+         KeyRayReadOnly ray = rayTracer.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
+         if (ray != null)
          {
-            KeyRayReadOnly ray = rayTracer.getResult();
             for (int j = 0; j < ray.size(); j++)
             {
                updateNode(ray.get(j), false); // insert freespace measurement
@@ -1196,17 +1196,13 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    protected boolean integrateMissOnRay(Point3d origin, Point3d end)
    {
-      if (!rayTracer.computeRayKeys(origin, end, resolution, treeDepth))
-      {
+      KeyRayReadOnly ray = rayTracer.computeRayKeys(origin, end, resolution, treeDepth);
+
+      if (ray == null)
          return false;
-      }
-   
-      KeyRayReadOnly ray = rayTracer.getResult();
    
       for (int i = 0; i < ray.size(); i++)
-      {
          updateNode(ray.get(i), false); // insert freespace measurement
-      }
    
       return true;
    }
