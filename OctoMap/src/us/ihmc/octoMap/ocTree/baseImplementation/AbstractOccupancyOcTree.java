@@ -693,7 +693,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    
       direction = new Vector3d(direction);
       direction.normalize();
-      boolean max_range_set = maxRange > 0.0;
+      boolean maxRangeSet = maxRange > 0.0;
    
       double[] originArray = new double[3];
       origin.get(originArray);
@@ -740,7 +740,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       int keyMaxValue = OcTreeKeyTools.computeMaximumKey(treeDepth);
    
       // for speedup:
-      double maxrange_sq = maxRange * maxRange;
+      double maxRangeSquared = maxRange * maxRange;
    
       // Incremental phase  ---------------------------------------------------------
    
@@ -783,14 +783,14 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          keyToCoordinate(currentKey, endToPack);
    
          // check for maxrange:
-         if (max_range_set)
+         if (maxRangeSet)
          {
             double distanceFromOriginSquared = 0.0;
             for (int j = 0; j < 3; j++)
             {
                distanceFromOriginSquared += (endArray[j] - originArray[j]) * (endArray[j] - originArray[j]);
             }
-            if (distanceFromOriginSquared > maxrange_sq)
+            if (distanceFromOriginSquared > maxRangeSquared)
                return false;
    
          }
