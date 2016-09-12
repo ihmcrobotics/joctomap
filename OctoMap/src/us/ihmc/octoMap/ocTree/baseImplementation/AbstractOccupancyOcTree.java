@@ -93,12 +93,12 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    public void setDefaultParameters()
    {
       // some sane default values:
-      setOccupancyThreshold(0.5);            // = 0.0 in logodds
-      setHitProbabilityUpdate(0.7);          // = 0.85 in logodds
+      setOccupancyThreshold(0.5); // = 0.0 in logodds
+      setHitProbabilityUpdate(0.7); // = 0.85 in logodds
       setMissProbabilityUpdate(0.4);//0.4);         // = -0.4 in logodds
 
-      setMinProbability(0.1192);             // = -2 in log odds
-      setMaxProbability(0.971);              // = 3.5 in log odds
+      setMinProbability(0.1192); // = -2 in log odds
+      setMaxProbability(0.971); // = 3.5 in log odds
    }
 
    /**
@@ -281,13 +281,13 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    {
       freeCells.clear();
       occupiedCells.clear();
-   
+
       long startTime = System.nanoTime();
       for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
       {
          PointCloud scan = sweepCollection.getSweep(i);
          Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
-   
+
          if (discretize)
             rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
          else
@@ -295,12 +295,12 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       }
       long endTime = System.nanoTime();
       System.out.println("Exiting  computeUpdate took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
-   
+
       startTime = System.nanoTime();
       // insert data into tree  -----------------------
       for (int i = 0; i < occupiedCells.size(); i++)
          updateNode(occupiedCells.unsafeGet(i), true);
-   
+
       for (int i = 0; i < freeCells.size(); i++)
          updateNode(freeCells.unsafeGet(i), false);
       endTime = System.nanoTime();
@@ -338,16 +338,16 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    {
       freeCells.clear();
       occupiedCells.clear();
-   
+
       if (discretize)
          rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
       else
          rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
-   
+
       // insert data into tree  -----------------------
       for (int i = 0; i < occupiedCells.size(); i++)
          updateNode(occupiedCells.unsafeGet(i), true);
-   
+
       for (int i = 0; i < freeCells.size(); i++)
          updateNode(freeCells.unsafeGet(i), false);
    }
@@ -432,7 +432,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    {
       if (scan.size() < 1)
          return;
-   
+
       for (int i = 0; i < scan.size(); i++)
       {
          Point3d point = new Point3d(scan.getPoint(i));
@@ -589,13 +589,13 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    {
       if (root == null)
          return;
-   
+
       // convert bottom up
       for (int depth = treeDepth; depth > 0; depth--)
       {
          toMaxLikelihoodRecurs(root, 0, depth);
       }
-   
+
       // convert root
       nodeToMaxLikelihood(root);
    }
@@ -623,7 +623,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       Vector3d direction = new Vector3d();
       direction.sub(end, origin);
       double length = direction.length();
-   
+
       // cut ray at maxrange
       if (maxRange > 0 && length > maxRange)
       {
@@ -719,7 +719,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          System.err.println(getClass().getSimpleName() + " (in getNormals): Voxel out of bounds");
          return false;
       }
-   
+
       return getNormals(initKey, normals, unknownStatus);
    }
 
@@ -732,18 +732,18 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    {
       normals.clear();
       // OCTOMAP_WARNING("Normal for %f, %f, %f\n", point.x(), point.y(), point.z());
-   
+
       int[] vertexValues = new int[8];
-   
+
       OcTreeKey currentKey = new OcTreeKey();
       NODE currentNode;
-   
+
       // There is 8 neighbouring sets
       // The current cube can be at any of the 8 vertex
       int[][] xIndex = new int[][] {{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0, -1, -1}, {0, 0, -1, -1}};
       int[][] yIndex = new int[][] {{1, 0, 0, 1}, {0, -1, -1, 0}, {0, -1, -1, 0}, {1, 0, 0, 1}};
       int[][] zIndex = new int[][] {{0, 1}, {-1, 0}};
-   
+
       // Iterate over the 8 neighboring sets
       for (int m = 0; m < 2; ++m)
       {
@@ -759,11 +759,11 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
                   currentKey.setKey(1, key.getKey(1) + yIndex[l][i]);
                   currentKey.setKey(2, key.getKey(2) + zIndex[m][j]);
                   currentNode = search(currentKey);
-   
+
                   if (currentNode != null)
                   {
                      vertexValues[k] = isNodeOccupied(currentNode) ? 1 : 0;
-   
+
                      // point3d coord = this->keyToCoord(current_key);
                      // OCTOMAP_WARNING_STR("vertex " << k << " at " << coord << "; value " << vertex_values[k]);
                   }
@@ -775,23 +775,31 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
                   ++k;
                }
             }
-   
+
             int cubeIndex = 0;
-            if (vertexValues[0] != 0) cubeIndex |= 1;
-            if (vertexValues[1] != 0) cubeIndex |= 2;
-            if (vertexValues[2] != 0) cubeIndex |= 4;
-            if (vertexValues[3] != 0) cubeIndex |= 8;
-            if (vertexValues[4] != 0) cubeIndex |= 16;
-            if (vertexValues[5] != 0) cubeIndex |= 32;
-            if (vertexValues[6] != 0) cubeIndex |= 64;
-            if (vertexValues[7] != 0) cubeIndex |= 128;
-   
+            if (vertexValues[0] != 0)
+               cubeIndex |= 1;
+            if (vertexValues[1] != 0)
+               cubeIndex |= 2;
+            if (vertexValues[2] != 0)
+               cubeIndex |= 4;
+            if (vertexValues[3] != 0)
+               cubeIndex |= 8;
+            if (vertexValues[4] != 0)
+               cubeIndex |= 16;
+            if (vertexValues[5] != 0)
+               cubeIndex |= 32;
+            if (vertexValues[6] != 0)
+               cubeIndex |= 64;
+            if (vertexValues[7] != 0)
+               cubeIndex |= 128;
+
             // OCTOMAP_WARNING_STR("cubde_index: " << cube_index);
-   
+
             // All vertices are occupied or free resulting in no normal
             if (edgeTable[cubeIndex] == 0)
                continue; //return true;
-   
+
             // No interpolation is done yet, we use vertexList in <MCTables.h>.
             for (int i = 0; triTable[cubeIndex][i] != -1; i += 3)
             {
@@ -805,18 +813,18 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
                v2.sub(p3, p1);
                v3.cross(v1, v2);
                v3.normalize();
-   
+
                // OCTOMAP_WARNING("Vertex p1 %f, %f, %f\n", p1.x(), p1.y(), p1.z());
                // OCTOMAP_WARNING("Vertex p2 %f, %f, %f\n", p2.x(), p2.y(), p2.z());
                // OCTOMAP_WARNING("Vertex p3 %f, %f, %f\n", p3.x(), p3.y(), p3.z());
-   
+
                // Right hand side cross product to retrieve the normal in the good
                // direction (pointing to the free nodes).
                normals.add(v3);
             }
          }
       }
-   
+
       return true;
    }
 
@@ -962,10 +970,10 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
 
       if (ray == null)
          return false;
-   
+
       for (int i = 0; i < ray.size(); i++)
          updateNode(ray.get(i), false); // insert freespace measurement
-   
+
       return true;
    }
 
@@ -973,7 +981,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    {
       if (node == null)
          throw new RuntimeException("The given node is null.");
-   
+
       // only recurse and update for inner nodes:
       if (node.hasAtLeastOneChild())
       {
@@ -995,7 +1003,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    {
       if (node == null)
          throw new RuntimeException("The given node is null.");
-   
+
       if (depth < max_depth)
       {
          for (int i = 0; i < 8; i++)
@@ -1011,5 +1019,4 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          nodeToMaxLikelihood(node);
       }
    }
-
 }
