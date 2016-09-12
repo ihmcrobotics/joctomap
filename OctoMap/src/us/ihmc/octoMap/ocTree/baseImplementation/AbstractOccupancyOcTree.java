@@ -26,7 +26,6 @@ import us.ihmc.octoMap.ocTree.UpdateOccupancyRule;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.ScanNode;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
-import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 import us.ihmc.robotics.time.TimeTools;
 
@@ -45,10 +44,19 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    protected OcTreeBoundingBox boundingBox;
    protected boolean useChangeDetection;
    /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
-   protected KeyBoolMap changedKeys = new KeyBoolMap();
-   protected RayTracer rayTracer = new RayTracer();
+   protected final KeyBoolMap changedKeys = new KeyBoolMap();
+   protected final RayTracer<NODE> rayTracer = new RayTracer<>();
    private final OcTreeKeySet freeCells = new OcTreeKeySet(1000000);
    private final OcTreeKeySet occupiedCells = new OcTreeKeySet(1000000);
+
+   private final CollidableRule<NODE> collidableRule = new CollidableRule<NODE>()
+   {
+      @Override
+      public boolean isCollidable(NODE node)
+      {
+         return isNodeOccupied(node);
+      }
+   };
 
    public AbstractOccupancyOcTree(double resolution)
    {
@@ -664,154 +672,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public boolean castRay(Point3d origin, Vector3d direction, Point3d endToPack, boolean ignoreUnknownCells, double maxRange)
    {
-      /// ----------  see OcTreeBase::computeRayKeys  -----------
-   
-      // Initialization phase -------------------------------------------------------
-      OcTreeKey currentKey = coordinateToKey(origin);
-      if (currentKey == null)
-      {
-         System.err.println(AbstractOccupancyOcTree.class.getSimpleName() + " (in castRay): Coordinates out of bounds during ray casting");
-         return false;
-      }
-   
-      NODE startingNode = search(currentKey);
-      if (startingNode != null)
-      {
-         if (isNodeOccupied(startingNode))
-         {
-            // Occupied node found at origin 
-            // (need to convert from key, since origin does not need to be a voxel center)
-            keyToCoordinate(currentKey, endToPack);
-            return true;
-         }
-      }
-      else if (!ignoreUnknownCells)
-      {
-         keyToCoordinate(currentKey, endToPack);
-         return false;
-      }
-   
-      direction = new Vector3d(direction);
-      direction.normalize();
-      boolean maxRangeSet = maxRange > 0.0;
-   
-      double[] originArray = new double[3];
-      origin.get(originArray);
-      double[] endArray = new double[3];
-      endToPack.get(endArray);
-      double[] directionArray = new double[3];
-      direction.get(directionArray);
-      int[] step = new int[3];
-      double[] tMax = new double[3];
-      double[] tDelta = new double[3];
-   
-      for (int i = 0; i < 3; ++i)
-      {
-         // compute step direction
-         if (directionArray[i] > 0.0)
-            step[i] = 1;
-         else if (directionArray[i] < 0.0)
-            step[i] = -1;
-         else
-            step[i] = 0;
-   
-         // compute tMax, tDelta
-         if (step[i] != 0)
-         {
-            // corner point of voxel (in direction of ray)
-            double voxelBorder = keyToCoordinate(currentKey.getKey(i));
-            voxelBorder += step[i] * resolution * 0.5;
-   
-            tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
-            tDelta[i] = resolution / Math.abs(directionArray[i]);
-         }
-         else
-         {
-            tMax[i] = Double.POSITIVE_INFINITY;
-            tDelta[i] = Double.POSITIVE_INFINITY;
-         }
-      }
-   
-      if (step[0] == 0 && step[1] == 0 && step[2] == 0)
-      {
-         System.err.println(AbstractOccupancyOcTree.class.getSimpleName() + " (in castRay): Raycasting in direction (0,0,0) is not possible!");
-         return false;
-      }
-      int keyMaxValue = OcTreeKeyTools.computeMaximumKey(treeDepth);
-   
-      // for speedup:
-      double maxRangeSquared = maxRange * maxRange;
-   
-      // Incremental phase  ---------------------------------------------------------
-   
-      boolean done = false;
-   
-      while (!done)
-      {
-         int dim;
-   
-         // find minimum tMax:
-         if (tMax[0] < tMax[1])
-         {
-            if (tMax[0] < tMax[2])
-               dim = 0;
-            else
-               dim = 2;
-         }
-         else
-         {
-            if (tMax[1] < tMax[2])
-               dim = 1;
-            else
-               dim = 2;
-         }
-   
-         // check for overflow:
-         if (step[dim] < 0 && currentKey.getKey(dim) == 0 || step[dim] > 0 && currentKey.getKey(dim) == keyMaxValue)
-         {
-            System.err.println(AbstractOccupancyOcTree.class.getSimpleName() + " (in castRay): Coordinate hit bounds in dim " + dim + ", aborting raycast");
-            // return border point nevertheless:
-            keyToCoordinate(currentKey, endToPack);
-            return false;
-         }
-   
-         // advance in direction "dim"
-         currentKey.addKey(dim, step[dim]);
-         tMax[dim] += tDelta[dim];
-   
-         // generate world coords from key
-         keyToCoordinate(currentKey, endToPack);
-   
-         // check for maxrange:
-         if (maxRangeSet)
-         {
-            double distanceFromOriginSquared = 0.0;
-            for (int j = 0; j < 3; j++)
-            {
-               distanceFromOriginSquared += (endArray[j] - originArray[j]) * (endArray[j] - originArray[j]);
-            }
-            if (distanceFromOriginSquared > maxRangeSquared)
-               return false;
-   
-         }
-   
-         NODE currentNode = search(currentKey);
-         if (currentNode != null)
-         {
-            if (isNodeOccupied(currentNode))
-            {
-               done = true;
-               break;
-            }
-            // otherwise: node is free and valid, raycasting continues
-         }
-         else if (!ignoreUnknownCells)
-         { // no node found, this usually means we are in "unknown" areas
-            return false;
-         }
-      } // end while
-   
-      return true;
+      return rayTracer.castRay(root, origin, direction, endToPack, ignoreUnknownCells, maxRange, collidableRule, maxRange, treeDepth);
    }
 
    public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersection)
