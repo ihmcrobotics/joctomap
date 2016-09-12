@@ -4,9 +4,9 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.ColorOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
-import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
+import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTree;
 
-public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
+public class ColorOcTree extends AbstractOccupancyOcTree<ColorOcTreeNode>
 {
    public ColorOcTree(double resolution)
    {

@@ -21,13 +21,13 @@ import us.ihmc.octoMap.key.OcTreeKeyDeque;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
-import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
+import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.robotics.time.TimeTools;
 
-public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
+public class NormalOcTree extends AbstractOccupancyOcTree<NormalOcTreeNode>
 {
    private enum NormalComputationMethod {DIRECT_NEIGHBORS, CLOSE_NEIGHBORS, RANSAC};
    private static final NormalComputationMethod NORMAL_COMPUTATION_METHOD = NormalComputationMethod.RANSAC;

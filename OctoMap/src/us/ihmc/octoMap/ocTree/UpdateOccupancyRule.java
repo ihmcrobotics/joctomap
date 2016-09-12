@@ -46,7 +46,6 @@ public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>>
    @Override
    public void updateLeaf(NODE leafToUpdate)
    {
-
       float logOdds = leafToUpdate.getLogOdds() + updateLogOdds;
       if (logOdds < minOccupancyLogOdds)
          logOdds = minOccupancyLogOdds;
