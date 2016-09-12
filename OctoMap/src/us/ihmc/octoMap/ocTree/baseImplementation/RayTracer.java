@@ -463,4 +463,119 @@ public class RayTracer<NODE extends AbstractOcTreeNode<NODE>>
    
       return true;
    }
+
+   /**
+    * Retrieves the entry point of a ray into a voxel. This is the closest intersection point of the ray
+    * originating from origin and a plane of the axis aligned cube.
+    * 
+    * @param[in] origin Starting point of ray
+    * @param[in] direction A vector pointing in the direction of the raycast. Does not need to be normalized.
+    * @param[in] center The center of the voxel where the ray terminated. This is the output of castRay.
+    * @param[out] intersectionToPack The entry point of the ray into the voxel, on the voxel surface.
+    * @param[in] delta A small increment to avoid ambiguity of being exactly on a voxel surface. A positive value will get the point out of the hit voxel, while a negative value will get it inside.
+    * @return Whether or not an intesection point has been found. Either, the ray never cross the voxel or the ray is exactly parallel to the only surface it intersect.
+    */
+   public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersectionToPack, double delta, double resolution)
+   {
+      // We only need three normals for the six planes
+      Vector3d normalX = new Vector3d(1, 0, 0);
+      Vector3d normalY = new Vector3d(0, 1, 0);
+      Vector3d normalZ = new Vector3d(0, 0, 1);
+   
+      // One point on each plane, let them be the center for simplicity
+      Vector3d pointXNeg = new Vector3d(center.getX() - resolution / 2.0, center.getY(), center.getZ());
+      Vector3d pointXPos = new Vector3d(center.getX() + resolution / 2.0, center.getY(), center.getZ());
+      Vector3d pointYNeg = new Vector3d(center.getX(), center.getY() - resolution / 2.0, center.getZ());
+      Vector3d pointYPos = new Vector3d(center.getX(), center.getY() + resolution / 2.0, center.getZ());
+      Vector3d pointZNeg = new Vector3d(center.getX(), center.getY(), center.getZ() - resolution / 2.0);
+      Vector3d pointZPos = new Vector3d(center.getX(), center.getY(), center.getZ() + resolution / 2.0);
+   
+      double lineDotNormal = 0.0;
+      double d = 0.0;
+      double outD = Double.POSITIVE_INFINITY;
+      Point3d intersect = new Point3d();
+      boolean found = false;
+   
+      Vector3d tempVector = new Vector3d();
+   
+      // Find the intersection (if any) with each place
+      // Line dot normal will be zero if they are parallel, in which case no intersection can be the entry one
+      // if there is an intersection does it occur in the bounded plane of the voxel
+      // if yes keep only the closest (smallest distance to sensor origin).
+      if ((lineDotNormal = normalX.dot(direction)) != 0.0)
+      {
+         tempVector.sub(pointXNeg, origin);
+         d = tempVector.dot(normalX) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getY() < pointYNeg.getY() - 1e-6 || intersect.getY() > pointYPos.getY() + 1e-6 || intersect.getZ() < pointZNeg.getZ() - 1e-6
+               || intersect.getZ() > pointZPos.getZ() + 1e-6))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
+   
+         tempVector.sub(pointXPos, origin);
+         d = tempVector.dot(normalX) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getY() < pointYNeg.getY() - 1e-6 || intersect.getY() > pointYPos.getY() + 1e-6 || intersect.getZ() < pointZNeg.getZ() - 1e-6
+               || intersect.getZ() > pointZPos.getZ() + 1e-6))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
+      }
+   
+      if ((lineDotNormal = normalY.dot(direction)) != 0.0)
+      {
+         tempVector.sub(pointYNeg, origin);
+         d = tempVector.dot(normalY) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getX() < pointXNeg.getX() - 1e-6 || intersect.getX() > pointXPos.getX() + 1e-6 || intersect.getZ() < pointZNeg.getZ() - 1e-6
+               || intersect.getZ() > pointZPos.getZ() + 1e-6))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
+   
+         tempVector.sub(pointYPos, origin);
+         d = tempVector.dot(normalY) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getX() < pointXNeg.getX() - 1e-6 || intersect.getX() > pointXPos.getX() + 1e-6 || intersect.getZ() < pointZNeg.getZ() - 1e-6
+               || intersect.getZ() > pointZPos.getZ() + 1e-6))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
+      }
+   
+      if ((lineDotNormal = normalZ.dot(direction)) != 0.0)
+      {
+         tempVector.sub(pointZNeg, origin);
+         d = tempVector.dot(normalZ) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getX() < pointXNeg.getX() - 1e-6 || intersect.getX() > pointXPos.getX() + 1e-6 || intersect.getY() < pointYNeg.getY() - 1e-6
+               || intersect.getY() > pointYPos.getY() + 1e-6))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
+   
+         tempVector.sub(pointZPos, origin);
+         d = tempVector.dot(normalZ) / lineDotNormal;
+         intersect.scaleAdd(d, direction, origin);
+         if (!(intersect.getX() < pointXNeg.getX() - 1e-6 || intersect.getX() > pointXPos.getX() + 1e-6 || intersect.getY() < pointYNeg.getY() - 1e-6
+               || intersect.getY() > pointYPos.getY() + 1e-6))
+         {
+            outD = Math.min(outD, d);
+            found = true;
+         }
+      }
+   
+      // Subtract (add) a fraction to ensure no ambiguity on the starting voxel
+      // Don't start on a boundary.
+      if (found)
+         intersectionToPack.scaleAdd(outD + delta, direction, origin);
+   
+      return found;
+   }
 }
