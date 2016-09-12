@@ -25,29 +25,26 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    protected final UpdateOccupancyRule<NODE> updateOccupancyRule;
    protected final SetOccupancyRule<NODE> setOccupancyRule = new SetOccupancyRule<>();
 
-   @SuppressWarnings("unchecked")
    public AbstractOccupancyOcTree(double resolution)
    {
       super(resolution);
       setDefaultParameters();
       nodeUpdater = new NodeUpdater<>(treeDepth);
-      nodeUpdater.setNodeBuilder(new NodeBuilder<NODE>((Class<NODE>) createEmptyNode().getClass()));
+      nodeUpdater.setNodeBuilder(new NodeBuilder<NODE>(getNodeClass()));
       updateOccupancyRule = new UpdateOccupancyRule<>(minOccupancyLogOdds, maxOccupancyLogOdds);
    }
 
    /// Constructor to enable derived classes to change tree constants.
    /// This usually requires a re-implementation of some core tree-traversal functions as well!
-   @SuppressWarnings("unchecked")
    protected AbstractOccupancyOcTree(double resolution, int treeDepth)
    {
       super(resolution, treeDepth);
       setDefaultParameters();
       nodeUpdater = new NodeUpdater<>(treeDepth);
-      nodeUpdater.setNodeBuilder(new NodeBuilder<NODE>((Class<NODE>) createEmptyNode().getClass()));
+      nodeUpdater.setNodeBuilder(new NodeBuilder<NODE>(getNodeClass()));
       updateOccupancyRule = new UpdateOccupancyRule<>(minOccupancyLogOdds, maxOccupancyLogOdds);
    }
 
-   @SuppressWarnings("unchecked")
    public AbstractOccupancyOcTree(AbstractOccupancyOcTree<NODE> other)
    {
       super(other);
@@ -57,7 +54,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       missUpdateLogOdds = other.missUpdateLogOdds;
       occupancyThresholdLogOdds = other.occupancyThresholdLogOdds;
       nodeUpdater = new NodeUpdater<>(treeDepth);
-      nodeUpdater.setNodeBuilder(new NodeBuilder<NODE>((Class<NODE>) createEmptyNode().getClass()));
+      nodeUpdater.setNodeBuilder(new NodeBuilder<NODE>(getNodeClass()));
       updateOccupancyRule = new UpdateOccupancyRule<>(minOccupancyLogOdds, maxOccupancyLogOdds);
    }
 

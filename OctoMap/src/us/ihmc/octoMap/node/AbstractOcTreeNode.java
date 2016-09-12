@@ -2,12 +2,10 @@ package us.ihmc.octoMap.node;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.HashMap;
 
 public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 {
    protected N[] children;
-   private final HashMap<Class<? extends AbstractOcTreeNode<?>>, NodeBuilder<? extends AbstractOcTreeNode<?>>> builderCache = NodeManager.BUILDER_CACHE_THREAD_LOCAL.get();
 
    AbstractOcTreeNode()
    {
@@ -31,30 +29,17 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
    }
 
    @SuppressWarnings("unchecked")
-   public final N cloneRecursive()
+   public final N cloneRecursive(NodeBuilder<N> nodeBuilder)
    {
-      N ret = create();
+      N ret = nodeBuilder.createNode();
       ret.copyData((N) this);
 
       if (hasAtLeastOneChild())
          allocateChildren();
 
       for (int i = 0; i < 8; i++)
-         ret.children[i] = children[i].cloneRecursive();
+         ret.children[i] = children[i].cloneRecursive(nodeBuilder);
 
-      return ret;
-   }
-
-   @SuppressWarnings({"unchecked", "rawtypes"})
-   public N create()
-   {
-      NodeBuilder<N> builder = (NodeBuilder<N>) builderCache.get(getClass());
-      if (builder == null)
-      {
-         builder = (NodeBuilder<N>) new NodeBuilder(getClass());
-         builderCache.put((Class<? extends AbstractOcTreeNode<?>>) getClass(), builder);
-      }
-      N ret = builder.createNode();
       return ret;
    }
 

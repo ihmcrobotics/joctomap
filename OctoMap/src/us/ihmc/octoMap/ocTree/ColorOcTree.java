@@ -13,12 +13,6 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
       super(resolution);
    }
 
-   @Override
-   protected ColorOcTreeNode createEmptyNode()
-   {
-      return new ColorOcTreeNode();
-   }
-
    /// virtual constructor: creates a new object of same type
    /// (Covariant return type requires an up-to-date compiler)
    public ColorOcTree create()
@@ -152,5 +146,11 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
          node.updateOccupancyChildren();
          node.updateColorChildren();
       }
+   }
+
+   @Override
+   protected Class<ColorOcTreeNode> getNodeClass()
+   {
+      return ColorOcTreeNode.class;
    }
 }

@@ -44,12 +44,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    }
 
    @Override
-   public NormalOcTreeNode create()
-   {
-      return new NormalOcTreeNode();
-   }
-
-   @Override
    public void clear()
    {
       super.resetLogOdds();

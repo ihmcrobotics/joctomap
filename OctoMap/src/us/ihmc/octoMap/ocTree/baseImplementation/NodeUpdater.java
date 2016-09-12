@@ -153,7 +153,7 @@ public class NodeUpdater<NODE extends AbstractOcTreeNode<NODE>>
    {
       assignChildrenArrayIfNecessarry(node);
 
-      NODE newChild = unusedNodes.isEmpty() ? node.create() : unusedNodes.remove(unusedNodes.size() - 1);
+      NODE newChild = unusedNodes.isEmpty() ? nodeBuilder.createNode() : unusedNodes.remove(unusedNodes.size() - 1);
       node.setChild(childIndex, newChild);
       numberOfNodeCreatedDeleted++;
 

@@ -16,6 +16,7 @@ import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.NodeBuilder;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
@@ -42,8 +43,9 @@ import us.ihmc.octoMap.tools.OctoMapTools;
 public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
    protected NODE root; ///< root NODE, null for empty tree
-   private List<NODE> unusedNodes = new ArrayList<>(50000000);
-   private List<NODE[]> unusedNodeArrays = new ArrayList<>(50000000 / 8);
+   private final NodeBuilder<NODE> nodeBuilder;
+   private final List<NODE> unusedNodes = new ArrayList<>(50000000);
+   private final List<NODE[]> unusedNodeArrays = new ArrayList<>(50000000 / 8);
 
    // constants of the tree
    /** Maximum tree depth (fixed to 16 usually) */
@@ -72,6 +74,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       this.resolution = resolution;
       this.treeDepth = treeDepth;
       treeSize = 0;
+      nodeBuilder = new NodeBuilder<>(getNodeClass());
 
       initialize();
       // no longer create an empty root node - only on demand
@@ -82,20 +85,20 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
       resolution = other.resolution;
       treeDepth = other.treeDepth;
+      nodeBuilder = new NodeBuilder<>(getNodeClass());
       initialize();
       if (other.root != null)
-         root = other.root.cloneRecursive();
+         root = other.root.cloneRecursive(nodeBuilder);
    }
 
    @SuppressWarnings("unchecked")
    public void ensureCapacityUnusedPools(int minCapacity)
    {
       while (unusedNodes.size() < minCapacity)
-         unusedNodes.add(createEmptyNode());
+         unusedNodes.add(nodeBuilder.createNode());
 
-      NODE node = root != null ? root : createEmptyNode();
       while (unusedNodeArrays.size() < minCapacity)
-         unusedNodeArrays.add((NODE[]) Array.newInstance(node.getClass(), 8));
+         unusedNodeArrays.add((NODE[]) Array.newInstance(getNodeClass(), 8));
    }
 
    /**
@@ -193,7 +196,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             node.assignChildren(unusedNodeArrays.remove(unusedNodeArrays.size() - 1));
       }
 
-      NODE newChildNode = unusedNodes.isEmpty() ? node.create() : unusedNodes.remove(unusedNodes.size() - 1);
+      NODE newChildNode = unusedNodes.isEmpty() ? nodeBuilder.createNode() : unusedNodes.remove(unusedNodes.size() - 1);
       node.setChildUnsafe(childIndex, newChildNode);
 
       treeSize++;
@@ -875,5 +878,5 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
    }
 
-   protected abstract NODE createEmptyNode();
+   protected abstract Class<NODE> getNodeClass();
 }

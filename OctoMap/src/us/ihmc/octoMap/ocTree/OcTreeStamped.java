@@ -47,8 +47,8 @@ public class OcTreeStamped extends AbstractOccupancyOcTreeBase<OcTreeNodeStamped
    }
 
    @Override
-   protected OcTreeNodeStamped createEmptyNode()
+   protected Class<OcTreeNodeStamped> getNodeClass()
    {
-      return new OcTreeNodeStamped();
+      return OcTreeNodeStamped.class;
    }
 }

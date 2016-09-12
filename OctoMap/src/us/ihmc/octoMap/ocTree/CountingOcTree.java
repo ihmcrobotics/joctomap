@@ -84,8 +84,8 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
    }
 
    @Override
-   protected CountingOcTreeNode createEmptyNode()
+   protected Class<CountingOcTreeNode> getNodeClass()
    {
-      return new CountingOcTreeNode();
+      return CountingOcTreeNode.class;
    }
 }

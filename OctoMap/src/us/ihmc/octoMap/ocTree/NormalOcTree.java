@@ -614,8 +614,8 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
    }
 
    @Override
-   protected NormalOcTreeNode createEmptyNode()
+   protected Class<NormalOcTreeNode> getNodeClass()
    {
-      return new NormalOcTreeNode();
+      return NormalOcTreeNode.class;
    }
 }
