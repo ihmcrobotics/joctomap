@@ -7,24 +7,14 @@ import us.ihmc.octoMap.ocTree.baseImplementation.UpdateRule;
 public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> implements UpdateRule<NODE>, EarlyAbortRule<NODE>
 {
    private float updateLogOdds = Float.NaN;
-   private float maxOccupancyLogOdds;
-   private float minOccupancyLogOdds;
+   private Number maxOccupancyLogOdds;
+   private Number minOccupancyLogOdds;
    private boolean lazyEvaluation = false;
 
-   public UpdateOccupancyRule(float minOccupancyLogOdds, float maxOccupancyLogOdds)
+   public UpdateOccupancyRule(Number minOccupancyLogOdds, Number maxOccupancyLogOdds)
    {
       this.minOccupancyLogOdds = minOccupancyLogOdds;
       this.maxOccupancyLogOdds = maxOccupancyLogOdds;
-   }
-
-   public void setMaxOccupancyLogOdds(float maxOccupancyLogOdds)
-   {
-      this.maxOccupancyLogOdds = maxOccupancyLogOdds;
-   }
-
-   public void setMinOccupancyLogOdds(float minOccupancyLogOdds)
-   {
-      this.minOccupancyLogOdds = minOccupancyLogOdds;
    }
 
    public void setUpdateLogOdds(float updateLogOdds)
@@ -47,10 +37,10 @@ public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>>
    public void updateLeaf(NODE leafToUpdate)
    {
       float logOdds = leafToUpdate.getLogOdds() + updateLogOdds;
-      if (logOdds < minOccupancyLogOdds)
-         logOdds = minOccupancyLogOdds;
-      else if (logOdds > maxOccupancyLogOdds)
-         logOdds = maxOccupancyLogOdds;
+      if (logOdds < minOccupancyLogOdds.floatValue())
+         logOdds = minOccupancyLogOdds.floatValue();
+      else if (logOdds > maxOccupancyLogOdds.floatValue())
+         logOdds = maxOccupancyLogOdds.floatValue();
       leafToUpdate.setLogOdds(logOdds);
    }
 
@@ -67,8 +57,8 @@ public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>>
       // may cause an overhead in some configuration, but more often helps
       // no change: node already at threshold
       float nodeLogOdds = nodeToUpdate.getLogOdds();
-      boolean reachedMaxThreshold = updateLogOdds >= 0.0f && nodeLogOdds >= maxOccupancyLogOdds;
-      boolean reachedMinThreshold = updateLogOdds <= 0.0f && nodeLogOdds <= minOccupancyLogOdds;
+      boolean reachedMaxThreshold = updateLogOdds >= 0.0f && nodeLogOdds >= maxOccupancyLogOdds.floatValue();
+      boolean reachedMinThreshold = updateLogOdds <= 0.0f && nodeLogOdds <= minOccupancyLogOdds.floatValue();
       return reachedMaxThreshold || reachedMinThreshold;
    }
 }

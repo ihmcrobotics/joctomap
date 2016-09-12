@@ -12,6 +12,8 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
+import org.apache.commons.lang3.mutable.MutableFloat;
+
 import us.ihmc.octoMap.key.KeyBoolMap;
 import us.ihmc.octoMap.key.KeyRayReadOnly;
 import us.ihmc.octoMap.key.OcTreeKey;
@@ -31,8 +33,8 @@ import us.ihmc.robotics.time.TimeTools;
 public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOcTreeBase<NODE>
 {
    // occupancy parameters of tree, stored in logodds:
-   protected float minOccupancyLogOdds;
-   protected float maxOccupancyLogOdds;
+   protected final MutableFloat minOccupancyLogOdds = new MutableFloat();
+   protected final MutableFloat maxOccupancyLogOdds = new MutableFloat();
    protected float hitUpdateLogOdds;
    protected float missUpdateLogOdds;
    private float occupancyThresholdLogOdds;
@@ -69,8 +71,8 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    public AbstractOccupancyOcTree(AbstractOccupancyOcTree<NODE> other)
    {
       super(other);
-      minOccupancyLogOdds = other.minOccupancyLogOdds;
-      maxOccupancyLogOdds = other.maxOccupancyLogOdds;
+      minOccupancyLogOdds.setValue(other.minOccupancyLogOdds.floatValue());
+      maxOccupancyLogOdds.setValue(other.maxOccupancyLogOdds.floatValue());
       hitUpdateLogOdds = other.hitUpdateLogOdds;
       missUpdateLogOdds = other.missUpdateLogOdds;
       occupancyThresholdLogOdds = other.occupancyThresholdLogOdds;
@@ -117,7 +119,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public boolean isNodeAtOccupancyLimit(NODE occupancyNode)
    {
-      return occupancyNode.getLogOdds() >= this.maxOccupancyLogOdds || occupancyNode.getLogOdds() <= this.minOccupancyLogOdds;
+      return occupancyNode.getLogOdds() >= this.maxOccupancyLogOdds.floatValue() || occupancyNode.getLogOdds() <= this.minOccupancyLogOdds.floatValue();
    }
 
    //-- parameters for occupancy and sensor model:
@@ -159,8 +161,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public void setMinProbability(double minimumProbability)
    {
-      minOccupancyLogOdds = logodds(minimumProbability);
-      updateOccupancyRule.setMinOccupancyLogOdds(minOccupancyLogOdds);
+      minOccupancyLogOdds.setValue(logodds(minimumProbability));
    }
 
    /**
@@ -169,8 +170,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public void setMaxProbability(double maximumProbability)
    {
-      maxOccupancyLogOdds = logodds(maximumProbability);
-      updateOccupancyRule.setMaxOccupancyLogOdds(maxOccupancyLogOdds);
+      maxOccupancyLogOdds.setValue(logodds(maximumProbability));
    }
 
    /**
@@ -226,7 +226,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public double getMinProbability()
    {
-      return probability(minOccupancyLogOdds);
+      return probability(minOccupancyLogOdds.floatValue());
    }
 
    /**
@@ -234,7 +234,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public float getMinLogOdds()
    {
-      return minOccupancyLogOdds;
+      return minOccupancyLogOdds.floatValue();
    }
 
    /**
@@ -242,7 +242,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public double getMaxProbability()
    {
-      return probability(maxOccupancyLogOdds);
+      return probability(maxOccupancyLogOdds.floatValue());
    }
 
    /**
@@ -250,7 +250,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public float getMaxLogOdds()
    {
-      return maxOccupancyLogOdds;
+      return maxOccupancyLogOdds.floatValue();
    }
 
    public void insertSweepCollection(SweepCollection sweepCollection)
@@ -451,7 +451,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    public NODE setNodeValue(OcTreeKeyReadOnly key, float logOddsValue)
    {
       // clamp log odds within range:
-      setOccupancyRule.setNewLogOdds(Math.min(Math.max(logOddsValue, minOccupancyLogOdds), maxOccupancyLogOdds));
+      setOccupancyRule.setNewLogOdds(Math.min(Math.max(logOddsValue, minOccupancyLogOdds.floatValue()), maxOccupancyLogOdds.floatValue()));
       return updateNodeInternal(key, setOccupancyRule, null);
    }
 
@@ -481,7 +481,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    public NODE setNodeValue(double x, double y, double z, float logOddsValue)
    {
       // clamp log odds within range:
-      setOccupancyRule.setNewLogOdds(Math.min(Math.max(logOddsValue, minOccupancyLogOdds), maxOccupancyLogOdds));
+      setOccupancyRule.setNewLogOdds(Math.min(Math.max(logOddsValue, minOccupancyLogOdds.floatValue()), maxOccupancyLogOdds.floatValue()));
       return updateNodeInternal(x, y, z, setOccupancyRule, null);
    }
 
@@ -1169,11 +1169,11 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    public float computeUpdatedLogOdds(NODE occupancyNode, float update)
    {
       float logOdds = occupancyNode.getLogOdds() + update;
-      if (logOdds < minOccupancyLogOdds)
-         logOdds = minOccupancyLogOdds;
-      else if (logOdds > maxOccupancyLogOdds)
+      if (logOdds < minOccupancyLogOdds.floatValue())
+         logOdds = minOccupancyLogOdds.floatValue();
+      else if (logOdds > maxOccupancyLogOdds.floatValue())
       {
-         logOdds = maxOccupancyLogOdds;
+         logOdds = maxOccupancyLogOdds.floatValue();
       }
       return logOdds;
    }
@@ -1185,9 +1185,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    public void nodeToMaxLikelihood(NODE occupancyNode)
    {
       if (isNodeOccupied(occupancyNode))
-         occupancyNode.setLogOdds(maxOccupancyLogOdds);
+         occupancyNode.setLogOdds(maxOccupancyLogOdds.floatValue());
       else
-         occupancyNode.setLogOdds(minOccupancyLogOdds);
+         occupancyNode.setLogOdds(minOccupancyLogOdds.floatValue());
    }
 
    /**
