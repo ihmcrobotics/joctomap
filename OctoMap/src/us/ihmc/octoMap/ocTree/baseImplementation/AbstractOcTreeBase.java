@@ -54,8 +54,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /** flag to denote whether the octree extent changed (for lazy min/max eval) */
    protected boolean sizeChanged;
 
-   protected double max_value[] = new double[3]; ///< max in x, y, z
-   protected double min_value[] = new double[3]; ///< min in x, y, z
+   protected double maxCoordinate[] = new double[3]; ///< max in x, y, z
+   protected double minCoordinate[] = new double[3]; ///< min in x, y, z
 
    /// data structure for ray casting, array for multithreading
 
@@ -73,7 +73,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       this.treeDepth = treeDepth;
       treeSize = 0;
 
-      init();
+      initialize();
       // no longer create an empty root node - only on demand
       ensureCapacityUnusedPools(2000000);
    }
@@ -82,7 +82,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
       resolution = other.resolution;
       treeDepth = other.treeDepth;
-      init();
+      initialize();
       if (other.root != null)
          root = other.root.cloneRecursive();
    }
@@ -92,7 +92,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
       while (unusedNodes.size() < minCapacity)
          unusedNodes.add(createEmptyNode());
-      
+
       NODE node = root != null ? root : createEmptyNode();
       while (unusedNodeArrays.size() < minCapacity)
          unusedNodeArrays.add((NODE[]) Array.newInstance(node.getClass(), 8));
@@ -106,13 +106,13 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     */
    public void swapContent(AbstractOcTreeBase<NODE> other)
    {
-      NODE this_root = root;
+      NODE thisRoot = root;
       root = other.root;
-      other.root = this_root;
+      other.root = thisRoot;
 
-      int this_size = treeSize;
+      int thisSize = treeSize;
       treeSize = other.treeSize;
-      other.treeSize = this_size;
+      other.treeSize = thisSize;
    }
 
    /// Comparison between two octrees, all meta data, all
@@ -398,8 +398,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       for (int depth = treeDepth - 1; depth > 0; depth--)
       {
-         int num_pruned = pruneRecurs(root, 0, depth, 0);
-         if (num_pruned == 0)
+         int numberOfPrunedNodes = pruneRecursively(root, 0, depth, 0);
+         if (numberOfPrunedNodes == 0)
             break;
       }
    }
@@ -453,8 +453,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    public void getMetricMin(Point3d min)
    {
-      calcMinMax();
-      min.set(min_value[0], min_value[1], min_value[2]);
+      calculateMinMax();
+      min.set(minCoordinate[0], minCoordinate[1], minCoordinate[2]);
    }
 
    /// maximum value of the bounding box of all known space in x, y, z
@@ -467,8 +467,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    public void getMetricMax(Point3d max)
    {
-      calcMinMax();
-      max.set(max_value[0], max_value[1], max_value[2]);
+      calculateMinMax();
+      max.set(maxCoordinate[0], maxCoordinate[1], maxCoordinate[2]);
    }
 
    /// Traverses the tree to calculate the total number of nodes
@@ -494,12 +494,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    // -- access tree nodes  ------------------
 
    /// return centers of leafs that do NOT exist (but could) in a given bounding box
-   public void getUnknownLeafCenters(List<Point3d> node_centers, Point3d pmin, Point3d pmax)
+   public void getUnknownLeafCenters(List<Point3d> nodeCenters, Point3d pmin, Point3d pmax)
    {
-      getUnknownLeafCenters(node_centers, pmin, pmax, 0);
+      getUnknownLeafCenters(nodeCenters, pmin, pmax, 0);
    }
 
-   public void getUnknownLeafCenters(List<Point3d> node_centers, Point3d pmin, Point3d pmax, int depth)
+   public void getUnknownLeafCenters(List<Point3d> nodeCenters, Point3d pmin, Point3d pmax, int depth)
    {
       OctoMapTools.checkIfDepthValid(depth, treeDepth);
       if (depth == 0)
@@ -512,11 +512,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       double[] diff = new double[3];
       int[] steps = new int[3];
-      double step_size = resolution * Math.pow(2, treeDepth - depth);
+      double stepSize = resolution * Math.pow(2, treeDepth - depth);
       for (int i = 0; i < 3; ++i)
       {
          diff[i] = pmaxArray[i] - pminArray[i];
-         steps[i] = (int) Math.floor(diff[i] / step_size);
+         steps[i] = (int) Math.floor(diff[i] / stepSize);
          //      std::cout << "bbx " << i << " size: " << diff[i] << " " << steps[i] << " steps\n";
       }
 
@@ -524,18 +524,18 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       NODE res;
       for (int x = 0; x < steps[0]; ++x)
       {
-         p.setX(p.getX() + step_size);
+         p.setX(p.getX() + stepSize);
          for (int y = 0; y < steps[1]; ++y)
          {
-            p.setY(p.getY() + step_size);
+            p.setY(p.getY() + stepSize);
             for (int z = 0; z < steps[2]; ++z)
             {
                //          std::cout << "querying p=" << p << std::endl;
-               p.setZ(p.getZ() + step_size);
+               p.setZ(p.getZ() + stepSize);
                res = search(p, depth);
                if (res == null)
                {
-                  node_centers.add(p);
+                  nodeCenters.add(p);
                }
             }
             p.setZ(pmin.getZ());
@@ -676,19 +676,19 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// initialize non-trivial members, helper for constructors
-   protected void init()
+   protected void initialize()
    {
       setResolution(resolution);
       for (int i = 0; i < 3; i++)
       {
-         max_value[i] = Double.NEGATIVE_INFINITY;
-         min_value[i] = Double.POSITIVE_INFINITY;
+         maxCoordinate[i] = Double.NEGATIVE_INFINITY;
+         minCoordinate[i] = Double.POSITIVE_INFINITY;
       }
       sizeChanged = true;
    }
 
-   /// recalculates min and max in x, y, z. Does nothing when tree size didn't change.
-   protected void calcMinMax()
+   /** Recalculates min and max in x, y, z. Does nothing when tree size didn't change. Reset {@link #sizeChanged} */
+   protected void calculateMinMax()
    {
       if (!sizeChanged)
          return;
@@ -696,16 +696,16 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       // empty tree
       if (root == null)
       {
-         min_value[0] = min_value[1] = min_value[2] = 0.0;
-         max_value[0] = max_value[1] = max_value[2] = 0.0;
+         minCoordinate[0] = minCoordinate[1] = minCoordinate[2] = 0.0;
+         maxCoordinate[0] = maxCoordinate[1] = maxCoordinate[2] = 0.0;
          sizeChanged = false;
          return;
       }
 
       for (int i = 0; i < 3; i++)
       {
-         max_value[i] = Double.NEGATIVE_INFINITY;
-         min_value[i] = Double.POSITIVE_INFINITY;
+         maxCoordinate[i] = Double.NEGATIVE_INFINITY;
+         minCoordinate[i] = Double.POSITIVE_INFINITY;
       }
 
       for (OcTreeSuperNode<NODE> node : this)
@@ -715,23 +715,22 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          double x = node.getX() - halfSize;
          double y = node.getY() - halfSize;
          double z = node.getZ() - halfSize;
-         if (x < min_value[0])
-            min_value[0] = x;
-         if (y < min_value[1])
-            min_value[1] = y;
-         if (z < min_value[2])
-            min_value[2] = z;
+         if (x < minCoordinate[0])
+            minCoordinate[0] = x;
+         if (y < minCoordinate[1])
+            minCoordinate[1] = y;
+         if (z < minCoordinate[2])
+            minCoordinate[2] = z;
 
          x += size;
          y += size;
          z += size;
-         if (x > max_value[0])
-            max_value[0] = x;
-         if (y > max_value[1])
-            max_value[1] = y;
-         if (z > max_value[2])
-            max_value[2] = z;
-
+         if (x > maxCoordinate[0])
+            maxCoordinate[0] = x;
+         if (y > maxCoordinate[1])
+            maxCoordinate[1] = y;
+         if (z > maxCoordinate[2])
+            maxCoordinate[2] = z;
       }
 
       sizeChanged = false;
@@ -823,7 +822,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive call of prune()
-   protected int pruneRecurs(NODE node, int depth, int maxDepth, int numberOfPrunedNode)
+   protected int pruneRecursively(NODE node, int depth, int maxDepth, int numberOfPrunedNode)
    {
       if (node == null)
          throw new RuntimeException("The given node is null");
@@ -837,7 +836,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          {
             NODE childNode;
             if ((childNode = node.getChildUnsafe(i)) != null)
-               numberOfPrunedNode = pruneRecurs(childNode, depth + 1, maxDepth, numberOfPrunedNode);
+               numberOfPrunedNode = pruneRecursively(childNode, depth + 1, maxDepth, numberOfPrunedNode);
          }
       } // end if depth
       else
