@@ -34,7 +34,7 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       N ret = nodeBuilder.createNode();
       ret.copyData((N) this);
 
-      if (hasAtLeastOneChild())
+      if (!hasAtLeastOneChild())
          allocateChildren();
 
       for (int i = 0; i < 8; i++)
