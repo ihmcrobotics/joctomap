@@ -149,7 +149,7 @@ public class NodeUpdater<NODE extends AbstractOcTreeNode<NODE>>
       }
    }
 
-   protected NODE createNodeChild(NODE node, int childIndex)
+   private NODE createNodeChild(NODE node, int childIndex)
    {
       assignChildrenArrayIfNecessarry(node);
 
