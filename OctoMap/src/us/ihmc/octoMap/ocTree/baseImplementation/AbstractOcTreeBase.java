@@ -634,7 +634,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /** Converts from a 3D coordinate into a 3D addressing key at a given depth */
    public OcTreeKey coordinateToKey(double x, double y, double z, int depth)
    {
-      return OcTreeKeyConversionTools.convertCartesianCoordinateToKey(x, y, z, depth, resolution, treeDepth);
+      return OcTreeKeyConversionTools.coordinateToKey(x, y, z, depth, resolution, treeDepth);
    }
 
    public boolean coordinateToKey(Point3d coord, OcTreeKey keyToPack)
