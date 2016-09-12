@@ -85,7 +85,7 @@ public class NodeUpdater<NODE extends AbstractOcTreeNode<NODE>>
       return updateNodeRecurs(root, createdRoot, key, 0);
    }
 
-   protected NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, int depth)
+   private NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, int depth)
    {
       boolean createdNode = false;
 
@@ -160,7 +160,7 @@ public class NodeUpdater<NODE extends AbstractOcTreeNode<NODE>>
       return newChild;
    }
 
-   public void assignChildrenArrayIfNecessarry(NODE node)
+   private void assignChildrenArrayIfNecessarry(NODE node)
    {
       if (!node.hasArrayForChildren())
       {
@@ -175,9 +175,9 @@ public class NodeUpdater<NODE extends AbstractOcTreeNode<NODE>>
     * Prunes a node when it is collapsible
     * @return true if pruning was successful
     */
-   public boolean pruneNode(NODE node)
+   private boolean pruneNode(NODE node)
    {
-      if (!isNodeCollapsible(node))
+      if (!OcTreeNodeTools.isNodeCollapsible(node))
          return false;
 
       // set value to children's values (all assumed equal)
@@ -191,33 +191,6 @@ public class NodeUpdater<NODE extends AbstractOcTreeNode<NODE>>
       }
       unusedNodeArrays.add(node.removeChildren());
 
-      return true;
-   }
-
-   /**
-    *  A node is collapsible if all children exist, don't have children of their own
-    * and have the same occupancy value
-    * @param node
-    * @return
-    */
-   public boolean isNodeCollapsible(NODE node)
-   {
-      // All children must exist, must not have children of
-      // their own and have the same occupancy probability
-      if (!node.hasArrayForChildren())
-         return false;
-
-      NODE firstChild = OcTreeNodeTools.getNodeChild(node, 0);
-      if (firstChild == null || firstChild.hasAtLeastOneChild())
-         return false;
-
-      for (int i = 1; i < 8; i++)
-      {
-         NODE currentChild = OcTreeNodeTools.getNodeChild(node, i);
-
-         if (currentChild == null || currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
-            return false;
-      }
       return true;
    }
 

@@ -35,7 +35,7 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
    @Override
    public boolean pruneNode(ColorOcTreeNode node)
    {
-      if (!isNodeCollapsible(node))
+      if (!OcTreeNodeTools.isNodeCollapsible(node))
          return false;
 
       // set value to children's values (all assumed equal)
@@ -50,31 +50,6 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
          deleteNodeChild(node, i);
       }
       node.removeChildren();
-
-      return true;
-   }
-
-   @Override
-   public boolean isNodeCollapsible(ColorOcTreeNode node)
-   {
-      // all children must exist, must not have children of
-      // their own and have the same occupancy probability
-      if (!OcTreeNodeTools.nodeChildExists(node, 0))
-         return false;
-
-      ColorOcTreeNode firstChild = OcTreeNodeTools.getNodeChild(node, 0);
-      if (firstChild.hasAtLeastOneChild())
-         return false;
-
-      for (int i = 1; i < 8; i++)
-      {
-         // compare nodes only using their occupancy, ignoring color for pruning
-         if (!OcTreeNodeTools.nodeChildExists(node, i))
-            return false;
-         ColorOcTreeNode child = OcTreeNodeTools.getNodeChild(node, i);
-         if (child.hasAtLeastOneChild() || !child.epsilonEquals(firstChild))
-            return false;
-      }
 
       return true;
    }

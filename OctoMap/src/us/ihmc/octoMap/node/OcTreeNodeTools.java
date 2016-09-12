@@ -1,7 +1,5 @@
 package us.ihmc.octoMap.node;
 
-import java.util.HashMap;
-
 /**
  * This tool class has to live in this package to be able to do operation on node's children field.
  * @author Sylvain
@@ -9,15 +7,6 @@ import java.util.HashMap;
  */
 public class OcTreeNodeTools
 {
-   static final ThreadLocal<HashMap<Class<? extends AbstractOcTreeNode<?>>, NodeBuilder<? extends AbstractOcTreeNode<?>>>> BUILDER_CACHE_THREAD_LOCAL = new ThreadLocal<HashMap<Class<? extends AbstractOcTreeNode<?>>, NodeBuilder<? extends AbstractOcTreeNode<?>>>>()
-   {
-      @Override
-      public HashMap<Class<? extends AbstractOcTreeNode<?>>, NodeBuilder<? extends AbstractOcTreeNode<?>>> initialValue()
-      {
-         return new HashMap<>();
-      }
-   };
-
    /** 
     * Safe test if node has a child at index childIdx.
     * First tests if there are any children. Replaces node->childExists(...)
@@ -53,5 +42,51 @@ public class OcTreeNodeTools
       checkNodeHasChildren(node);
       checkNodeChildNotNull(node, childIndex);
       return node.children == null ? null : node.getChildUnsafe(childIndex);
+   }
+
+   /**
+    *  A node is collapsible if all children exist, don't have children of their own
+    * and have the same occupancy value
+    * @param node
+    * @return
+    */
+   public static <NODE extends AbstractOcTreeNode<NODE>> boolean isNodeCollapsible(NODE node)
+   {
+      // All children must exist, must not have children of
+      // their own and have the same occupancy probability
+      if (!node.hasArrayForChildren())
+         return false;
+   
+      NODE firstChild = getNodeChild(node, 0);
+      if (firstChild == null || firstChild.hasAtLeastOneChild())
+         return false;
+   
+      for (int i = 1; i < 8; i++)
+      {
+         NODE currentChild = node.getChildUnsafe(i);
+   
+         if (currentChild == null || currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
+            return false;
+      }
+      return true;
+   }
+
+   public static <NODE extends AbstractOcTreeNode<NODE>> int getNumberOfLeafNodesRecursive(NODE parent)
+   {
+      if (parent == null)
+         throw new RuntimeException("The given parent node is null");
+   
+      if (!parent.hasAtLeastOneChild()) // this is a leaf -> terminate
+         return 1;
+   
+      int sumLeafsChildren = 0;
+      for (int i = 0; i < 8; ++i)
+      {
+         if (nodeChildExists(parent, i))
+         {
+            sumLeafsChildren += getNumberOfLeafNodesRecursive(getNodeChild(parent, i));
+         }
+      }
+      return sumLeafsChildren;
    }
 }

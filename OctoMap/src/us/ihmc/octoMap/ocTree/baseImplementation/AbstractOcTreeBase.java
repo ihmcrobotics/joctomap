@@ -52,7 +52,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    protected int treeSize; ///< number of nodes in tree
    /** flag to denote whether the octree extent changed (for lazy min/max eval) */
-   protected boolean size_changed;
+   protected boolean sizeChanged;
 
    protected double max_value[] = new double[3]; ///< max in x, y, z
    protected double min_value[] = new double[3]; ///< min in x, y, z
@@ -152,7 +152,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public void setResolution(double newResolution)
    {
       resolution = newResolution;
-      size_changed = true;
+      sizeChanged = true;
    }
 
    public double getResolution()
@@ -197,7 +197,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       node.setChildUnsafe(childIndex, newChildNode);
 
       treeSize++;
-      size_changed = true;
+      sizeChanged = true;
 
       return newChildNode;
    }
@@ -212,34 +212,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       unusedNodes.add(node.removeChild(childIndex));
 
       treeSize--;
-      size_changed = true;
-   }
-
-   /**
-    *  A node is collapsible if all children exist, don't have children of their own
-    * and have the same occupancy value
-    * @param node
-    * @return
-    */
-   public boolean isNodeCollapsible(NODE node)
-   {
-//      // all children must exist, must not have children of
-//      // their own and have the same occupancy probability
-      if (!node.hasArrayForChildren())
-         return false;
-
-      NODE firstChild = node.getChildUnsafe(0);
-      if (firstChild == null || firstChild.hasAtLeastOneChild())
-         return false;
-
-      for (int i = 1; i < 8; i++)
-      {
-         NODE currentChild = node.getChildUnsafe(i);
-
-         if (currentChild == null || currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
-            return false;
-      }
-      return true;
+      sizeChanged = true;
    }
 
    /**
@@ -268,17 +241,15 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     */
    public boolean pruneNode(NODE node)
    {
-      if (!isNodeCollapsible(node))
+      if (!OcTreeNodeTools.isNodeCollapsible(node))
          return false;
 
       // set value to children's values (all assumed equal)
       node.copyData(node.getChildUnsafe(0));
 
       // delete children (known to be leafs at this point!)
-      for (int i = 0; i < 8; i++)
-      {
-         deleteNodeChild(node, i);
-      }
+      for (int childIndex = 0; childIndex < 8; childIndex++)
+         deleteNodeChild(node, childIndex);
       unusedNodeArrays.add(node.removeChildren());
 
       return true;
@@ -377,17 +348,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    public boolean deleteNode(Point3d coord, int depth)
    {
-      OcTreeKey key = coordinateToKey(coord);
-      if (key == null)
-      {
-         System.err.println(AbstractOcTreeBase.class.getSimpleName() + " Error in deleteNode: [" + coord + "] is out of OcTree bounds!");
-         return false;
-      }
-      else
-      {
-         return deleteNode(key, depth);
-      }
-
+      return deleteNode(coord.getX(), coord.getY(), coord.getZ(), depth);
    }
 
    /** 
@@ -420,7 +381,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          root = null;
          treeSize = 0;
          // max extent of tree changed:
-         size_changed = true;
+         sizeChanged = true;
       }
    }
 
@@ -527,7 +488,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (root == null)
          return 0;
 
-      return getNumLeafNodesRecurs(root);
+      return OcTreeNodeTools.getNumberOfLeafNodesRecursive(root);
    }
 
    // -- access tree nodes  ------------------
@@ -723,13 +684,13 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          max_value[i] = Double.NEGATIVE_INFINITY;
          min_value[i] = Double.POSITIVE_INFINITY;
       }
-      size_changed = true;
+      sizeChanged = true;
    }
 
    /// recalculates min and max in x, y, z. Does nothing when tree size didn't change.
    protected void calcMinMax()
    {
-      if (!size_changed)
+      if (!sizeChanged)
          return;
 
       // empty tree
@@ -737,7 +698,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          min_value[0] = min_value[1] = min_value[2] = 0.0;
          max_value[0] = max_value[1] = max_value[2] = 0.0;
-         size_changed = false;
+         sizeChanged = false;
          return;
       }
 
@@ -773,7 +734,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       }
 
-      size_changed = false;
+      sizeChanged = false;
    }
 
    protected int calculateNumberOfNodesRecursively(NODE node, int currentNumberOfNodes)
@@ -816,9 +777,9 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive call of deleteNode()
-   protected boolean deleteNodeRecurs(NODE node, int depth, int max_depth, OcTreeKeyReadOnly key)
+   protected boolean deleteNodeRecurs(NODE node, int depth, int maxDepth, OcTreeKeyReadOnly key)
    {
-      if (depth >= max_depth) // on last level: delete child when going up
+      if (depth >= maxDepth) // on last level: delete child when going up
          return true;
 
       if (node == null)
@@ -843,7 +804,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
 
       // follow down further, fix inner nodes on way back up
-      boolean deleteChild = deleteNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), depth + 1, max_depth, key);
+      boolean deleteChild = deleteNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), depth + 1, maxDepth, key);
       if (deleteChild)
       {
          // TODO: lazy eval?
@@ -862,7 +823,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive call of prune()
-   protected int pruneRecurs(NODE node, int depth, int max_depth, int numberOfPrunedNode)
+   protected int pruneRecurs(NODE node, int depth, int maxDepth, int numberOfPrunedNode)
    {
       if (node == null)
          throw new RuntimeException("The given node is null");
@@ -870,13 +831,13 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (!node.hasAtLeastOneChild())
          return numberOfPrunedNode;
 
-      if (depth < max_depth)
+      if (depth < maxDepth)
       {
          for (int i = 0; i < 8; i++)
          {
             NODE childNode;
             if ((childNode = node.getChildUnsafe(i)) != null)
-               numberOfPrunedNode = pruneRecurs(childNode, depth + 1, max_depth, numberOfPrunedNode);
+               numberOfPrunedNode = pruneRecurs(childNode, depth + 1, maxDepth, numberOfPrunedNode);
          }
       } // end if depth
       else
@@ -913,25 +874,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             expandRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1, maxDepth);
          }
       }
-   }
-
-   protected int getNumLeafNodesRecurs(NODE parent)
-   {
-      if (parent == null)
-         throw new RuntimeException("The given parent node is null");
-
-      if (!parent.hasAtLeastOneChild()) // this is a leaf -> terminate
-         return 1;
-
-      int sumLeafsChildren = 0;
-      for (int i = 0; i < 8; ++i)
-      {
-         if (OcTreeNodeTools.nodeChildExists(parent, i))
-         {
-            sumLeafsChildren += getNumLeafNodesRecurs(OcTreeNodeTools.getNodeChild(parent, i));
-         }
-      }
-      return sumLeafsChildren;
    }
 
    protected abstract NODE createEmptyNode();

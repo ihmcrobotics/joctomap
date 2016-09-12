@@ -262,7 +262,10 @@ public abstract class AbstractOccupancyOcTreeBase<NODE extends AbstractOccupancy
       setOccupancyRule.setNewLogOdds(logOddsValue);
       nodeUpdater.setEarlyAbortRule(null);
       nodeUpdater.setUpdateRule(setOccupancyRule);
-      return nodeUpdater.updateNode(root, key);
+      NODE updatedNode = nodeUpdater.updateNode(root, key);
+      root = nodeUpdater.getRoot();
+      treeSize += nodeUpdater.getNumberOfNodeCreatedDeleted();
+      return updatedNode;
    }
 
    /**
