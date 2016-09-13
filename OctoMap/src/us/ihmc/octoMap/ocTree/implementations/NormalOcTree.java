@@ -3,6 +3,7 @@ package us.ihmc.octoMap.ocTree.implementations;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
@@ -99,7 +100,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   private final TIntObjectHashMap<NormalOcTreeNode> keyToNodeMap = new TIntObjectHashMap<>();
+   private final HashMap<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
 
    public void updateNormalsAndPlanarRegions(int depth)
    {
@@ -109,7 +110,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          NormalOcTreeNode node = superNode.getNode();
          node.resetRegionId();
          node.resetHasBeenCandidateForRegion();
-         keyToNodeMap.put(superNode.getKey().hashCode(), node);
+         keyToNodeMap.put(new OcTreeKey(superNode.getKey()), node);
       }
 
       long startTime = System.nanoTime();
@@ -264,7 +265,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       for (int i = tempNeighborKeysForNormal.size() - 1; i >= 0; i--)
       {
          OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(i);
-         currentNode = keyToNodeMap.get(currentKey.hashCode());
+         currentNode = keyToNodeMap.get(currentKey);
 
          if (currentNode == null)
          {
@@ -296,7 +297,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          for (int i = 0; i < tempNeighborKeysForNormal.size(); i++)
          {
             OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(i);
-            currentNode = keyToNodeMap.get(currentKey.hashCode());
+            currentNode = keyToNodeMap.get(currentKey);
 
             if (currentNode != null && currentNode.isCenterSet())
             {
@@ -344,7 +345,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
       {
          tempKeyForNormal.add(key, cachedNeighborKeyOffsets.unsafeGet(i));
-         NormalOcTreeNode neighborNode = keyToNodeMap.get(tempKeyForNormal.hashCode());
+         NormalOcTreeNode neighborNode = keyToNodeMap.get(tempKeyForNormal);
 
          if (neighborNode == null)
             continue;
@@ -568,7 +569,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
       {
          neighborKey.add(nodeKey, cachedNeighborKeyOffsets.unsafeGet(i));
-         NormalOcTreeNode neighborNode = keyToNodeMap.get(neighborKey.hashCode());
+         NormalOcTreeNode neighborNode = keyToNodeMap.get(neighborKey);
          if (neighborNode == null || !isNodeOccupied(neighborNode))
             continue;
          if (neighborNode.getHasBeenCandidateForRegion() == planarRegionId || neighborNode.isPartOfRegion())
