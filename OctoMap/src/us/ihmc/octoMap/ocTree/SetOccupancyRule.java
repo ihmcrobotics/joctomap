@@ -18,7 +18,7 @@ public class SetOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> im
    }
 
    @Override
-   public void updateLeaf(NODE leafToUpdate, OcTreeKeyReadOnly leafKey)
+   public void updateLeaf(NODE leafToUpdate, OcTreeKeyReadOnly leafKey, boolean nodeJustCreated)
    {
 
       leafToUpdate.setLogOdds(newLogOdds);

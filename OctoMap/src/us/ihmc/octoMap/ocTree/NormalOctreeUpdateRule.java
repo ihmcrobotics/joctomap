@@ -39,9 +39,9 @@ public class NormalOctreeUpdateRule extends UpdateOccupancyRule<NormalOcTreeNode
    }
 
    @Override
-   public void updateLeaf(NormalOcTreeNode leafToUpdate, OcTreeKeyReadOnly leafKey)
+   public void updateLeaf(NormalOcTreeNode leafToUpdate, OcTreeKeyReadOnly leafKey, boolean nodeJustCreated)
    {
-      super.updateLeaf(leafToUpdate, leafKey);
+      super.updateLeaf(leafToUpdate, leafKey, nodeJustCreated);
 
       leafToUpdate.updateCenter(hitLocation, alphaHitLocationUpdate);
 

@@ -1,5 +1,6 @@
 package us.ihmc.octoMap.ocTree;
 
+import us.ihmc.octoMap.key.KeyBoolMap;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.EarlyAbortRule;
@@ -11,6 +12,7 @@ public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>>
 {
    private float updateLogOdds = Float.NaN;
    private final OccupancyParametersReadOnly parameters;
+   private KeyBoolMap changedKeys;
 
    public UpdateOccupancyRule(OccupancyParametersReadOnly occupancyParameters)
    {
@@ -22,11 +24,41 @@ public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>>
       this.updateLogOdds = updateLogOdds;
    }
 
-   @Override
-   public void updateLeaf(NODE leafToUpdate, OcTreeKeyReadOnly leafKey)
+   public void detachChangedKeys()
    {
-      float logOdds = OccupancyTools.clipLogOddsToMinMax(parameters, leafToUpdate.getLogOdds() + updateLogOdds);
-      leafToUpdate.setLogOdds(logOdds);
+      changedKeys = null;
+   }
+
+   public void attachChangedKeys(KeyBoolMap changedKeys)
+   {
+      this.changedKeys = changedKeys;
+   }
+
+   @Override
+   public void updateLeaf(NODE leafToUpdate, OcTreeKeyReadOnly leafKey, boolean nodeJustCreated)
+   {
+      if (changedKeys != null)
+      {
+         boolean occupiedBefore = OccupancyTools.isNodeOccupied(parameters, leafToUpdate);
+         OccupancyTools.updateNodeLogOdds(parameters, leafToUpdate, updateLogOdds);
+
+         if (nodeJustCreated)
+         { // new node
+            changedKeys.put(leafKey, true);
+         }
+         else if (occupiedBefore != OccupancyTools.isNodeOccupied(parameters, leafToUpdate))
+         { // occupancy changed, track it
+            Boolean changedKeyValue = changedKeys.get(leafKey);
+            if (changedKeyValue == null)
+               changedKeys.put(leafKey, false);
+            else if (changedKeyValue == false)
+               changedKeys.remove(leafKey);
+         }
+      }
+      else
+      {
+         OccupancyTools.updateNodeLogOdds(parameters, leafToUpdate, updateLogOdds);
+      }
    }
 
    @Override

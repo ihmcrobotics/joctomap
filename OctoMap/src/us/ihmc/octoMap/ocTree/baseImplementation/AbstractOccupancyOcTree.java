@@ -72,7 +72,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       updateOccupancyRule = new UpdateOccupancyRule<>(occupancyParameters);
       boundingBox = new OcTreeBoundingBox(other.boundingBox);
       changedKeys.putAll(other.changedKeys);
-      useChangeDetection = other.useChangeDetection;
+      enableChangeDetection(other.useChangeDetection);
    }
 
    public void setOccupancyParameters(OccupancyParameters occupancyParameters)
@@ -709,6 +709,10 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    public void enableChangeDetection(boolean enable)
    {
       useChangeDetection = enable;
+      if (useChangeDetection)
+         updateOccupancyRule.attachChangedKeys(changedKeys);
+      else
+         updateOccupancyRule.detachChangedKeys();
    }
 
    public boolean isChangeDetectionEnabled()
