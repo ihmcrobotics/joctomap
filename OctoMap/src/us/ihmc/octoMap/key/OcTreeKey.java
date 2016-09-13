@@ -1,6 +1,5 @@
 package us.ihmc.octoMap.key;
 
-import java.util.Arrays;
 import java.util.Random;
 
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
@@ -100,7 +99,7 @@ public class OcTreeKey implements OcTreeKeyReadOnly
    @Override
    public String toString()
    {
-      return "OcTreeKey: " + Arrays.toString(k);
+      return "OcTreeKey: [" + ((int) k[0]) + ", " + ((int) k[1]) + ", " + ((int) k[2]) + "]";
    }
 
    public OcTreeKey(Random random, int treeDepth)
