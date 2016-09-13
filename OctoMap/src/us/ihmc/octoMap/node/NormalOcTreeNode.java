@@ -4,7 +4,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
-import us.ihmc.octoMap.ocTree.PlanarRegion;
+import us.ihmc.octoMap.planarRegions.PlanarRegion;
 
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
 {
@@ -41,12 +41,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public void allocateChildren()
    {
       children = new NormalOcTreeNode[8];
-   }
-
-   @Override
-   public NormalOcTreeNode create()
-   {
-      return new NormalOcTreeNode();
    }
 
    @Override

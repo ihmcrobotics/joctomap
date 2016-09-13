@@ -1,8 +1,9 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.ocTree.implementations;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
@@ -21,19 +22,37 @@ import us.ihmc.octoMap.key.OcTreeKeyDeque;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
-import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
+import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
+import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeBoundingBoxInterface;
+import us.ihmc.octoMap.ocTree.rules.NormalOctreeUpdateRule;
+import us.ihmc.octoMap.occupancy.OccupancyParameters;
+import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
+import us.ihmc.octoMap.occupancy.OccupancyTools;
+import us.ihmc.octoMap.planarRegions.PlanarRegion;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.robotics.time.TimeTools;
 
-public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
+public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
+   // occupancy parameters of tree, stored in logodds:
+   private final OccupancyParameters occupancyParameters = new OccupancyParameters();
+   private OcTreeBoundingBoxInterface boundingBox;
+   /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   private double minInsertRange = -1.0;
+   /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   private double maxInsertRange = -1.0;
+
+   private final NormalOctreeUpdateRule updateRule = new NormalOctreeUpdateRule(occupancyParameters);
+
    private enum NormalComputationMethod {DIRECT_NEIGHBORS, CLOSE_NEIGHBORS, RANSAC};
    private static final NormalComputationMethod NORMAL_COMPUTATION_METHOD = NormalComputationMethod.RANSAC;
 
    private final TDoubleObjectHashMap<TIntObjectHashMap<OcTreeKeyList>> neighborOffsetsCached = new TDoubleObjectHashMap<>(4);
    private final LeafIterable<NormalOcTreeNode> leafIterable;
+
+   private double alphaCenterUpdate = 0.1;
 
    public NormalOcTree(double resolution)
    {
@@ -41,11 +60,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       leafIterable = new LeafIterable<>(this, treeDepth, true);
    }
 
-   private final TIntObjectHashMap<NormalOcTreeNode> keyToNodeMap = new TIntObjectHashMap<>();
-   private final Vector3d tempInitialNormalGuess = new Vector3d();
-   private final Point3d tempCenterUpdate = new Point3d();
-
-   public void updateNodeFromSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange)
+   public void insertSweepCollection(SweepCollection sweepCollection)
    {
       System.out.println("Entering updateNodeFromSweepCollection sweep size: " + sweepCollection.getNumberOfSweeps());
       for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
@@ -57,19 +72,21 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
          PointCloud scan = sweepCollection.getSweep(i);
 
-         updateNodesFromPointCloud(sensorOrigin, scan, minRange, maxRange);
+         insertPointCloud(scan, sensorOrigin);
       }
 
       long endTime = System.nanoTime();
       System.out.println("Exiting  updateNodeFromSweepCollection took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
    }
 
-   public void updateNodesFromPointCloud(Point3d sensorOrigin, PointCloud scan, double minRange, double maxRange)
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)
    {
       Point3d scanPoint = new Point3d();
-      double alphaCenterUpdate = 0.1;
-      double minRangeSquared = minRange < 0 ? 0 : minRange * minRange;
-      double maxRangeSquared = maxRange < 0 ? Double.POSITIVE_INFINITY : maxRange * maxRange;
+      double minRangeSquared = minInsertRange < 0.0 ? 0.0 : minInsertRange * minInsertRange;
+      double maxRangeSquared = maxInsertRange < 0.0 ? Double.POSITIVE_INFINITY : maxInsertRange * maxInsertRange;
+
+      updateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
+      updateRule.setAlphaHitLocationUpdate(alphaCenterUpdate);
 
       for (int i = 0; i < scan.size(); i++)
       {
@@ -77,19 +94,13 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          double distanceSquared = scanPoint.distanceSquared(sensorOrigin);
          if (distanceSquared < maxRangeSquared && distanceSquared > minRangeSquared)
          {
-            NormalOcTreeNode node = updateNode(scanPoint, true);
-            node.updateCenter(scanPoint, alphaCenterUpdate);
-            if (!node.isNormalSet())
-            {
-               tempCenterUpdate.set(scanPoint);
-               tempInitialNormalGuess.sub(sensorOrigin, tempCenterUpdate);
-               tempInitialNormalGuess.normalize();
-               node.setNormal(tempInitialNormalGuess);
-               node.setNormalQuality(Float.POSITIVE_INFINITY);
-            }
+            updateRule.setHitLocation(sensorOrigin, scanPoint);
+            updateNodeInternal(scanPoint, updateRule, null);
          }
       }
    }
+
+   private final HashMap<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
 
    public void updateNormalsAndPlanarRegions(int depth)
    {
@@ -99,7 +110,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          NormalOcTreeNode node = superNode.getNode();
          node.resetRegionId();
          node.resetHasBeenCandidateForRegion();
-         keyToNodeMap.put(superNode.getKey().hashCode(), node);
+         keyToNodeMap.put(new OcTreeKey(superNode.getKey()), node);
       }
 
       long startTime = System.nanoTime();
@@ -111,46 +122,6 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       updatePlanarRegionSegmentation(depth);
       endTime = System.nanoTime();
       System.out.println("Exiting  updatePlanarRegionSegmentation took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
-   }
-
-   public void updateSweepCollectionHitLocations(SweepCollection sweepCollection, double alphaUpdate, boolean lazyEvaluation)
-   {
-      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
-         updateHitLocations(sweepCollection.getSweepOrigin(i), sweepCollection.getSweep(i), alphaUpdate, lazyEvaluation);
-   }
-
-   private final OcTreeKey hitLocationKey = new OcTreeKey();
-
-   public void updateHitLocations(Point3d sensorOrigin, PointCloud pointCloud, double alphaUpdate, boolean lazyEvaluation)
-   {
-      for (int i = 0; i < pointCloud.size(); i++)
-      {
-         Point3f point = pointCloud.getPoint(i);
-         if (useBoundingBoxLimit && !isInBoundingBox(point))
-            continue;
-         if (coordinateToKey(point, hitLocationKey))
-            updateNodeCenterRecursively(root, hitLocationKey, 0, sensorOrigin, point, alphaUpdate, lazyEvaluation);
-      }
-   }
-
-   private void updateNodeCenterRecursively(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, Point3d sensorOrigin, Point3f centerUpdate, double alphaUpdate, boolean lazyEvaluation)
-   {
-      if (depth < treeDepth)
-      {
-         int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
-         NormalOcTreeNode child;
-         if (node.hasArrayForChildren() && (child = node.getChildUnsafe(childIndex)) != null)
-            updateNodeCenterRecursively(child, key, depth + 1, sensorOrigin, centerUpdate, alphaUpdate, lazyEvaluation);
-      }
-      node.updateCenter(centerUpdate, alphaUpdate);
-      if (!node.isNormalSet())
-      {
-         tempCenterUpdate.set(centerUpdate);
-         tempInitialNormalGuess.sub(sensorOrigin, tempCenterUpdate);
-         tempInitialNormalGuess.normalize();
-         node.setNormal(tempInitialNormalGuess);
-         node.setNormalQuality(Float.POSITIVE_INFINITY);
-      }
    }
 
    public void updateNormals()
@@ -294,7 +265,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       for (int i = tempNeighborKeysForNormal.size() - 1; i >= 0; i--)
       {
          OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(i);
-         currentNode = keyToNodeMap.get(currentKey.hashCode());
+         currentNode = keyToNodeMap.get(currentKey);
 
          if (currentNode == null)
          {
@@ -326,7 +297,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
          for (int i = 0; i < tempNeighborKeysForNormal.size(); i++)
          {
             OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(i);
-            currentNode = keyToNodeMap.get(currentKey.hashCode());
+            currentNode = keyToNodeMap.get(currentKey);
 
             if (currentNode != null && currentNode.isCenterSet())
             {
@@ -374,9 +345,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
       {
          tempKeyForNormal.add(key, cachedNeighborKeyOffsets.unsafeGet(i));
-         NormalOcTreeNode neighborNode = keyToNodeMap.get(tempKeyForNormal.hashCode());
-         if (neighborNode == null)
-            neighborNode = search(tempKeyForNormal);
+         NormalOcTreeNode neighborNode = keyToNodeMap.get(tempKeyForNormal);
 
          if (neighborNode == null)
             continue;
@@ -600,7 +569,7 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
       {
          neighborKey.add(nodeKey, cachedNeighborKeyOffsets.unsafeGet(i));
-         NormalOcTreeNode neighborNode = keyToNodeMap.get(neighborKey.hashCode());
+         NormalOcTreeNode neighborNode = keyToNodeMap.get(neighborKey);
          if (neighborNode == null || !isNodeOccupied(neighborNode))
             continue;
          if (neighborNode.getHasBeenCandidateForRegion() == planarRegionId || neighborNode.isPartOfRegion())
@@ -613,9 +582,106 @@ public class NormalOcTree extends AbstractOccupancyOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   @Override
-   protected NormalOcTreeNode createEmptyNode()
+   public void disableBoundingBox()
    {
-      return new NormalOcTreeNode();
+      boundingBox = null;
+   }
+
+   /**
+    * Bounding box to use for the next updates on this OcTree.
+    * If null, no limit will be applied.
+    * @param boundingBox
+    */
+   public void setBoundingBox(OcTreeBoundingBoxInterface boundingBox)
+   {
+      this.boundingBox = boundingBox;
+   }
+
+   public OcTreeBoundingBoxInterface getBoundingBox()
+   {
+      return boundingBox;
+   }
+
+   /**
+    * @return true if point is in the currently set bounding box or if there is no bounding box.
+    */
+   public boolean isInBoundingBox(Point3d candidate)
+   {
+      return boundingBox == null || boundingBox.isInBoundingBox(candidate);
+   }
+
+   /**
+    * @return true if point is in the currently set bounding box or if there is no bounding box.
+    */
+   public boolean isInBoundingBox(Point3f candidate)
+   {
+      return boundingBox == null || boundingBox.isInBoundingBox(candidate);
+   }
+
+   /**
+    * @return true if key is in the currently set bounding box or if there is no bounding box.
+    */
+   public boolean isInBoundingBox(OcTreeKeyReadOnly candidate)
+   {
+      return boundingBox == null || boundingBox.isInBoundingBox(candidate);
+   }
+
+   public boolean isNodeOccupied(NormalOcTreeNode node)
+   {
+      return OccupancyTools.isNodeOccupied(occupancyParameters, node);
+   }
+
+   public void setOccupancyParameters(OccupancyParameters occupancyParameters)
+   {
+      this.occupancyParameters.set(occupancyParameters);
+   }
+
+   public OccupancyParametersReadOnly getOccupancyParameters()
+   {
+      return occupancyParameters;
+   }
+   
+   /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   public void setMinimumInsertRange(double minRange)
+   {
+      minInsertRange = minRange;
+   }
+
+   /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   public void setMaximumInsertRange(double maxRange)
+   {
+      maxInsertRange = maxRange;
+   }
+
+   /** Minimum and maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   public void setBoundsInsertRange(double minRange, double maxRange)
+   {
+      setMinimumInsertRange(minRange);
+      setMaximumInsertRange(maxRange);
+   }
+
+   /** Remove the limitation in minimum range when inserting a ray or point cloud. */
+   public void removeMinimumInsertRange()
+   {
+      minInsertRange = -1.0;
+   }
+   
+   /** Remove the limitation in maximum range when inserting a ray or point cloud. */
+   public void removeMaximumInsertRange()
+   {
+      maxInsertRange = -1.0;
+   }
+
+   /** Remove the limitation in minimum and maximum range when inserting a ray or point cloud. */
+   public void removeBoundsInsertRange()
+   {
+      removeMinimumInsertRange();
+      removeMaximumInsertRange();
+   }
+
+   @Override
+   protected Class<NormalOcTreeNode> getNodeClass()
+   {
+      return NormalOcTreeNode.class;
    }
 }

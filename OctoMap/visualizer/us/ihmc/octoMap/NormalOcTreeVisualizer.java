@@ -1,8 +1,5 @@
 package us.ihmc.octoMap;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
@@ -25,9 +22,8 @@ import us.ihmc.javaFXToolkit.shapes.MultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorPalette1D;
 import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
-import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
-import us.ihmc.octoMap.ocTree.NormalOcTree;
+import us.ihmc.octoMap.ocTree.implementations.NormalOcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.tools.IntersectionPlaneBoxCalculator;
 import us.ihmc.robotics.geometry.RotationTools;
@@ -55,7 +51,6 @@ public class NormalOcTreeVisualizer extends Application
       System.out.println("Initialized octree");
       System.out.println("Computing normals");
       long startTime = System.nanoTime();
-      ocTree.updateHitLocations(lidarPosition, pointcloud, 0.1, false);
       ocTree.updateNormalsAndPlanarRegions(16);
       ocTree.updateNormalsAndPlanarRegions(16);
       ocTree.updateNormalsAndPlanarRegions(16);
@@ -64,19 +59,6 @@ public class NormalOcTreeVisualizer extends Application
       ocTree.updateNormalsAndPlanarRegions(16);
       long endTime = System.nanoTime();
       System.out.println("Done computing normals: time it took = " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
-
-      Point3d badNodeCoordinate = new Point3d(0.975, -0.025, -0.075);
-      OcTreeKey badNodeKey = ocTree.coordinateToKey(badNodeCoordinate);
-      
-      List<Vector3d> normals = new ArrayList<>();
-      ocTree.getNormals(badNodeKey, normals, true);
-      System.out.println(normals);
-
-      Point3d end = new Point3d();
-      Vector3d direction = new Vector3d(-3.54, -3.565, -0.2);
-      direction.normalize();
-      ocTree.castRay(new Point3d(), direction, end);
-      
    }
    
    PointCloud pointcloud = new PointCloud();
@@ -99,44 +81,6 @@ public class NormalOcTreeVisualizer extends Application
       }
 
       ocTree.insertPointCloud(pointcloud, origin);
-   }
-
-   private void callUpdateNode()
-   {
-      double dx = 0.05;
-      double dy = 0.05;
-      double dz = 0.05;
-
-      double xOff = 0.01;
-      double yOff = 0.01;
-      double zOff = 0.01;
-      // insert some measurements of occupied cells
-      for (int x = -20; x < 20; x++)
-      {
-         for (int y = -20; y < 20; y++)
-         {
-            for (int z = -20; z < 20; z++)
-            {
-               Point3d endpoint = new Point3d(x * dx + xOff, y * dy + yOff, z * dz + zOff);
-               ocTree.updateNode(endpoint, true);
-            }
-         }
-      }
-
-      //      // insert some measurements of free cells
-      for (int x = -30; x < 30; x++)
-      {
-         for (int y = -30; y < 30; y++)
-         {
-            for (int z = -30; z < 30; z++)
-            {
-               Point3d endpoint = new Point3d(x * 0.02f + 2.0f, y * 0.02f + 2.0f, z * 0.02f + 2.0f);
-               ocTree.updateNode(endpoint, false);
-            }
-         }
-      }
-
-      ocTree.updateInnerOccupancy();
    }
 
    public void createPlane(Point3d lidarPosition, double pitch, double roll, double z)

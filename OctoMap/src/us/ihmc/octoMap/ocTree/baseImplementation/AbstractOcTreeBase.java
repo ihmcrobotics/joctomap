@@ -16,7 +16,10 @@ import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.NodeBuilder;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
+import us.ihmc.octoMap.ocTree.rules.interfaces.EarlyAbortRule;
+import us.ihmc.octoMap.ocTree.rules.interfaces.UpdateRule;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;
@@ -42,8 +45,9 @@ import us.ihmc.octoMap.tools.OctoMapTools;
 public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
    protected NODE root; ///< root NODE, null for empty tree
-   private List<NODE> unusedNodes = new ArrayList<>(50000000);
-   private List<NODE[]> unusedNodeArrays = new ArrayList<>(50000000 / 8);
+   private final NodeBuilder<NODE> nodeBuilder;
+   private final List<NODE> unusedNodes = new ArrayList<>(50000000);
+   private final List<NODE[]> unusedNodeArrays = new ArrayList<>(50000000 / 8);
 
    // constants of the tree
    /** Maximum tree depth (fixed to 16 usually) */
@@ -52,10 +56,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    protected int treeSize; ///< number of nodes in tree
    /** flag to denote whether the octree extent changed (for lazy min/max eval) */
-   protected boolean size_changed;
+   protected boolean sizeChanged;
 
-   protected double max_value[] = new double[3]; ///< max in x, y, z
-   protected double min_value[] = new double[3]; ///< min in x, y, z
+   protected double maxCoordinate[] = new double[3]; ///< max in x, y, z
+   protected double minCoordinate[] = new double[3]; ///< min in x, y, z
+   protected boolean lazyUpdate = false;
 
    /// data structure for ray casting, array for multithreading
 
@@ -72,8 +77,9 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       this.resolution = resolution;
       this.treeDepth = treeDepth;
       treeSize = 0;
+      nodeBuilder = new NodeBuilder<>(getNodeClass());
 
-      init();
+      initialize();
       // no longer create an empty root node - only on demand
       ensureCapacityUnusedPools(2000000);
    }
@@ -82,20 +88,20 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
       resolution = other.resolution;
       treeDepth = other.treeDepth;
-      init();
+      nodeBuilder = new NodeBuilder<>(getNodeClass());
+      initialize();
       if (other.root != null)
-         root = other.root.cloneRecursive();
+         root = other.root.cloneRecursive(nodeBuilder);
    }
 
    @SuppressWarnings("unchecked")
    public void ensureCapacityUnusedPools(int minCapacity)
    {
       while (unusedNodes.size() < minCapacity)
-         unusedNodes.add(createEmptyNode());
-      
-      NODE node = root != null ? root : createEmptyNode();
+         unusedNodes.add(nodeBuilder.createNode());
+
       while (unusedNodeArrays.size() < minCapacity)
-         unusedNodeArrays.add((NODE[]) Array.newInstance(node.getClass(), 8));
+         unusedNodeArrays.add((NODE[]) Array.newInstance(getNodeClass(), 8));
    }
 
    /**
@@ -106,13 +112,13 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     */
    public void swapContent(AbstractOcTreeBase<NODE> other)
    {
-      NODE this_root = root;
+      NODE thisRoot = root;
       root = other.root;
-      other.root = this_root;
+      other.root = thisRoot;
 
-      int this_size = treeSize;
+      int thisSize = treeSize;
       treeSize = other.treeSize;
-      other.treeSize = this_size;
+      other.treeSize = thisSize;
    }
 
    /// Comparison between two octrees, all meta data, all
@@ -147,12 +153,22 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return getClass().getSimpleName();
    }
 
+   /**
+    * Affect the methods using {@link #updateNodeInternal(OcTreeKeyReadOnly, UpdateRule, EarlyAbortRule)}.
+    * @param lazyUpdate whether update of inner nodes is omitted after the update (default: false).
+    *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
+    */
+   public void setLazyUpdate(boolean lazyUpdate)
+   {
+      this.lazyUpdate = lazyUpdate;
+   }
+
    /// Change the resolution of the octree, scaling all voxels.
    /// This will not preserve the (metric) scale!
    public void setResolution(double newResolution)
    {
       resolution = newResolution;
-      size_changed = true;
+      sizeChanged = true;
    }
 
    public double getResolution()
@@ -173,17 +189,24 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    // -- Tree structure operations formerly contained in the nodes ---
 
    /// Creates (allocates) the i-th child of the node. @return ptr to newly create NODE
-   public NODE createNodeChild(NODE node, int childIndex)
+   protected NODE createNodeChild(NODE node, int childIndex)
    {
       OcTreeNodeTools.checkChildIndex(childIndex);
+      assignChildrenArrayIfNecessary(node);
 
       if (node.getChildUnsafe(childIndex) != null)
          throw new RuntimeException("Something went wrong.");
 
-      return createNodeChildUnsafe(node, childIndex);
+      NODE newChildNode = getOrCreateNode();
+      node.setChildUnsafe(childIndex, newChildNode);
+
+      treeSize++;
+      sizeChanged = true;
+
+      return newChildNode;
    }
 
-   protected NODE createNodeChildUnsafe(NODE node, int childIndex)
+   private void assignChildrenArrayIfNecessary(NODE node)
    {
       if (!node.hasArrayForChildren())
       {
@@ -192,14 +215,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          else
             node.assignChildren(unusedNodeArrays.remove(unusedNodeArrays.size() - 1));
       }
+   }
 
-      NODE newChildNode = unusedNodes.isEmpty() ? node.create() : unusedNodes.remove(unusedNodes.size() - 1);
-      node.setChildUnsafe(childIndex, newChildNode);
-
-      treeSize++;
-      size_changed = true;
-
-      return newChildNode;
+   private NODE getOrCreateNode()
+   {
+      return unusedNodes.isEmpty() ? nodeBuilder.createNode() : unusedNodes.remove(unusedNodes.size() - 1);
    }
 
    /// Deletes the i-th child of the node
@@ -212,34 +232,94 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       unusedNodes.add(node.removeChild(childIndex));
 
       treeSize--;
-      size_changed = true;
+      sizeChanged = true;
    }
 
    /**
-    *  A node is collapsible if all children exist, don't have children of their own
-    * and have the same occupancy value
-    * @param node
-    * @return
+    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
+    * <p>
+    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
+    * This only works if key is at the lowest octree level.
+    * @param coordinate 3d coordinate of the NODE that is to be updated
+    * @param updateRule Specifies how the NODE and its parents should be updated.
+    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
+    * @return the updated NODE
     */
-   public boolean isNodeCollapsible(NODE node)
+   protected NODE updateNodeInternal(Point3f coordinate, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
    {
-//      // all children must exist, must not have children of
-//      // their own and have the same occupancy probability
-      if (!node.hasArrayForChildren())
-         return false;
+      return updateNodeInternal(coordinate.getX(), coordinate.getY(), coordinate.getZ(), updateRule, earlyAbortRule);
+   }
 
-      NODE firstChild = node.getChildUnsafe(0);
-      if (firstChild == null || firstChild.hasAtLeastOneChild())
-         return false;
+   /**
+    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
+    * <p>
+    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
+    * This only works if key is at the lowest octree level.
+    * @param coordinate 3d coordinate of the NODE that is to be updated
+    * @param updateRule Specifies how the NODE and its parents should be updated.
+    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
+    * @return the updated NODE
+    */
+   protected NODE updateNodeInternal(Point3d coordinate, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
+   {
+      return updateNodeInternal(coordinate.getX(), coordinate.getY(), coordinate.getZ(), updateRule, earlyAbortRule);
+   }
 
-      for (int i = 1; i < 8; i++)
+   /**
+    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
+    * <p>
+    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
+    * This only works if key is at the lowest octree level.
+    * @param x coordinate of the NODE that is to be updated
+    * @param y coordinate of the NODE that is to be updated
+    * @param z coordinate of the NODE that is to be updated
+    * @param updateRule Specifies how the NODE and its parents should be updated.
+    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
+    * @return the updated NODE
+    */
+   protected NODE updateNodeInternal(double x, double y, double z, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
+   {
+      OcTreeKey key = coordinateToKey(x, y, z);
+      if (key == null)
+         return null;
+      else
+         return updateNodeInternal(key, updateRule, earlyAbortRule);
+   }
+
+   /**
+    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
+    * <p>
+    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
+    * This only works if key is at the lowest octree level.
+    * @param key OcTreeKey of the NODE that is to be updated
+    * @param updateRule Specifies how the NODE and its parents should be updated.
+    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
+    * @return the updated NODE
+    */
+   protected NODE updateNodeInternal(OcTreeKeyReadOnly key, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
+   {
+      boolean createdRoot = false;
+
+      if (root == null)
       {
-         NODE currentChild = node.getChildUnsafe(i);
-
-         if (currentChild == null || currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
-            return false;
+         root = getOrCreateNode();
+         treeSize++;
+         sizeChanged = true;
+         createdRoot = true;
       }
-      return true;
+
+      if (earlyAbortRule != null)
+      {
+         NODE leaf = OcTreeSearchTools.search(root, key, treeDepth);
+
+         if (leaf != null)
+         {
+            if (earlyAbortRule.shouldAbortFullDepthUpdate(leaf))
+               return leaf;
+         }
+      }
+
+      return updateNodeRecurs(root, createdRoot, key, updateRule, 0);
    }
 
    /**
@@ -257,7 +337,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       for (int k = 0; k < 8; k++)
       {
-         NODE newNode = createNodeChildUnsafe(node, k);
+         NODE newNode = createNodeChild(node, k);
          newNode.copyData(node);
       }
    }
@@ -268,17 +348,15 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     */
    public boolean pruneNode(NODE node)
    {
-      if (!isNodeCollapsible(node))
+      if (!OcTreeNodeTools.isNodeCollapsible(node))
          return false;
 
       // set value to children's values (all assumed equal)
       node.copyData(node.getChildUnsafe(0));
 
       // delete children (known to be leafs at this point!)
-      for (int i = 0; i < 8; i++)
-      {
-         deleteNodeChild(node, i);
-      }
+      for (int childIndex = 0; childIndex < 8; childIndex++)
+         deleteNodeChild(node, childIndex);
       unusedNodeArrays.add(node.removeChildren());
 
       return true;
@@ -377,17 +455,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    public boolean deleteNode(Point3d coord, int depth)
    {
-      OcTreeKey key = coordinateToKey(coord);
-      if (key == null)
-      {
-         System.err.println(AbstractOcTreeBase.class.getSimpleName() + " Error in deleteNode: [" + coord + "] is out of OcTree bounds!");
-         return false;
-      }
-      else
-      {
-         return deleteNode(key, depth);
-      }
-
+      return deleteNode(coord.getX(), coord.getY(), coord.getZ(), depth);
    }
 
    /** 
@@ -408,7 +476,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (depth == 0)
          depth = treeDepth;
 
-      return deleteNodeRecurs(root, 0, depth, key);
+      return deleteNodeRecursively(root, 0, depth, key);
    }
 
    /// Deletes the complete tree structure
@@ -416,11 +484,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
       if (root != null)
       {
-         deleteNodeRecurs(root);
+         deleteNodeRecursively(root);
          root = null;
          treeSize = 0;
          // max extent of tree changed:
-         size_changed = true;
+         sizeChanged = true;
       }
    }
 
@@ -437,8 +505,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       for (int depth = treeDepth - 1; depth > 0; depth--)
       {
-         int num_pruned = pruneRecurs(root, 0, depth, 0);
-         if (num_pruned == 0)
+         int numberOfPrunedNodes = pruneRecursively(root, 0, depth, 0);
+         if (numberOfPrunedNodes == 0)
             break;
       }
    }
@@ -450,7 +518,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public void expand()
    {
       if (root != null)
-         expandRecurs(root, 0, treeDepth);
+         expandRecursively(root, 0, treeDepth);
    }
 
    // -- statistics  ----------------------
@@ -492,8 +560,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    public void getMetricMin(Point3d min)
    {
-      calcMinMax();
-      min.set(min_value[0], min_value[1], min_value[2]);
+      calculateMinMax();
+      min.set(minCoordinate[0], minCoordinate[1], minCoordinate[2]);
    }
 
    /// maximum value of the bounding box of all known space in x, y, z
@@ -506,8 +574,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    public void getMetricMax(Point3d max)
    {
-      calcMinMax();
-      max.set(max_value[0], max_value[1], max_value[2]);
+      calculateMinMax();
+      max.set(maxCoordinate[0], maxCoordinate[1], maxCoordinate[2]);
    }
 
    /// Traverses the tree to calculate the total number of nodes
@@ -527,18 +595,18 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (root == null)
          return 0;
 
-      return getNumLeafNodesRecurs(root);
+      return OcTreeNodeTools.getNumberOfLeafNodesRecursive(root);
    }
 
    // -- access tree nodes  ------------------
 
    /// return centers of leafs that do NOT exist (but could) in a given bounding box
-   public void getUnknownLeafCenters(List<Point3d> node_centers, Point3d pmin, Point3d pmax)
+   public void getUnknownLeafCenters(List<Point3d> nodeCenters, Point3d pmin, Point3d pmax)
    {
-      getUnknownLeafCenters(node_centers, pmin, pmax, 0);
+      getUnknownLeafCenters(nodeCenters, pmin, pmax, 0);
    }
 
-   public void getUnknownLeafCenters(List<Point3d> node_centers, Point3d pmin, Point3d pmax, int depth)
+   public void getUnknownLeafCenters(List<Point3d> nodeCenters, Point3d pmin, Point3d pmax, int depth)
    {
       OctoMapTools.checkIfDepthValid(depth, treeDepth);
       if (depth == 0)
@@ -551,11 +619,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       double[] diff = new double[3];
       int[] steps = new int[3];
-      double step_size = resolution * Math.pow(2, treeDepth - depth);
+      double stepSize = resolution * Math.pow(2, treeDepth - depth);
       for (int i = 0; i < 3; ++i)
       {
          diff[i] = pmaxArray[i] - pminArray[i];
-         steps[i] = (int) Math.floor(diff[i] / step_size);
+         steps[i] = (int) Math.floor(diff[i] / stepSize);
          //      std::cout << "bbx " << i << " size: " << diff[i] << " " << steps[i] << " steps\n";
       }
 
@@ -563,18 +631,18 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       NODE res;
       for (int x = 0; x < steps[0]; ++x)
       {
-         p.setX(p.getX() + step_size);
+         p.setX(p.getX() + stepSize);
          for (int y = 0; y < steps[1]; ++y)
          {
-            p.setY(p.getY() + step_size);
+            p.setY(p.getY() + stepSize);
             for (int z = 0; z < steps[2]; ++z)
             {
                //          std::cout << "querying p=" << p << std::endl;
-               p.setZ(p.getZ() + step_size);
+               p.setZ(p.getZ() + stepSize);
                res = search(p, depth);
                if (res == null)
                {
-                  node_centers.add(p);
+                  nodeCenters.add(p);
                }
             }
             p.setZ(pmin.getZ());
@@ -670,7 +738,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /** Converts from a 3D coordinate into a 3D addressing key at a given depth */
    public OcTreeKey coordinateToKey(double x, double y, double z, int depth)
    {
-      return OcTreeKeyConversionTools.convertCartesianCoordinateToKey(x, y, z, depth, resolution, treeDepth);
+      return OcTreeKeyConversionTools.coordinateToKey(x, y, z, depth, resolution, treeDepth);
    }
 
    public boolean coordinateToKey(Point3d coord, OcTreeKey keyToPack)
@@ -715,36 +783,36 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// initialize non-trivial members, helper for constructors
-   protected void init()
+   protected void initialize()
    {
       setResolution(resolution);
       for (int i = 0; i < 3; i++)
       {
-         max_value[i] = Double.NEGATIVE_INFINITY;
-         min_value[i] = Double.POSITIVE_INFINITY;
+         maxCoordinate[i] = Double.NEGATIVE_INFINITY;
+         minCoordinate[i] = Double.POSITIVE_INFINITY;
       }
-      size_changed = true;
+      sizeChanged = true;
    }
 
-   /// recalculates min and max in x, y, z. Does nothing when tree size didn't change.
-   protected void calcMinMax()
+   /** Recalculates min and max in x, y, z. Does nothing when tree size didn't change. Reset {@link #sizeChanged} */
+   protected void calculateMinMax()
    {
-      if (!size_changed)
+      if (!sizeChanged)
          return;
 
       // empty tree
       if (root == null)
       {
-         min_value[0] = min_value[1] = min_value[2] = 0.0;
-         max_value[0] = max_value[1] = max_value[2] = 0.0;
-         size_changed = false;
+         minCoordinate[0] = minCoordinate[1] = minCoordinate[2] = 0.0;
+         maxCoordinate[0] = maxCoordinate[1] = maxCoordinate[2] = 0.0;
+         sizeChanged = false;
          return;
       }
 
       for (int i = 0; i < 3; i++)
       {
-         max_value[i] = Double.NEGATIVE_INFINITY;
-         min_value[i] = Double.POSITIVE_INFINITY;
+         maxCoordinate[i] = Double.NEGATIVE_INFINITY;
+         minCoordinate[i] = Double.POSITIVE_INFINITY;
       }
 
       for (OcTreeSuperNode<NODE> node : this)
@@ -754,26 +822,25 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          double x = node.getX() - halfSize;
          double y = node.getY() - halfSize;
          double z = node.getZ() - halfSize;
-         if (x < min_value[0])
-            min_value[0] = x;
-         if (y < min_value[1])
-            min_value[1] = y;
-         if (z < min_value[2])
-            min_value[2] = z;
+         if (x < minCoordinate[0])
+            minCoordinate[0] = x;
+         if (y < minCoordinate[1])
+            minCoordinate[1] = y;
+         if (z < minCoordinate[2])
+            minCoordinate[2] = z;
 
          x += size;
          y += size;
          z += size;
-         if (x > max_value[0])
-            max_value[0] = x;
-         if (y > max_value[1])
-            max_value[1] = y;
-         if (z > max_value[2])
-            max_value[2] = z;
-
+         if (x > maxCoordinate[0])
+            maxCoordinate[0] = x;
+         if (y > maxCoordinate[1])
+            maxCoordinate[1] = y;
+         if (z > maxCoordinate[2])
+            maxCoordinate[2] = z;
       }
 
-      size_changed = false;
+      sizeChanged = false;
    }
 
    protected int calculateNumberOfNodesRecursively(NODE node, int currentNumberOfNodes)
@@ -797,7 +864,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive delete of node and all children (deallocates memory)
-   protected void deleteNodeRecurs(NODE node)
+   protected void deleteNodeRecursively(NODE node)
    {
       if (node.hasAtLeastOneChild())
       {
@@ -807,7 +874,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             if (child != null)
             {
                unusedNodes.add(child);
-               deleteNodeRecurs(child);
+               deleteNodeRecursively(child);
             }
          }
 
@@ -816,9 +883,9 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive call of deleteNode()
-   protected boolean deleteNodeRecurs(NODE node, int depth, int max_depth, OcTreeKeyReadOnly key)
+   protected boolean deleteNodeRecursively(NODE node, int depth, int maxDepth, OcTreeKeyReadOnly key)
    {
-      if (depth >= max_depth) // on last level: delete child when going up
+      if (depth >= maxDepth) // on last level: delete child when going up
          return true;
 
       if (node == null)
@@ -843,7 +910,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
 
       // follow down further, fix inner nodes on way back up
-      boolean deleteChild = deleteNodeRecurs(OcTreeNodeTools.getNodeChild(node, pos), depth + 1, max_depth, key);
+      boolean deleteChild = deleteNodeRecursively(OcTreeNodeTools.getNodeChild(node, pos), depth + 1, maxDepth, key);
       if (deleteChild)
       {
          // TODO: lazy eval?
@@ -861,8 +928,59 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return false;
    }
 
+   private NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, UpdateRule<NODE> updateRule, int depth)
+   {
+      boolean createdNode = false;
+
+      if (node == null)
+         throw new RuntimeException("The given node is null.");
+
+      // follow down to last level
+      if (depth < treeDepth)
+      {
+         int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
+         if (!OcTreeNodeTools.nodeChildExists(node, pos))
+         {
+            // child does not exist, but maybe it's a pruned node?
+            if (!node.hasAtLeastOneChild() && !nodeJustCreated)
+            { // current node does not have children AND it is not a new node -> expand pruned node
+               expandNode(node);
+            }
+            else
+            { // not a pruned node, create requested child
+               createNodeChild(node, pos);
+               createdNode = true;
+            }
+         }
+
+         NODE nodeChild = OcTreeNodeTools.getNodeChild(node, pos);
+
+         if (lazyUpdate)
+         {
+            return updateNodeRecurs(nodeChild, createdNode, key, updateRule, depth + 1);
+         }
+         else
+         {
+            NODE leafToReturn = updateNodeRecurs(nodeChild, createdNode, key, updateRule, depth + 1);
+            // prune node if possible, otherwise set own probability
+            // note: combining both did not lead to a speedup!
+            if (pruneNode(node)) // return pointer to current parent (pruned), the just updated node no longer exists
+               leafToReturn = node;
+            else // That's an inner node, apply the update rule
+               updateRule.updateInnerNode(node);
+
+            return leafToReturn;
+         }
+      }
+      else // at last level, update node, end of recursion
+      {
+         updateRule.updateLeaf(node, key, nodeJustCreated);
+         return node;
+      }
+   }
+
    /// recursive call of prune()
-   protected int pruneRecurs(NODE node, int depth, int max_depth, int numberOfPrunedNode)
+   protected int pruneRecursively(NODE node, int depth, int maxDepth, int numberOfPrunedNode)
    {
       if (node == null)
          throw new RuntimeException("The given node is null");
@@ -870,13 +988,13 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (!node.hasAtLeastOneChild())
          return numberOfPrunedNode;
 
-      if (depth < max_depth)
+      if (depth < maxDepth)
       {
          for (int i = 0; i < 8; i++)
          {
             NODE childNode;
             if ((childNode = node.getChildUnsafe(i)) != null)
-               numberOfPrunedNode = pruneRecurs(childNode, depth + 1, max_depth, numberOfPrunedNode);
+               numberOfPrunedNode = pruneRecursively(childNode, depth + 1, maxDepth, numberOfPrunedNode);
          }
       } // end if depth
       else
@@ -892,7 +1010,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /** recursive call of expand() */
-   protected void expandRecurs(NODE node, int depth, int maxDepth)
+   protected void expandRecursively(NODE node, int depth, int maxDepth)
    {
       if (depth >= maxDepth)
          return;
@@ -910,29 +1028,10 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          if (OcTreeNodeTools.nodeChildExists(node, i))
          {
-            expandRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1, maxDepth);
+            expandRecursively(OcTreeNodeTools.getNodeChild(node, i), depth + 1, maxDepth);
          }
       }
    }
 
-   protected int getNumLeafNodesRecurs(NODE parent)
-   {
-      if (parent == null)
-         throw new RuntimeException("The given parent node is null");
-
-      if (!parent.hasAtLeastOneChild()) // this is a leaf -> terminate
-         return 1;
-
-      int sumLeafsChildren = 0;
-      for (int i = 0; i < 8; ++i)
-      {
-         if (OcTreeNodeTools.nodeChildExists(parent, i))
-         {
-            sumLeafsChildren += getNumLeafNodesRecurs(OcTreeNodeTools.getNodeChild(parent, i));
-         }
-      }
-      return sumLeafsChildren;
-   }
-
-   protected abstract NODE createEmptyNode();
+   protected abstract Class<NODE> getNodeClass();
 }

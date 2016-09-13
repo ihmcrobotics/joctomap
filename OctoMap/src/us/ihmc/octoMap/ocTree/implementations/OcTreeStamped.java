@@ -1,10 +1,10 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.ocTree.implementations;
 
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OcTreeNodeStamped;
-import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
+import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTree;
 
-public class OcTreeStamped extends AbstractOccupancyOcTreeBase<OcTreeNodeStamped>
+public class OcTreeStamped extends AbstractOccupancyOcTree<OcTreeNodeStamped>
 {
 
    public OcTreeStamped(double resolution)
@@ -37,18 +37,18 @@ public class OcTreeStamped extends AbstractOccupancyOcTreeBase<OcTreeNodeStamped
    @Override
    public void updateNodeLogOdds(OcTreeNodeStamped node, float update)
    {
-      updateNodeLogOdds(node, update);
+      super.updateNodeLogOdds(node, update);
       node.updateTimestamp();
    }
 
    public void integrateMissNoTime(OcTreeNodeStamped node)
    {
-      updateNodeLogOdds(node, missUpdateLogOdds);
+      updateNodeLogOdds(node, occupancyParameters.getMissProbabilityLogOdds());
    }
 
    @Override
-   protected OcTreeNodeStamped createEmptyNode()
+   protected Class<OcTreeNodeStamped> getNodeClass()
    {
-      return new OcTreeNodeStamped();
+      return OcTreeNodeStamped.class;
    }
 }

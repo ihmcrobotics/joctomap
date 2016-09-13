@@ -1,22 +1,16 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.ocTree.implementations;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.ColorOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
-import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTreeBase;
+import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTree;
 
-public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
+public class ColorOcTree extends AbstractOccupancyOcTree<ColorOcTreeNode>
 {
    public ColorOcTree(double resolution)
    {
       super(resolution);
-   }
-
-   @Override
-   protected ColorOcTreeNode createEmptyNode()
-   {
-      return new ColorOcTreeNode();
    }
 
    /// virtual constructor: creates a new object of same type
@@ -35,7 +29,7 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
    @Override
    public boolean pruneNode(ColorOcTreeNode node)
    {
-      if (!isNodeCollapsible(node))
+      if (!OcTreeNodeTools.isNodeCollapsible(node))
          return false;
 
       // set value to children's values (all assumed equal)
@@ -50,31 +44,6 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
          deleteNodeChild(node, i);
       }
       node.removeChildren();
-
-      return true;
-   }
-
-   @Override
-   public boolean isNodeCollapsible(ColorOcTreeNode node)
-   {
-      // all children must exist, must not have children of
-      // their own and have the same occupancy probability
-      if (!OcTreeNodeTools.nodeChildExists(node, 0))
-         return false;
-
-      ColorOcTreeNode firstChild = OcTreeNodeTools.getNodeChild(node, 0);
-      if (firstChild.hasAtLeastOneChild())
-         return false;
-
-      for (int i = 1; i < 8; i++)
-      {
-         // compare nodes only using their occupancy, ignoring color for pruning
-         if (!OcTreeNodeTools.nodeChildExists(node, i))
-            return false;
-         ColorOcTreeNode child = OcTreeNodeTools.getNodeChild(node, i);
-         if (child.hasAtLeastOneChild() || !child.epsilonEquals(firstChild))
-            return false;
-      }
 
       return true;
    }
@@ -177,5 +146,11 @@ public class ColorOcTree extends AbstractOccupancyOcTreeBase<ColorOcTreeNode>
          node.updateOccupancyChildren();
          node.updateColorChildren();
       }
+   }
+
+   @Override
+   protected Class<ColorOcTreeNode> getNodeClass()
+   {
+      return ColorOcTreeNode.class;
    }
 }
