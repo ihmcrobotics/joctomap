@@ -196,18 +196,6 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
    }
 
    @Override
-   public boolean isInBoundingBox(Point3d candidate)
-   {
-      return isInBoundingBox(candidate.getX(), candidate.getY(), candidate.getZ());
-   }
-
-   @Override
-   public boolean isInBoundingBox(Point3f candidate)
-   {
-      return isInBoundingBox(candidate.getX(), candidate.getY(), candidate.getZ());
-   }
-
-   @Override
    public boolean isInBoundingBox(OcTreeKeyReadOnly candidate)
    {
       if (minKeyDirtyBit || maxKeyDirtyBit)

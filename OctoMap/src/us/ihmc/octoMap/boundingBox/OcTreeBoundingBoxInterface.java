@@ -10,9 +10,15 @@ public interface OcTreeBoundingBoxInterface
 
    boolean isInBoundingBox(double x, double y, double z);
 
-   boolean isInBoundingBox(Point3d candidate);
+   default boolean isInBoundingBox(Point3d candidate)
+   {
+      return isInBoundingBox(candidate.getX(), candidate.getY(), candidate.getZ());
+   }
 
-   boolean isInBoundingBox(Point3f candidate);
+   default boolean isInBoundingBox(Point3f candidate)
+   {
+      return isInBoundingBox(candidate.getX(), candidate.getY(), candidate.getZ());
+   }
 
    boolean isInBoundingBox(OcTreeKeyReadOnly candidate);
 
