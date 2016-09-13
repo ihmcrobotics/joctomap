@@ -1,10 +1,12 @@
 package us.ihmc.octoMap.boundingBox;
 
 import javax.vecmath.Point3d;
+import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
+import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 
 public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInterface
 {
@@ -23,6 +25,11 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
    {
    }
 
+   public OcTreeBoundingBoxWithCenterAndYaw(OcTreeSimpleBoundingBox simpleBoundingBox)
+   {
+      set(simpleBoundingBox);
+   }
+
    public OcTreeBoundingBoxWithCenterAndYaw(OcTreeBoundingBoxWithCenterAndYaw other)
    {
       set(other);
@@ -31,6 +38,16 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
    public OcTreeBoundingBoxWithCenterAndYaw(Point3d minCoordinate, Point3d maxCoordinate)
    {
       set(minCoordinate, maxCoordinate);
+   }
+
+   public OcTreeBoundingBoxWithCenterAndYaw(Point3d minCoordinate, Point3d maxCoordinate, double resolution, int treeDepth)
+   {
+      set(minCoordinate, maxCoordinate);
+      update(resolution, treeDepth);
+   }
+
+   public void set(OcTreeSimpleBoundingBox simpleBoundingBox)
+   {
    }
 
    public void set(OcTreeBoundingBoxWithCenterAndYaw other)
@@ -96,10 +113,48 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       halfSizeKeyDirtyBit = true;
    }
 
+   public void setHalfSize(double[] halfSize)
+   {
+      halfSizeMetric.set(halfSize);
+
+      halfSizeMetricDirtyBit = false;
+      halfSizeKeyDirtyBit = true;
+   }
+
    public void setYaw(double yaw)
    {
       sinYaw = Math.sin(yaw);
       cosYaw = Math.cos(yaw);
+   }
+
+   public void update(double resolution, int treeDepth)
+   {
+      if (centerKeyDirtyBit)
+      {
+         boolean success = OcTreeKeyConversionTools.coordinateToKey(centerMetric, resolution, treeDepth, centerKey);
+         if (!success)
+            System.err.println(getClass().getSimpleName() + " (in update): ERROR while generating center key.");
+      }
+      else if (centerMetricDirtyBit)
+      {
+         OcTreeKeyConversionTools.keyToCoordinate(centerKey, centerMetric, resolution, treeDepth);
+      }
+
+      if (halfSizeKeyDirtyBit)
+      {
+         boolean success = OcTreeKeyConversionTools.coordinateToKey(halfSizeMetric, resolution, treeDepth, halfSizeKey);
+         if (!success)
+            System.err.println(getClass().getSimpleName() + " (in update): ERROR while generating half-size key.");
+      }
+      else if (centerMetricDirtyBit)
+      {
+         OcTreeKeyConversionTools.keyToCoordinate(halfSizeKey, halfSizeMetric, resolution, treeDepth);
+      }
+
+      centerKeyDirtyBit = false;
+      halfSizeKeyDirtyBit = false;
+      centerMetricDirtyBit = false;
+      halfSizeMetricDirtyBit = false;
    }
 
    @Override
@@ -152,5 +207,15 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
    public OcTreeBoundingBoxWithCenterAndYaw getCopy()
    {
       return new OcTreeBoundingBoxWithCenterAndYaw(this);
+   }
+
+   public void getBoundingBoxHalfSize(Tuple3d halfSizeToPack)
+   {
+      halfSizeToPack.set(halfSizeMetric);
+   }
+
+   public void getBoundingBoxHalfSize(double[] halfSizeToPack)
+   {
+      halfSizeMetric.get(halfSizeToPack);
    }
 }

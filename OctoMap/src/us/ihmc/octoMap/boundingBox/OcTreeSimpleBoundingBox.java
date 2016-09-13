@@ -156,7 +156,7 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
       {
          boolean success = OcTreeKeyConversionTools.coordinateToKey(minCoordinate, resolution, treeDepth, minKey);
          if (!success)
-            System.err.println(getClass().getSimpleName() + " (in setMinCoordinate): ERROR while generating min key.");
+            System.err.println(getClass().getSimpleName() + " (in update): ERROR while generating min key.");
       }
       else if (minCoordinateDirtyBit)
       {
@@ -167,7 +167,7 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
       {
          boolean success = OcTreeKeyConversionTools.coordinateToKey(maxCoordinate, resolution, treeDepth, maxKey);
          if (!success)
-            System.err.println(getClass().getSimpleName() + " (in setMaxCoordinate): ERROR while generating max key.");
+            System.err.println(getClass().getSimpleName() + " (in update): ERROR while generating max key.");
       }
       else if (maxCoordinateDirtyBit)
       {
