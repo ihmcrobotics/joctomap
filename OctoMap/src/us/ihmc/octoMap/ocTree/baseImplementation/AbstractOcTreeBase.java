@@ -18,6 +18,8 @@ import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.NodeBuilder;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
+import us.ihmc.octoMap.ocTree.rules.interfaces.EarlyAbortRule;
+import us.ihmc.octoMap.ocTree.rules.interfaces.UpdateRule;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;

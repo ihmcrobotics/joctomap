@@ -12,7 +12,7 @@ import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.OcTree;
+import us.ihmc.octoMap.ocTree.implementations.OcTree;
 
 public class OcTreeSearchToolsTest
 {

@@ -27,7 +27,7 @@ import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
-import us.ihmc.octoMap.ocTree.NormalOcTree;
+import us.ihmc.octoMap.ocTree.implementations.NormalOcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.tools.IntersectionPlaneBoxCalculator;
 import us.ihmc.robotics.geometry.RotationTools;

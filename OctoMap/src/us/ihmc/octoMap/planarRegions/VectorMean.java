@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.planarRegions;
 
 import javax.vecmath.Vector3d;
 

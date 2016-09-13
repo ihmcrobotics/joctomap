@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree.baseImplementation;
+package us.ihmc.octoMap.occupancy;
 
 import static us.ihmc.octoMap.tools.OctoMapTools.logodds;
 import static us.ihmc.octoMap.tools.OctoMapTools.probability;

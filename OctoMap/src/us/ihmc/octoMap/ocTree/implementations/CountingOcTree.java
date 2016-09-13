@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.ocTree.implementations;
 
 import static us.ihmc.octoMap.node.OcTreeNodeTools.getNodeChild;
 

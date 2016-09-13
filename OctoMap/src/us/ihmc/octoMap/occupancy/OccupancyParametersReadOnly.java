@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree.baseImplementation;
+package us.ihmc.octoMap.occupancy;
 
 public interface OccupancyParametersReadOnly
 {

@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.ocTree.implementations;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -22,6 +22,7 @@ import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTree;
+import us.ihmc.octoMap.planarRegions.PlanarRegion;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;

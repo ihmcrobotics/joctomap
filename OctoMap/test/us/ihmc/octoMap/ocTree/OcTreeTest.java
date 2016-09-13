@@ -15,6 +15,7 @@ import org.junit.Test;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
+import us.ihmc.octoMap.ocTree.implementations.OcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.tools.OctoMapTools;
 import us.ihmc.robotics.random.RandomTools;

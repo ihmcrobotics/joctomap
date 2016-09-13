@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.ocTree.implementations;
 
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OcTreeNodeStamped;

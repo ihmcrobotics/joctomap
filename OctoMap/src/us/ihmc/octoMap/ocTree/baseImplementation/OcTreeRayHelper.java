@@ -12,6 +12,7 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.key.OcTreeKeySet;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.ocTree.rules.interfaces.CollidableRule;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;

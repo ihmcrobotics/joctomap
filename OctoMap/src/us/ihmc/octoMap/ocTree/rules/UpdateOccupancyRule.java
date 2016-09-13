@@ -1,12 +1,12 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.ocTree.rules;
 
 import us.ihmc.octoMap.key.KeyBoolMap;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.baseImplementation.EarlyAbortRule;
-import us.ihmc.octoMap.ocTree.baseImplementation.OccupancyParametersReadOnly;
-import us.ihmc.octoMap.ocTree.baseImplementation.OccupancyTools;
-import us.ihmc.octoMap.ocTree.baseImplementation.UpdateRule;
+import us.ihmc.octoMap.ocTree.rules.interfaces.EarlyAbortRule;
+import us.ihmc.octoMap.ocTree.rules.interfaces.UpdateRule;
+import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
+import us.ihmc.octoMap.occupancy.OccupancyTools;
 
 public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> implements UpdateRule<NODE>, EarlyAbortRule<NODE>
 {

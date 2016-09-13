@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree;
+package us.ihmc.octoMap.ocTree.rules;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
@@ -7,7 +7,7 @@ import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
-import us.ihmc.octoMap.ocTree.baseImplementation.OccupancyParametersReadOnly;
+import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 
 public class NormalOctreeUpdateRule extends UpdateOccupancyRule<NormalOcTreeNode>
 {

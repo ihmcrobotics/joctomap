@@ -8,7 +8,7 @@ import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.node.ColorOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
-import us.ihmc.octoMap.ocTree.ColorOcTree;
+import us.ihmc.octoMap.ocTree.implementations.ColorOcTree;
 
 public class ColorTreeTest
 {
