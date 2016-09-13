@@ -7,7 +7,7 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 
-public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
+public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
 {
    private final Point3d minCoordinate = new Point3d();
    private final Point3d maxCoordinate = new Point3d();
@@ -19,32 +19,32 @@ public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
    private boolean minKeyDirtyBit = false;
    private boolean maxKeyDirtyBit = false;
 
-   public OcTreeBoundingBox()
+   public OcTreeSimpleBoundingBox()
    {
    }
 
-   public OcTreeBoundingBox(OcTreeBoundingBox other)
+   public OcTreeSimpleBoundingBox(OcTreeSimpleBoundingBox other)
    {
       set(other);
    }
 
-   public OcTreeBoundingBox(Point3d minCoordinate, Point3d maxCoordinate, double resolution, int treeDepth)
+   public OcTreeSimpleBoundingBox(Point3d minCoordinate, Point3d maxCoordinate, double resolution, int treeDepth)
    {
       setMinMaxCoordinates(minCoordinate, maxCoordinate);
       update(resolution, treeDepth);
    }
 
-   public OcTreeBoundingBox(Point3d minCoordinate, Point3d maxCoordinate)
+   public OcTreeSimpleBoundingBox(Point3d minCoordinate, Point3d maxCoordinate)
    {
       setMinMaxCoordinates(minCoordinate, maxCoordinate);
    }
 
-   public OcTreeBoundingBox(double[] minCoordinate, double[] maxCoordinate)
+   public OcTreeSimpleBoundingBox(double[] minCoordinate, double[] maxCoordinate)
    {
       setMinMaxCoordinates(minCoordinate, maxCoordinate);
    }
 
-   public void set(OcTreeBoundingBox other)
+   public void set(OcTreeSimpleBoundingBox other)
    {
       minCoordinate.set(other.minCoordinate);
       maxCoordinate.set(other.maxCoordinate);
@@ -255,9 +255,9 @@ public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
    }
 
    @Override
-   public OcTreeBoundingBox getCopy()
+   public OcTreeSimpleBoundingBox getCopy()
    {
-      return new OcTreeBoundingBox(this);
+      return new OcTreeSimpleBoundingBox(this);
    }
 }
 
