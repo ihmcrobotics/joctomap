@@ -65,12 +65,14 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
    public void setMinCoordinate(double xMin, double yMin, double zMin)
    {
       this.minCoordinate.set(xMin, yMin, zMin);
+      minCoordinateDirtyBit = false;
       minKeyDirtyBit = true;
    }
 
    public void setMaxCoordinate(double xMax, double yMax, double zMax)
    {
       this.maxCoordinate.set(xMax, yMax, zMax);
+      maxCoordinateDirtyBit = false;
       maxKeyDirtyBit = true;
    }
 
@@ -131,12 +133,14 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
    public void setMinKey(OcTreeKeyReadOnly minKey)
    {
       this.minKey.set(minKey);
+      minKeyDirtyBit = false;
       minCoordinateDirtyBit = true;
    }
 
    public void setMaxKey(OcTreeKeyReadOnly maxKey)
    {
       this.maxKey.set(maxKey);
+      maxKeyDirtyBit = false;
       maxCoordinateDirtyBit = true;
    }
 
