@@ -23,23 +23,22 @@ import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.ScanNode;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
-import us.ihmc.robotics.time.TimeTools;
 
 public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOcTreeBase<NODE>
 {
    // occupancy parameters of tree, stored in logodds:
-   protected OccupancyParameters occupancyParameters = new OccupancyParameters();
+   protected final OccupancyParameters occupancyParameters = new OccupancyParameters();
+   protected OcTreeBoundingBox boundingBox;
+   /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   protected double minInsertRange = -1.0;
+   /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   protected double maxInsertRange = -1.0;
+   /** Discretize whether a scan to insert is discretized first into octree key cells (default: false).
+    *  This reduces the number of raycasts, resulting in a potential speedup. */
+   private boolean discretizePointCloud = false;
 
    protected final UpdateOccupancyRule<NODE> updateOccupancyRule;
    protected final SetOccupancyRule<NODE> setOccupancyRule = new SetOccupancyRule<>();
-   protected OcTreeBoundingBox boundingBox;
-   protected boolean useChangeDetection;
-   /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
-   protected final KeyBoolMap changedKeys = new KeyBoolMap();
-   protected final OcTreeRayHelper<NODE> rayHelper = new OcTreeRayHelper<>();
-   private final OcTreeKeySet freeCells = new OcTreeKeySet(1000000);
-   private final OcTreeKeySet occupiedCells = new OcTreeKeySet(1000000);
-
    private final CollidableRule<NODE> collidableRule = new CollidableRule<NODE>()
    {
       @Override
@@ -48,6 +47,14 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          return isNodeOccupied(node);
       }
    };
+
+   protected boolean useChangeDetection;
+   /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
+   protected final KeyBoolMap changedKeys = new KeyBoolMap();
+   
+   protected final OcTreeRayHelper<NODE> rayHelper = new OcTreeRayHelper<>();
+   private final OcTreeKeySet freeCells = new OcTreeKeySet(1000000);
+   private final OcTreeKeySet occupiedCells = new OcTreeKeySet(1000000);
 
    public AbstractOccupancyOcTree(double resolution)
    {
@@ -84,6 +91,51 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    {
       return occupancyParameters;
    }
+   
+   /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   public void setMinimumInsertRange(double minRange)
+   {
+      minInsertRange = minRange;
+   }
+
+   /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   public void setMaximumInsertRange(double maxRange)
+   {
+      maxInsertRange = maxRange;
+   }
+
+   /** Minimum and maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   public void setBoundsInsertRange(double minRange, double maxRange)
+   {
+      setMinimumInsertRange(minRange);
+      setMaximumInsertRange(maxRange);
+   }
+
+   /** Remove the limitation in minimum range when inserting a ray or point cloud. */
+   public void removeMinimumInsertRange()
+   {
+      minInsertRange = -1.0;
+   }
+   
+   /** Remove the limitation in maximum range when inserting a ray or point cloud. */
+   public void removeMaximumInsertRange()
+   {
+      maxInsertRange = -1.0;
+   }
+
+   /** Remove the limitation in minimum and maximum range when inserting a ray or point cloud. */
+   public void removeBoundsInsertRange()
+   {
+      removeMinimumInsertRange();
+      removeMaximumInsertRange();
+   }
+
+   /** Discretize whether a scan to insert is discretized first into octree key cells (default: false).
+    *  This reduces the number of raycasts, resulting in a potential speedup. */
+   public void enableDiscretizePointCloud(boolean enable)
+   {
+      discretizePointCloud = enable;
+   }
 
    /**
     * Queries whether a node is occupied according to the tree's parameter for "occupancyThreshold"
@@ -97,58 +149,26 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
 
    public void insertSweepCollection(SweepCollection sweepCollection)
    {
-      insertSweepCollection(sweepCollection, -1.0, -1.0, false);
-   }
-
-   public void insertSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange)
-   {
-      System.out.println("Entering insertSweepCollection sweep size: " + sweepCollection.getNumberOfSweeps());
-      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
-         System.out.println("Point cloud size: " + sweepCollection.getSweep(i).size());
-      long startTime = System.nanoTime();
-      insertSweepCollection(sweepCollection, minRange, maxRange, false);
-      long endTime = System.nanoTime();
-      System.out.println("Exiting  insertSweepCollection took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
-   }
-
-   public void insertSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange, boolean discretize)
-   {
       freeCells.clear();
       occupiedCells.clear();
 
-      long startTime = System.nanoTime();
       for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
       {
          PointCloud scan = sweepCollection.getSweep(i);
          Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
 
-         if (discretize)
-            rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
+         if (discretizePointCloud)
+            rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
          else
-            rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
+            rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
       }
-      long endTime = System.nanoTime();
-      System.out.println("Exiting  computeUpdate took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
 
-      startTime = System.nanoTime();
       // insert data into tree  -----------------------
       for (int i = 0; i < occupiedCells.size(); i++)
          updateNode(occupiedCells.unsafeGet(i), true);
 
       for (int i = 0; i < freeCells.size(); i++)
          updateNode(freeCells.unsafeGet(i), false);
-      endTime = System.nanoTime();
-      System.out.println("Exiting  updateNode took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
-   }
-
-   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)
-   {
-      insertPointCloud(scan, sensorOrigin, -1.0, -1.0, false);
-   }
-
-   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, boolean discretize)
-   {
-      insertPointCloud(scan, sensorOrigin, -1.0, -1.0, discretize);
    }
 
    /**
@@ -162,21 +182,16 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     *
     * @param scan Pointcloud (measurement endpoints), in global reference frame
     * @param sensorOrigin measurement origin in global reference frame
-    * @param maxRange maximum range for how long individual beams are inserted (default -1: complete beam)
-    * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
-    *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
-    * @param discretize whether the scan is discretized first into octree key cells (default: false).
-    *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.*
     */
-   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, double minRange, double maxRange, boolean discretize)
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)
    {
       freeCells.clear();
       occupiedCells.clear();
 
-      if (discretize)
-         rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
+      if (discretizePointCloud)
+         rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
       else
-         rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
+         rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
 
       // insert data into tree  -----------------------
       for (int i = 0; i < occupiedCells.size(); i++)
@@ -184,11 +199,6 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
 
       for (int i = 0; i < freeCells.size(); i++)
          updateNode(freeCells.unsafeGet(i), false);
-   }
-
-   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, RigidBodyTransform frameOrigin)
-   {
-      insertPointCloud(scan, sensorOrigin, frameOrigin, -1.0, -1.0, false);
    }
 
    /**
@@ -203,25 +213,15 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    * @param scan Pointcloud (measurement endpoints) relative to frame origin
    * @param sensorOrigin origin of sensor relative to frame origin
    * @param frameOrigin origin of reference frame, determines transform to be applied to cloud and sensor origin
-   * @param maxRange maximum range for how long individual beams are inserted (default -1: complete beam)
-   * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
-   *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
-   * @param discretize whether the scan is discretized first into octree key cells (default: false).
-   *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.*
    */
-   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, RigidBodyTransform frameOrigin, double minRange, double maxRange, boolean discretize)
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, RigidBodyTransform frameOrigin)
    {
       // performs transformation to data and sensor origin first
       PointCloud transformedScan = new PointCloud(scan);
       transformedScan.transform(frameOrigin);
-      Point3d transformed_sensorOrigin = new Point3d(sensorOrigin);
-      frameOrigin.transform(transformed_sensorOrigin);
-      insertPointCloud(transformedScan, transformed_sensorOrigin, minRange, maxRange, discretize);
-   }
-
-   public void insertPointCloud(ScanNode scan)
-   {
-      insertPointCloud(scan, -1.0, -1.0, false);
+      Point3d transformedSensorOrigin = new Point3d(sensorOrigin);
+      frameOrigin.transform(transformedSensorOrigin);
+      insertPointCloud(transformedScan, transformedSensorOrigin);
    }
 
    /**
@@ -230,26 +230,18 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    * @note replaces insertScan
    *
    * @param scan ScanNode contains Pointcloud data and frame/sensor origin
-   * @param maxRange maximum range for how long individual beams are inserted (default -1: complete beam)
-   * @param discretize whether the scan is discretized first into octree key cells (default: false).
-   *   This reduces the number of raycasts using computeDiscreteUpdate(), resulting in a potential speedup.
    */
-   public void insertPointCloud(ScanNode scan, double minRange, double maxRange, boolean discretize)
+   public void insertPointCloud(ScanNode scan)
    {
       // performs transformation to data and sensor origin first
       PointCloud cloud = scan.getScan();
-      RigidBodyTransform frame_origin = new RigidBodyTransform(scan.getPose());
-      frame_origin.invert();
+      RigidBodyTransform frameOrigin = new RigidBodyTransform(scan.getPose());
+      frameOrigin.invert();
       Vector3d tempVector = new Vector3d();
       scan.getPose().getTranslation(tempVector);
       Point3d sensorOrigin = new Point3d(tempVector);//frame_origin.inv().transform(scan.pose.trans()); // TODO Sylvain Double-check this transformation
-      frame_origin.transform(sensorOrigin);
-      insertPointCloud(cloud, sensorOrigin, frame_origin, minRange, maxRange, discretize);
-   }
-
-   public void insertPointCloudRays(PointCloud scan, Point3d sensorOrigin)
-   {
-      insertPointCloudRays(scan, sensorOrigin, -1.0);
+      frameOrigin.transform(sensorOrigin);
+      insertPointCloud(cloud, sensorOrigin, frameOrigin);
    }
 
    /**
@@ -260,24 +252,41 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     *
     * @param scan Pointcloud (measurement endpoints), in global reference frame
     * @param sensorOrigin measurement origin in global reference frame
-    * @param maxRange maximum range for how long individual beams are inserted (default -1: complete beam)
     */
-   public void insertPointCloudRays(PointCloud scan, Point3d sensorOrigin, double maxRange)
+   public void insertPointCloudRays(PointCloud scan, Point3d sensorOrigin)
    {
       if (scan.size() < 1)
          return;
 
+      Vector3d direction = new Vector3d();
+
       for (int i = 0; i < scan.size(); i++)
       {
          Point3d point = new Point3d(scan.getPoint(i));
-         KeyRayReadOnly ray = rayHelper.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
-         if (ray != null)
+         direction.sub(point, sensorOrigin);
+         double length = direction.length();
+         if (minInsertRange > 0.0 && length < minInsertRange)
+            continue;
+
+         if (maxInsertRange > 0.0 && length > maxInsertRange)
          {
-            for (int j = 0; j < ray.size(); j++)
+            point.scaleAdd(maxInsertRange / length, direction, sensorOrigin);
+            KeyRayReadOnly ray = rayHelper.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
+            if (ray != null)
             {
-               updateNode(ray.get(j), false); // insert freespace measurement
+               for (int j = 0; j < ray.size(); j++)
+                  updateNode(ray.get(j), false); // insert freespace measurement
             }
-            updateNode(point, true); // update endpoint to be occupied
+         }
+         else
+         {
+            KeyRayReadOnly ray = rayHelper.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
+            if (ray != null)
+            {
+               for (int j = 0; j < ray.size(); j++)
+                  updateNode(ray.get(j), false); // insert freespace measurement
+               updateNode(point, true); // update endpoint to be occupied
+            }
          }
       }
    }
@@ -434,11 +443,6 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       OccupancyTools.nodeToMaxLikelihood(occupancyParameters, root);
    }
 
-   public boolean insertRay(Point3d origin, Point3d end)
-   {
-      return insertRay(origin, end, -1.0);
-   }
-
    /**
     * Insert one ray between origin and end into the tree.
     * integrateMissOnRay() is called for the ray, the end point is updated as occupied.
@@ -447,23 +451,25 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     *
     * @param origin origin of sensor in global coordinates
     * @param end endpoint of measurement in global coordinates
-    * @param maxRange maximum range after which the raycast should be aborted
     * @param lazyEvaluation whether update of inner nodes is omitted after the update (default: false).
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return success of operation
     */
-   public boolean insertRay(Point3d origin, Point3d end, double maxRange)
+   public boolean insertRay(Point3d origin, Point3d end)
    {
       Vector3d direction = new Vector3d();
       direction.sub(end, origin);
       double length = direction.length();
 
+      if (minInsertRange > 0.0 && length < minInsertRange)
+         return false;
+
       // cut ray at maxrange
-      if (maxRange > 0 && length > maxRange)
+      if (maxInsertRange > 0 && length > maxInsertRange)
       {
          direction.scale(1.0 / length);
          Point3d newEnd = new Point3d();
-         newEnd.scaleAdd(maxRange, direction, origin);
+         newEnd.scaleAdd(maxInsertRange, direction, origin);
          return integrateMissOnRay(origin, newEnd);
       }
       // insert complete ray
@@ -506,7 +512,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public boolean castRay(Point3d origin, Vector3d direction, Point3d endToPack, boolean ignoreUnknownCells, double maxRange)
    {
-      return rayHelper.castRay(root, origin, direction, endToPack, ignoreUnknownCells, maxRange, collidableRule, maxRange, treeDepth);
+      return rayHelper.castRay(root, origin, direction, endToPack, ignoreUnknownCells, maxRange, collidableRule, resolution, treeDepth);
    }
 
    public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersection)

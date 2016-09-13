@@ -45,7 +45,7 @@ public class NormalOcTree extends AbstractOccupancyOcTree<NormalOcTreeNode>
    private final Vector3d tempInitialNormalGuess = new Vector3d();
    private final Point3d tempCenterUpdate = new Point3d();
 
-   public void updateNodeFromSweepCollection(SweepCollection sweepCollection, double minRange, double maxRange)
+   public void updateNodeFromSweepCollection(SweepCollection sweepCollection)
    {
       System.out.println("Entering updateNodeFromSweepCollection sweep size: " + sweepCollection.getNumberOfSweeps());
       for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
@@ -57,19 +57,19 @@ public class NormalOcTree extends AbstractOccupancyOcTree<NormalOcTreeNode>
          Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
          PointCloud scan = sweepCollection.getSweep(i);
 
-         updateNodesFromPointCloud(sensorOrigin, scan, minRange, maxRange);
+         updateNodesFromPointCloud(sensorOrigin, scan);
       }
 
       long endTime = System.nanoTime();
       System.out.println("Exiting  updateNodeFromSweepCollection took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
    }
 
-   public void updateNodesFromPointCloud(Point3d sensorOrigin, PointCloud scan, double minRange, double maxRange)
+   public void updateNodesFromPointCloud(Point3d sensorOrigin, PointCloud scan)
    {
       Point3d scanPoint = new Point3d();
       double alphaCenterUpdate = 0.1;
-      double minRangeSquared = minRange < 0 ? 0 : minRange * minRange;
-      double maxRangeSquared = maxRange < 0 ? Double.POSITIVE_INFINITY : maxRange * maxRange;
+      double minRangeSquared = minInsertRange < 0 ? 0 : minInsertRange * minInsertRange;
+      double maxRangeSquared = maxInsertRange < 0 ? Double.POSITIVE_INFINITY : maxInsertRange * maxInsertRange;
 
       for (int i = 0; i < scan.size(); i++)
       {
