@@ -137,14 +137,16 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       }
       else if (centerMetricDirtyBit)
       {
-         OcTreeKeyConversionTools.keyToCoordinate(centerKey, centerMetric, resolution, treeDepth);
+         halfSizeMetric.set(halfSizeKey.getKey(0), halfSizeKey.getKey(1), halfSizeKey.getKey(2));
+         halfSizeMetric.scale(resolution);
       }
 
       if (halfSizeKeyDirtyBit)
       {
-         boolean success = OcTreeKeyConversionTools.coordinateToKey(halfSizeMetric, resolution, treeDepth, halfSizeKey);
-         if (!success)
-            System.err.println(getClass().getSimpleName() + " (in update): ERROR while generating half-size key.");
+         int k0 = (int) Math.floor(halfSizeMetric.getX() / resolution);
+         int k1 = (int) Math.floor(halfSizeMetric.getY() / resolution);
+         int k2 = (int) Math.floor(halfSizeMetric.getZ() / resolution);
+         halfSizeKey.set(k0, k1, k2);
       }
       else if (centerMetricDirtyBit)
       {
