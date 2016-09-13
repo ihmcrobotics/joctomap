@@ -32,7 +32,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
 {
    // occupancy parameters of tree, stored in logodds:
    protected final OccupancyParameters occupancyParameters = new OccupancyParameters();
-   protected OcTreeBoundingBox boundingBox;
+   protected OcTreeBoundingBoxInterface boundingBox;
    /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    protected double minInsertRange = -1.0;
    /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
@@ -81,7 +81,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       super(other);
       occupancyParameters.set(other.occupancyParameters);
       updateOccupancyRule = new UpdateOccupancyRule<>(occupancyParameters);
-      boundingBox = new OcTreeBoundingBox(other.boundingBox);
+      boundingBox = other.boundingBox.getCopy();
       changedKeys.putAll(other.changedKeys);
       enableChangeDetection(other.useChangeDetection);
    }
@@ -682,12 +682,12 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * If null, no limit will be applied.
     * @param boundingBox
     */
-   public void setBoundingBox(OcTreeBoundingBox boundingBox)
+   public void setBoundingBox(OcTreeBoundingBoxInterface boundingBox)
    {
       this.boundingBox = boundingBox;
    }
 
-   public OcTreeBoundingBox getBoundingBox()
+   public OcTreeBoundingBoxInterface getBoundingBox()
    {
       return boundingBox;
    }

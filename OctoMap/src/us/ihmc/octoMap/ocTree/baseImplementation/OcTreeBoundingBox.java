@@ -7,7 +7,7 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 
-public class OcTreeBoundingBox
+public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
 {
    private final Point3d minCoordinate = new Point3d();
    private final Point3d maxCoordinate = new Point3d();
@@ -171,6 +171,7 @@ public class OcTreeBoundingBox
       maxKeyDirtyBit = false;
    }
 
+   @Override
    public boolean isInBoundingBox(double x, double y, double z)
    {
       if (minCoordinateDirtyBit || maxCoordinateDirtyBit)
@@ -185,16 +186,19 @@ public class OcTreeBoundingBox
       return true;
    }
 
+   @Override
    public boolean isInBoundingBox(Point3d candidate)
    {
       return isInBoundingBox(candidate.getX(), candidate.getY(), candidate.getZ());
    }
 
+   @Override
    public boolean isInBoundingBox(Point3f candidate)
    {
       return isInBoundingBox(candidate.getX(), candidate.getY(), candidate.getZ());
    }
 
+   @Override
    public boolean isInBoundingBox(OcTreeKeyReadOnly candidate)
    {
       if (minKeyDirtyBit || maxKeyDirtyBit)
@@ -248,6 +252,12 @@ public class OcTreeBoundingBox
       if (maxCoordinateDirtyBit)
          throw new RuntimeException("The bounding box max coordinate is not up to date.");
       maxCoordinate.get(maxCoordinateToPack);
+   }
+
+   @Override
+   public OcTreeBoundingBox getCopy()
+   {
+      return new OcTreeBoundingBox(this);
    }
 }
 

@@ -52,7 +52,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxRange maximum range for raycasting (-1: unlimited)
     */
-   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBox boundingBox,
+   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBoxInterface boundingBox,
          double minRange, double maxRange, double resolution, int treeDepth)
    {
       PointCloud discretePC = new PointCloud();
@@ -79,7 +79,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxRange maximum range for raycasting (-1: unlimited)
     */
-   public void computeUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBox boundingBox,
+   public void computeUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBoxInterface boundingBox,
          double minRange, double maxRange, double resolution, int treeDepth)
    {
       unfilteredFreeCells.clear();

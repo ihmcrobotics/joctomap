@@ -23,7 +23,7 @@ import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
-import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeBoundingBox;
+import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeBoundingBoxInterface;
 import us.ihmc.octoMap.ocTree.rules.NormalOctreeUpdateRule;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
@@ -38,7 +38,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
    // occupancy parameters of tree, stored in logodds:
    private final OccupancyParameters occupancyParameters = new OccupancyParameters();
-   private OcTreeBoundingBox boundingBox;
+   private OcTreeBoundingBoxInterface boundingBox;
    /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    private double minInsertRange = -1.0;
    /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
@@ -592,12 +592,12 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
     * If null, no limit will be applied.
     * @param boundingBox
     */
-   public void setBoundingBox(OcTreeBoundingBox boundingBox)
+   public void setBoundingBox(OcTreeBoundingBoxInterface boundingBox)
    {
       this.boundingBox = boundingBox;
    }
 
-   public OcTreeBoundingBox getBoundingBox()
+   public OcTreeBoundingBoxInterface getBoundingBox()
    {
       return boundingBox;
    }
