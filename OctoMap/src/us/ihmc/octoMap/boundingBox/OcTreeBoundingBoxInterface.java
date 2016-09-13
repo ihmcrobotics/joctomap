@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree.baseImplementation;
+package us.ihmc.octoMap.boundingBox;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
