@@ -2,6 +2,7 @@ package us.ihmc.octoMap.boundingBox;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
+import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
@@ -249,6 +250,22 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
       if (maxCoordinateDirtyBit)
          throw new RuntimeException("The bounding box max coordinate is not up to date.");
       maxCoordinate.get(maxCoordinateToPack);
+   }
+
+   public void getSize(Vector3d sizeToPack)
+   {
+      if (minCoordinateDirtyBit || maxCoordinateDirtyBit)
+         throw new RuntimeException("The bounding box min/max coordinate is not up to date.");
+
+      sizeToPack.sub(maxCoordinate, minCoordinate);
+   }
+
+   public void getCenterCoordinate(Point3d centerToPack)
+   {
+      if (minCoordinateDirtyBit || maxCoordinateDirtyBit)
+         throw new RuntimeException("The bounding box min/max coordinate is not up to date.");
+
+      centerToPack.interpolate(maxCoordinate, minCoordinate, 0.5);
    }
 
    @Override
