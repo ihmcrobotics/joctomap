@@ -44,6 +44,11 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
       setMinMaxCoordinates(minCoordinate, maxCoordinate);
    }
 
+   public OcTreeSimpleBoundingBox(OcTreeKeyReadOnly minKey, OcTreeKeyReadOnly maxKey)
+   {
+      setMinMaxKeys(minKey, maxKey);
+   }
+
    public void set(OcTreeSimpleBoundingBox other)
    {
       minCoordinate.set(other.minCoordinate);
