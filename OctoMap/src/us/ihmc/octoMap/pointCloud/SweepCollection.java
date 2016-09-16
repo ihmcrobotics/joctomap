@@ -17,6 +17,11 @@ public class SweepCollection
    {
    }
 
+   public SweepCollection(PointCloud pointCloud, Point3d origin)
+   {
+      addSweep(pointCloud, origin);
+   }
+
    public void clear()
    {
       sweeps.clear();
@@ -26,6 +31,18 @@ public class SweepCollection
    public void setSubSampleSize(int subSampleSize)
    {
       this.subSampleSize = subSampleSize;
+   }
+
+   public void addSweepCollection(SweepCollection sweepCollection)
+   {
+      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
+         addSweep(sweepCollection.getSweep(i), sweepCollection.getSweepOrigin(i));
+   }
+
+   public void addSweep(PointCloud pointCloud, Point3d origin)
+   {
+      sweeps.add(pointCloud);
+      origins.add(origin);
    }
 
    public void addSweep(float[] pointsInWorld, Point3d origin)
