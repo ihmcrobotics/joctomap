@@ -2,7 +2,7 @@ package us.ihmc.octoMap.ocTree.implementations;
 
 public class NormalEstimationParameters
 {
-   public static final double DEFAULT_SEARCH_RADIUS = 0.05;
+   public static final double DEFAULT_SEARCH_RADIUS = 0.08;
    public static final double DEFAULT_MAX_DISTANCE_FROM_PLANE = 0.03;
 
    private double searchRadius;
