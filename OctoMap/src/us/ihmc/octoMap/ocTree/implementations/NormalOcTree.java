@@ -151,29 +151,29 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          if (minInsertRange >= 0.0 && length < minInsertRange)
             continue;
 
-         if (isInBoundingBox(point))
-         { // no BBX specified
-            Point3d rayEnd;
-            if (maxInsertRange < 0.0 || length <= maxInsertRange)
-            { // is not maxrange meas, free cells
+         Point3d rayEnd;
+         if (maxInsertRange < 0.0 || length <= maxInsertRange)
+         { // is not maxrange meas, free cells
+            if (isInBoundingBox(point))
                rayEnd = point;
-            }
             else
-            { // user set a maxrange and length is above
-               rayEnd = new Point3d();
-               rayEnd.scaleAdd(maxInsertRange / length, direction, sensorOrigin);
-            } // end if maxrange
+               continue;
+         }
+         else
+         { // user set a maxrange and length is above
+            rayEnd = new Point3d();
+            rayEnd.scaleAdd(maxInsertRange / length, direction, sensorOrigin);
+         } // end if maxrange
 
-            KeyRayReadOnly keyRay;
-            if ((keyRay = rayHelper.computeRayKeys(sensorOrigin, rayEnd, resolution, treeDepth)) != null)
+         KeyRayReadOnly keyRay;
+         if ((keyRay = rayHelper.computeRayKeys(sensorOrigin, rayEnd, resolution, treeDepth)) != null)
+         {
+            for (int freeKeyIndex = 0; freeKeyIndex < keyRay.size(); freeKeyIndex++)
             {
-               for (int freeKeyIndex = 0; freeKeyIndex < keyRay.size(); freeKeyIndex++)
+               OcTreeKeyReadOnly freeKey = keyRay.get(freeKeyIndex);
+               if (!occupiedCells.contains(freeKey))
                {
-                  OcTreeKeyReadOnly freeKey = keyRay.get(freeKeyIndex);
-                  if (!occupiedCells.contains(freeKey))
-                  {
-                     updateNodeInternal(freeKey, missUpdateRule, missUpdateRule);
-                  }
+                  updateNodeInternal(freeKey, missUpdateRule, missUpdateRule);
                }
             }
          }
