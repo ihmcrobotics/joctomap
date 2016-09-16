@@ -1,13 +1,14 @@
-package us.ihmc.octoMap.ocTree.baseImplementation;
+package us.ihmc.octoMap.boundingBox;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
+import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 
-public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
+public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
 {
    private final Point3d minCoordinate = new Point3d();
    private final Point3d maxCoordinate = new Point3d();
@@ -19,32 +20,37 @@ public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
    private boolean minKeyDirtyBit = false;
    private boolean maxKeyDirtyBit = false;
 
-   public OcTreeBoundingBox()
+   public OcTreeSimpleBoundingBox()
    {
    }
 
-   public OcTreeBoundingBox(OcTreeBoundingBox other)
+   public OcTreeSimpleBoundingBox(OcTreeSimpleBoundingBox other)
    {
       set(other);
    }
 
-   public OcTreeBoundingBox(Point3d minCoordinate, Point3d maxCoordinate, double resolution, int treeDepth)
+   public OcTreeSimpleBoundingBox(Point3d minCoordinate, Point3d maxCoordinate, double resolution, int treeDepth)
    {
       setMinMaxCoordinates(minCoordinate, maxCoordinate);
       update(resolution, treeDepth);
    }
 
-   public OcTreeBoundingBox(Point3d minCoordinate, Point3d maxCoordinate)
+   public OcTreeSimpleBoundingBox(Point3d minCoordinate, Point3d maxCoordinate)
    {
       setMinMaxCoordinates(minCoordinate, maxCoordinate);
    }
 
-   public OcTreeBoundingBox(double[] minCoordinate, double[] maxCoordinate)
+   public OcTreeSimpleBoundingBox(double[] minCoordinate, double[] maxCoordinate)
    {
       setMinMaxCoordinates(minCoordinate, maxCoordinate);
    }
 
-   public void set(OcTreeBoundingBox other)
+   public OcTreeSimpleBoundingBox(OcTreeKeyReadOnly minKey, OcTreeKeyReadOnly maxKey)
+   {
+      setMinMaxKeys(minKey, maxKey);
+   }
+
+   public void set(OcTreeSimpleBoundingBox other)
    {
       minCoordinate.set(other.minCoordinate);
       maxCoordinate.set(other.maxCoordinate);
@@ -60,12 +66,14 @@ public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
    public void setMinCoordinate(double xMin, double yMin, double zMin)
    {
       this.minCoordinate.set(xMin, yMin, zMin);
+      minCoordinateDirtyBit = false;
       minKeyDirtyBit = true;
    }
 
    public void setMaxCoordinate(double xMax, double yMax, double zMax)
    {
       this.maxCoordinate.set(xMax, yMax, zMax);
+      maxCoordinateDirtyBit = false;
       maxKeyDirtyBit = true;
    }
 
@@ -126,12 +134,14 @@ public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
    public void setMinKey(OcTreeKeyReadOnly minKey)
    {
       this.minKey.set(minKey);
+      minKeyDirtyBit = false;
       minCoordinateDirtyBit = true;
    }
 
    public void setMaxKey(OcTreeKeyReadOnly maxKey)
    {
       this.maxKey.set(maxKey);
+      maxKeyDirtyBit = false;
       maxCoordinateDirtyBit = true;
    }
 
@@ -147,7 +157,7 @@ public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
       {
          boolean success = OcTreeKeyConversionTools.coordinateToKey(minCoordinate, resolution, treeDepth, minKey);
          if (!success)
-            System.err.println(getClass().getSimpleName() + " (in setMinCoordinate): ERROR while generating min key.");
+            System.err.println(getClass().getSimpleName() + " (in update): ERROR while generating min key.");
       }
       else if (minCoordinateDirtyBit)
       {
@@ -158,7 +168,7 @@ public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
       {
          boolean success = OcTreeKeyConversionTools.coordinateToKey(maxCoordinate, resolution, treeDepth, maxKey);
          if (!success)
-            System.err.println(getClass().getSimpleName() + " (in setMaxCoordinate): ERROR while generating max key.");
+            System.err.println(getClass().getSimpleName() + " (in update): ERROR while generating max key.");
       }
       else if (maxCoordinateDirtyBit)
       {
@@ -184,18 +194,6 @@ public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
       if (z < minCoordinate.getZ() || z > maxCoordinate.getZ())
          return false;
       return true;
-   }
-
-   @Override
-   public boolean isInBoundingBox(Point3d candidate)
-   {
-      return isInBoundingBox(candidate.getX(), candidate.getY(), candidate.getZ());
-   }
-
-   @Override
-   public boolean isInBoundingBox(Point3f candidate)
-   {
-      return isInBoundingBox(candidate.getX(), candidate.getY(), candidate.getZ());
    }
 
    @Override
@@ -254,10 +252,26 @@ public class OcTreeBoundingBox implements OcTreeBoundingBoxInterface
       maxCoordinate.get(maxCoordinateToPack);
    }
 
-   @Override
-   public OcTreeBoundingBox getCopy()
+   public void getSize(Vector3d sizeToPack)
    {
-      return new OcTreeBoundingBox(this);
+      if (minCoordinateDirtyBit || maxCoordinateDirtyBit)
+         throw new RuntimeException("The bounding box min/max coordinate is not up to date.");
+
+      sizeToPack.sub(maxCoordinate, minCoordinate);
+   }
+
+   public void getCenterCoordinate(Point3d centerToPack)
+   {
+      if (minCoordinateDirtyBit || maxCoordinateDirtyBit)
+         throw new RuntimeException("The bounding box min/max coordinate is not up to date.");
+
+      centerToPack.interpolate(maxCoordinate, minCoordinate, 0.5);
+   }
+
+   @Override
+   public OcTreeSimpleBoundingBox getCopy()
+   {
+      return new OcTreeSimpleBoundingBox(this);
    }
 }
 

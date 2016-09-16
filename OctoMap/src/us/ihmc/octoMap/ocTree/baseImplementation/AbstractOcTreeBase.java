@@ -9,6 +9,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
+import us.ihmc.octoMap.boundingBox.OcTreeSimpleBoundingBox;
 import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
 import us.ihmc.octoMap.iterators.LeafIterable;
 import us.ihmc.octoMap.iterators.OcTreeIterable;
@@ -685,7 +686,9 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public Iterable<OcTreeSuperNode<NODE>> leafBoundingBoxIterable(OcTreeKeyReadOnly min, OcTreeKeyReadOnly max)
    {
       LeafBoundingBoxIterable<NODE> iterable = new LeafBoundingBoxIterable<>(this, 0);
-      iterable.setBoundingBox(min, max);
+      OcTreeSimpleBoundingBox boundingBox = new OcTreeSimpleBoundingBox(min, max);
+      boundingBox.update(resolution, treeDepth);
+      iterable.setBoundingBox(boundingBox);
       return iterable; // TODO Organize imports;
    }
 

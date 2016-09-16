@@ -5,7 +5,8 @@ import static us.ihmc.octoMap.tools.OcTreeKeyTools.checkKeyIsValid;
 import static us.ihmc.octoMap.tools.OcTreeKeyTools.computeCenterOffsetKey;
 
 import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
+import javax.vecmath.Tuple3d;
+import javax.vecmath.Tuple3f;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
@@ -51,7 +52,7 @@ public abstract class OcTreeKeyConversionTools
     * @param coord 3d coordinate of a point
     * @return key if point is within the octree (valid), null otherwise
     */
-   public static OcTreeKey coordinateToKey(Point3f coord, double resolution, int treeDepth)
+   public static OcTreeKey coordinateToKey(Tuple3f coord, double resolution, int treeDepth)
    {
       return coordinateToKey(coord.getX(), coord.getY(), coord.getZ(), treeDepth, resolution, treeDepth);
    }
@@ -62,7 +63,7 @@ public abstract class OcTreeKeyConversionTools
     * @param coord 3d coordinate of a point
     * @return key if point is within the octree (valid), null otherwise
     */
-   public static boolean coordinateToKey(Point3f coord, double resolution, int treeDepth, OcTreeKey keyToPack)
+   public static boolean coordinateToKey(Tuple3f coord, double resolution, int treeDepth, OcTreeKey keyToPack)
    {
       return coordinateToKey(coord.getX(), coord.getY(), coord.getZ(), treeDepth, resolution, treeDepth, keyToPack);
    }
@@ -73,7 +74,7 @@ public abstract class OcTreeKeyConversionTools
     * @param coord 3d coordinate of a point
     * @return key if point is within the octree (valid), null otherwise
     */
-   public static OcTreeKey coordinateToKey(Point3d coord, double resolution, int treeDepth)
+   public static OcTreeKey coordinateToKey(Tuple3d coord, double resolution, int treeDepth)
    {
       return coordinateToKey(coord.getX(), coord.getY(), coord.getZ(), treeDepth, resolution, treeDepth);
    }
@@ -85,12 +86,12 @@ public abstract class OcTreeKeyConversionTools
     * @param depth level of the key from the top
     * @return key if point is within the octree (valid), null otherwise
     */
-   public static OcTreeKey coordinateToKey(Point3d coord, int depth, double resolution, int treeDepth)
+   public static OcTreeKey coordinateToKey(Tuple3d coord, int depth, double resolution, int treeDepth)
    {
       return coordinateToKey(coord.getX(), coord.getY(), coord.getZ(), depth, resolution, treeDepth);
    }
 
-   public static boolean coordinateToKey(Point3d coord, int depth, double resolution, int treeDepth, OcTreeKey keyToPack)
+   public static boolean coordinateToKey(Tuple3d coord, int depth, double resolution, int treeDepth, OcTreeKey keyToPack)
    {
       return coordinateToKey(coord.getX(), coord.getY(), coord.getZ(), depth, resolution, treeDepth, keyToPack);
    }
@@ -103,7 +104,7 @@ public abstract class OcTreeKeyConversionTools
     * @param keyToPack
     * @return true if point is within the octree (valid), false otherwise
     */
-   public static boolean coordinateToKey(Point3d coord, double resolution, int treeDepth, OcTreeKey keyToPack)
+   public static boolean coordinateToKey(Tuple3d coord, double resolution, int treeDepth, OcTreeKey keyToPack)
    {
       return coordinateToKey(coord, treeDepth, resolution, treeDepth, keyToPack);
    }
@@ -202,13 +203,13 @@ public abstract class OcTreeKeyConversionTools
       return new Point3d(x, y, z);
    }
 
-   public static void keyToCoordinate(OcTreeKeyReadOnly key, Point3d coordinateToPack, double resolution, int treeDepth)
+   public static void keyToCoordinate(OcTreeKeyReadOnly key, Tuple3d coordinateToPack, double resolution, int treeDepth)
    {
       keyToCoordinate(key, treeDepth, coordinateToPack, resolution, treeDepth);
    }
 
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
-   public static void keyToCoordinate(OcTreeKeyReadOnly key, int depth, Point3d coordinateToPack, double resolution, int treeDepth)
+   public static void keyToCoordinate(OcTreeKeyReadOnly key, int depth, Tuple3d coordinateToPack, double resolution, int treeDepth)
    {
       coordinateToPack.setX(keyToCoordinate(key.getKey(0), depth, resolution, treeDepth));
       coordinateToPack.setY(keyToCoordinate(key.getKey(1), depth, resolution, treeDepth));

@@ -10,6 +10,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
+import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.octoMap.key.KeyBoolMap;
 import us.ihmc.octoMap.key.KeyRayReadOnly;
 import us.ihmc.octoMap.key.OcTreeKey;

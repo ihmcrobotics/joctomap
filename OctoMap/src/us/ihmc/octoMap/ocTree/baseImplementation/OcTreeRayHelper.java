@@ -6,6 +6,7 @@ import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.keyToCoordinate;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
+import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.octoMap.key.KeyRay;
 import us.ihmc.octoMap.key.KeyRayReadOnly;
 import us.ihmc.octoMap.key.OcTreeKey;

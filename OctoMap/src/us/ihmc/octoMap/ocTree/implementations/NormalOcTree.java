@@ -15,7 +15,8 @@ import org.apache.commons.math3.stat.descriptive.moment.Variance;
 
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import us.ihmc.octoMap.iterators.LeafIterable;
+import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
+import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyDeque;
@@ -23,7 +24,6 @@ import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
-import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeBoundingBoxInterface;
 import us.ihmc.octoMap.ocTree.rules.NormalOctreeUpdateRule;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
@@ -38,7 +38,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
    // occupancy parameters of tree, stored in logodds:
    private final OccupancyParameters occupancyParameters = new OccupancyParameters();
-   private OcTreeBoundingBoxInterface boundingBox;
+   private OcTreeBoundingBoxInterface boundingBox = null;
    /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    private double minInsertRange = -1.0;
    /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
@@ -50,14 +50,14 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private static final NormalComputationMethod NORMAL_COMPUTATION_METHOD = NormalComputationMethod.RANSAC;
 
    private final TDoubleObjectHashMap<TIntObjectHashMap<OcTreeKeyList>> neighborOffsetsCached = new TDoubleObjectHashMap<>(4);
-   private final LeafIterable<NormalOcTreeNode> leafIterable;
+   private final LeafBoundingBoxIterable<NormalOcTreeNode> leafIterable;
 
    private double alphaCenterUpdate = 0.1;
 
    public NormalOcTree(double resolution)
    {
       super(resolution);
-      leafIterable = new LeafIterable<>(this, treeDepth, true);
+      leafIterable = new LeafBoundingBoxIterable<>(this, treeDepth, true);
    }
 
    public void insertSweepCollection(SweepCollection sweepCollection)
@@ -91,6 +91,10 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       for (int i = 0; i < scan.size(); i++)
       {
          scanPoint.set(scan.getPoint(i));
+
+         if (!isInBoundingBox(scanPoint))
+            continue;
+
          double distanceSquared = scanPoint.distanceSquared(sensorOrigin);
          if (distanceSquared < maxRangeSquared && distanceSquared > minRangeSquared)
          {
@@ -585,6 +589,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public void disableBoundingBox()
    {
       boundingBox = null;
+      leafIterable.setBoundingBox(null);
    }
 
    /**
@@ -595,6 +600,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public void setBoundingBox(OcTreeBoundingBoxInterface boundingBox)
    {
       this.boundingBox = boundingBox;
+      leafIterable.setBoundingBox(boundingBox);
    }
 
    public OcTreeBoundingBoxInterface getBoundingBox()
