@@ -7,18 +7,28 @@ import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
+import us.ihmc.octoMap.ocTree.rules.interfaces.UpdateRule;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
+import us.ihmc.octoMap.occupancy.OccupancyTools;
 
-public class NormalOctreeUpdateRule extends UpdateOccupancyRule<NormalOcTreeNode>
+public class NormalOctreeUpdateRule implements UpdateRule<NormalOcTreeNode>
 {
    private double alphaHitLocationUpdate;
    private final Point3d hitLocation = new Point3d();
    private final Point3d sensorLocation = new Point3d();
    private final Vector3d initialGuessNormal = new Vector3d();
 
+   private float updateLogOdds = Float.NaN;
+   private final OccupancyParametersReadOnly parameters;
+
    public NormalOctreeUpdateRule(OccupancyParametersReadOnly occupancyParameters)
    {
-      super(occupancyParameters);
+      this.parameters = occupancyParameters;
+   }
+
+   public void setUpdateLogOdds(float updateLogOdds)
+   {
+      this.updateLogOdds = updateLogOdds;
    }
 
    public void setAlphaHitLocationUpdate(double alphaHitLocationUpdate)
@@ -41,7 +51,7 @@ public class NormalOctreeUpdateRule extends UpdateOccupancyRule<NormalOcTreeNode
    @Override
    public void updateLeaf(NormalOcTreeNode leafToUpdate, OcTreeKeyReadOnly leafKey, boolean nodeJustCreated)
    {
-      super.updateLeaf(leafToUpdate, leafKey, nodeJustCreated);
+      OccupancyTools.updateNodeLogOdds(parameters, leafToUpdate, updateLogOdds);
 
       leafToUpdate.updateCenter(hitLocation, alphaHitLocationUpdate);
 
@@ -57,6 +67,6 @@ public class NormalOctreeUpdateRule extends UpdateOccupancyRule<NormalOcTreeNode
    @Override
    public void updateInnerNode(NormalOcTreeNode innerNodeToUpdate)
    {
-      super.updateInnerNode(innerNodeToUpdate);
+      innerNodeToUpdate.updateOccupancyChildren();
    }
 }
