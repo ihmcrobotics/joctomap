@@ -13,6 +13,7 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.key.OcTreeKeySet;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.ocTree.rules.ActionRule;
 import us.ihmc.octoMap.ocTree.rules.interfaces.CollidableRule;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
@@ -29,6 +30,14 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
    private final OcTreeKeySet unfilteredFreeCells = new OcTreeKeySet();
 
    private final KeyRay ray = new KeyRay();
+   private final ActionRule growKeyRayActionRule = new ActionRule()
+   {
+      @Override
+      public void doAction(OcTreeKeyReadOnly key)
+      {
+         ray.add(key);
+      }
+   };
 
    private final Vector3d direction = new Vector3d();
    private final double[] directionArray = new double[3];
@@ -165,24 +174,33 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
    */
    public KeyRayReadOnly computeRayKeys(Point3d origin, Point3d end, double resolution, int treeDepth)
    {
+      return computeRayKeys(origin, end, null, resolution, treeDepth);
+   }
+
+   public KeyRayReadOnly computeRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, double resolution, int treeDepth)
+   {
+      ray.clear();
+      doActionOnRayKeys(origin, end, boundingBox, growKeyRayActionRule, resolution, treeDepth);
+      return ray;
+   }
+
+   public void doActionOnRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, ActionRule actionRule, double resolution, int treeDepth)
+   {
       // see "A Faster Voxel Traversal Algorithm for Ray Tracing" by Amanatides & Woo
       // basically: DDA in 3D
-
-      ray.clear();
-
       boolean foundKeyOrigin = coordinateToKey(origin, resolution, treeDepth, keyOrigin);
       boolean foundKeyEnd = coordinateToKey(end, resolution, treeDepth, keyEnd);
 
       if (!foundKeyOrigin || !foundKeyEnd)
       {
          System.err.println(AbstractOcTreeBase.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
-         return null;
+         return;
       }
 
       if (keyOrigin.equals(keyEnd))
-         return ray; // same tree cell, we're done.
+         return; // same tree cell, we're done.
 
-      ray.add(keyOrigin);
+      actionRule.doAction(keyOrigin);
 
       // Initialization phase -------------------------------------------------------
 
@@ -250,7 +268,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
          tMax[dim] += tDelta[dim];
 
          // reached endpoint, key equv?
-         if (currentKey.equals(keyEnd))
+         if (currentKey.equals(keyEnd) || (boundingBox != null && !boundingBox.isInBoundingBox(currentKey)))
          {
             done = true;
             break;
@@ -284,16 +302,10 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             }
             else
             { // continue to add freespace cells
-               ray.add(currentKey);
+               actionRule.doAction(currentKey);
             }
          }
-
-         if (ray.size() >= maxRaySize - 1)
-            break;
-
       } // end while
-
-      return ray;
    }
 
    /**
