@@ -148,9 +148,12 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             continue;
          }
 
-//         if (node.getNormalQuality() < 0.005 && random.nextInt(5) != 0)
+//         if (node.getNormalQuality() < 0.005)
 //         {
-//            continue;
+//            if (random.nextDouble() >= 0.10)
+//               continue;
+////            else if (random.nextDouble() <= 0.01)
+////               node.resetNormal();
 //         }
 
          switch (NORMAL_COMPUTATION_METHOD)
