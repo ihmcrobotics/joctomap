@@ -11,8 +11,6 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
-import org.apache.commons.math3.stat.descriptive.moment.Variance;
-
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
@@ -511,66 +509,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          OcTreeKeyTools.computeNeighborKeyOffsets(depth, resolution, treeDepth, searchRadius, cachedNeighborOffsets);
       }
       return cachedNeighborOffsets;
-   }
-
-   public double computeNodeNeighborNormalDifference(OcTreeKeyReadOnly key, int depth)
-   {
-      NormalOcTreeNode node = search(key, depth);
-
-      if (node == null || !node.isNormalSet())
-         return Double.NaN;
-
-      Vector3d normal = new Vector3d();
-      node.getNormal(normal);
-      Vector3d meanNormal = new Vector3d();
-      OcTreeKey currentKey = new OcTreeKey();
-      NormalOcTreeNode currentNode;
-
-      int count = 0;
-
-      double meanDifference = 0.0;
-      Variance var = new Variance();
-      int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
-
-      int[] keyOffsets = {-keyInterval, 0, keyInterval};
-
-      for (int kxOffset : keyOffsets)
-      {
-         for (int kyOffset : keyOffsets)
-         {
-            for (int kzOffset : keyOffsets)
-            {
-               if (kxOffset == 0 && kyOffset == 0 && kzOffset == 0)
-                  continue;
-
-               currentKey.setKey(0, key.getKey(0) + kxOffset);
-               currentKey.setKey(1, key.getKey(1) + kyOffset);
-               currentKey.setKey(2, key.getKey(2) + kzOffset);
-               currentNode = search(currentKey, depth);
-
-               if (currentNode == null || !currentNode.isNormalSet())
-                  continue;
-
-               Vector3d currentNodeNormal = new Vector3d();
-               currentNode.getNormal(currentNodeNormal);
-               meanNormal.add(currentNodeNormal);
-               double dot = currentNodeNormal.dot(normal);
-               meanDifference += 1.0 - Math.abs(dot);
-               var.increment(1.0 - Math.abs(dot));
-               count++;
-            }
-         }
-      }
-
-      if (count == 0)
-         return Double.NaN;
-
-      meanNormal.scale(1.0 / count);
-      meanDifference = 1.0 - Math.abs(meanNormal.dot(normal));
-
-      //      meanDifference /= count;
-      return meanDifference;
-      //      return var.getResult();
    }
 
    public void updatePlanarRegionSegmentation(int depth)
