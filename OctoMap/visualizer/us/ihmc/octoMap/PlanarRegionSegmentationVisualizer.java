@@ -70,7 +70,7 @@ public class PlanarRegionSegmentationVisualizer extends Application
             pointcloud.add(point);
          }
       }
-      ocTree.insertPointCloud(pointcloud, origin);
+      ocTree.integrateHitsOnly(pointcloud, origin);
    }
 
    public void createSawToothPlanes(double pitch, double roll, Vector3d planeOffset, Point3d lidarLocation)
@@ -121,7 +121,7 @@ public class PlanarRegionSegmentationVisualizer extends Application
             pointcloud.add(point);
          }
       }
-      ocTree.insertPointCloud(pointcloud, origin);
+      ocTree.integrateHitsOnly(pointcloud, origin);
    }
 
    private final RecyclingArrayList<Point3d> plane = new RecyclingArrayList<>(GenericTypeBuilder.createBuilderWithEmptyConstructor(Point3d.class));

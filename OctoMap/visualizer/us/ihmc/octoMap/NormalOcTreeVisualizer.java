@@ -80,7 +80,7 @@ public class NormalOcTreeVisualizer extends Application
          }
       }
 
-      ocTree.insertPointCloud(pointcloud, origin);
+      ocTree.integrateHitsOnly(pointcloud, origin);
    }
 
    public void createPlane(Point3d lidarPosition, double pitch, double roll, double z)
@@ -102,7 +102,7 @@ public class NormalOcTreeVisualizer extends Application
             pointcloud.add(point);
          }
       }
-      ocTree.insertPointCloud(pointcloud, lidarPosition);
+      ocTree.integrateHitsOnly(pointcloud, lidarPosition);
    }
 
    public void createBowl(double radius, Point3d center)
@@ -121,7 +121,7 @@ public class NormalOcTreeVisualizer extends Application
          }
       }
 
-      ocTree.insertPointCloud(pointcloud, origin);
+      ocTree.integrateHitsOnly(pointcloud, origin);
    }
 
    private final RecyclingArrayList<Point3d> plane = new RecyclingArrayList<>(GenericTypeBuilder.createBuilderWithEmptyConstructor(Point3d.class));

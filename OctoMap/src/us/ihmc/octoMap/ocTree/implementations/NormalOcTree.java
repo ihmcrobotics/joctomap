@@ -18,13 +18,17 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
+import us.ihmc.octoMap.key.KeyRayReadOnly;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyDeque;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
+import us.ihmc.octoMap.key.OcTreeKeySet;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
+import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
 import us.ihmc.octoMap.ocTree.rules.NormalOcTreeHitUpdateRule;
+import us.ihmc.octoMap.ocTree.rules.NormalOcTreeMissUpdateRule;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.occupancy.OccupancyTools;
@@ -47,6 +51,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private double maxInsertRange = -1.0;
 
    private final NormalOcTreeHitUpdateRule hitUpdateRule = new NormalOcTreeHitUpdateRule(occupancyParameters);
+   private final NormalOcTreeMissUpdateRule missUpdateRule = new NormalOcTreeMissUpdateRule(occupancyParameters);
+
+   private final OcTreeRayHelper<NormalOcTreeNode> rayHelper = new OcTreeRayHelper<>();
 
    private enum NormalComputationMethod {DIRECT_NEIGHBORS, CLOSE_NEIGHBORS, RANSAC};
    private static final NormalComputationMethod NORMAL_COMPUTATION_METHOD = NormalComputationMethod.RANSAC;
@@ -74,14 +81,14 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
          PointCloud scan = sweepCollection.getSweep(i);
 
-         insertPointCloud(scan, sensorOrigin);
+         integrateHitsOnly(scan, sensorOrigin);
       }
 
       long endTime = System.nanoTime();
       System.out.println("Exiting  updateNodeFromSweepCollection took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
    }
 
-   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)
+   public void integrateHitsOnly(PointCloud scan, Point3d sensorOrigin)
    {
       Point3d scanPoint = new Point3d();
       double minRangeSquared = minInsertRange < 0.0 ? 0.0 : minInsertRange * minInsertRange;
@@ -104,6 +111,71 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             updateNodeInternal(scanPoint, hitUpdateRule, null);
          }
       }
+   }
+
+   private final OcTreeKeySet occupiedCells = new OcTreeKeySet();
+
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)
+   {
+      missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
+      hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
+      hitUpdateRule.setAlphaHitLocationUpdate(alphaCenterUpdate);
+      occupiedCells.clear();
+
+      Vector3d direction = new Vector3d();
+      Point3d point = new Point3d();
+
+      for (int i = 0; i < scan.size(); ++i)
+      {
+         point.set(scan.getPoint(i));
+         direction.sub(point, sensorOrigin);
+         double length = direction.length();
+
+         if (isInBoundingBox(point) && (maxInsertRange < 0.0 || length <= maxInsertRange) && (minInsertRange < 0.0 || length >= minInsertRange))
+         {
+            OcTreeKey occupiedKey = coordinateToKey(point);
+            occupiedCells.add(occupiedKey);
+            hitUpdateRule.setHitLocation(sensorOrigin, point);
+            updateNodeInternal(occupiedKey, hitUpdateRule, null);
+         }
+      }
+
+      for (int i = 0; i < scan.size(); ++i)
+      {
+         point.set(scan.getPoint(i));
+         direction.sub(point, sensorOrigin);
+         double length = direction.length();
+
+         if (minInsertRange >= 0.0 && length < minInsertRange)
+            continue;
+
+         if (isInBoundingBox(point))
+         { // no BBX specified
+            Point3d rayEnd;
+            if (maxInsertRange < 0.0 || length <= maxInsertRange)
+            { // is not maxrange meas, free cells
+               rayEnd = point;
+            }
+            else
+            { // user set a maxrange and length is above
+               rayEnd = new Point3d();
+               rayEnd.scaleAdd(maxInsertRange / length, direction, sensorOrigin);
+            } // end if maxrange
+
+            KeyRayReadOnly keyRay;
+            if ((keyRay = rayHelper.computeRayKeys(sensorOrigin, rayEnd, resolution, treeDepth)) != null)
+            {
+               for (int freeKeyIndex = 0; freeKeyIndex < keyRay.size(); freeKeyIndex++)
+               {
+                  OcTreeKeyReadOnly freeKey = keyRay.get(freeKeyIndex);
+                  if (!occupiedCells.contains(freeKey))
+                  {
+                     updateNodeInternal(freeKey, missUpdateRule, missUpdateRule);
+                  }
+               }
+            }
+         }
+      } // end for all points, end of parallel OMP loop
    }
 
    private final HashMap<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
