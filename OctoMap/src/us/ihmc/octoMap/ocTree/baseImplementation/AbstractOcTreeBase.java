@@ -311,13 +311,10 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       if (earlyAbortRule != null)
       {
-         NODE leaf = OcTreeSearchTools.search(root, key, treeDepth);
+         NODE leaf = search(key);
 
-         if (leaf != null)
-         {
-            if (earlyAbortRule.shouldAbortFullDepthUpdate(leaf))
-               return leaf;
-         }
+         if (earlyAbortRule.shouldAbortFullDepthUpdate(leaf))
+            return leaf;
       }
 
       return updateNodeRecurs(root, createdRoot, key, updateRule, 0);

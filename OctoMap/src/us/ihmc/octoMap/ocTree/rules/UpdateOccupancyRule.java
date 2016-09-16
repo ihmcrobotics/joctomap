@@ -70,6 +70,9 @@ public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>>
    @Override
    public boolean shouldAbortFullDepthUpdate(NODE nodeToUpdate)
    {
+      if (nodeToUpdate == null)
+         return false;
+
       // early abort (no change will happen).
       // may cause an overhead in some configuration, but more often helps
       // no change: node already at threshold
