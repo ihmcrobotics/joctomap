@@ -942,7 +942,10 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          if (!OcTreeNodeTools.nodeChildExists(node, pos))
          {
             if (!updateRule.enableNodeCreation())
+            {
+               updateRule.updateLeaf(node, key, nodeJustCreated);
                return node;
+            }
             // child does not exist, but maybe it's a pruned node?
             if (!node.hasAtLeastOneChild() && !nodeJustCreated)
             { // current node does not have children AND it is not a new node -> expand pruned node
