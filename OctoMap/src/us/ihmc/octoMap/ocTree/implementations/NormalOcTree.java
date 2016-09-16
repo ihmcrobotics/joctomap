@@ -40,6 +40,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    // occupancy parameters of tree, stored in logodds:
    private final OccupancyParameters occupancyParameters = new OccupancyParameters();
+   private final NormalEstimationParameters normalEstimationParameters = new NormalEstimationParameters();
+   private final PlanarRegionSegmentationParameters planarRegionSegmentationParameters = new PlanarRegionSegmentationParameters();
    private OcTreeBoundingBoxInterface boundingBox = null;
    /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    private double minInsertRange = -1.0;
@@ -206,7 +208,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       leafIterable.setMaxDepth(treeDepth);
       boolean unknownStatus = true;
-      double searchRadius = 0.05; //2.1 * getNodeSize(treeDepth);
+      double searchRadius = normalEstimationParameters.getSearchRadius();
+      double maxDistanceFromPlane = normalEstimationParameters.getMaxDistanceFromPlane();
 
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
@@ -231,7 +234,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          switch (NORMAL_COMPUTATION_METHOD)
          {
          case RANSAC:
-            computeNodeNormalRansac(node, key, depth, unknownStatus, searchRadius);
+            computeNodeNormalRansac(node, key, depth, searchRadius, maxDistanceFromPlane);
             break;
          case CLOSE_NEIGHBORS:
             computeNodeNormalWithSphericalNeighborhood(node, key, depth, unknownStatus, searchRadius);
@@ -407,7 +410,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private final RecyclingArrayList<Point3d> tempNeighborCenters = new RecyclingArrayList<>(Point3d.class);
 
-   private void computeNodeNormalRansac(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, boolean unknownStatus, double searchRadius)
+   private void computeNodeNormalRansac(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, double searchRadius, double maxDistanceFromPlane)
    {
       if (!node.isCenterSet() || !node.isNormalQualitySet())
       {
@@ -418,7 +421,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       node.getNormal(normal);
       node.getCenter(nodeCenter);
       double nodeNormalQuality = 0.0; // Need to be recomputed as the neighbors may have changed
-      int numberOfPoints = 0;
+      int nodeNumberOfPoints = 0;
 
       OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(depth, searchRadius);
 
@@ -438,11 +441,18 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          neighborNode.getCenter(neighborCenter);
 
          nodeCenterToNeighborCenter.sub(nodeCenter, neighborCenter);
-         nodeNormalQuality += Math.abs(normal.dot(nodeCenterToNeighborCenter));
-         numberOfPoints++;
+         double distanceFromPlane = Math.abs(normal.dot(nodeCenterToNeighborCenter));
+         if (distanceFromPlane <= maxDistanceFromPlane)
+         {
+            nodeNormalQuality += distanceFromPlane;
+            nodeNumberOfPoints++;
+         }
       }
 
-      nodeNormalQuality /= numberOfPoints;
+      if (nodeNumberOfPoints == 0)
+         nodeNormalQuality = Double.POSITIVE_INFINITY;
+      else
+         nodeNormalQuality /= nodeNumberOfPoints;
 
       normalCandidate.set(0.0, 0.0, 0.0);
 
@@ -476,24 +486,28 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       normalCandidate.setZ(v1_x * v2_y - v1_y * v2_x);
       normalCandidate.normalize();
 
-      float normalQuality = 0.0f;
-      numberOfPoints = 3; // The three points picked randomly are on the plane
+      float candidateNormalQuality = 0.0f;
+      int candidateNumberOfPoints = 3; // The three points picked randomly are on the plane
 
       for (int i = 0; i < tempNeighborCenters.size(); i++)
       {
          nodeCenterToNeighborCenter.sub(nodeCenter, tempNeighborCenters.get(i));
-         normalQuality += Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
-         numberOfPoints++;
+         double distanceFromPlane = Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
+         if (distanceFromPlane < maxDistanceFromPlane)
+         {
+            candidateNormalQuality += distanceFromPlane;
+            candidateNumberOfPoints++;
+         }
       }
 
-      normalQuality /= numberOfPoints;
+      candidateNormalQuality /= candidateNumberOfPoints;
 
-      if (normalQuality < nodeNormalQuality)
+      if (candidateNumberOfPoints >= nodeNumberOfPoints && candidateNormalQuality < nodeNormalQuality)
       {
          if (normal.dot(normalCandidate) < 0.0)
             normalCandidate.negate();
          node.setNormal(normalCandidate);
-         node.setNormalQuality(normalQuality);
+         node.setNormalQuality(candidateNormalQuality);
       }
    }
 
@@ -518,10 +532,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void updatePlanarRegionSegmentation(int depth)
    {
-      double exploringRadius = 5.0 * getNodeSize(depth);
-      double maxMistanceFromPlane = 0.05;
-      double angleThreshold = Math.toRadians(10.0);
-      double dotThreshold = Math.cos(angleThreshold);
+      double dotThreshold = Math.cos(planarRegionSegmentationParameters.getMaxAngleFromPlane());
+      float minNormalQuality = (float) planarRegionSegmentationParameters.getMinNormalQuality();
+      double searchRadius = planarRegionSegmentationParameters.getSearchRadius();
+      double maxDistanceFromPlane = planarRegionSegmentationParameters.getMaxDistanceFromPlane();
+
       Random random = new Random(45561L);
       Vector3d nodeNormal = new Vector3d();
 
@@ -533,7 +548,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
          if (!isNodeOccupied(node) || node.isPartOfRegion() || !node.isNormalSet())
             continue;
-         if (node.getNormalQuality() > 0.005)
+         if (node.getNormalQuality() > minNormalQuality)
             continue;
 
          OcTreeKeyReadOnly nodeKey = superNode.getKey();
@@ -544,7 +559,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          node.setRegionId(planarRegion.getId());
          node.setHasBeenCandidateForRegion(planarRegion.getId());
 
-         growPlanarRegionIteratively(planarRegion, nodeKey, depth, exploringRadius, maxMistanceFromPlane, dotThreshold);
+         growPlanarRegionIteratively(planarRegion, nodeKey, depth, searchRadius, maxDistanceFromPlane, dotThreshold);
       }
    }
 
@@ -655,16 +670,36 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       return OccupancyTools.isNodeOccupied(occupancyParameters, node);
    }
 
-   public void setOccupancyParameters(OccupancyParameters occupancyParameters)
+   public void setOccupancyParameters(OccupancyParameters parameters)
    {
-      this.occupancyParameters.set(occupancyParameters);
+      this.occupancyParameters.set(parameters);
    }
 
    public OccupancyParametersReadOnly getOccupancyParameters()
    {
       return occupancyParameters;
    }
-   
+
+   public void setNormalEstimationParameters(NormalEstimationParameters parameters)
+   {
+      this.normalEstimationParameters.set(parameters);
+   }
+
+   public NormalEstimationParameters getNormalEstimationParameters()
+   {
+      return normalEstimationParameters;
+   }
+
+   public void setPlanarRegionSegmentationParameters(PlanarRegionSegmentationParameters parameters)
+   {
+      this.planarRegionSegmentationParameters.set(parameters);
+   }
+
+   public PlanarRegionSegmentationParameters getPlanarRegionSegmentationParameters()
+   {
+      return planarRegionSegmentationParameters;
+   }
+
    /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    public void setMinimumInsertRange(double minRange)
    {
