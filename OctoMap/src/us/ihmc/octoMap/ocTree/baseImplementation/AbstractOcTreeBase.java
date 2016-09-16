@@ -941,6 +941,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
          if (!OcTreeNodeTools.nodeChildExists(node, pos))
          {
+            if (!updateRule.enableNodeCreation())
+               return node;
             // child does not exist, but maybe it's a pruned node?
             if (!node.hasAtLeastOneChild() && !nodeJustCreated)
             { // current node does not have children AND it is not a new node -> expand pruned node
@@ -962,12 +964,19 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          else
          {
             NODE leafToReturn = updateNodeRecurs(nodeChild, createdNode, key, updateRule, depth + 1);
+
+            // That's an inner node, apply the update rule
+            updateRule.updateInnerNode(node);
+
             // prune node if possible, otherwise set own probability
             // note: combining both did not lead to a speedup!
-            if (pruneNode(node)) // return pointer to current parent (pruned), the just updated node no longer exists
+            if (updateRule.deleteUpdatedNode(leafToReturn))
+            {
+               deleteNodeChild(node, pos);
                leafToReturn = node;
-            else // That's an inner node, apply the update rule
-               updateRule.updateInnerNode(node);
+            }
+            else if (pruneNode(node)) // return pointer to current parent (pruned), the just updated node no longer exists
+               leafToReturn = node;
 
             return leafToReturn;
          }
