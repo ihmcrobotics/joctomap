@@ -83,7 +83,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
          PointCloud scan = sweepCollection.getSweep(i);
 
-         integrateHitsOnly(scan, sensorOrigin);
+         insertPointCloud(scan, sensorOrigin);
       }
 
       long endTime = System.nanoTime();
