@@ -114,7 +114,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             { // user set a maxrange and length is above
                Point3d newEnd = new Point3d();
                newEnd.scaleAdd(maxRange / length, direction, origin);
-               if (computeRayKeys(origin, point, resolution, treeDepth) != null)
+               if (computeRayKeys(origin, newEnd, resolution, treeDepth) != null)
                   unfilteredFreeCells.addAll(ray);
             } // end if maxrange
          }
@@ -322,7 +322,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       OcTreeKey currentKey = OcTreeKeyConversionTools.coordinateToKey(origin, resolution, treeDepth);
       if (currentKey == null)
       {
-         System.err.println(AbstractOccupancyOcTree.class.getSimpleName() + " (in castRay): Coordinates out of bounds during ray casting");
+         System.err.println(OcTreeRayHelper.class.getSimpleName() + " (in castRay): Coordinates out of bounds during ray casting");
          return false;
       }
    
@@ -386,7 +386,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
    
       if (step[0] == 0 && step[1] == 0 && step[2] == 0)
       {
-         System.err.println(AbstractOccupancyOcTree.class.getSimpleName() + " (in castRay): Raycasting in direction (0,0,0) is not possible!");
+         System.err.println(OcTreeRayHelper.class.getSimpleName() + " (in castRay): Raycasting in direction (0,0,0) is not possible!");
          return false;
       }
       int keyMaxValue = OcTreeKeyTools.computeMaximumKey(treeDepth);
@@ -421,7 +421,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
          // check for overflow:
          if (step[dim] < 0 && currentKey.getKey(dim) == 0 || step[dim] > 0 && currentKey.getKey(dim) == keyMaxValue)
          {
-            System.err.println(AbstractOccupancyOcTree.class.getSimpleName() + " (in castRay): Coordinate hit bounds in dim " + dim + ", aborting raycast");
+            System.err.println(OcTreeRayHelper.class.getSimpleName() + " (in castRay): Coordinate hit bounds in dim " + dim + ", aborting raycast");
             // return border point nevertheless:
             OcTreeKeyConversionTools.keyToCoordinate(currentKey, endToPack, resolution, treeDepth);
             return false;
