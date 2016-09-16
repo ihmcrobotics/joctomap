@@ -43,7 +43,7 @@ public class NormalOcTreeMissUpdateRule implements UpdateRule<NormalOcTreeNode>,
    @Override
    public boolean enableNodeCreation()
    {
-      return true;
+      return false;
    }
 
    @Override
