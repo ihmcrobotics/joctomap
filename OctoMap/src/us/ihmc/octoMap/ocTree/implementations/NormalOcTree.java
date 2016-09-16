@@ -24,7 +24,7 @@ import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
-import us.ihmc.octoMap.ocTree.rules.NormalOctreeUpdateRule;
+import us.ihmc.octoMap.ocTree.rules.NormalOcTreeHitUpdateRule;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.occupancy.OccupancyTools;
@@ -46,7 +46,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    private double maxInsertRange = -1.0;
 
-   private final NormalOctreeUpdateRule updateRule = new NormalOctreeUpdateRule(occupancyParameters);
+   private final NormalOcTreeHitUpdateRule hitUpdateRule = new NormalOcTreeHitUpdateRule(occupancyParameters);
 
    private enum NormalComputationMethod {DIRECT_NEIGHBORS, CLOSE_NEIGHBORS, RANSAC};
    private static final NormalComputationMethod NORMAL_COMPUTATION_METHOD = NormalComputationMethod.RANSAC;
@@ -87,8 +87,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       double minRangeSquared = minInsertRange < 0.0 ? 0.0 : minInsertRange * minInsertRange;
       double maxRangeSquared = maxInsertRange < 0.0 ? Double.POSITIVE_INFINITY : maxInsertRange * maxInsertRange;
 
-      updateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
-      updateRule.setAlphaHitLocationUpdate(alphaCenterUpdate);
+      hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
+      hitUpdateRule.setAlphaHitLocationUpdate(alphaCenterUpdate);
 
       for (int i = 0; i < scan.size(); i++)
       {
@@ -100,8 +100,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          double distanceSquared = scanPoint.distanceSquared(sensorOrigin);
          if (distanceSquared < maxRangeSquared && distanceSquared > minRangeSquared)
          {
-            updateRule.setHitLocation(sensorOrigin, scanPoint);
-            updateNodeInternal(scanPoint, updateRule, null);
+            hitUpdateRule.setHitLocation(sensorOrigin, scanPoint);
+            updateNodeInternal(scanPoint, hitUpdateRule, null);
          }
       }
    }

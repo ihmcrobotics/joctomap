@@ -11,7 +11,7 @@ import us.ihmc.octoMap.ocTree.rules.interfaces.UpdateRule;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.occupancy.OccupancyTools;
 
-public class NormalOctreeUpdateRule implements UpdateRule<NormalOcTreeNode>
+public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
 {
    private double alphaHitLocationUpdate;
    private final Point3d hitLocation = new Point3d();
@@ -21,7 +21,7 @@ public class NormalOctreeUpdateRule implements UpdateRule<NormalOcTreeNode>
    private float updateLogOdds = Float.NaN;
    private final OccupancyParametersReadOnly parameters;
 
-   public NormalOctreeUpdateRule(OccupancyParametersReadOnly occupancyParameters)
+   public NormalOcTreeHitUpdateRule(OccupancyParametersReadOnly occupancyParameters)
    {
       this.parameters = occupancyParameters;
    }
