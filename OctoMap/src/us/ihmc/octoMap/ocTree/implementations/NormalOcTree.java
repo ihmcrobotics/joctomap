@@ -51,7 +51,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private final OcTreeRayHelper<NormalOcTreeNode> rayHelper = new OcTreeRayHelper<>();
 
-   private enum NormalComputationMethod {DIRECT_NEIGHBORS, CLOSE_NEIGHBORS, RANSAC};
+   private enum NormalComputationMethod
+   {
+      DIRECT_NEIGHBORS, CLOSE_NEIGHBORS, RANSAC
+   };
+
    private static final NormalComputationMethod NORMAL_COMPUTATION_METHOD = NormalComputationMethod.RANSAC;
 
    private final TDoubleObjectHashMap<TIntObjectHashMap<OcTreeKeyList>> neighborOffsetsCached = new TDoubleObjectHashMap<>(4);
@@ -71,7 +75,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
          System.out.println("Point cloud size: " + sweepCollection.getSweep(i).size());
       long startTime = System.nanoTime();
-     
+
       for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
       {
          Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
@@ -685,7 +689,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       minInsertRange = -1.0;
    }
-   
+
    /** Remove the limitation in maximum range when inserting a ray or point cloud. */
    public void removeMaximumInsertRange()
    {
