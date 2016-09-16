@@ -6,8 +6,8 @@ import static us.ihmc.octoMap.tools.OctoMapTools.probability;
 public class OccupancyParameters implements OccupancyParametersReadOnly
 {
    public static final double DEFAULT_OCCUPANCY_THRESHOLD = 0.5;  // = 0.0 in logodds
-   public static final double DEFAULT_HIT_UPDATE = 0.7;           // = 0.85 in logodds
-   public static final double DEFAULT_MISS_UPDATE = 0.4;          // = -0.4 in logodds
+   public static final double DEFAULT_HIT_UPDATE = 0.85; //0.7;           // = 0.85 in logodds
+   public static final double DEFAULT_MISS_UPDATE = 0.47; //0.4;          // = -0.4 in logodds
    public static final double DEFAULT_MIN_PROBABILITY = 0.1192;   // = -2 in log odds
    public static final double DEFAULT_MAX_PROBABILITY = 0.971;    // = 3.5 in log odds
 
