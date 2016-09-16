@@ -36,6 +36,8 @@ import us.ihmc.robotics.time.TimeTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
+   public static final boolean UPDATE_NODE_HIT_WITH_AVERAGE = true;
+
    // occupancy parameters of tree, stored in logodds:
    private final OccupancyParameters occupancyParameters = new OccupancyParameters();
    private OcTreeBoundingBoxInterface boundingBox = null;
@@ -370,9 +372,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          // Did not find three points, just fall back to the naive way
          if (tempNeighborsForNormal.isEmpty())
          {
-//            System.err.println("Not more neighbos :/");
             node.resetNormal();
-//          computeNodeNormalWithSphericalNeighborhood(node, key, depth, unknownStatus, searchRadius);
             return;
          }
 

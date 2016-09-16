@@ -4,6 +4,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
+import us.ihmc.octoMap.ocTree.implementations.NormalOcTree;
 import us.ihmc.octoMap.planarRegions.PlanarRegion;
 
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
@@ -17,6 +18,11 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    private float centerZ = Float.NaN;
    private int regionId = PlanarRegion.NO_REGION_ID;
    private int hasBeenCandidateForRegion = PlanarRegion.NO_REGION_ID;
+
+   private long n;
+   private float devX, nDevX;
+   private float devY, nDevY;
+   private float devZ, nDevZ;
 
    public NormalOcTreeNode()
    {
@@ -35,6 +41,17 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       centerZ = other.centerZ;
       regionId = other.regionId;
       hasBeenCandidateForRegion = other.hasBeenCandidateForRegion;
+
+      if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
+      {
+         n = other.n;
+         devX = other.devX;
+         devY = other.devY;
+         devZ = other.devZ;
+         nDevX = other.nDevX;
+         nDevY = other.nDevY;
+         nDevZ = other.nDevZ;
+      }
    }
 
    @Override
@@ -66,6 +83,14 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       centerX = Float.NaN;
       centerY = Float.NaN;
       centerZ = Float.NaN;
+
+      if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
+      {
+         n = 0;
+         devX = Float.NaN; nDevX = Float.NaN;
+         devY = Float.NaN; nDevY = Float.NaN;
+         devZ = Float.NaN; nDevZ = Float.NaN;
+      }
    }
 
    public void resetRegionId()
@@ -190,17 +215,42 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    public void updateCenter(float xUpdate, float yUpdate, float zUpdate, float alphaUpdate)
    {
-      if (!isCenterSet())
+      if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
       {
-         centerX = xUpdate;
-         centerY = yUpdate;
-         centerZ = zUpdate;
+         if (n == 0)
+         {
+            centerX = 0.0f;
+            centerY = 0.0f;
+            centerZ = 0.0f;
+         }
+         n++;
+         float n0 = n;
+         devX = xUpdate - centerX;
+         nDevX = devX / n0;
+         centerX += nDevX;
+
+         devY = yUpdate - centerY;
+         nDevY = devY / n0;
+         centerY += nDevY;
+
+         devZ = zUpdate - centerZ;
+         nDevZ = devZ / n0;
+         centerZ += nDevZ;
       }
       else
       {
-         centerX = alphaUpdate * xUpdate + (1.0f - alphaUpdate) * centerX;
-         centerY = alphaUpdate * yUpdate + (1.0f - alphaUpdate) * centerY;
-         centerZ = alphaUpdate * zUpdate + (1.0f - alphaUpdate) * centerZ;
+         if (!isCenterSet())
+         {
+            centerX = xUpdate;
+            centerY = yUpdate;
+            centerZ = zUpdate;
+         }
+         else
+         {
+            centerX = alphaUpdate * xUpdate + (1.0f - alphaUpdate) * centerX;
+            centerY = alphaUpdate * yUpdate + (1.0f - alphaUpdate) * centerY;
+            centerZ = alphaUpdate * zUpdate + (1.0f - alphaUpdate) * centerZ;
+         }
       }
    }
 
