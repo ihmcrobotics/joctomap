@@ -1,10 +1,7 @@
 package us.ihmc.octoMap.ocTree.implementations;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Random;
 
 import javax.vecmath.Point3d;
@@ -34,6 +31,7 @@ import us.ihmc.octoMap.planarRegions.PlanarRegion;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
+import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.time.TimeTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
@@ -403,24 +401,24 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private final Vector3d normalCandidate = new Vector3d();
    private final Point3d[] randomDraw = {new Point3d(), new Point3d(), new Point3d()};
 
-   private final List<NormalOcTreeNode> tempNeighborsForNormal = new ArrayList<>();
+   private final RecyclingArrayList<Point3d> tempNeighborCenters = new RecyclingArrayList<>(Point3d.class);
 
    private void computeNodeNormalRansac(NormalOcTreeNode node, OcTreeKeyReadOnly key, int depth, boolean unknownStatus, double searchRadius)
    {
       if (!node.isCenterSet() || !node.isNormalQualitySet())
       {
          node.resetNormal();
-//         computeNodeNormalWithSphericalNeighborhood(node, key, depth, unknownStatus, searchRadius);
          return;
       }
 
+      node.getNormal(normal);
       node.getCenter(nodeCenter);
-
-      NormalOcTreeNode currentNode;
+      double nodeNormalQuality = 0.0; // Need to be recomputed as the neighbors may have changed
+      int numberOfPoints = 0;
 
       OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(depth, searchRadius);
 
-      tempNeighborsForNormal.clear();
+      tempNeighborCenters.clear();
       for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
       {
          tempKeyForNormal.add(key, cachedNeighborKeyOffsets.unsafeGet(i));
@@ -432,8 +430,15 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             continue;
          if (!neighborNode.isCenterSet())
             continue;
-         tempNeighborsForNormal.add(neighborNode);
+         Point3d neighborCenter = tempNeighborCenters.add();
+         neighborNode.getCenter(neighborCenter);
+
+         nodeCenterToNeighborCenter.sub(nodeCenter, neighborCenter);
+         nodeNormalQuality += Math.abs(normal.dot(nodeCenterToNeighborCenter));
+         numberOfPoints++;
       }
+
+      nodeNormalQuality /= numberOfPoints;
 
       normalCandidate.set(0.0, 0.0, 0.0);
 
@@ -443,17 +448,15 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       while (index < 3)
       {
          // Did not find three points, just fall back to the naive way
-         if (tempNeighborsForNormal.isEmpty())
+         if (tempNeighborCenters.isEmpty())
          {
             node.resetNormal();
             return;
          }
 
-         int nextInt = random.nextInt(tempNeighborsForNormal.size());
-         currentNode = tempNeighborsForNormal.get(nextInt);
-         currentNode.getCenter(randomDraw[index++]);
-         Collections.swap(tempNeighborsForNormal, nextInt, tempNeighborsForNormal.size() - 1);
-         tempNeighborsForNormal.remove(tempNeighborsForNormal.size() - 1);
+         int nextInt = random.nextInt(tempNeighborCenters.size());
+         randomDraw[index++].set(tempNeighborCenters.get(nextInt));
+         tempNeighborCenters.fastRemove(nextInt);
       }
 
       double v1_x = randomDraw[1].getX() - randomDraw[0].getX();
@@ -470,21 +473,19 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       normalCandidate.normalize();
 
       float normalQuality = 0.0f;
-      int numberOfPoints = 3; // The three points picked randomly are on the plane
+      numberOfPoints = 3; // The three points picked randomly are on the plane
 
-      for (int i = 0; i < tempNeighborsForNormal.size(); i++)
+      for (int i = 0; i < tempNeighborCenters.size(); i++)
       {
-         currentNode = tempNeighborsForNormal.get(i);
-         currentNode.getCenter(neighborCenter);
-         nodeCenterToNeighborCenter.sub(nodeCenter, neighborCenter);
+         nodeCenterToNeighborCenter.sub(nodeCenter, tempNeighborCenters.get(i));
          normalQuality += Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
          numberOfPoints++;
       }
 
       normalQuality /= numberOfPoints;
-      if (normalQuality < node.getNormalQuality())
+
+      if (normalQuality < nodeNormalQuality)
       {
-         node.getNormal(normal);
          if (normal.dot(normalCandidate) < 0.0)
             normalCandidate.negate();
          node.setNormal(normalCandidate);
