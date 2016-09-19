@@ -554,6 +554,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
          growPlanarRegionIteratively(planarRegion, nodeKey, searchRadius, maxDistanceFromPlane, dotThreshold);
       }
+
+      if (root != null)
+         updateInnerRegionIdsRecursive(root, 0);
    }
 
    private final Vector3d normalCandidateToCurrentRegion = new Vector3d();
@@ -609,6 +612,26 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          neighborNode.setHasBeenCandidateForRegion(planarRegionId);
          keysToExplore.add(neighborKey);
          nodesToExplore.add(neighborNode);
+      }
+   }
+
+   private void updateInnerRegionIdsRecursive(NormalOcTreeNode node, int depth)
+   {
+      // only recurse and update for inner nodes:
+      if (node.hasAtLeastOneChild())
+      {
+         // return early for last level:
+         if (depth < treeDepth - 1)
+         {
+            for (int i = 0; i < 8; i++)
+            {
+               NormalOcTreeNode childNode;
+               if ((childNode = node.getChildUnsafe(i)) != null)
+                  updateInnerRegionIdsRecursive(childNode, depth + 1);
+            }
+         }
+         node.resetRegionId();
+         node.updateRegionIdChildren();
       }
    }
 
