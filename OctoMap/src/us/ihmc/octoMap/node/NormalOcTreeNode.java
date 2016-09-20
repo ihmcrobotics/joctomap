@@ -314,25 +314,28 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
          return;
       }
 
-      int[] regionIdCount = new int[8];
       int indexRegionWithHighestCount = -1;
+      int highestCount = -1;
 
       for (int i = 0; i < 8; i++)
       {
          NormalOcTreeNode currentChild = children[i];
          if (currentChild != null && currentChild.isPartOfRegion())
          {
-            regionIdCount[0] = 1;
+            int currentCount = 1;
             
             for (int j = 0; j < i; j++)
             {
                NormalOcTreeNode other = children[j];
                if (other != null && currentChild.getRegionId() == other.getRegionId())
-                  regionIdCount[i]++;
+                  currentCount++;
             }
 
-            if (indexRegionWithHighestCount < 0 || regionIdCount[i] > regionIdCount[indexRegionWithHighestCount])
+            if (indexRegionWithHighestCount < 0 || currentCount > highestCount)
+            {
                indexRegionWithHighestCount = i;
+               highestCount = currentCount;
+            }
          }
       }
 
