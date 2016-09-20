@@ -82,7 +82,7 @@ public class PlanarRegion
    {
       try
       {
-         FileWriter fw = new FileWriter("regionPoints");
+         FileWriter fw = new FileWriter("regionPoints" + id);
          for (int i = 0; i < getNumberOfNodes(); i++)
          {
             Point3d point = points.get(i);
