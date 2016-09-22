@@ -554,7 +554,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
          growPlanarRegionIteratively(planarRegion, nodeKey, searchRadius, maxDistanceFromPlane, dotThreshold);
 
-//         if (planarRegion.getNumberOfNodes() > 15000)
+//         if (planarRegion.getNumberOfNodes() > 3000)
 //            planarRegion.printPointsToFile();
       }
 
