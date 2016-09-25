@@ -231,13 +231,13 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             continue;
          }
 
-         if (node.getNormalQuality() < 0.005)
-         {
-            if (random.nextDouble() >= 0.10)
-               continue;
-//            else if (random.nextDouble() <= 0.01)
-//               node.resetNormal();
-         }
+//         if (node.getNormalQuality() < 0.005)
+//         {
+//            if (random.nextDouble() >= 0.10)
+//               continue;
+////            else if (random.nextDouble() <= 0.01)
+////               node.resetNormal();
+//         }
 
          switch (NORMAL_COMPUTATION_METHOD)
          {
@@ -773,6 +773,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public PlanarRegion getPlanarRegion(int index)
    {
       return planarRegions.get(index);
+   }
+
+   public List<PlanarRegion> getPlanarRegions()
+   {
+      return planarRegions;
    }
 
    public int getNumberOfPlanarRegions()
