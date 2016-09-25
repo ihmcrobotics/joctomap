@@ -1,8 +1,10 @@
 package us.ihmc.octoMap.ocTree.implementations;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 
 import javax.vecmath.Point3d;
@@ -51,6 +53,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private final NormalOcTreeMissUpdateRule missUpdateRule = new NormalOcTreeMissUpdateRule(occupancyParameters);
 
    private final OcTreeRayHelper<NormalOcTreeNode> rayHelper = new OcTreeRayHelper<>();
+
+   private final List<PlanarRegion> planarRegions = new ArrayList<>();
 
    private enum NormalComputationMethod
    {
@@ -105,7 +109,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
 
       startTime = System.nanoTime();
-      updatePlanarRegionSegmentation();
+      updatePlanarRegionSegmentation(sweepCollection.getSweepOrigin(sweepCollection.getNumberOfSweeps() - 1));
       endTime = System.nanoTime();
       System.out.println("Exiting  updatePlanarRegionSegmentation took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
    }
@@ -525,15 +529,19 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       return cachedNeighborOffsets;
    }
 
-   private void updatePlanarRegionSegmentation()
+   private void updatePlanarRegionSegmentation(Point3d lastSensorOrigin)
    {
       double dotThreshold = Math.cos(planarRegionSegmentationParameters.getMaxAngleFromPlane());
       float minNormalQuality = (float) planarRegionSegmentationParameters.getMinNormalQuality();
       double searchRadius = planarRegionSegmentationParameters.getSearchRadius();
       double maxDistanceFromPlane = planarRegionSegmentationParameters.getMaxDistanceFromPlane();
 
-      Random random = new Random(45561L);
+      Vector3d towardsSensor = new Vector3d();
       Vector3d nodeNormal = new Vector3d();
+      Point3d nodeCenter = new Point3d();
+
+      Random random = new Random(45561L);
+      planarRegions.clear();
 
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
@@ -547,15 +555,20 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          OcTreeKeyReadOnly nodeKey = superNode.getKey();
          int regionId = random.nextInt(Integer.MAX_VALUE);
          PlanarRegion planarRegion = new PlanarRegion(regionId);
+         planarRegion.update(node, nodeKey);
+         node.getCenter(nodeCenter);
          node.getNormal(nodeNormal);
-         planarRegion.update(nodeNormal, keyToCoordinate(nodeKey));
+         towardsSensor.sub(lastSensorOrigin, nodeCenter);
+
+         if (towardsSensor.dot(nodeNormal) < 0.0)
+            node.negateNormal();
+
          node.setRegionId(planarRegion.getId());
          node.setHasBeenCandidateForRegion(planarRegion.getId());
 
          growPlanarRegionIteratively(planarRegion, nodeKey, searchRadius, maxDistanceFromPlane, dotThreshold);
 
-//         if (planarRegion.getNumberOfNodes() > 3000)
-//            planarRegion.printPointsToFile();
+         planarRegions.add(planarRegion);
       }
 
       if (root != null)
@@ -589,11 +602,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          double dot = planarRegion.dot(normalCandidateToCurrentRegion);
          if (planarRegion.absoluteOrthogonalDistance(centerCandidateToCurrentRegion) < maxMistanceFromPlane && Math.abs(dot) > dotThreshold)
          {
-            planarRegion.update(normalCandidateToCurrentRegion, centerCandidateToCurrentRegion);
-            currentNode.setRegionId(planarRegionId);
-
             if (dot < 0.0)
                currentNode.negateNormal();
+
+            planarRegion.update(currentNode, nodeKey);
+            currentNode.setRegionId(planarRegionId);
 
             extendSearch(currentKey, cachedNeighborKeyOffsets, planarRegionId);
          }
@@ -755,6 +768,16 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       removeMinimumInsertRange();
       removeMaximumInsertRange();
+   }
+
+   public PlanarRegion getPlanarRegion(int index)
+   {
+      return planarRegions.get(index);
+   }
+
+   public int getNumberOfPlanarRegions()
+   {
+      return planarRegions.size();
    }
 
    @Override

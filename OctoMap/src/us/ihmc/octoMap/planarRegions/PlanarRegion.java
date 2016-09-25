@@ -2,11 +2,15 @@ package us.ihmc.octoMap.planarRegions;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import us.ihmc.robotics.lists.RecyclingArrayList;
+import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
+import us.ihmc.octoMap.node.NormalOcTreeNode;
 
 public class PlanarRegion
 {
@@ -17,18 +21,25 @@ public class PlanarRegion
    private final VectorMean normal = new VectorMean();
    private final PointMean point = new PointMean();
    private final Vector3d temporaryVector = new Vector3d();
-   private final RecyclingArrayList<Point3d> points = new RecyclingArrayList<>(Point3d.class);
+   private final List<Point3d> points = new ArrayList<>();
+   private final List<OcTreeKey> keys = new ArrayList<>();
 
    public PlanarRegion(int id)
    {
       this.id = id;
    }
 
-   public void update(Vector3d normal, Point3d point)
+   public void update(NormalOcTreeNode node, OcTreeKeyReadOnly nodeKey)
    {
-      this.normal.update(normal);
-      this.point.update(point);
-      points.add().set(point);
+      node.getNormal(temporaryVector);
+      normal.update(temporaryVector);
+
+      Point3d newPoint = new Point3d();
+      node.getCenter(newPoint);
+      points.add(newPoint);
+      point.update(newPoint);
+
+      keys.add(new OcTreeKey(nodeKey));
    }
 
    public double distanceFromCenterSquared(Point3d point)
@@ -66,6 +77,26 @@ public class PlanarRegion
    public double absoluteDot(Vector3d normal)
    {
       return Math.abs(dot(normal));
+   }
+
+   public Vector3d getNormal()
+   {
+      return normal;
+   }
+
+   public Point3d getOrigin()
+   {
+      return point;
+   }
+
+   public Point3d getPoint(int index)
+   {
+      return points.get(index);
+   }
+ 
+   public List<Point3d> getPoints()
+   {
+      return points;
    }
 
    public int getId()
