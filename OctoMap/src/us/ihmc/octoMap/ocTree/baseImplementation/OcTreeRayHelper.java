@@ -13,7 +13,7 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.key.OcTreeKeySet;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
-import us.ihmc.octoMap.ocTree.rules.ActionRule;
+import us.ihmc.octoMap.ocTree.rules.RayActionRule;
 import us.ihmc.octoMap.ocTree.rules.interfaces.CollidableRule;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
@@ -30,10 +30,10 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
    private final OcTreeKeySet unfilteredFreeCells = new OcTreeKeySet();
 
    private final KeyRay ray = new KeyRay();
-   private final ActionRule growKeyRayActionRule = new ActionRule()
+   private final RayActionRule growKeyRayActionRule = new RayActionRule()
    {
       @Override
-      public void doAction(OcTreeKeyReadOnly key)
+      public void doAction(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, OcTreeKeyReadOnly key)
       {
          ray.add(key);
       }
@@ -184,7 +184,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       return ray;
    }
 
-   public void doActionOnRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, ActionRule actionRule, double resolution, int treeDepth)
+   public void doActionOnRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule, double resolution, int treeDepth)
    {
       // see "A Faster Voxel Traversal Algorithm for Ray Tracing" by Amanatides & Woo
       // basically: DDA in 3D
@@ -200,7 +200,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       if (keyOrigin.equals(keyEnd))
          return; // same tree cell, we're done.
 
-      actionRule.doAction(keyOrigin);
+      actionRule.doAction(origin, end, direction, keyOrigin);
 
       // Initialization phase -------------------------------------------------------
 
@@ -302,7 +302,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             }
             else
             { // continue to add freespace cells
-               actionRule.doAction(currentKey);
+               actionRule.doAction(origin, end, direction, currentKey);
             }
          }
       } // end while

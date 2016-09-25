@@ -29,6 +29,11 @@ public class PlanarRegion
       this.id = id;
    }
 
+   public void addPoint(Point3d point)
+   {
+      points.add(point);
+   }
+
    public void update(NormalOcTreeNode node, OcTreeKeyReadOnly nodeKey)
    {
       node.getNormal(temporaryVector);
@@ -106,7 +111,7 @@ public class PlanarRegion
 
    public int getNumberOfNodes()
    {
-      return normal.getNumberOfSamples();
+      return points.size();
    }
 
    public void printPointsToFile()

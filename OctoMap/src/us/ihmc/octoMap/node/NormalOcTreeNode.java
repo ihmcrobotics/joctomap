@@ -12,7 +12,8 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    private float normalX = Float.NaN;
    private float normalY = Float.NaN;
    private float normalZ = Float.NaN;
-   private float normalQuality = Float.NaN;
+   private float normalAverageDeviation = Float.NaN;
+   private int normalConsensusSize = 0;
    private float centerX = Float.NaN;
    private float centerY = Float.NaN;
    private float centerZ = Float.NaN;
@@ -35,7 +36,8 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       normalX = other.normalX;
       normalY = other.normalY;
       normalZ = other.normalZ;
-      normalQuality = other.normalQuality;
+      normalAverageDeviation = other.normalAverageDeviation;
+      normalConsensusSize = other.normalConsensusSize;
       centerX = other.centerX;
       centerY = other.centerY;
       centerZ = other.centerZ;
@@ -75,7 +77,8 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       normalX = Float.NaN;
       normalY = Float.NaN;
       normalZ = Float.NaN;
-      normalQuality = Float.NaN;
+      normalAverageDeviation = Float.NaN;
+      normalConsensusSize = 0;
    }
 
    public void resetCenter()
@@ -160,24 +163,25 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       normalZ = - normalZ;
    }
 
-   public void setNormalQuality(float quality)
+   public void setNormalQuality(float averageDeviation, int consensusSize)
    {
-      normalQuality = quality;
+      normalAverageDeviation = averageDeviation;
+      normalConsensusSize = consensusSize;
    }
 
-   public float getNormalQuality()
+   public float getNormalAverageDeviation()
    {
-      return normalQuality;
+      return normalAverageDeviation;
+   }
+
+   public int getNormalConsensusSize()
+   {
+      return normalConsensusSize;
    }
 
    public boolean isNormalSet()
    {
       return !Float.isNaN(normalX) && !Float.isNaN(normalY) && !Float.isNaN(normalZ);
-   }
-
-   public boolean isNormalQualitySet()
-   {
-      return !Float.isNaN(normalQuality);
    }
 
    public boolean isCenterSet()

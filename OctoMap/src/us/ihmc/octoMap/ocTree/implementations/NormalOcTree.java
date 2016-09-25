@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.ocTree.implementations;
 
+import static us.ihmc.robotics.geometry.GeometryTools.*;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,9 +24,9 @@ import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
-import us.ihmc.octoMap.ocTree.rules.ActionRule;
 import us.ihmc.octoMap.ocTree.rules.NormalOcTreeHitUpdateRule;
 import us.ihmc.octoMap.ocTree.rules.NormalOcTreeMissUpdateRule;
+import us.ihmc.octoMap.ocTree.rules.RayActionRule;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.occupancy.OccupancyTools;
@@ -32,6 +34,7 @@ import us.ihmc.octoMap.planarRegions.PlanarRegion;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
+import us.ihmc.robotics.MathTools;
 import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.time.TimeTools;
 
@@ -152,13 +155,27 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    }
 
    private final HashSet<OcTreeKey> occupiedCells = new HashSet<>();
-   private final ActionRule integrateMissActionRule = new ActionRule()
+   private final RayActionRule integrateMissActionRule = new RayActionRule()
    {
+      private final Point3d nodeCenter = new Point3d();
+      private final Vector3d nodeNormal = new Vector3d();
+
       @Override
-      public void doAction(OcTreeKeyReadOnly key)
+      public void doAction(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, OcTreeKeyReadOnly key)
       {
-         if (keyToNodeMap.containsKey(key) && isInBoundingBox(key) && !occupiedCells.contains(key))
+         NormalOcTreeNode node = keyToNodeMap.get(key);
+         if (node != null && isInBoundingBox(key) && !occupiedCells.contains(key))
+         {
+            if (node.getNormalConsensusSize() > 10 && node.isCenterSet() && node.isNormalSet())
+            {
+               node.getCenter(nodeCenter);
+               node.getNormal(nodeNormal);
+
+               if (MathTools.epsilonEquals(Math.abs(nodeNormal.angle(rayDirection)) - Math.PI / 2.0, 0.0, Math.toRadians(30.0)) && distanceFromPointToLine(nodeCenter, rayOrigin, rayEnd) > 0.005)
+                  return;
+            }
             updateNodeInternal(key, missUpdateRule, missUpdateRule);
+         }
       }
    };
 
@@ -402,7 +419,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             normalQuality = Float.POSITIVE_INFINITY;
          else
             normalQuality /= numberOfPoints;
-         node.setNormalQuality(normalQuality);
+         node.setNormalQuality(normalQuality, numberOfPoints);
       }
       else
       {
@@ -418,7 +435,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private void computeNodeNormalRansac(NormalOcTreeNode node, OcTreeKeyReadOnly key, double searchRadius, double maxDistanceFromPlane)
    {
-      if (!node.isCenterSet() || !node.isNormalQualitySet())
+      if (!node.isCenterSet() || !node.isNormalSet())
       {
          node.resetNormal();
          return;
@@ -462,58 +479,63 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       normalCandidate.set(0.0, 0.0, 0.0);
 
-      int index = 0;
-      node.getCenter(randomDraw[index++]);
-
-      while (index < 3)
+      boolean hasNormalBeenUpdatedAtLeastOnce = false;
+      while (!hasNormalBeenUpdatedAtLeastOnce)
       {
-         // Did not find three points, just fall back to the naive way
-         if (tempNeighborCenters.isEmpty())
+         int index = 0;
+         node.getCenter(randomDraw[index++]);
+
+         while (index < 3)
          {
-            node.resetNormal();
-            return;
+            // Did not find three points, just fall back to the naive way
+            if (tempNeighborCenters.isEmpty())
+               return;
+
+            int nextInt = random.nextInt(tempNeighborCenters.size());
+            randomDraw[index++].set(tempNeighborCenters.get(nextInt));
+            tempNeighborCenters.fastRemove(nextInt);
          }
 
-         int nextInt = random.nextInt(tempNeighborCenters.size());
-         randomDraw[index++].set(tempNeighborCenters.get(nextInt));
-         tempNeighborCenters.fastRemove(nextInt);
-      }
+         double v1_x = randomDraw[1].getX() - randomDraw[0].getX();
+         double v1_y = randomDraw[1].getY() - randomDraw[0].getY();
+         double v1_z = randomDraw[1].getZ() - randomDraw[0].getZ();
 
-      double v1_x = randomDraw[1].getX() - randomDraw[0].getX();
-      double v1_y = randomDraw[1].getY() - randomDraw[0].getY();
-      double v1_z = randomDraw[1].getZ() - randomDraw[0].getZ();
+         double v2_x = randomDraw[2].getX() - randomDraw[0].getX();
+         double v2_y = randomDraw[2].getY() - randomDraw[0].getY();
+         double v2_z = randomDraw[2].getZ() - randomDraw[0].getZ();
 
-      double v2_x = randomDraw[2].getX() - randomDraw[0].getX();
-      double v2_y = randomDraw[2].getY() - randomDraw[0].getY();
-      double v2_z = randomDraw[2].getZ() - randomDraw[0].getZ();
+         normalCandidate.setX(v1_y * v2_z - v1_z * v2_y);
+         normalCandidate.setY(v2_x * v1_z - v2_z * v1_x);
+         normalCandidate.setZ(v1_x * v2_y - v1_y * v2_x);
+         normalCandidate.normalize();
 
-      normalCandidate.setX(v1_y * v2_z - v1_z * v2_y);
-      normalCandidate.setY(v2_x * v1_z - v2_z * v1_x);
-      normalCandidate.setZ(v1_x * v2_y - v1_y * v2_x);
-      normalCandidate.normalize();
+         float candidateNormalQuality = 0.0f;
+         int candidateNumberOfPoints = 3; // The three points picked randomly are on the plane
 
-      float candidateNormalQuality = 0.0f;
-      int candidateNumberOfPoints = 3; // The three points picked randomly are on the plane
-
-      for (int i = 0; i < tempNeighborCenters.size(); i++)
-      {
-         nodeCenterToNeighborCenter.sub(nodeCenter, tempNeighborCenters.get(i));
-         double distanceFromPlane = Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
-         if (distanceFromPlane < maxDistanceFromPlane)
+         for (int i = 0; i < tempNeighborCenters.size(); i++)
          {
-            candidateNormalQuality += distanceFromPlane;
-            candidateNumberOfPoints++;
+            nodeCenterToNeighborCenter.sub(nodeCenter, tempNeighborCenters.get(i));
+            double distanceFromPlane = Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
+            if (distanceFromPlane < maxDistanceFromPlane)
+            {
+               candidateNormalQuality += distanceFromPlane;
+               candidateNumberOfPoints++;
+            }
          }
-      }
 
-      candidateNormalQuality /= candidateNumberOfPoints;
+         candidateNormalQuality /= candidateNumberOfPoints;
 
-      if (candidateNumberOfPoints >= nodeNumberOfPoints && candidateNormalQuality < nodeNormalQuality)
-      {
-         if (normal.dot(normalCandidate) < 0.0)
-            normalCandidate.negate();
-         node.setNormal(normalCandidate);
-         node.setNormalQuality(candidateNormalQuality);
+         boolean isSimplyBetter = candidateNumberOfPoints >= nodeNumberOfPoints && candidateNormalQuality <= nodeNormalQuality;
+         boolean hasLittleLessNodesButIsMuchBetter = candidateNumberOfPoints >= (int) (0.75 * nodeNumberOfPoints) && candidateNormalQuality <= 0.5 * nodeNormalQuality;
+
+         if (isSimplyBetter || hasLittleLessNodesButIsMuchBetter)
+         {
+            if (normal.dot(normalCandidate) < 0.0)
+               normalCandidate.negate();
+            node.setNormal(normalCandidate);
+            node.setNormalQuality(candidateNormalQuality, candidateNumberOfPoints);
+            hasNormalBeenUpdatedAtLeastOnce = true;
+         }
       }
    }
 
@@ -549,7 +571,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
          if (!isNodeOccupied(node) || node.isPartOfRegion() || !node.isNormalSet())
             continue;
-         if (node.getNormalQuality() > minNormalQuality)
+         if (node.getNormalAverageDeviation() > minNormalQuality)
             continue;
 
          OcTreeKeyReadOnly nodeKey = superNode.getKey();

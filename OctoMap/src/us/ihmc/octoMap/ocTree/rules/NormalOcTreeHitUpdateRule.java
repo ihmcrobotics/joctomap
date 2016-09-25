@@ -60,7 +60,7 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
          initialGuessNormal.sub(sensorLocation, hitLocation);
          initialGuessNormal.normalize();
          leafToUpdate.setNormal(initialGuessNormal);
-         leafToUpdate.setNormalQuality(Float.POSITIVE_INFINITY);
+         leafToUpdate.setNormalQuality(Float.POSITIVE_INFINITY, 0);
       }
    }
 
