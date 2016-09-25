@@ -126,4 +126,13 @@ public class PlanarRegion
          e.printStackTrace();
       }
    }
+
+   @Override
+   public String toString()
+   {
+      String ret = "Region ID: " + id;
+      ret += ", origin: " + point + ", normal: " + normal;
+      ret += ", size: " + points.size();
+      return ret;
+   }
 }
