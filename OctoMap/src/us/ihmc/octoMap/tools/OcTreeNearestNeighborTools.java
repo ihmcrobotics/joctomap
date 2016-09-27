@@ -4,6 +4,8 @@ import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.*;
 
 import javax.vecmath.Point3d;
 
+import org.apache.commons.lang3.mutable.MutableDouble;
+
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
@@ -32,13 +34,12 @@ public class OcTreeNearestNeighborTools
    {
       OcTreeKeyReadOnly rootKey = OcTreeKeyTools.getRootKey(treeDepth);
       double radiusSquared = radius * radius;
-      findRadiusNeighbors(rootNode, rootKey, 0.0, 0.0, 0.0, x, y, z, radius, radiusSquared, actionRule, 0, resolution,
-            treeDepth);
+      findRadiusNeighbors(rootNode, rootKey, 0.0, 0.0, 0.0, x, y, z, radius, radiusSquared, actionRule, 0, resolution, treeDepth);
    }
 
-   private static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE node, OcTreeKeyReadOnly nodeKey, double xNode, double yNode, double zNode,
-         double x, double y, double z, double radius, double radiusSquared, NeighborActionRule<NODE> actionRule, int depth,
-         double resolution, int treeDepth)
+   private static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE node, OcTreeKeyReadOnly nodeKey, double xNode, double yNode,
+         double zNode, double x, double y, double z, double radius, double radiusSquared, NeighborActionRule<NODE> actionRule, int depth, double resolution,
+         int treeDepth)
    {
 
       // if search ball S(q,r) contains octant, simply add point indexes.
@@ -76,23 +77,28 @@ public class OcTreeNearestNeighborTools
 
          if (!overlaps(x, y, z, radius, radiusSquared, xChild, yChild, zChild, childDepth, resolution, treeDepth))
             continue;
-         findRadiusNeighbors(child, childKey, xChild, yChild, zChild, x, y, z, radius, radiusSquared, actionRule, childDepth,
-               resolution, treeDepth);
+         findRadiusNeighbors(child, childKey, xChild, yChild, zChild, x, y, z, radius, radiusSquared, actionRule, childDepth, resolution, treeDepth);
       }
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> boolean findNeighbor(NODE rootNode, double x, double y, double z, double minDistance,
-         double maxDistance, OcTreeKey nearestNeighborKey, int depth, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> boolean findNearestNeighbor(NODE rootNode, Point3d query, double minDistance, double maxDistance,
+         OcTreeKey nearestNeighborKey, double resolution, int treeDepth)
+   {
+      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, maxDistance, nearestNeighborKey, resolution, treeDepth);
+   }
+
+   public static <NODE extends AbstractOcTreeNode<NODE>> boolean findNearestNeighbor(NODE rootNode, double x, double y, double z, double minDistance,
+         double maxDistance, OcTreeKey nearestNeighborKey, double resolution, int treeDepth)
    {
       OcTreeKeyReadOnly rootKey = OcTreeKeyTools.getRootKey(treeDepth);
-      return findNeighbor(rootKey, rootNode, x, y, z, minDistance, maxDistance, nearestNeighborKey, depth, resolution, treeDepth);
+      return findNearestNeighbor(rootKey, rootNode, x, y, z, minDistance, new MutableDouble(maxDistance), nearestNeighborKey, 0, resolution, treeDepth);
    }
 
    /** \brief nearest neighbor queries. Using minDistance >= 0, we explicitly disallow self-matches.
     * @return index of nearest neighbor n with Distance::compute(query, n) > minDistance and otherwise -1.
     **/
-   private static <NODE extends AbstractOcTreeNode<NODE>> boolean findNeighbor(OcTreeKeyReadOnly key, NODE node, double x, double y, double z,
-         double minDistance, double maxDistance, OcTreeKey nearestNeighborKey, int depth, double resolution, int treeDepth)
+   private static <NODE extends AbstractOcTreeNode<NODE>> boolean findNearestNeighbor(OcTreeKeyReadOnly key, NODE node, double x, double y, double z,
+         double minDistance, MutableDouble maxDistance, OcTreeKey nearestNeighborKey, int depth, double resolution, int treeDepth)
    {
       double xNode = keyToCoordinate(key.getKey(0), depth, resolution, treeDepth);
       double yNode = keyToCoordinate(key.getKey(1), depth, resolution, treeDepth);
@@ -101,15 +107,21 @@ public class OcTreeNearestNeighborTools
       // 1. first descend to leaf and check in leafs points.
       if (!node.hasAtLeastOneChild())
       {
-         double sqrMaxDistance = maxDistance * maxDistance;
-         double sqrMinDistance = (minDistance < 0) ? minDistance : minDistance * minDistance;
+         double maxDistanceSquared = maxDistance.doubleValue() * maxDistance.doubleValue();
+         double minDistanceSquared = (minDistance < 0) ? minDistance : minDistance * minDistance;
 
          double dx = x - xNode;
-         double dy = y - xNode;
-         double dz = z - xNode;
+         double dy = y - yNode;
+         double dz = z - zNode;
 
          double distanceSquared = dx * dx + dy * dy + dz * dz;
-         return distanceSquared > sqrMinDistance && distanceSquared < sqrMaxDistance;
+         boolean isBetter = distanceSquared > minDistanceSquared && distanceSquared < maxDistanceSquared;
+         if (isBetter)
+         {
+            nearestNeighborKey.set(key);
+            maxDistance.setValue(Math.sqrt(distanceSquared));
+         }
+         return inside(x, y, z, maxDistance.doubleValue(), xNode, yNode, zNode, depth, resolution, treeDepth);
       }
 
       // determine Morton code for each point...
@@ -121,18 +133,18 @@ public class OcTreeNearestNeighborTools
       if (z > zNode)
          mortonCode |= 4;
 
+      int childDepth = depth + 1;
       NODE child = node.getChild(mortonCode);
 
       if (child != null)
       {
-         int childDepth = depth + 1;
          OcTreeKey childKey = OcTreeKeyTools.computeChildKey(mortonCode, key, childDepth, treeDepth);
-         if (findNeighbor(childKey, child, x, y, z, minDistance, maxDistance, nearestNeighborKey, depth, resolution, treeDepth))
+         if (findNearestNeighbor(childKey, child, x, y, z, minDistance, maxDistance, nearestNeighborKey, childDepth, resolution, treeDepth))
             return true;
       }
 
       // 2. if current best point completely inside, just return.
-      double sqrMaxDistance = maxDistance * maxDistance;
+      double maxDistanceSquared = maxDistance.doubleValue() * maxDistance.doubleValue();
 
       // 3. check adjacent octants for overlap and check these if necessary.
       for (int childIndex = 0; childIndex < 8; childIndex++)
@@ -145,21 +157,21 @@ public class OcTreeNearestNeighborTools
          if (child == null)
             continue;
 
-         int childDepth = depth + 1;
          OcTreeKeyReadOnly childKey = OcTreeKeyTools.computeChildKey(childIndex, key, childDepth, treeDepth);
 
-         if (!overlaps(x, y, z, maxDistance, sqrMaxDistance, childKey, childDepth, resolution, treeDepth))
+         if (!overlaps(x, y, z, maxDistance.doubleValue(), maxDistanceSquared, childKey, childDepth, resolution, treeDepth))
             continue;
 
-         if (findNeighbor(childKey, child, x, y, z, minDistance, maxDistance, nearestNeighborKey, childDepth, resolution, treeDepth))
+         if (findNearestNeighbor(childKey, child, x, y, z, minDistance, maxDistance, nearestNeighborKey, childDepth, resolution, treeDepth))
             return true; // early pruning
       }
 
       // all children have been checked...check if point is inside the current octant...
-      return inside(x, y, z, maxDistance, key, depth, resolution, treeDepth);
+      return inside(x, y, z, maxDistance.doubleValue(), key, depth, resolution, treeDepth);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> void doActionOnLeavesRecursively(OcTreeKeyReadOnly nodeKey, NODE node, NeighborActionRule<NODE> actionRule, int depth, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> void doActionOnLeavesRecursively(OcTreeKeyReadOnly nodeKey, NODE node,
+         NeighborActionRule<NODE> actionRule, int depth, int treeDepth)
    {
       if (!node.hasAtLeastOneChild())
       {

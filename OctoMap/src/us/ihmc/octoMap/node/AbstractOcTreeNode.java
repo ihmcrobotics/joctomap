@@ -11,7 +11,7 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 {
    protected N[] children;
 
-   AbstractOcTreeNode()
+   protected AbstractOcTreeNode()
    {
    }
 
