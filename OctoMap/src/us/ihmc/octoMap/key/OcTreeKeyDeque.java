@@ -68,6 +68,11 @@ public class OcTreeKeyDeque extends ArrayDeque<OcTreeKey>
       return super.add(copyAndReturnLocalKey(newKey));
    }
 
+   public boolean add(OcTreeKeyReadOnly newKey)
+   {
+      return super.add(copyAndReturnLocalKey(newKey));
+   }
+
    public boolean addAll(List<OcTreeKey> keyList)
    {
       boolean changed = false;
