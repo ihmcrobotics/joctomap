@@ -44,22 +44,27 @@ public class OcTreeKeyTools
    public static void computeChildKey(int childIndex, OcTreeKeyReadOnly parentKey, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
    {
       int keyMin = computeMinimumKeyAtDepth(childDepth, treeDepth);
+      int k0, k1, k2;
 
       // x-axis
       if ((childIndex & 1) != 0)
-         childKeyToPack.setKey(0, parentKey.getKey(0) + keyMin);
+         k0 = parentKey.getKey(0) + keyMin;
       else
-         childKeyToPack.setKey(0, parentKey.getKey(0) - keyMin - (keyMin != 0 ? 0 : 1));
+         k0 = parentKey.getKey(0) - keyMin - (keyMin != 0 ? 0 : 1);
       // y-axis
       if ((childIndex & 2) != 0)
-         childKeyToPack.setKey(1, parentKey.getKey(1) + keyMin);
+         k1 = parentKey.getKey(1) + keyMin;
       else
-         childKeyToPack.setKey(1, parentKey.getKey(1) - keyMin - (keyMin != 0 ? 0 : 1));
+         k1 = parentKey.getKey(1) - keyMin - (keyMin != 0 ? 0 : 1);
       // z-axis
       if ((childIndex & 4) != 0)
-         childKeyToPack.setKey(2, parentKey.getKey(2) + keyMin);
+         k2 = parentKey.getKey(2) + keyMin;
       else
-         childKeyToPack.setKey(2, parentKey.getKey(2) - keyMin - (keyMin != 0 ? 0 : 1));
+         k2 = parentKey.getKey(2) - keyMin - (keyMin != 0 ? 0 : 1);
+
+      childKeyToPack.setKey(0, adjustToUnsignedNBits(k0, treeDepth));
+      childKeyToPack.setKey(1, adjustToUnsignedNBits(k1, treeDepth));
+      childKeyToPack.setKey(2, adjustToUnsignedNBits(k2, treeDepth));
    }
 
    /**
