@@ -135,7 +135,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    public OcTreeKey get(int i)
    {
       rangeCheck(i);
-      return unsafeGet(i);
+      return elementData[i];
    }
 
    /**
@@ -149,7 +149,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
       if (isEmpty())
          return null;
       else
-         return unsafeGet(0);
+         return elementData[0];
    }
 
    /**
@@ -163,12 +163,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
       if (isEmpty())
          return null;
       else
-         return unsafeGet(size - 1);
-   }
-
-   public OcTreeKey unsafeGet(int i)
-   {
-      return elementData[i];
+         return elementData[size - 1];
    }
 
    /**
@@ -454,8 +449,8 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
       String ret = "";
 
       for (int i = 0; i < size - 1; i++)
-         ret += unsafeGet(i).toString() + "\n";
-      ret += unsafeGet(size - 1).toString();
+         ret += get(i).toString() + "\n";
+      ret += get(size - 1).toString();
 
       return ret;
    }

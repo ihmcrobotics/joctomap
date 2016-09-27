@@ -369,7 +369,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
       {
-         neighborKey.add(nodeKey, cachedNeighborKeyOffsets.unsafeGet(i));
+         neighborKey.add(nodeKey, cachedNeighborKeyOffsets.get(i));
          NormalOcTreeNode neighborNode = keyToNodeMap.get(neighborKey);
          if (neighborNode == null || !isNodeOccupied(neighborNode))
             continue;

@@ -167,10 +167,10 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
 
       // insert data into tree  -----------------------
       for (int i = 0; i < occupiedCells.size(); i++)
-         updateNode(occupiedCells.unsafeGet(i), true);
+         updateNode(occupiedCells.get(i), true);
 
       for (int i = 0; i < freeCells.size(); i++)
-         updateNode(freeCells.unsafeGet(i), false);
+         updateNode(freeCells.get(i), false);
    }
 
    /**
@@ -197,10 +197,10 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
 
       // insert data into tree  -----------------------
       for (int i = 0; i < occupiedCells.size(); i++)
-         updateNode(occupiedCells.unsafeGet(i), true);
+         updateNode(occupiedCells.get(i), true);
 
       for (int i = 0; i < freeCells.size(); i++)
-         updateNode(freeCells.unsafeGet(i), false);
+         updateNode(freeCells.get(i), false);
    }
 
    /**

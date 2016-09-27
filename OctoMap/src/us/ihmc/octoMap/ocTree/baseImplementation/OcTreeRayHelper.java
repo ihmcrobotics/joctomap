@@ -156,7 +156,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       // prefer occupied cells over free ones (and make sets disjunct)
       for (int i = 0; i < unfilteredFreeCells.size(); i++)
       {
-         OcTreeKeyReadOnly possibleFreeCell = unfilteredFreeCells.unsafeGet(i);
+         OcTreeKeyReadOnly possibleFreeCell = unfilteredFreeCells.get(i);
          if (!occupiedCells.contains(possibleFreeCell))
             freeCells.add(possibleFreeCell);
       }
