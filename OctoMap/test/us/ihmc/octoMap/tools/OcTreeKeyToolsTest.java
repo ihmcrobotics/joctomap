@@ -1,7 +1,6 @@
 package us.ihmc.octoMap.tools;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -103,6 +102,26 @@ public class OcTreeKeyToolsTest
             assertFalse(keySet.contains(childKey));
             keySet.add(childKey);
          }
+      }
+   }
+
+   @Test
+   public void testComputeChildIndexAgainstComputeChildKey() throws Exception
+   {
+      Random random = new Random(5616L);
+      int treeDepth = 16;
+
+      for (int i = 0; i < 100000; i++)
+      {
+         OcTreeKey currentKey = OcTreeKeyTools.getRootKey(treeDepth);
+         OcTreeKey expectedKey = new OcTreeKey(random, treeDepth);
+
+         for (int depth = 0; depth < treeDepth; depth++)
+         {
+            int childIndex = OcTreeKeyTools.computeChildIndex(expectedKey, depth, treeDepth);
+            currentKey = OcTreeKeyTools.computeChildKey(childIndex, currentKey, depth + 1, treeDepth);
+         }
+         assertEquals(expectedKey, currentKey);
       }
    }
 }

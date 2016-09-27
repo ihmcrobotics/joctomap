@@ -899,7 +899,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (node == null)
          throw new RuntimeException("The given node is null");
 
-      int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth, treeDepth);
+      int childIndex = OcTreeKeyTools.computeChildIndex(key, depth, treeDepth);
 
       if (!OcTreeNodeTools.nodeChildExists(node, childIndex))
       {
@@ -946,7 +946,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       // follow down to last level
       if (depth < treeDepth)
       {
-         int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth, treeDepth);
+         int childIndex = OcTreeKeyTools.computeChildIndex(key, depth, treeDepth);
          if (!OcTreeNodeTools.nodeChildExists(node, childIndex))
          {
             if (!updateRule.enableNodeCreation())

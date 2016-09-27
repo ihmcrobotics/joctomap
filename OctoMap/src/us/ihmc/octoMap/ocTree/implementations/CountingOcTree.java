@@ -32,7 +32,7 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
       curNode.increaseCount();
 
       // follow or construct nodes down to last level...
-      for (int depth = (treeDepth - 1); depth >= 0; depth--)
+      for (int depth = 0; depth < treeDepth; depth++)
       {
          int pos = OcTreeKeyTools.computeChildIndex(key, depth, treeDepth);
 

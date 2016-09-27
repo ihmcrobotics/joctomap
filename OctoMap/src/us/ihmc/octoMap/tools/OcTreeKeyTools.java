@@ -68,10 +68,7 @@ public class OcTreeKeyTools
    }
 
    /**
-    * Generate child index (between 0 and 7) from key at given tree depth
-    * @param key
-    * @param depth
-    * @return
+    * Generate child index for node at given depth (between 0 and 7) from key.
     */
    public static int computeChildIndex(OcTreeKeyReadOnly key, int depth, int treeDepth)
    {
@@ -84,12 +81,15 @@ public class OcTreeKeyTools
       return childIndex;
    }
 
+   /**
+    * Generate child index for node at given depth (between 0 and 7) from key.
+    */
    public static int computeChildIndex(int k0, int k1, int k2, int depth, int treeDepth)
    {
       OctoMapTools.checkIfDepthValid(depth, treeDepth);
 
       int childIndex = 0;
-      int temp = (1 << depth) % computeNumberOfNodesAtDepth(treeDepth);
+      int temp = (1 << treeDepth - 1 - depth) % computeNumberOfNodesAtDepth(treeDepth);
 
       if ((k0 & temp) != 0)
          childIndex += 1;
