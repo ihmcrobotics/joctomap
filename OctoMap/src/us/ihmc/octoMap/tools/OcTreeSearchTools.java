@@ -91,10 +91,8 @@ public abstract class OcTreeSearchTools
 
       NODE currentNode = rootNode;
 
-      int level = treeDepth - depth;
-
-      // follow nodes down to requested level (for level = 0 it's the last level)
-      for (int currentDepth = (treeDepth - 1); currentDepth >= level; --currentDepth)
+      // follow nodes down to requested depth
+      for (int currentDepth = 0; currentDepth < depth; currentDepth++)
       {
          int childIndex = OcTreeKeyTools.computeChildIndex(k0, k1, k2, currentDepth, treeDepth);
          NODE childNode;
