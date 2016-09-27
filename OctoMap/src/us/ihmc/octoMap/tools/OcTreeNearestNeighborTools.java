@@ -81,28 +81,43 @@ public class OcTreeNearestNeighborTools
       }
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> boolean findNearestNeighbor(NODE rootNode, Point3d query, double minDistance, double maxDistance,
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, OcTreeKey nearestNeighborKey,
+         double resolution, int treeDepth)
+   {
+      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), -1.0, Double.POSITIVE_INFINITY, nearestNeighborKey, resolution, treeDepth);
+   }
+
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance,
+         OcTreeKey nearestNeighborKey, double resolution, int treeDepth)
+   {
+      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, Double.POSITIVE_INFINITY, nearestNeighborKey, resolution,
+            treeDepth);
+   }
+
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance, double maxDistance,
          OcTreeKey nearestNeighborKey, double resolution, int treeDepth)
    {
       return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, maxDistance, nearestNeighborKey, resolution, treeDepth);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> boolean findNearestNeighbor(NODE rootNode, double x, double y, double z, double minDistance,
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, double x, double y, double z, double minDistance,
          double maxDistance, OcTreeKey nearestNeighborKey, double resolution, int treeDepth)
    {
       OcTreeKeyReadOnly rootKey = OcTreeKeyTools.getRootKey(treeDepth);
-      return findNearestNeighbor(rootKey, rootNode, x, y, z, minDistance, new MutableDouble(maxDistance), nearestNeighborKey, 0, resolution, treeDepth);
+      MutableDouble result = new MutableDouble(maxDistance);
+
+      if (findNearestNeighbor(rootKey, rootNode, 0.0, 0.0, 0.0, x, y, z, minDistance, result, nearestNeighborKey, 0, resolution, treeDepth))
+         return result.doubleValue();
+      else
+         return Double.NaN;
    }
 
    /** \brief nearest neighbor queries. Using minDistance >= 0, we explicitly disallow self-matches.
     * @return index of nearest neighbor n with Distance::compute(query, n) > minDistance and otherwise -1.
     **/
-   private static <NODE extends AbstractOcTreeNode<NODE>> boolean findNearestNeighbor(OcTreeKeyReadOnly key, NODE node, double x, double y, double z,
+   private static <NODE extends AbstractOcTreeNode<NODE>> boolean findNearestNeighbor(OcTreeKeyReadOnly key, NODE node, double xNode, double yNode, double zNode, double x, double y, double z,
          double minDistance, MutableDouble maxDistance, OcTreeKey nearestNeighborKey, int depth, double resolution, int treeDepth)
    {
-      double xNode = keyToCoordinate(key.getKey(0), depth, resolution, treeDepth);
-      double yNode = keyToCoordinate(key.getKey(1), depth, resolution, treeDepth);
-      double zNode = keyToCoordinate(key.getKey(2), depth, resolution, treeDepth);
 
       // 1. first descend to leaf and check in leafs points.
       if (!node.hasAtLeastOneChild())
@@ -139,7 +154,12 @@ public class OcTreeNearestNeighborTools
       if (child != null)
       {
          OcTreeKey childKey = OcTreeKeyTools.computeChildKey(mortonCode, key, childDepth, treeDepth);
-         if (findNearestNeighbor(childKey, child, x, y, z, minDistance, maxDistance, nearestNeighborKey, childDepth, resolution, treeDepth))
+
+         double xChild = keyToCoordinate(childKey.getKey(0), childDepth, resolution, treeDepth);
+         double yChild = keyToCoordinate(childKey.getKey(1), childDepth, resolution, treeDepth);
+         double zChild = keyToCoordinate(childKey.getKey(2), childDepth, resolution, treeDepth);
+
+         if (findNearestNeighbor(childKey, child, xChild, yChild, zChild, x, y, z, minDistance, maxDistance, nearestNeighborKey, childDepth, resolution, treeDepth))
             return true;
       }
 
@@ -159,10 +179,14 @@ public class OcTreeNearestNeighborTools
 
          OcTreeKeyReadOnly childKey = OcTreeKeyTools.computeChildKey(childIndex, key, childDepth, treeDepth);
 
-         if (!overlaps(x, y, z, maxDistance.doubleValue(), maxDistanceSquared, childKey, childDepth, resolution, treeDepth))
+         double xChild = keyToCoordinate(childKey.getKey(0), childDepth, resolution, treeDepth);
+         double yChild = keyToCoordinate(childKey.getKey(1), childDepth, resolution, treeDepth);
+         double zChild = keyToCoordinate(childKey.getKey(2), childDepth, resolution, treeDepth);
+
+         if (!overlaps(x, y, z, maxDistance.doubleValue(), maxDistanceSquared, xChild, yChild, zChild, childDepth, resolution, treeDepth))
             continue;
 
-         if (findNearestNeighbor(childKey, child, x, y, z, minDistance, maxDistance, nearestNeighborKey, childDepth, resolution, treeDepth))
+         if (findNearestNeighbor(childKey, child, xChild, yChild, zChild, x, y, z, minDistance, maxDistance, nearestNeighborKey, childDepth, resolution, treeDepth))
             return true; // early pruning
       }
 

@@ -18,6 +18,7 @@ import us.ihmc.octoMap.ocTree.rules.interfaces.CollidableRule;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
+import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;
 
 public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
@@ -62,8 +63,8 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxRange maximum range for raycasting (-1: unlimited)
     */
-   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBoxInterface boundingBox,
-         double minRange, double maxRange, double resolution, int treeDepth)
+   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells,
+         OcTreeBoundingBoxInterface boundingBox, double minRange, double maxRange, double resolution, int treeDepth)
    {
       PointCloud discretePC = new PointCloud();
       OcTreeKeySet endpoints = new OcTreeKeySet();
@@ -184,7 +185,13 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       return ray;
    }
 
-   public void doActionOnRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule, double resolution, int treeDepth)
+   /**
+    * Traces a ray from origin to end (excluding), returning an
+    * OcTreeKey of all nodes traversed by the beam. You still need to check
+    * if a node at that coordinate exists (e.g. with search()).
+    */
+   public void doActionOnRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule, double resolution,
+         int treeDepth)
    {
       // see "A Faster Voxel Traversal Algorithm for Ray Tracing" by Amanatides & Woo
       // basically: DDA in 3D
@@ -193,7 +200,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
 
       if (!foundKeyOrigin || !foundKeyEnd)
       {
-         System.err.println(AbstractOcTreeBase.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
+         System.err.println(OcTreeRayHelper.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
          return;
       }
 
@@ -308,6 +315,69 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       } // end while
    }
 
+   private final Point3d currentPosition = new Point3d();
+
+   /**
+    * Traces a ray from origin to end (excluding), returning an
+    * OcTreeKey of all nodes traversed by the beam. You still need to check
+    * if a node at that coordinate exists (e.g. with search()).
+    */
+   public void doActionOnRayKeysUsingRayMarching(NODE root, Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule,
+         double resolution, int treeDepth)
+   {
+      boolean foundKeyOrigin = coordinateToKey(origin, resolution, treeDepth, keyOrigin);
+      boolean foundKeyEnd = coordinateToKey(end, resolution, treeDepth, keyEnd);
+
+      if (!foundKeyOrigin || !foundKeyEnd)
+      {
+         System.err.println(OcTreeRayHelper.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
+         return;
+      }
+
+      if (keyOrigin.equals(keyEnd))
+         return; // same tree cell, we're done.
+
+      direction.sub(end, origin);
+      double rayLength = direction.length();
+      direction.scale(1.0 / rayLength);
+      double currentLength = 0.0;
+      currentPosition.set(origin);
+
+      while (true)
+      {
+         double distanceFromNearestNeighbor = OcTreeNearestNeighborTools.findNearestNeighbor(root, currentPosition, currentKey, resolution, treeDepth);
+
+         if (Double.isNaN(distanceFromNearestNeighbor))
+            break;
+
+         if (distanceFromNearestNeighbor < 0.1 * resolution)
+         {
+            actionRule.doAction(origin, end, direction, currentKey);
+            
+            Point3d nearestNodeCoordinate = keyToCoordinate(currentKey, resolution, treeDepth);
+            double minDistance = 0.1 * resolution;
+            distanceFromNearestNeighbor = OcTreeNearestNeighborTools.findNearestNeighbor(root, nearestNodeCoordinate, minDistance, currentKey, resolution, treeDepth);
+         }
+
+         distanceFromNearestNeighbor = Math.max(distanceFromNearestNeighbor, 0.5 * resolution);
+
+         currentPosition.scaleAdd(distanceFromNearestNeighbor, direction, currentPosition);
+
+         currentLength += distanceFromNearestNeighbor;
+
+         if (currentLength >= rayLength)
+            break;
+
+         if (boundingBox != null && !boundingBox.isInBoundingBox(currentPosition))
+            break;
+
+         OcTreeKeyConversionTools.coordinateToKey(currentPosition, resolution, treeDepth, currentKey);
+
+         if (currentKey.equals(keyEnd))
+            break;
+      }
+   }
+
    /**
     * Performs raycasting in 3d, similar to computeRay(). Can be called in parallel e.g. with OpenMP
     * for a speedup.
@@ -326,10 +396,11 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
     * @param[in] maxRange Maximum range after which the raycast is aborted (<= 0: no limit, default)
     * @return true if an occupied cell was hit, false if the maximum range or octree bounds are reached, or if an unknown node was hit.
     */
-   public boolean castRay(NODE root, Point3d origin, Vector3d direction, Point3d endToPack, boolean ignoreUnknownCells, double maxRange, CollidableRule<NODE> collidableRule, double resolution, int treeDepth)
+   public boolean castRay(NODE root, Point3d origin, Vector3d direction, Point3d endToPack, boolean ignoreUnknownCells, double maxRange,
+         CollidableRule<NODE> collidableRule, double resolution, int treeDepth)
    {
       /// ----------  see OcTreeBase::computeRayKeys  -----------
-   
+
       // Initialization phase -------------------------------------------------------
       OcTreeKey currentKey = OcTreeKeyConversionTools.coordinateToKey(origin, resolution, treeDepth);
       if (currentKey == null)
@@ -337,7 +408,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
          System.err.println(OcTreeRayHelper.class.getSimpleName() + " (in castRay): Coordinates out of bounds during ray casting");
          return false;
       }
-   
+
       NODE startingNode = OcTreeSearchTools.search(root, currentKey, treeDepth);
       if (startingNode != null)
       {
@@ -354,11 +425,11 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
          OcTreeKeyConversionTools.keyToCoordinate(currentKey, endToPack, resolution, treeDepth);
          return false;
       }
-   
+
       direction = new Vector3d(direction);
       direction.normalize();
       boolean maxRangeSet = maxRange > 0.0;
-   
+
       double[] originArray = new double[3];
       origin.get(originArray);
       double[] endArray = new double[3];
@@ -368,7 +439,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       int[] step = new int[3];
       double[] tMax = new double[3];
       double[] tDelta = new double[3];
-   
+
       for (int i = 0; i < 3; ++i)
       {
          // compute step direction
@@ -378,14 +449,14 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             step[i] = -1;
          else
             step[i] = 0;
-   
+
          // compute tMax, tDelta
          if (step[i] != 0)
          {
             // corner point of voxel (in direction of ray)
             double voxelBorder = OcTreeKeyConversionTools.keyToCoordinate(currentKey.getKey(i), resolution, treeDepth);
             voxelBorder += step[i] * resolution * 0.5;
-   
+
             tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
             tDelta[i] = resolution / Math.abs(directionArray[i]);
          }
@@ -395,25 +466,25 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             tDelta[i] = Double.POSITIVE_INFINITY;
          }
       }
-   
+
       if (step[0] == 0 && step[1] == 0 && step[2] == 0)
       {
          System.err.println(OcTreeRayHelper.class.getSimpleName() + " (in castRay): Raycasting in direction (0,0,0) is not possible!");
          return false;
       }
       int keyMaxValue = OcTreeKeyTools.computeMaximumKey(treeDepth);
-   
+
       // for speedup:
       double maxRangeSquared = maxRange * maxRange;
-   
+
       // Incremental phase  ---------------------------------------------------------
-   
+
       boolean done = false;
-   
+
       while (!done)
       {
          int dim;
-   
+
          // find minimum tMax:
          if (tMax[0] < tMax[1])
          {
@@ -429,7 +500,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             else
                dim = 2;
          }
-   
+
          // check for overflow:
          if (step[dim] < 0 && currentKey.getKey(dim) == 0 || step[dim] > 0 && currentKey.getKey(dim) == keyMaxValue)
          {
@@ -438,14 +509,14 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             OcTreeKeyConversionTools.keyToCoordinate(currentKey, endToPack, resolution, treeDepth);
             return false;
          }
-   
+
          // advance in direction "dim"
          currentKey.addKey(dim, step[dim]);
          tMax[dim] += tDelta[dim];
-   
+
          // generate world coords from key
          OcTreeKeyConversionTools.keyToCoordinate(currentKey, endToPack, resolution, treeDepth);
-   
+
          // check for maxrange:
          if (maxRangeSet)
          {
@@ -456,9 +527,9 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             }
             if (distanceFromOriginSquared > maxRangeSquared)
                return false;
-   
+
          }
-   
+
          NODE currentNode = OcTreeSearchTools.search(root, currentKey, treeDepth);
          if (currentNode != null)
          {
@@ -474,7 +545,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             return false;
          }
       } // end while
-   
+
       return true;
    }
 
@@ -495,7 +566,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       Vector3d normalX = new Vector3d(1, 0, 0);
       Vector3d normalY = new Vector3d(0, 1, 0);
       Vector3d normalZ = new Vector3d(0, 0, 1);
-   
+
       // One point on each plane, let them be the center for simplicity
       Vector3d pointXNeg = new Vector3d(center.getX() - resolution / 2.0, center.getY(), center.getZ());
       Vector3d pointXPos = new Vector3d(center.getX() + resolution / 2.0, center.getY(), center.getZ());
@@ -503,15 +574,15 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       Vector3d pointYPos = new Vector3d(center.getX(), center.getY() + resolution / 2.0, center.getZ());
       Vector3d pointZNeg = new Vector3d(center.getX(), center.getY(), center.getZ() - resolution / 2.0);
       Vector3d pointZPos = new Vector3d(center.getX(), center.getY(), center.getZ() + resolution / 2.0);
-   
+
       double lineDotNormal = 0.0;
       double d = 0.0;
       double outD = Double.POSITIVE_INFINITY;
       Point3d intersect = new Point3d();
       boolean found = false;
-   
+
       Vector3d tempVector = new Vector3d();
-   
+
       // Find the intersection (if any) with each place
       // Line dot normal will be zero if they are parallel, in which case no intersection can be the entry one
       // if there is an intersection does it occur in the bounded plane of the voxel
@@ -527,7 +598,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             outD = Math.min(outD, d);
             found = true;
          }
-   
+
          tempVector.sub(pointXPos, origin);
          d = tempVector.dot(normalX) / lineDotNormal;
          intersect.scaleAdd(d, direction, origin);
@@ -538,7 +609,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             found = true;
          }
       }
-   
+
       if ((lineDotNormal = normalY.dot(direction)) != 0.0)
       {
          tempVector.sub(pointYNeg, origin);
@@ -550,7 +621,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             outD = Math.min(outD, d);
             found = true;
          }
-   
+
          tempVector.sub(pointYPos, origin);
          d = tempVector.dot(normalY) / lineDotNormal;
          intersect.scaleAdd(d, direction, origin);
@@ -561,7 +632,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             found = true;
          }
       }
-   
+
       if ((lineDotNormal = normalZ.dot(direction)) != 0.0)
       {
          tempVector.sub(pointZNeg, origin);
@@ -573,7 +644,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             outD = Math.min(outD, d);
             found = true;
          }
-   
+
          tempVector.sub(pointZPos, origin);
          d = tempVector.dot(normalZ) / lineDotNormal;
          intersect.scaleAdd(d, direction, origin);
@@ -584,12 +655,12 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             found = true;
          }
       }
-   
+
       // Subtract (add) a fraction to ensure no ambiguity on the starting voxel
       // Don't start on a boundary.
       if (found)
          intersectionToPack.scaleAdd(outD + delta, direction, origin);
-   
+
       return found;
    }
 }
