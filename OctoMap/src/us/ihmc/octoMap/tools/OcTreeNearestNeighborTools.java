@@ -2,53 +2,49 @@ package us.ihmc.octoMap.tools;
 
 import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.*;
 
-import java.util.List;
-
 import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 
 public class OcTreeNearestNeighborTools
 {
-   /**
-    * Radius neighbor queries where radius determines the maximal radius of reported indices of points in radiusNeighborKeysToPack.
-    */
-   public static <NODE extends AbstractOcTreeNode<NODE>> void radiusNeighbors(NODE rootNode, Point3d query, double radius,
-         OcTreeKeyList radiusNeighborKeysToPack, List<NODE> radiusNeighborsToPack, double resolution, int treeDepth)
+   public static interface NeighborActionRule<NODE extends AbstractOcTreeNode<NODE>>
    {
-      radiusNeighbors(rootNode, query.getX(), query.getY(), query.getZ(), radius, radiusNeighborKeysToPack, radiusNeighborsToPack, resolution, treeDepth);
+      public void doActionOnNeighbor(NODE node, OcTreeKeyReadOnly nodeKey);
    }
 
    /**
     * Radius neighbor queries where radius determines the maximal radius of reported indices of points in radiusNeighborKeysToPack.
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> void radiusNeighbors(NODE rootNode, double x, double y, double z, double radius,
-         OcTreeKeyList radiusNeighborKeysToPack, List<NODE> radiusNeighborsToPack, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE rootNode, Point3d query, double radius,
+         NeighborActionRule<NODE> actionRule, double resolution, int treeDepth)
+   {
+      findRadiusNeighbors(rootNode, query.getX(), query.getY(), query.getZ(), radius, actionRule, resolution, treeDepth);
+   }
+
+   /**
+    * Radius neighbor queries where radius determines the maximal radius of reported indices of points in radiusNeighborKeysToPack.
+    */
+   public static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE rootNode, double x, double y, double z, double radius,
+         NeighborActionRule<NODE> actionRule, double resolution, int treeDepth)
    {
       OcTreeKeyReadOnly rootKey = OcTreeKeyTools.getRootKey(treeDepth);
       double radiusSquared = radius * radius;
-      radiusNeighbors(rootNode, rootKey, 0.0, 0.0, 0.0, x, y, z, radius, radiusSquared, radiusNeighborKeysToPack, radiusNeighborsToPack, 0, resolution,
+      findRadiusNeighbors(rootNode, rootKey, 0.0, 0.0, 0.0, x, y, z, radius, radiusSquared, actionRule, 0, resolution,
             treeDepth);
    }
 
-   private static <NODE extends AbstractOcTreeNode<NODE>> void radiusNeighbors(NODE node, OcTreeKeyReadOnly nodeKey, double xNode, double yNode, double zNode,
-         double x, double y, double z, double radius, double radiusSquared, OcTreeKeyList radiusNeighborKeysToPack, List<NODE> radiusNeighborsToPack, int depth,
+   private static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE node, OcTreeKeyReadOnly nodeKey, double xNode, double yNode, double zNode,
+         double x, double y, double z, double radius, double radiusSquared, NeighborActionRule<NODE> actionRule, int depth,
          double resolution, int treeDepth)
    {
 
       // if search ball S(q,r) contains octant, simply add point indexes.
       if (contains(x, y, z, radiusSquared, xNode, yNode, zNode, depth, resolution, treeDepth))
       {
-         if (radiusNeighborKeysToPack == null)
-            addLeafNodesRecursively(node, radiusNeighborsToPack, depth, treeDepth);
-         else if (radiusNeighborsToPack == null)
-            addLeafKeysRecursively(nodeKey, node, radiusNeighborKeysToPack, depth, treeDepth);
-         else
-            addLeafNodesAndKeysRecursively(nodeKey, node, radiusNeighborKeysToPack, radiusNeighborsToPack, depth, treeDepth);
-
+         doActionOnLeavesRecursively(nodeKey, node, actionRule, depth, treeDepth);
          return; // early pruning.
       }
 
@@ -60,12 +56,7 @@ public class OcTreeNearestNeighborTools
 
          double distanceSquared = dx * dx + dy * dy + dz * dz;
          if (distanceSquared < radiusSquared)
-         {
-            if (radiusNeighborKeysToPack != null)
-               radiusNeighborKeysToPack.add(nodeKey);
-            if (radiusNeighborsToPack != null)
-               radiusNeighborsToPack.add(node);
-         }
+            actionRule.doActionOnNeighbor(node, nodeKey);
 
          return;
       }
@@ -85,7 +76,7 @@ public class OcTreeNearestNeighborTools
 
          if (!overlaps(x, y, z, radius, radiusSquared, xChild, yChild, zChild, childDepth, resolution, treeDepth))
             continue;
-         radiusNeighbors(child, childKey, xChild, yChild, zChild, x, y, z, radius, radiusSquared, radiusNeighborKeysToPack, radiusNeighborsToPack, childDepth,
+         findRadiusNeighbors(child, childKey, xChild, yChild, zChild, x, y, z, radius, radiusSquared, actionRule, childDepth,
                resolution, treeDepth);
       }
    }
@@ -168,13 +159,11 @@ public class OcTreeNearestNeighborTools
       return inside(x, y, z, maxDistance, key, depth, resolution, treeDepth);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> void addLeafNodesAndKeysRecursively(OcTreeKeyReadOnly key, NODE node, OcTreeKeyList keysToPack,
-         List<NODE> nodesToPack, int depth, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> void doActionOnLeavesRecursively(OcTreeKeyReadOnly nodeKey, NODE node, NeighborActionRule<NODE> actionRule, int depth, int treeDepth)
    {
       if (!node.hasAtLeastOneChild())
       {
-         keysToPack.add(key);
-         nodesToPack.add(node);
+         actionRule.doActionOnNeighbor(node, nodeKey);
          return;
       }
 
@@ -186,50 +175,8 @@ public class OcTreeNearestNeighborTools
          if (childNode == null)
             continue;
 
-         OcTreeKeyReadOnly childKey = OcTreeKeyTools.computeChildKey(childIndex, key, childDepth, treeDepth);
-         addLeafNodesAndKeysRecursively(childKey, childNode, keysToPack, nodesToPack, childDepth, treeDepth);
-      }
-   }
-
-   public static <NODE extends AbstractOcTreeNode<NODE>> void addLeafNodesRecursively(NODE node, List<NODE> nodesToPack, int depth, int treeDepth)
-   {
-      if (!node.hasAtLeastOneChild())
-      {
-         nodesToPack.add(node);
-         return;
-      }
-
-      int childDepth = depth + 1;
-
-      for (int childIndex = 0; childIndex < 8; childIndex++)
-      {
-         NODE childNode = node.getChildUnsafe(childIndex);
-         if (childNode == null)
-            continue;
-
-         addLeafNodesRecursively(childNode, nodesToPack, childDepth, treeDepth);
-      }
-   }
-
-   public static <NODE extends AbstractOcTreeNode<NODE>> void addLeafKeysRecursively(OcTreeKeyReadOnly key, NODE node, OcTreeKeyList keysToPack, int depth,
-         int treeDepth)
-   {
-      if (!node.hasAtLeastOneChild())
-      {
-         keysToPack.add(key);
-         return;
-      }
-
-      int childDepth = depth + 1;
-
-      for (int childIndex = 0; childIndex < 8; childIndex++)
-      {
-         NODE childNode = node.getChildUnsafe(childIndex);
-         if (childNode == null)
-            continue;
-
-         OcTreeKeyReadOnly childKey = OcTreeKeyTools.computeChildKey(childIndex, key, childDepth, treeDepth);
-         addLeafKeysRecursively(childKey, childNode, keysToPack, childDepth, treeDepth);
+         OcTreeKeyReadOnly childKey = OcTreeKeyTools.computeChildKey(childIndex, nodeKey, childDepth, treeDepth);
+         doActionOnLeavesRecursively(childKey, childNode, actionRule, childDepth, treeDepth);
       }
    }
 

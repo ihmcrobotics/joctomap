@@ -34,9 +34,7 @@ import us.ihmc.octoMap.planarRegions.PlanarRegion;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
-import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
 import us.ihmc.robotics.MathTools;
-import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.time.TimeTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
@@ -60,17 +58,12 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private final List<PlanarRegion> planarRegions = new ArrayList<>();
 
-   private enum NormalComputationMethod
-   {
-      DIRECT_NEIGHBORS, CLOSE_NEIGHBORS, RANSAC
-   };
-
-   private static final NormalComputationMethod NORMAL_COMPUTATION_METHOD = NormalComputationMethod.RANSAC;
-
    private final TDoubleObjectHashMap<OcTreeKeyList> neighborOffsetsCached = new TDoubleObjectHashMap<>(4);
    private final LeafBoundingBoxIterable<NormalOcTreeNode> leafIterable;
 
    private double alphaCenterUpdate = 0.1;
+
+   private final NormalCalculator normalCalculator = new NormalCalculator();
 
    public NormalOcTree(double resolution)
    {
@@ -234,9 +227,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private void updateNormals()
    {
       leafIterable.setMaxDepth(treeDepth);
-      boolean unknownStatus = true;
       double searchRadius = normalEstimationParameters.getSearchRadius();
       double maxDistanceFromPlane = normalEstimationParameters.getMaxDistanceFromPlane();
+      normalCalculator.setOcTreeParameters(root, resolution, treeDepth);
 
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
@@ -249,28 +242,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             continue;
          }
 
-//         if (node.getNormalQuality() < 0.005)
-//         {
-//            if (random.nextDouble() >= 0.10)
-//               continue;
-////            else if (random.nextDouble() <= 0.01)
-////               node.resetNormal();
-//         }
-
-         switch (NORMAL_COMPUTATION_METHOD)
-         {
-         case RANSAC:
-            computeNodeNormalRansac(node, key, searchRadius, maxDistanceFromPlane);
-            break;
-         case CLOSE_NEIGHBORS:
-            computeNodeNormalWithSphericalNeighborhood(node, key, unknownStatus, searchRadius);
-            break;
-         case DIRECT_NEIGHBORS:
-            computeNodeNormalWithDirectNeighbors(node, key, unknownStatus);
-            break;
-         default:
-            break;
-         }
+         normalCalculator.computeNodeNormalRansac(node, key, searchRadius, maxDistanceFromPlane);
       }
 
       if (root != null)
@@ -294,243 +266,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          }
          node.resetRegionId();
          node.updateNormalChildren();
-      }
-   }
-
-   private void computeNodeNormalWithDirectNeighbors(NormalOcTreeNode node, OcTreeKeyReadOnly key, boolean unknownStatus)
-   {
-      OcTreeKey currentKey = new OcTreeKey();
-      NormalOcTreeNode currentNode;
-
-      int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(treeDepth, treeDepth);
-
-      int[] keyOffsets = {-keyInterval, 0, keyInterval};
-
-      for (int kxOffset : keyOffsets)
-      {
-         for (int kyOffset : keyOffsets)
-         {
-            for (int kzOffset : keyOffsets)
-            {
-               currentKey.setKey(0, key.getKey(0) + kxOffset);
-               currentKey.setKey(1, key.getKey(1) + kyOffset);
-               currentKey.setKey(2, key.getKey(2) + kzOffset);
-               currentNode = search(currentKey);
-
-               boolean nodeExists = currentNode == null;
-               boolean isOccupied = !nodeExists && isNodeOccupied(currentNode);
-               boolean isUnknownConsideredOccupied = nodeExists && unknownStatus;
-
-               if (isOccupied || isUnknownConsideredOccupied)
-               {
-                  normal.setX(normal.getX() - kxOffset);
-                  normal.setY(normal.getY() - kyOffset);
-                  normal.setZ(normal.getZ() - kzOffset);
-               }
-            }
-         }
-      }
-
-      double lengthSquared = normal.lengthSquared();
-      if (lengthSquared > 1.0e-3)
-      {
-         normal.scale(1.0 / Math.sqrt(lengthSquared));
-         node.setNormal(normal);
-      }
-      else
-      {
-         node.resetNormal();
-      }
-   }
-
-   private final OcTreeKeyList tempNeighborKeysForNormal = new OcTreeKeyList();
-   private final Vector3d normal = new Vector3d();
-   private final Vector3d nodeCenterToNeighborCenter = new Vector3d();
-   private final Point3d nodeCenter = new Point3d();
-   private final Point3d neighborCenter = new Point3d();
-
-   private void computeNodeNormalWithSphericalNeighborhood(NormalOcTreeNode node, OcTreeKeyReadOnly key, boolean unknownStatus, double searchRadius)
-   {
-      if (node.isCenterSet())
-         node.getCenter(nodeCenter);
-      else
-         keyToCoordinate(key, nodeCenter);
-
-      NormalOcTreeNode currentNode;
-
-      OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(searchRadius);
-      tempNeighborKeysForNormal.clear();
-      for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
-      {
-         OcTreeKey currentKey = tempNeighborKeysForNormal.add();
-         currentKey.set(key);
-         currentKey.add(cachedNeighborKeyOffsets.unsafeGet(i));
-      }
-
-      normal.set(0.0, 0.0, 0.0);
-
-      for (int i = tempNeighborKeysForNormal.size() - 1; i >= 0; i--)
-      {
-         OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(i);
-         currentNode = keyToNodeMap.get(currentKey);
-
-         if (currentNode == null)
-         {
-            if (unknownStatus)
-            {
-               normal.setX(normal.getX() + Math.signum(key.getKey(0) - currentKey.getKey(0)));
-               normal.setY(normal.getY() + Math.signum(key.getKey(1) - currentKey.getKey(1)));
-               normal.setZ(normal.getZ() + Math.signum(key.getKey(2) - currentKey.getKey(2)));
-            }
-            tempNeighborKeysForNormal.fastRemove(i);
-         }
-         else if (isNodeOccupied(currentNode))
-         {
-            normal.setX(normal.getX() + Math.signum(key.getKey(0) - currentKey.getKey(0)));
-            normal.setY(normal.getY() + Math.signum(key.getKey(1) - currentKey.getKey(1)));
-            normal.setZ(normal.getZ() + Math.signum(key.getKey(2) - currentKey.getKey(2)));
-         }
-      }
-
-      double lengthSquared = normal.lengthSquared();
-      if (lengthSquared > 1.0e-3)
-      {
-         normal.scale(1.0 / Math.sqrt(lengthSquared));
-         node.setNormal(normal);
-
-         float normalQuality = 0.0f;
-         int numberOfPoints = 0;
-
-         for (int i = 0; i < tempNeighborKeysForNormal.size(); i++)
-         {
-            OcTreeKey currentKey = tempNeighborKeysForNormal.unsafeGet(i);
-            currentNode = keyToNodeMap.get(currentKey);
-
-            if (currentNode != null && currentNode.isCenterSet())
-            {
-               currentNode.getCenter(neighborCenter);
-               nodeCenterToNeighborCenter.sub(nodeCenter, neighborCenter);
-               normalQuality += Math.abs(normal.dot(nodeCenterToNeighborCenter));
-               numberOfPoints++;
-            }
-         }
-
-         if (numberOfPoints == 0)
-            normalQuality = Float.POSITIVE_INFINITY;
-         else
-            normalQuality /= numberOfPoints;
-         node.setNormalQuality(normalQuality, numberOfPoints);
-      }
-      else
-      {
-         node.resetNormal();
-      }
-   }
-
-   private final Random random = new Random(1651L);
-   private final Vector3d normalCandidate = new Vector3d();
-   private final Point3d[] randomDraw = {new Point3d(), new Point3d(), new Point3d()};
-   private final List<NormalOcTreeNode> neighbors = new ArrayList<>();
-
-   private final RecyclingArrayList<Point3d> tempNeighborCenters = new RecyclingArrayList<>(Point3d.class);
-
-   private void computeNodeNormalRansac(NormalOcTreeNode node, OcTreeKeyReadOnly key, double searchRadius, double maxDistanceFromPlane)
-   {
-      if (!node.isCenterSet() || !node.isNormalSet())
-      {
-         node.resetNormal();
-         return;
-      }
-
-      node.getNormal(normal);
-      node.getCenter(nodeCenter);
-      double nodeNormalQuality = 0.0; // Need to be recomputed as the neighbors may have changed
-      int nodeNumberOfPoints = 0;
-
-      tempNeighborCenters.clear();
-      Point3d coord = keyToCoordinate(key);
-      neighbors.clear();
-      OcTreeNearestNeighborTools.radiusNeighbors(root, coord, searchRadius, null, neighbors, resolution, treeDepth);
-
-      for (int i = 0; i < neighbors.size(); i++)
-      {
-         NormalOcTreeNode neighborNode = neighbors.get(i);
-         Point3d neighborCenter = tempNeighborCenters.add();
-         neighborNode.getCenter(neighborCenter);
-
-         nodeCenterToNeighborCenter.sub(nodeCenter, neighborCenter);
-         double distanceFromPlane = Math.abs(normal.dot(nodeCenterToNeighborCenter));
-         if (distanceFromPlane <= maxDistanceFromPlane)
-         {
-            nodeNormalQuality += distanceFromPlane;
-            nodeNumberOfPoints++;
-         }
-      }
-
-      if (nodeNumberOfPoints == 0)
-         nodeNormalQuality = Double.POSITIVE_INFINITY;
-      else
-         nodeNormalQuality /= nodeNumberOfPoints;
-
-      normalCandidate.set(0.0, 0.0, 0.0);
-
-      boolean hasNormalBeenUpdatedAtLeastOnce = false;
-      while (!hasNormalBeenUpdatedAtLeastOnce) // TODO Check if necessary, maybe only one iteration when normal is pretty good already. 
-      {
-         int index = 0;
-         node.getCenter(randomDraw[index++]);
-
-         while (index < 3)
-         {
-            // Did not find three points, just fall back to the naive way
-            if (tempNeighborCenters.isEmpty())
-               return;
-
-            int nextInt = random.nextInt(tempNeighborCenters.size());
-            randomDraw[index++].set(tempNeighborCenters.get(nextInt));
-            tempNeighborCenters.fastRemove(nextInt);
-         }
-
-         double v1_x = randomDraw[1].getX() - randomDraw[0].getX();
-         double v1_y = randomDraw[1].getY() - randomDraw[0].getY();
-         double v1_z = randomDraw[1].getZ() - randomDraw[0].getZ();
-
-         double v2_x = randomDraw[2].getX() - randomDraw[0].getX();
-         double v2_y = randomDraw[2].getY() - randomDraw[0].getY();
-         double v2_z = randomDraw[2].getZ() - randomDraw[0].getZ();
-
-         normalCandidate.setX(v1_y * v2_z - v1_z * v2_y);
-         normalCandidate.setY(v2_x * v1_z - v2_z * v1_x);
-         normalCandidate.setZ(v1_x * v2_y - v1_y * v2_x);
-         normalCandidate.normalize();
-
-         float candidateNormalQuality = 0.0f;
-         int candidateNumberOfPoints = 3; // The three points picked randomly are on the plane
-
-         for (int i = 0; i < tempNeighborCenters.size(); i++)
-         {
-            nodeCenterToNeighborCenter.sub(nodeCenter, tempNeighborCenters.get(i));
-            double distanceFromPlane = Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
-            if (distanceFromPlane < maxDistanceFromPlane)
-            {
-               candidateNormalQuality += distanceFromPlane;
-               candidateNumberOfPoints++;
-            }
-         }
-
-         candidateNormalQuality /= candidateNumberOfPoints;
-
-         boolean isSimplyBetter = candidateNumberOfPoints >= nodeNumberOfPoints && candidateNormalQuality <= nodeNormalQuality;
-         boolean hasLittleLessNodesButIsMuchBetter = candidateNumberOfPoints >= (int) (0.75 * nodeNumberOfPoints) && candidateNormalQuality <= 0.5 * nodeNormalQuality;
-
-         if (isSimplyBetter || hasLittleLessNodesButIsMuchBetter)
-         {
-            if (normal.dot(normalCandidate) < 0.0)
-               normalCandidate.negate();
-            node.setNormal(normalCandidate);
-            node.setNormalQuality(candidateNormalQuality, candidateNumberOfPoints);
-            hasNormalBeenUpdatedAtLeastOnce = true;
-         }
       }
    }
 
