@@ -6,17 +6,15 @@ import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class OcTreeKey implements OcTreeKeyReadOnly
 {
-   private char[] k = new char[3];
+   private int[] k = new int[3];
 
    public OcTreeKey()
    {
    }
 
-   public OcTreeKey(int a, int b, int c)
+   public OcTreeKey(int k0, int k1, int k2)
    {
-      k[0] = (char) a;
-      k[1] = (char) b;
-      k[2] = (char) c;
+      set(k0, k1, k2);
    }
 
    public OcTreeKey(OcTreeKeyReadOnly other)
@@ -24,46 +22,49 @@ public class OcTreeKey implements OcTreeKeyReadOnly
       set(other);
    }
 
-   public void set(OcTreeKeyReadOnly other)
-   {
-      for (int i = 0; i < 3; i++)
-         k[i] = (char) other.getKey(i);
-   }
-
    public void set(int k0, int k1, int k2)
    {
-      k[0] = (char) k0;
-      k[1] = (char) k1;
-      k[2] = (char) k2;
-   }
-
-   public void set(int key[])
-   {
-      for (int i = 0; i < 3; i++)
-         k[i] = (char) key[i];
+      k[0] = k0;
+      k[1] = k1;
+      k[2] = k2;
    }
 
    public void setKey(int index, int keyValue)
    {
-      k[index] = (char) keyValue;
+      k[index] = keyValue;
    }
 
-   public void add(OcTreeKeyReadOnly other)
+   public void add(int k0, int k1, int k2)
    {
-      for (int i = 0; i < 3; i++)
-         k[i] += (char) other.getKey(i);
-   }
-   
-   public void add(OcTreeKeyReadOnly k1, OcTreeKeyReadOnly k2)
-   {
-      for (int i = 0; i < 3; i++)
-         k[i] = (char) (k1.getKey(i) + k2.getKey(i));
+      k[0] += k0;
+      k[1] += k1;
+      k[2] += k2;
    }
 
    public void addKey(int index, int keyValue)
    {
       k[index] += keyValue;
-      k[index] = (char) k[index];
+   }
+
+   public void set(OcTreeKeyReadOnly other)
+   {
+      set(other.getKey(0), other.getKey(1), other.getKey(2));
+   }
+
+   public void set(int key[])
+   {
+      set(key[0], key[1], key[2]);
+   }
+
+   public void add(OcTreeKeyReadOnly other)
+   {
+      add(other.getKey(0), other.getKey(1), other.getKey(2));
+   }
+
+   public void add(OcTreeKeyReadOnly k1, OcTreeKeyReadOnly k2)
+   {
+      set(k1);
+      add(k2);
    }
 
    @Override
@@ -93,13 +94,13 @@ public class OcTreeKey implements OcTreeKeyReadOnly
       // a simple hashing function 
       // explicit casts to size_t to operate on the complete range
       // constanst will be promoted according to C++ standard
-      return (int) ((long) (k[0]) + 1447L * (long) (k[1]) + 345637L * (long) (k[2]));
+      return (int) (k[0] + 1447L * k[1] + 345637L * k[2]);
    }
 
    @Override
    public String toString()
    {
-      return "OcTreeKey: [" + ((int) k[0]) + ", " + ((int) k[1]) + ", " + ((int) k[2]) + "]";
+      return "OcTreeKey: [" + k[0] + ", " + k[1] + ", " + k[2] + "]";
    }
 
    public OcTreeKey(Random random, int treeDepth)
@@ -109,15 +110,9 @@ public class OcTreeKey implements OcTreeKeyReadOnly
 
    public OcTreeKey(Random random, int depth, int treeDepth)
    {
-      int numberOfNodes = OcTreeKeyTools.computeNumberOfNodesAtDepth(depth);
-      int keyMin = OcTreeKeyTools.computeMinimumKeyAtDepth(depth, treeDepth);
-      int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
-
       for (int i = 0; i < 3; i++)
       {
-         int key = (int) (char) (random.nextInt(numberOfNodes) * keyInterval - keyMin);
-         OcTreeKeyTools.checkKeyIsValid(key, depth, treeDepth);
-         setKey(i, key);
+         setKey(i, OcTreeKeyTools.generateRandomKey(random, depth, treeDepth));
       }
    }
 }

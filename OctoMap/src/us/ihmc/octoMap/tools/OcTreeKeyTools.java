@@ -2,6 +2,7 @@ package us.ihmc.octoMap.tools;
 
 import java.util.Random;
 
+import us.ihmc.octoMap.exceptions.InvalidKeyException;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
@@ -67,21 +68,23 @@ public class OcTreeKeyTools
     * @param depth
     * @return
     */
-   public static int computeChildIndex(OcTreeKeyReadOnly key, int depth)
+   public static int computeChildIndex(OcTreeKeyReadOnly key, int depth, int treeDepth)
    {
       int k0 = key.getKey(0);
       int k1 = key.getKey(1);
       int k2 = key.getKey(2);
 
-      int childIndex = computeChildIndex(k0, k1, k2, depth);
+      int childIndex = computeChildIndex(k0, k1, k2, depth, treeDepth);
 
       return childIndex;
    }
 
-   public static int computeChildIndex(int k0, int k1, int k2, int depth)
+   public static int computeChildIndex(int k0, int k1, int k2, int depth, int treeDepth)
    {
+      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+
       int childIndex = 0;
-      int temp = (int) ((char) (1 << depth) % Character.MAX_VALUE);
+      int temp = (1 << depth) % computeNumberOfNodesAtDepth(treeDepth);
 
       if ((k0 & temp) != 0)
          childIndex += 1;
@@ -111,7 +114,7 @@ public class OcTreeKeyTools
       }
       else
       {
-         int mask = (int) (char) (computeMaximumKey(treeDepth) << level);
+         int mask = adjustToUnsignedNBits(computeMaximumKey(treeDepth) << level, treeDepth);
          OcTreeKey result = new OcTreeKey(key);
          result.setKey(0, result.getKey(0) & mask);
          result.setKey(1, result.getKey(1) & mask);
@@ -142,7 +145,7 @@ public class OcTreeKeyTools
       else
       {
          int centerOffsetKey = computeCenterOffsetKey(treeDepth);
-         return (int) (char) (((key - centerOffsetKey) >> diff) << diff) + (1 << (diff - 1)) + centerOffsetKey;
+         return adjustToUnsignedNBits(adjustToUnsignedNBits(((key - centerOffsetKey) >> diff) << diff, treeDepth) + (1 << (diff - 1)) + centerOffsetKey, treeDepth);
       }
    }
 
@@ -179,7 +182,7 @@ public class OcTreeKeyTools
       if (treeDepth == 0)
          return 0;
       else
-         return (int) (char) 1 << (treeDepth - 1);
+         return 1 << (treeDepth - 1);
    }
 
    /**
@@ -211,7 +214,7 @@ public class OcTreeKeyTools
     */
    public static int computeMaximumKey(int treeDepth)
    {
-      return (int) (char) ((1 << treeDepth) - 1);
+      return (1 << treeDepth) - 1;
    }
 
    /**
@@ -226,7 +229,7 @@ public class OcTreeKeyTools
          return computeMaximumKey(treeDepth);
       int keyMinAtDepth = computeMinimumKeyAtDepth(depth, treeDepth);
       int keyMaxAtLowestLevel = computeMaximumKey(treeDepth);
-      return (int) (char) (keyMaxAtLowestLevel - keyMinAtDepth + 1);
+      return adjustToUnsignedNBits(keyMaxAtLowestLevel - keyMinAtDepth + 1, treeDepth);
    }
 
    /**
@@ -240,7 +243,7 @@ public class OcTreeKeyTools
       if (depth == treeDepth)
          return 0;
       else
-         return (int) (char) 1 << (treeDepth - depth - 1);
+         return 1 << (treeDepth - depth - 1);
    }
 
    /**
@@ -251,7 +254,8 @@ public class OcTreeKeyTools
     */
    public static int computeKeyIntervalAtDepth(int depth, int treeDepth)
    {
-      return (int) (char) (1 << treeDepth - depth);
+      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      return 1 << treeDepth - depth;
    }
 
    public static int computeNumberOfNodesAtDepth(int depth)
@@ -283,7 +287,7 @@ public class OcTreeKeyTools
       int keyMin = OcTreeKeyTools.computeMinimumKeyAtDepth(depth, treeDepth);
       int keyInterval = OcTreeKeyTools.computeKeyIntervalAtDepth(depth, treeDepth);
 
-      int key = (int) (char) (random.nextInt(numberOfNodes) * keyInterval - keyMin);
+      int key = adjustToUnsignedNBits(random.nextInt(numberOfNodes) * keyInterval - keyMin, treeDepth);
       OcTreeKeyTools.checkKeyIsValid(key, depth, treeDepth);
       return key;
    }
@@ -291,7 +295,7 @@ public class OcTreeKeyTools
    public static void checkKeyIsValid(int keyToCheck, int depth, int treeDepth)
    {
       if (!isKeyValid(keyToCheck, depth, treeDepth))
-         throw new RuntimeException("The key is invalid: " + keyToCheck + " (at depth: " + depth + ")");
+         throw new InvalidKeyException(keyToCheck, depth);
    }
 
    public static boolean isKeyValid(int keyToCheck, int depth, int treeDepth)
@@ -376,5 +380,16 @@ public class OcTreeKeyTools
             }
          }
       }
+   }
+
+   private static int adjustToUnsignedNBits(int key, int n)
+   {
+      int maxValue = 1 << n;
+      int adjusted = key % maxValue;
+
+      if (adjusted >= 0)
+         return adjusted;
+      else
+         return (adjusted + maxValue) % maxValue;
    }
 }

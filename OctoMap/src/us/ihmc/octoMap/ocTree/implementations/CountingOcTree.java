@@ -34,7 +34,7 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
       // follow or construct nodes down to last level...
       for (int depth = (treeDepth - 1); depth >= 0; depth--)
       {
-         int pos = OcTreeKeyTools.computeChildIndex(key, depth);
+         int pos = OcTreeKeyTools.computeChildIndex(key, depth, treeDepth);
 
          // requested node does not exist
          if (!OcTreeNodeTools.nodeChildExists(curNode, pos))
