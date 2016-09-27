@@ -34,6 +34,7 @@ import us.ihmc.octoMap.planarRegions.PlanarRegion;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
+import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
 import us.ihmc.robotics.MathTools;
 import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.time.TimeTools;
@@ -343,7 +344,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    }
 
    private final OcTreeKeyList tempNeighborKeysForNormal = new OcTreeKeyList();
-   private final OcTreeKey tempKeyForNormal = new OcTreeKey();
    private final Vector3d normal = new Vector3d();
    private final Vector3d nodeCenterToNeighborCenter = new Vector3d();
    private final Point3d nodeCenter = new Point3d();
@@ -430,6 +430,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private final Random random = new Random(1651L);
    private final Vector3d normalCandidate = new Vector3d();
    private final Point3d[] randomDraw = {new Point3d(), new Point3d(), new Point3d()};
+   private final List<NormalOcTreeNode> neighbors = new ArrayList<>();
 
    private final RecyclingArrayList<Point3d> tempNeighborCenters = new RecyclingArrayList<>(Point3d.class);
 
@@ -446,20 +447,14 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       double nodeNormalQuality = 0.0; // Need to be recomputed as the neighbors may have changed
       int nodeNumberOfPoints = 0;
 
-      OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(searchRadius);
-
       tempNeighborCenters.clear();
-      for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
-      {
-         tempKeyForNormal.add(key, cachedNeighborKeyOffsets.unsafeGet(i));
-         NormalOcTreeNode neighborNode = keyToNodeMap.get(tempKeyForNormal);
+      Point3d coord = keyToCoordinate(key);
+      neighbors.clear();
+      OcTreeNearestNeighborTools.radiusNeighbors(root, coord, searchRadius, null, neighbors, resolution, treeDepth);
 
-         if (neighborNode == null)
-            continue;
-         if (!isNodeOccupied(neighborNode))
-            continue;
-         if (!neighborNode.isCenterSet())
-            continue;
+      for (int i = 0; i < neighbors.size(); i++)
+      {
+         NormalOcTreeNode neighborNode = neighbors.get(i);
          Point3d neighborCenter = tempNeighborCenters.add();
          neighborNode.getCenter(neighborCenter);
 
@@ -480,7 +475,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       normalCandidate.set(0.0, 0.0, 0.0);
 
       boolean hasNormalBeenUpdatedAtLeastOnce = false;
-      while (!hasNormalBeenUpdatedAtLeastOnce)
+      while (!hasNormalBeenUpdatedAtLeastOnce) // TODO Check if necessary, maybe only one iteration when normal is pretty good already. 
       {
          int index = 0;
          node.getCenter(randomDraw[index++]);
