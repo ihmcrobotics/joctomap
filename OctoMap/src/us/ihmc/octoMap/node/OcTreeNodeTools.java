@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.node;
 
+import us.ihmc.octoMap.OctoMapParameters;
+
 /**
  * This tool class has to live in this package to be able to do operation on node's children field.
  * @author Sylvain
@@ -14,13 +16,14 @@ public class OcTreeNodeTools
     */
    public final static boolean nodeChildExists(AbstractOcTreeNode<?> node, int childIndex)
    {
-      checkChildIndex(childIndex);
+      if (!OctoMapParameters.FAST_MODE)
+         checkChildIndex(childIndex);
       return node.children != null && node.children[childIndex] != null;
    }
 
    public final static void checkChildIndex(int childIndex)
    {
-      if (childIndex > 7)
+      if (childIndex > 7 || childIndex < 0)
          throw new RuntimeException("Bad child index :" + childIndex + ", expected index to be in [0, 7].");
    }
 
@@ -36,14 +39,6 @@ public class OcTreeNodeTools
          throw new RuntimeException("Child is already null.");
    }
 
-   public static final <NODE extends AbstractOcTreeNode<NODE>> NODE getNodeChild(NODE node, int childIndex)
-   {
-      checkChildIndex(childIndex);
-      checkNodeHasChildren(node);
-      checkNodeChildNotNull(node, childIndex);
-      return node.children == null ? null : node.getChildUnsafe(childIndex);
-   }
-
    /**
     *  A node is collapsible if all children exist, don't have children of their own
     * and have the same occupancy value
@@ -57,13 +52,13 @@ public class OcTreeNodeTools
       if (!node.hasArrayForChildren())
          return false;
    
-      NODE firstChild = node.getChildUnsafe(0);
+      NODE firstChild = node.children[0];
       if (firstChild == null || firstChild.hasAtLeastOneChild())
          return false;
    
       for (int i = 1; i < 8; i++)
       {
-         NODE currentChild = node.getChildUnsafe(i);
+         NODE currentChild = node.children[i];
    
          if (currentChild == null || currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
             return false;
@@ -84,7 +79,7 @@ public class OcTreeNodeTools
       {
          if (nodeChildExists(parent, i))
          {
-            sumLeafsChildren += getNumberOfLeafNodesRecursive(getNodeChild(parent, i));
+            sumLeafsChildren += getNumberOfLeafNodesRecursive(parent.children[i]);
          }
       }
       return sumLeafsChildren;

@@ -60,7 +60,7 @@ public class OcTreeVisualizer extends Application
             {
                for (int i = 0; i < 8; i++)
                {
-                  OccupancyOcTreeNode currentChild = (OccupancyOcTreeNode) currentNode.getChildUnsafe(i);
+                  OccupancyOcTreeNode currentChild = (OccupancyOcTreeNode) currentNode.getChild(i);
                   if (currentChild != null)
                   {
                      numberOfNodes++;

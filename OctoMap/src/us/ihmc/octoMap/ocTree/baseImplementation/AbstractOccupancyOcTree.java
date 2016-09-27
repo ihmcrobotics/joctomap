@@ -1,8 +1,6 @@
 package us.ihmc.octoMap.ocTree.baseImplementation;
 
-import static us.ihmc.octoMap.MarchingCubesTables.edgeTable;
-import static us.ihmc.octoMap.MarchingCubesTables.triTable;
-import static us.ihmc.octoMap.MarchingCubesTables.vertexList;
+import static us.ihmc.octoMap.MarchingCubesTables.*;
 
 import java.util.List;
 
@@ -17,7 +15,6 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.key.OcTreeKeySet;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
-import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.rules.SetOccupancyRule;
 import us.ihmc.octoMap.ocTree.rules.UpdateOccupancyRule;
 import us.ihmc.octoMap.ocTree.rules.interfaces.CollidableRule;
@@ -815,8 +812,8 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          {
             for (int i = 0; i < 8; i++)
             {
-               NODE childNode;
-               if ((childNode = node.getChildUnsafe(i)) != null)
+               NODE childNode = node.getChild(i);
+               if (childNode != null)
                   updateInnerOccupancyRecurs(childNode, depth + 1);
             }
          }
@@ -833,10 +830,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       {
          for (int i = 0; i < 8; i++)
          {
-            if (OcTreeNodeTools.nodeChildExists(node, i))
-            {
-               toMaxLikelihoodRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1, max_depth);
-            }
+            NODE childNode = node.getChild(i);
+            if (childNode != null)
+               toMaxLikelihoodRecurs(childNode, depth + 1, max_depth);
          }
       }
       else

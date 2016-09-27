@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.ocTree.baseImplementation;
 
+import static us.ihmc.octoMap.node.OcTreeNodeTools.*;
+
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,6 +11,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
+import us.ihmc.octoMap.OctoMapParameters;
 import us.ihmc.octoMap.boundingBox.OcTreeSimpleBoundingBox;
 import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
 import us.ihmc.octoMap.iterators.LeafIterable;
@@ -192,14 +195,15 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /// Creates (allocates) the i-th child of the node. @return ptr to newly create NODE
    protected NODE createNodeChild(NODE node, int childIndex)
    {
-      OcTreeNodeTools.checkChildIndex(childIndex);
+      if (!OctoMapParameters.FAST_MODE)
+         checkChildIndex(childIndex);
       assignChildrenArrayIfNecessary(node);
 
-      if (node.getChildUnsafe(childIndex) != null)
+      if (OcTreeNodeTools.nodeChildExists(node, childIndex))
          throw new RuntimeException("Something went wrong.");
 
       NODE newChildNode = getOrCreateNode();
-      node.setChildUnsafe(childIndex, newChildNode);
+      node.setChild(childIndex, newChildNode);
 
       treeSize++;
       sizeChanged = true;
@@ -226,9 +230,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /// Deletes the i-th child of the node
    public void deleteNodeChild(NODE node, int childIndex)
    {
-      OcTreeNodeTools.checkChildIndex(childIndex);
-      OcTreeNodeTools.checkNodeHasChildren(node);
-      OcTreeNodeTools.checkNodeChildNotNull(node, childIndex);
+      if (!OctoMapParameters.FAST_MODE)
+      {
+         checkChildIndex(childIndex);
+         checkNodeHasChildren(node);
+         checkNodeChildNotNull(node, childIndex);
+      }
 
       unusedNodes.add(node.removeChild(childIndex));
 
@@ -350,7 +357,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          return false;
 
       // set value to children's values (all assumed equal)
-      node.copyData(node.getChildUnsafe(0));
+      node.copyData(node.getChild(0));
 
       // delete children (known to be leafs at this point!)
       for (int childIndex = 0; childIndex < 8; childIndex++)
@@ -852,10 +859,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          for (int i = 0; i < 8; i++)
          {
-            if (OcTreeNodeTools.nodeChildExists(node, i))
+            NODE childNode = node.getChild(i);
+            if (childNode != null)
             {
                currentNumberOfNodes++;
-               currentNumberOfNodes = calculateNumberOfNodesRecursively(OcTreeNodeTools.getNodeChild(node, i), currentNumberOfNodes);
+               currentNumberOfNodes = calculateNumberOfNodesRecursively(childNode, currentNumberOfNodes);
             }
          }
       }
@@ -870,7 +878,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          for (int i = 0; i < 8; i++)
          {
-            NODE child = node.removeChildUnsafe(i);
+            NODE child = node.removeChild(i);
             if (child != null)
             {
                unusedNodes.add(child);
@@ -891,9 +899,9 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (node == null)
          throw new RuntimeException("The given node is null");
 
-      int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
+      int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
 
-      if (!OcTreeNodeTools.nodeChildExists(node, pos))
+      if (!OcTreeNodeTools.nodeChildExists(node, childIndex))
       {
          // child does not exist, but maybe it's a pruned node?
          if (!node.hasAtLeastOneChild() && node != root)
@@ -910,12 +918,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
 
       // follow down further, fix inner nodes on way back up
-      boolean deleteChild = deleteNodeRecursively(OcTreeNodeTools.getNodeChild(node, pos), depth + 1, maxDepth, key);
+      boolean deleteChild = deleteNodeRecursively(node.getChild(childIndex), depth + 1, maxDepth, key);
       if (deleteChild)
       {
          // TODO: lazy eval?
          // TODO delete check depth, what happens to inner nodes with children?
-         deleteNodeChild(node, pos);
+         deleteNodeChild(node, childIndex);
 
          if (!node.hasAtLeastOneChild())
             return true;
@@ -938,8 +946,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       // follow down to last level
       if (depth < treeDepth)
       {
-         int pos = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
-         if (!OcTreeNodeTools.nodeChildExists(node, pos))
+         int childIndex = OcTreeKeyTools.computeChildIndex(key, treeDepth - 1 - depth);
+         if (!OcTreeNodeTools.nodeChildExists(node, childIndex))
          {
             if (!updateRule.enableNodeCreation())
             {
@@ -953,12 +961,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             }
             else
             { // not a pruned node, create requested child
-               createNodeChild(node, pos);
+               createNodeChild(node, childIndex);
                createdNode = true;
             }
          }
 
-         NODE nodeChild = OcTreeNodeTools.getNodeChild(node, pos);
+         NODE nodeChild = node.getChild(childIndex);
 
          if (lazyUpdate)
          {
@@ -975,7 +983,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             // note: combining both did not lead to a speedup!
             if (updateRule.deleteUpdatedNode(leafToReturn))
             {
-               deleteNodeChild(node, pos);
+               deleteNodeChild(node, childIndex);
                leafToReturn = node;
             }
             else if (pruneNode(node)) // return pointer to current parent (pruned), the just updated node no longer exists
@@ -1004,8 +1012,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          for (int i = 0; i < 8; i++)
          {
-            NODE childNode;
-            if ((childNode = node.getChildUnsafe(i)) != null)
+            NODE childNode = node.getChild(i);
+            if (childNode != null)
                numberOfPrunedNode = pruneRecursively(childNode, depth + 1, maxDepth, numberOfPrunedNode);
          }
       } // end if depth
@@ -1038,10 +1046,9 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       // recursively expand children
       for (int i = 0; i < 8; i++)
       {
-         if (OcTreeNodeTools.nodeChildExists(node, i))
-         {
-            expandRecursively(OcTreeNodeTools.getNodeChild(node, i), depth + 1, maxDepth);
-         }
+         NODE childNode = node.getChild(i);
+         if (childNode != null)
+            expandRecursively(childNode, depth + 1, maxDepth);
       }
    }
 

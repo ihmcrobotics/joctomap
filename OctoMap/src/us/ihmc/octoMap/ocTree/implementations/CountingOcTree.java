@@ -1,7 +1,5 @@
 package us.ihmc.octoMap.ocTree.implementations;
 
-import static us.ihmc.octoMap.node.OcTreeNodeTools.getNodeChild;
-
 import java.util.List;
 
 import javax.vecmath.Point3d;
@@ -44,7 +42,7 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
             createNodeChild(curNode, pos);
          }
          // descent tree
-         curNode = OcTreeNodeTools.getNodeChild(curNode, pos);
+         curNode = curNode.getChild(pos);
          curNode.increaseCount(); // modify traversed nodes
       }
 
@@ -68,7 +66,7 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
             if (OcTreeNodeTools.nodeChildExists(node, i))
             {
                OcTreeKeyTools.computeChildKey(i, parentKey, searchKey, depth + 1, treeDepth);
-               getCentersMinHitsRecurs(nodeCenters, minHits, maxDepth, getNodeChild(node, i), depth + 1, searchKey);
+               getCentersMinHitsRecurs(nodeCenters, minHits, maxDepth, node.getChild(i), depth + 1, searchKey);
             }
          }
       }

@@ -1,7 +1,11 @@
 package us.ihmc.octoMap.node;
 
+import static us.ihmc.octoMap.node.OcTreeNodeTools.*;
+
 import java.lang.reflect.Array;
 import java.util.Arrays;
+
+import us.ihmc.octoMap.OctoMapParameters;
 
 public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 {
@@ -63,36 +67,31 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 
    public final void setChild(int childIndex, N newChild)
    {
-      OcTreeNodeTools.checkChildIndex(childIndex);
-      if (!getClass().isInstance(newChild))
-         throw new RuntimeException("Cannot add a child of a different type");
-      setChildUnsafe(childIndex, newChild);
-   }
-
-   public void setChildUnsafe(int childIndex, N newChild)
-   {
+      if (!OctoMapParameters.FAST_MODE)
+      {
+         checkChildIndex(childIndex);
+         if (!getClass().isInstance(newChild))
+            throw new RuntimeException("Cannot add a child of a different type");
+      }
       children[childIndex] = newChild;
    }
 
-   @SuppressWarnings("unchecked")
    public final N getChild(int childIndex)
    {
-      return OcTreeNodeTools.getNodeChild((N) this, childIndex);
-   }
-
-   public final N getChildUnsafe(int childIndex)
-   {
-      return children[childIndex];
+      if (!OctoMapParameters.FAST_MODE)
+      {
+         checkChildIndex(childIndex);
+         checkNodeHasChildren(this);
+         checkNodeChildNotNull(this, childIndex);
+      }
+      return children == null ? null : children[childIndex];
    }
 
    public final N removeChild(int childIndex)
    {
-      OcTreeNodeTools.checkChildIndex(childIndex);
-      return removeChildUnsafe(childIndex);
-   }
+      if (!OctoMapParameters.FAST_MODE)
+         OcTreeNodeTools.checkChildIndex(childIndex);
 
-   public final N removeChildUnsafe(int childIndex)
-   {
       N removedChild = children[childIndex];
       if (removedChild != null)
          removedChild.clear();
@@ -122,7 +121,7 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       {
          for (int i = 0; i < 8; i++)
          {
-            N child = getChildUnsafe(i);
+            N child = children[i];
             childrenNames[i] = child == null ? null : child.getClass().getSimpleName();
          }
       }

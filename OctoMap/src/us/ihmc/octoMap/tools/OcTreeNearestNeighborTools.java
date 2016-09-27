@@ -64,7 +64,7 @@ public class OcTreeNearestNeighborTools
       // check whether child nodes are in range.
       for (int childIndex = 0; childIndex < 8; childIndex++)
       {
-         NODE child = node.getChildUnsafe(childIndex);
+         NODE child = node.getChild(childIndex);
          if (child == null)
             continue;
          int childDepth = depth + 1;
@@ -121,7 +121,7 @@ public class OcTreeNearestNeighborTools
       if (z > zNode)
          mortonCode |= 4;
 
-      NODE child = node.getChildUnsafe(mortonCode);
+      NODE child = node.getChild(mortonCode);
 
       if (child != null)
       {
@@ -140,7 +140,7 @@ public class OcTreeNearestNeighborTools
          if (childIndex == mortonCode)
             continue;
 
-         child = node.getChildUnsafe(childIndex);
+         child = node.getChild(childIndex);
 
          if (child == null)
             continue;
@@ -171,7 +171,7 @@ public class OcTreeNearestNeighborTools
 
       for (int childIndex = 0; childIndex < 8; childIndex++)
       {
-         NODE childNode = node.getChildUnsafe(childIndex);
+         NODE childNode = node.getChild(childIndex);
          if (childNode == null)
             continue;
 

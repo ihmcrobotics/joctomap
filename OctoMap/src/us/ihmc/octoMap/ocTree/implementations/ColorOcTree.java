@@ -33,7 +33,7 @@ public class ColorOcTree extends AbstractOccupancyOcTree<ColorOcTreeNode>
          return false;
 
       // set value to children's values (all assumed equal)
-      node.copyData(OcTreeNodeTools.getNodeChild(node, 0));
+      node.copyData(node.getChild(0));
 
       if (node.isColorSet()) // TODO check
          node.setColor(node.getAverageChildColor());
@@ -137,10 +137,9 @@ public class ColorOcTree extends AbstractOccupancyOcTree<ColorOcTreeNode>
          {
             for (int i = 0; i < 8; i++)
             {
-               if (OcTreeNodeTools.nodeChildExists(node, i))
-               {
-                  updateInnerOccupancyRecurs(OcTreeNodeTools.getNodeChild(node, i), depth + 1);
-               }
+               ColorOcTreeNode childNode = node.getChild(i);
+               if (childNode != null)
+                  updateInnerOccupancyRecurs(childNode, depth + 1);
             }
          }
          node.updateOccupancyChildren();

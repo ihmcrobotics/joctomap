@@ -259,8 +259,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          {
             for (int i = 0; i < 8; i++)
             {
-               NormalOcTreeNode childNode;
-               if ((childNode = node.getChildUnsafe(i)) != null)
+               NormalOcTreeNode childNode = node.getChild(i);
+               if (childNode != null)
                   updateInnerNormalsRecursive(childNode, depth + 1);
             }
          }
@@ -393,8 +393,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          {
             for (int i = 0; i < 8; i++)
             {
-               NormalOcTreeNode childNode;
-               if ((childNode = node.getChildUnsafe(i)) != null)
+               NormalOcTreeNode childNode = node.getChild(i);
+               if (childNode != null)
                   updateInnerRegionIdsRecursive(childNode, depth + 1);
             }
          }
