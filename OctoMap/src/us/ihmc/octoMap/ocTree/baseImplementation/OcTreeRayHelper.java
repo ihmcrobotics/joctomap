@@ -41,11 +41,6 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
    };
 
    private final Vector3d direction = new Vector3d();
-   private final double[] directionArray = new double[3];
-   private final double[] originArray = new double[3];
-   private final int[] step = new int[3];
-   private final double[] tMax = new double[3];
-   private final double[] tDelta = new double[3];
 
    public OcTreeRayHelper()
    {
@@ -190,15 +185,15 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
     * OcTreeKey of all nodes traversed by the beam. You still need to check
     * if a node at that coordinate exists (e.g. with search()).
     */
-   public void doActionOnRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule, double resolution,
+   public static void doActionOnRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule, double resolution,
          int treeDepth)
    {
       // see "A Faster Voxel Traversal Algorithm for Ray Tracing" by Amanatides & Woo
       // basically: DDA in 3D
-      boolean foundKeyOrigin = coordinateToKey(origin, resolution, treeDepth, keyOrigin);
-      boolean foundKeyEnd = coordinateToKey(end, resolution, treeDepth, keyEnd);
+      OcTreeKey keyOrigin = coordinateToKey(origin, resolution, treeDepth);
+      OcTreeKey keyEnd = coordinateToKey(end, resolution, treeDepth);
 
-      if (!foundKeyOrigin || !foundKeyEnd)
+      if (keyOrigin == null || keyEnd == null)
       {
          System.err.println(OcTreeRayHelper.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
          return;
@@ -207,13 +202,20 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       if (keyOrigin.equals(keyEnd))
          return; // same tree cell, we're done.
 
-      actionRule.doAction(origin, end, direction, keyOrigin);
+      Vector3d direction = new Vector3d();
+      double[] directionArray = new double[3];
+      double[] originArray = new double[3];
+      int[] step = new int[3];
+      double[] tMax = new double[3];
+      double[] tDelta = new double[3];
+      OcTreeKey currentKey = new OcTreeKey();
 
       // Initialization phase -------------------------------------------------------
-
       direction.sub(end, origin);
       double length = direction.length();
       direction.scale(1.0 / length);
+
+      actionRule.doAction(origin, end, direction, keyOrigin);
 
       direction.get(directionArray);
       origin.get(originArray);

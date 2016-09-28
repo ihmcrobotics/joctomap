@@ -1,8 +1,11 @@
 package us.ihmc.octoMap.ocTree.implementations;
 
+import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -12,6 +15,7 @@ import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools.NeighborActionRule;
+import us.ihmc.octoMap.tools.OcTreeSearchTools;
 import us.ihmc.robotics.lists.RecyclingArrayList;
 
 public final class NormalCalculator
@@ -93,7 +97,7 @@ public final class NormalCalculator
       normalCandidate.set(0.0, 0.0, 0.0);
 
       boolean hasNormalBeenUpdatedAtLeastOnce = false;
-      do 
+      do
       {
          int index = 0;
 
@@ -155,17 +159,25 @@ public final class NormalCalculator
       while (!hasNormalBeenUpdatedAtLeastOnce && nodeNormalQuality > 0.005); // TODO Check if necessary, maybe only one iteration when normal is pretty good already.
    }
 
-   public static void computeNodeNormalRansac(NormalOcTreeNode root, NormalOcTreeNode node, OcTreeKeyReadOnly key, double searchRadius, double maxDistanceFromPlane, double resolution, int treeDepth)
+   public static void computeNodeNormalRansac(NormalOcTreeNode root, OcTreeKeyReadOnly key, double searchRadius, double maxDistanceFromPlane,
+         double resolution, int treeDepth)
    {
-      if (!node.isCenterSet() || !node.isNormalSet())
+      NormalOcTreeNode currentNode = OcTreeSearchTools.search(root, key, treeDepth);
+
+      if (!currentNode.isCenterSet() || !currentNode.isNormalSet())
       {
-         node.resetNormal();
+         currentNode.resetNormal();
          return;
       }
 
-      NormalOcTreeNode currentNode = node;
+      Vector3d normalCandidate = new Vector3d();
+      Random random = ThreadLocalRandom.current();
+      Point3d[] randomDraw = {new Point3d(), new Point3d()};
       Vector3d currentNodeNormal = new Vector3d();
       Point3d currentNodeCenter = new Point3d();
+      List<Point3d> neighborCenters = new ArrayList<>();
+      Vector3d nodeCenterToNeighborCenter = new Vector3d();
+
       currentNode.getNormal(currentNodeNormal);
       currentNode.getCenter(currentNodeCenter);
 
@@ -173,8 +185,6 @@ public final class NormalCalculator
       double nodeNormalQuality = 0.0;
       int nodeNumberOfPoints = 0;
 
-      Point3d coord = OcTreeKeyConversionTools.keyToCoordinate(key, resolution, treeDepth);
-      List<Point3d> tempNeighborCenters = new ArrayList<>();
 
       NeighborActionRule<NormalOcTreeNode> collectNodeCentersRule = new NeighborActionRule<NormalOcTreeNode>()
       {
@@ -185,18 +195,21 @@ public final class NormalCalculator
             {
                Point3d center = new Point3d();
                node.getCenter(center);
-               tempNeighborCenters.add(center);
+               neighborCenters.add(center);
             }
          }
       };
 
-      OcTreeNearestNeighborTools.findRadiusNeighbors(root, coord, searchRadius, collectNodeCentersRule, resolution, treeDepth);
+      double xNode = keyToCoordinate(key.getKey(0), resolution, treeDepth);
+      double yNode = keyToCoordinate(key.getKey(1), resolution, treeDepth);
+      double zNode = keyToCoordinate(key.getKey(2), resolution, treeDepth);
 
-      Vector3d nodeCenterToNeighborCenter = new Vector3d();
+      OcTreeNearestNeighborTools.findRadiusNeighbors(root, xNode, yNode, zNode, searchRadius, collectNodeCentersRule, resolution, treeDepth);
 
-      for (int i = 0; i < tempNeighborCenters.size(); i++)
+
+      for (int i = 0; i < neighborCenters.size(); i++)
       {
-         Point3d neighborCenter = tempNeighborCenters.get(i);
+         Point3d neighborCenter = neighborCenters.get(i);
 
          nodeCenterToNeighborCenter.sub(currentNodeCenter, neighborCenter);
          double distanceFromPlane = Math.abs(currentNodeNormal.dot(nodeCenterToNeighborCenter));
@@ -212,24 +225,20 @@ public final class NormalCalculator
       else
          nodeNormalQuality /= nodeNumberOfPoints;
 
-      Vector3d normalCandidate = new Vector3d();
-      Random random = new Random(45616L);
-      Point3d[] randomDraw = {new Point3d(), new Point3d()};
-
       boolean hasNormalBeenUpdatedAtLeastOnce = false;
-      do 
+      do
       {
          int index = 0;
 
          while (index < 2)
          {
             // Did not find two other points. Give up for now.
-            if (tempNeighborCenters.isEmpty())
+            if (neighborCenters.isEmpty())
                return;
 
-            int nextInt = random.nextInt(tempNeighborCenters.size());
-            randomDraw[index++].set(tempNeighborCenters.get(nextInt));
-            tempNeighborCenters.remove(nextInt);
+            int nextInt = random.nextInt(neighborCenters.size());
+            randomDraw[index++].set(neighborCenters.get(nextInt));
+            neighborCenters.remove(nextInt);
          }
 
          double v1_x = randomDraw[0].getX() - currentNodeCenter.getX();
@@ -248,9 +257,9 @@ public final class NormalCalculator
          float candidateNormalQuality = 0.0f;
          int candidateNumberOfPoints = 2; // The two points picked randomly are exactly on the plane
 
-         for (int i = 0; i < tempNeighborCenters.size(); i++)
+         for (int i = 0; i < neighborCenters.size(); i++)
          {
-            nodeCenterToNeighborCenter.sub(currentNodeCenter, tempNeighborCenters.get(i));
+            nodeCenterToNeighborCenter.sub(currentNodeCenter, neighborCenters.get(i));
             double distanceFromPlane = Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
             if (distanceFromPlane < maxDistanceFromPlane)
             {
