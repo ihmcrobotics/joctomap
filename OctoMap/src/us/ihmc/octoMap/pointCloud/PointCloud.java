@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
@@ -244,6 +245,16 @@ public class PointCloud implements Iterable<Point3f>
    public Point3f getPoint(int i) // may return NULL
    {
       return points.get(i);
+   }
+
+   public Stream<Point3f> stream()
+   {
+      return points.stream();
+   }
+
+   public Stream<Point3f> parallelStream()
+   {
+      return points.parallelStream();
    }
 
    @Override
