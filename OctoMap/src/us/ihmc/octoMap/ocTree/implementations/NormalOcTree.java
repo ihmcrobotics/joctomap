@@ -39,6 +39,8 @@ import us.ihmc.robotics.time.TimeTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
+   private static final boolean COMPUTE_NORMALS_IN_PARALLEL = true;
+
    public static final boolean UPDATE_NODE_HIT_WITH_AVERAGE = true;
 
    // occupancy parameters of tree, stored in logodds:
@@ -65,6 +67,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private final NormalCalculator normalCalculator = new NormalCalculator();
 
+   private final HashMap<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
+   private final List<OcTreeKey> keyList = new ArrayList<>();
+
    public NormalOcTree(double resolution)
    {
       super(resolution);
@@ -86,14 +91,16 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
 
       keyToNodeMap.clear();
+      keyList.clear();
+
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
          NormalOcTreeNode node = superNode.getNode();
          node.resetRegionId();
          node.resetHasBeenCandidateForRegion();
-         if(!isNodeOccupied(node))
-            System.err.println("HAAAAAAAAAAAAAAAA");
-         keyToNodeMap.put(new OcTreeKey(superNode.getKey()), node);
+         OcTreeKey key = new OcTreeKey(superNode.getKey());
+         keyToNodeMap.put(key, node);
+         keyList.add(key);
       }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
@@ -222,8 +229,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       } // end for all points, end of parallel OMP loop
    }
 
-   private final HashMap<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
-
    private void updateNormals()
    {
       leafIterable.setMaxDepth(treeDepth);
@@ -231,18 +236,17 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       double maxDistanceFromPlane = normalEstimationParameters.getMaxDistanceFromPlane();
       normalCalculator.setOcTreeParameters(root, resolution, treeDepth);
 
-      for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
+      if (COMPUTE_NORMALS_IN_PARALLEL)
       {
-         NormalOcTreeNode node = superNode.getNode();
-         OcTreeKeyReadOnly key = superNode.getKey();
-
-         if (!isNodeOccupied(node))
+         keyList.parallelStream().forEach(key -> NormalCalculator.computeNodeNormalRansac(root, search(key), key, searchRadius, maxDistanceFromPlane, resolution, treeDepth));
+      }
+      else
+      {
+         for (OcTreeKey key : keyList)
          {
-            node.resetNormal();
-            continue;
+            NormalOcTreeNode node = search(key);
+            normalCalculator.computeNodeNormalRansac(node, key, searchRadius, maxDistanceFromPlane);
          }
-
-         normalCalculator.computeNodeNormalRansac(node, key, searchRadius, maxDistanceFromPlane);
       }
 
       if (root != null)
