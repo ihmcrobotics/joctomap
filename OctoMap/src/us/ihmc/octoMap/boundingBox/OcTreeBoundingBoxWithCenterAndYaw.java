@@ -25,7 +25,7 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
 
    public OcTreeBoundingBoxWithCenterAndYaw(OcTreeSimpleBoundingBox simpleBoundingBox, double resolution, int treeDepth)
    {
-      set(simpleBoundingBox);
+      setLocalBoundingBox(simpleBoundingBox);
       update(resolution, treeDepth);
    }
 
@@ -40,8 +40,10 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       update(resolution, treeDepth);
    }
 
-   public void set(OcTreeSimpleBoundingBox simpleBoundingBox)
+   public void setLocalBoundingBox(OcTreeSimpleBoundingBox simpleBoundingBox)
    {
+      simpleBoundingBox.update(resolution, treeDepth);
+      this.simpleBoundingBox.set(simpleBoundingBox);
    }
 
    public void set(OcTreeBoundingBoxWithCenterAndYaw other)
