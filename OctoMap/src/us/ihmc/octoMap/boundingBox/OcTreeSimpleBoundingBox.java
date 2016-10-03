@@ -254,6 +254,48 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
       maxCoordinate.get(maxCoordinateToPack);
    }
 
+   public double getMinX()
+   {
+      if (minCoordinateDirtyBit)
+         throw new RuntimeException("The bounding box min coordinate is not up to date.");
+      return minCoordinate.getX();
+   }
+
+   public double getMinY()
+   {
+      if (minCoordinateDirtyBit)
+         throw new RuntimeException("The bounding box min coordinate is not up to date.");
+      return minCoordinate.getY();
+   }
+
+   public double getMinZ()
+   {
+      if (minCoordinateDirtyBit)
+         throw new RuntimeException("The bounding box min coordinate is not up to date.");
+      return minCoordinate.getZ();
+   }
+
+   public double getMaxX()
+   {
+      if (maxCoordinateDirtyBit)
+         throw new RuntimeException("The bounding box max coordinate is not up to date.");
+      return maxCoordinate.getX();
+   }
+
+   public double getMaxY()
+   {
+      if (maxCoordinateDirtyBit)
+         throw new RuntimeException("The bounding box max coordinate is not up to date.");
+      return maxCoordinate.getY();
+   }
+
+   public double getMaxZ()
+   {
+      if (maxCoordinateDirtyBit)
+         throw new RuntimeException("The bounding box max coordinate is not up to date.");
+      return maxCoordinate.getZ();
+   }
+
    public void getSize(Vector3d sizeToPack)
    {
       if (minCoordinateDirtyBit || maxCoordinateDirtyBit)
