@@ -58,10 +58,10 @@ public class NormalEstimationParameters
       return "search radius: " + searchRadius + ", max distance from plane: " + maxDistanceFromPlane;
    }
 
-   public static NormalEstimationParameters parseNormalEstimationParameters(String normalEstimationParametersAsString)
+   public static NormalEstimationParameters parse(String parametersAsString)
    {
-      normalEstimationParametersAsString = normalEstimationParametersAsString.replace(",", "");
-      Scanner scanner = new Scanner(normalEstimationParametersAsString);
+      parametersAsString = parametersAsString.replace(",", "");
+      Scanner scanner = new Scanner(parametersAsString);
       while (!scanner.hasNextDouble())
          scanner.next();
       double searchRadius = scanner.nextDouble();
@@ -69,9 +69,9 @@ public class NormalEstimationParameters
          scanner.next();
       double maxDistanceFromPlane = scanner.nextDouble();
       scanner.close();
-      NormalEstimationParameters normalEstimationParameters = new NormalEstimationParameters();
-      normalEstimationParameters.setSearchRadius(searchRadius);
-      normalEstimationParameters.setMaxDistanceFromPlane(maxDistanceFromPlane);
-      return normalEstimationParameters;
+      NormalEstimationParameters parameters = new NormalEstimationParameters();
+      parameters.setSearchRadius(searchRadius);
+      parameters.setMaxDistanceFromPlane(maxDistanceFromPlane);
+      return parameters;
    }
 }

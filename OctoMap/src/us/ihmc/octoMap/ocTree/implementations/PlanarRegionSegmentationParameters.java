@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.ocTree.implementations;
 
+import java.util.Scanner;
+
 public class PlanarRegionSegmentationParameters
 {
    public static final double DEFAULT_SEARCH_RADIUS = 0.05;
@@ -76,5 +78,36 @@ public class PlanarRegionSegmentationParameters
    public double getMinNormalQuality()
    {
       return minNormalQuality;
+   }
+
+   @Override
+   public String toString()
+   {
+      return "search radius: " + searchRadius + ", max distance from plane: " + maxDistanceFromPlane + ", maxAngleFromPlane: " + maxAngleFromPlane + ", minNormalQuality: " + minNormalQuality;
+   }
+
+   public static PlanarRegionSegmentationParameters parse(String parametersAsString)
+   {
+      parametersAsString = parametersAsString.replace(",", "");
+      Scanner scanner = new Scanner(parametersAsString);
+      while (!scanner.hasNextDouble())
+         scanner.next();
+      double searchRadius = scanner.nextDouble();
+      while (!scanner.hasNextDouble())
+         scanner.next();
+      double maxDistanceFromPlane = scanner.nextDouble();
+      while (!scanner.hasNextDouble())
+         scanner.next();
+      double maxAngleFromPlane = scanner.nextDouble();
+      while (!scanner.hasNextDouble())
+         scanner.next();
+      double minNormalQuality = scanner.nextDouble();
+      scanner.close();
+      PlanarRegionSegmentationParameters parameters = new PlanarRegionSegmentationParameters();
+      parameters.setSearchRadius(searchRadius);
+      parameters.setMaxDistanceFromPlane(maxDistanceFromPlane);
+      parameters.setMaxAngleFromPlane(maxAngleFromPlane);
+      parameters.setMinNormalQuality(minNormalQuality);
+      return parameters;
    }
 }

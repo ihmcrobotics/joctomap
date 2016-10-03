@@ -324,7 +324,7 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
       return "min: " + minCoordinate + ", max: " + maxCoordinate;
    }
 
-   public static OcTreeSimpleBoundingBox parseOcTreeSimpleBoundingBox(String boundingBoxAsString)
+   public static OcTreeSimpleBoundingBox parse(String boundingBoxAsString)
    {
       boundingBoxAsString = boundingBoxAsString.replace("(", "").replace(")", " ").replace(",", "");
       Scanner scanner = new Scanner(boundingBoxAsString);
