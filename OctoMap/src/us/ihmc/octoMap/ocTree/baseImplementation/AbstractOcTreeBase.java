@@ -85,7 +85,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       initialize();
       // no longer create an empty root node - only on demand
-      ensureCapacityUnusedPools(2000000);
+      ensureCapacityUnusedPools(2000000);  //TODO: understand this method
    }
 
    public AbstractOcTreeBase(AbstractOcTreeBase<NODE> other)
@@ -95,7 +95,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       nodeBuilder = new NodeBuilder<>(getNodeClass());
       initialize();
       if (other.root != null)
-         root = other.root.cloneRecursive(nodeBuilder);
+         root = other.root.cloneRecursive(nodeBuilder); //TODO: understand this method
    }
 
    @SuppressWarnings("unchecked")
@@ -138,7 +138,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       Iterator<OcTreeSuperNode<NODE>> thisIterator = treeIterator();
       Iterator<OcTreeSuperNode<NODE>> otherIterator = other.treeIterator();
 
-      for (OcTreeSuperNode<NODE> thisNode = thisIterator.next(), otherNode = otherIterator.next(); thisIterator.hasNext(); thisNode = thisIterator.next(), otherNode = otherIterator.next())
+      for (OcTreeSuperNode<NODE> thisNode = thisIterator.next(), otherNode = otherIterator.next(); thisIterator.hasNext(); thisNode = thisIterator.next(), otherNode = otherIterator.next()) //TODO: understand this
       {
          if (!otherIterator.hasNext()) // The other tree has less nodes
             return false;
@@ -825,7 +825,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       for (OcTreeSuperNode<NODE> node : this)
       {
          double size = node.getSize();
-         double halfSize = size / 2.0;
+         double halfSize = size / 2.0; //TODO: why halfSize?
          double x = node.getX() - halfSize;
          double y = node.getY() - halfSize;
          double z = node.getZ() - halfSize;
