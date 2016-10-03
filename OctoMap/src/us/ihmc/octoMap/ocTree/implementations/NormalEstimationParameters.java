@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.ocTree.implementations;
 
+import java.util.Scanner;
+
 public class NormalEstimationParameters
 {
    public static final double DEFAULT_SEARCH_RADIUS = 0.08;
@@ -48,5 +50,28 @@ public class NormalEstimationParameters
    public double getMaxDistanceFromPlane()
    {
       return maxDistanceFromPlane;
+   }
+
+   @Override
+   public String toString()
+   {
+      return "search radius: " + searchRadius + ", max distance from plane: " + maxDistanceFromPlane;
+   }
+
+   public static NormalEstimationParameters parseNormalEstimationParameters(String normalEstimationParametersAsString)
+   {
+      normalEstimationParametersAsString = normalEstimationParametersAsString.replace(",", "");
+      Scanner scanner = new Scanner(normalEstimationParametersAsString);
+      while (!scanner.hasNextDouble())
+         scanner.next();
+      double searchRadius = scanner.nextDouble();
+      while (!scanner.hasNextDouble())
+         scanner.next();
+      double maxDistanceFromPlane = scanner.nextDouble();
+      scanner.close();
+      NormalEstimationParameters normalEstimationParameters = new NormalEstimationParameters();
+      normalEstimationParameters.setSearchRadius(searchRadius);
+      normalEstimationParameters.setMaxDistanceFromPlane(maxDistanceFromPlane);
+      return normalEstimationParameters;
    }
 }

@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.boundingBox;
 
+import java.util.Scanner;
+
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
@@ -273,5 +275,29 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
    {
       return new OcTreeSimpleBoundingBox(this);
    }
-}
 
+   @Override
+   public String toString()
+   {
+      return "min: " + minCoordinate + ", max: " + maxCoordinate;
+   }
+
+   public static OcTreeSimpleBoundingBox parseOcTreeSimpleBoundingBox(String boundingBoxAsString)
+   {
+      boundingBoxAsString = boundingBoxAsString.replace("(", "").replace(")", " ").replace(",", "");
+      Scanner scanner = new Scanner(boundingBoxAsString);
+      scanner.next();
+      double minX = scanner.nextDouble();
+      double minY = scanner.nextDouble();
+      double minZ = scanner.nextDouble();
+      scanner.next();
+      double maxX = scanner.nextDouble();
+      double maxY = scanner.nextDouble();
+      double maxZ = scanner.nextDouble();
+      scanner.close();
+      OcTreeSimpleBoundingBox boundingBox = new OcTreeSimpleBoundingBox();
+      boundingBox.setMinCoordinate(minX, minY, minZ);
+      boundingBox.setMaxCoordinate(maxX, maxY, maxZ);
+      return boundingBox;
+   }
+}
