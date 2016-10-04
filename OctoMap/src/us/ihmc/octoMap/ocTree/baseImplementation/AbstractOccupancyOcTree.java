@@ -30,16 +30,16 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
 {
    // occupancy parameters of tree, stored in logodds:
    protected final OccupancyParameters occupancyParameters = new OccupancyParameters();
-   protected OcTreeBoundingBoxInterface boundingBox;
+   protected OcTreeBoundingBoxInterface boundingBox;		//TODO ask about
    /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
-   protected double minInsertRange = -1.0;
+   protected double minInsertRange = -1.0; 
    /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    protected double maxInsertRange = -1.0;
    /** Discretize whether a scan to insert is discretized first into octree key cells (default: false).
     *  This reduces the number of raycasts, resulting in a potential speedup. */
    private boolean discretizePointCloud = false;
 
-   protected final UpdateOccupancyRule<NODE> updateOccupancyRule;
+   protected final UpdateOccupancyRule<NODE> updateOccupancyRule; //TODO ask about
    protected final SetOccupancyRule<NODE> setOccupancyRule = new SetOccupancyRule<>();
    private final CollidableRule<NODE> collidableRule = new CollidableRule<NODE>()
    {
@@ -255,7 +255,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * @param scan Pointcloud (measurement endpoints), in global reference frame
     * @param sensorOrigin measurement origin in global reference frame
     */
-   public void insertPointCloudRays(PointCloud scan, Point3d sensorOrigin)
+   public void insertPointCloudRays(PointCloud scan, Point3d sensorOrigin) //TODO check if understood well
    {
       if (scan.size() < 1)
          return;
@@ -448,7 +448,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    /**
     * Insert one ray between origin and end into the tree.
     * integrateMissOnRay() is called for the ray, the end point is updated as occupied.
-    * It is usually more efficient to insert complete pointclouds with insertPointCloud() or
+    * It is usually more efficient to insert complete pointclouds with insertPointCloud() or   //TODO why then a less efficient method is created?
     * insertPointCloudRays().
     *
     * @param origin origin of sensor in global coordinates
@@ -643,7 +643,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
                continue; //return true;
 
             // No interpolation is done yet, we use vertexList in <MCTables.h>.
-            for (int i = 0; triTable[cubeIndex][i] != -1; i += 3)
+            for (int i = 0; triTable[cubeIndex][i] != -1; i += 3)  //TODO understand this passage
             {
                Point3d p1 = new Point3d(vertexList[triTable[cubeIndex][i]]);
                Point3d p2 = new Point3d(vertexList[triTable[cubeIndex][i + 1]]);

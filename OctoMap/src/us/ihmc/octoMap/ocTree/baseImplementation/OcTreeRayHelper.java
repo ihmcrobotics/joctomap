@@ -186,7 +186,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
     * if a node at that coordinate exists (e.g. with search()).
     */
    public static void doActionOnRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule, double resolution,
-         int treeDepth)
+         int treeDepth) 
    {
       // see "A Faster Voxel Traversal Algorithm for Ray Tracing" by Amanatides & Woo
       // basically: DDA in 3D
@@ -236,7 +236,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
          if (step[i] != 0)
          {
             // corner point of voxel (in direction of ray)
-            double voxelBorder = keyToCoordinate(currentKey.getKey(i), resolution, treeDepth);
+            double voxelBorder = keyToCoordinate(currentKey.getKey(i), resolution, treeDepth); //TODO understand this part
             voxelBorder += (float) (step[i] * resolution * 0.5);
 
             tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
@@ -658,7 +658,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
          }
       }
 
-      // Subtract (add) a fraction to ensure no ambiguity on the starting voxel
+      // Subtract (add) a fraction to ensure no ambiguity on the starting voxel //TODO: understand this part
       // Don't start on a boundary.
       if (found)
          intersectionToPack.scaleAdd(outD + delta, direction, origin);
