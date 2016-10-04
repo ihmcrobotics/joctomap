@@ -8,7 +8,7 @@ import java.util.Objects;
 
 public class OcTreeKeyDeque extends ArrayDeque<OcTreeKey>
 {
-   private static final long serialVersionUID = 2764740419465316737L;
+   private static final long serialVersionUID = 2764740419465316737L; //TODO
 
    private final ArrayDeque<OcTreeKey> unusedKeys;
    
@@ -327,7 +327,7 @@ public class OcTreeKeyDeque extends ArrayDeque<OcTreeKey>
 
       StringBuilder sb = new StringBuilder();
       sb.append('[');
-      for (;;)
+      for (;;)  //TODO
       {
          OcTreeKey nextKey = iterator.next();
          sb.append(nextKey);
