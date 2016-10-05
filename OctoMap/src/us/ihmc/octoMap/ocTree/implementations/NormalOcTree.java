@@ -31,7 +31,7 @@ import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
 import us.ihmc.octoMap.ocTree.rules.NormalOcTreeHitUpdateRule;
 import us.ihmc.octoMap.ocTree.rules.NormalOcTreeMissUpdateRule;
-import us.ihmc.octoMap.ocTree.rules.RayActionRule;
+import us.ihmc.octoMap.ocTree.rules.interfaces.RayActionRule;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.occupancy.OccupancyTools;
