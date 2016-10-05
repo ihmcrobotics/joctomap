@@ -71,7 +71,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
     */
    public OcTreeKey add()
    {
-      return unsafeGetAndGrowIfNeeded(size);
+      return unsafeGetAndGrowIfNeeded(size);    //TODO why unsafe
    }
 
    /** Unsupported operation. */
@@ -139,7 +139,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Returns the last element of this list.
+    * Returns the first element of this list.  
     * If the list is empty, it returns {@code null}.
     * @return the last element of this list
     */
@@ -296,7 +296,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
     * @return null.
     */
    @Override
-   public OcTreeKey remove(int i)
+   public OcTreeKey remove(int i)  
    {
       if (i == size - 1)
       {
@@ -450,7 +450,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
 
       for (int i = 0; i < size - 1; i++)
          ret += get(i).toString() + "\n";
-      ret += get(size - 1).toString();
+      ret += get(size - 1).toString();  //TODO why outside the loop?
 
       return ret;
    }
