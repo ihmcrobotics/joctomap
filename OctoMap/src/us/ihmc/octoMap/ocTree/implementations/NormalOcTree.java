@@ -87,9 +87,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       if (REPORT_TIME)
       {
-         System.out.println("Entering updateNodeFromSweepCollection sweep size: " + sweepCollection.getNumberOfSweeps());
+         System.out.println(getTreeType() + ": Entering updateNodeFromSweepCollection sweep size: " + sweepCollection.getNumberOfSweeps());
          for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
-            System.out.println("Point cloud size: " + sweepCollection.getSweep(i).size());
+            System.out.println(getTreeType() + ": Point cloud size: " + sweepCollection.getSweep(i).size());
          stopWatch.reset();
          stopWatch.start();
       }
@@ -98,7 +98,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       if (REPORT_TIME)
       {
-         System.out.println("Sweep integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+         System.out.println(getTreeType() + ": Sweep integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
       }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
@@ -127,7 +127,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       if (REPORT_TIME)
       {
-         System.out.println("Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+         System.out.println(getTreeType() + ": Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
       }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
@@ -140,7 +140,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       updatePlanarRegionSegmentation(sweepCollection.getSweepOrigin(sweepCollection.getNumberOfSweeps() - 1));
       if (REPORT_TIME)
       {
-         System.out.println("Planar region segmentation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+         System.out.println(getTreeType() + ": Planar region segmentation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
       }
    }
 
