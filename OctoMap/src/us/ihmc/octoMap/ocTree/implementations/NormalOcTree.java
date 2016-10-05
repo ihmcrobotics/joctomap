@@ -15,6 +15,9 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
+import org.apache.commons.lang3.time.StopWatch;
+import org.apache.commons.math3.util.Precision;
+
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
@@ -38,11 +41,13 @@ import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools.NeighborActionRule;
-import us.ihmc.robotics.MathTools;
-import us.ihmc.robotics.time.TimeTools;
+import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
+   private static final boolean REPORT_TIME = false;
+   private final StopWatch stopWatch = REPORT_TIME ? new StopWatch() : null;
+
    private static final boolean COMPUTE_NORMALS_IN_PARALLEL = true;
    private static final boolean COMPUTE_UPDATES_IN_PARALLEL = true;
    private static final boolean USE_RADIUS_NEIGHBORS_FOR_SEGMENTATION = false;
@@ -80,15 +85,21 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void update(SweepCollection sweepCollection)
    {
-      System.out.println("Entering updateNodeFromSweepCollection sweep size: " + sweepCollection.getNumberOfSweeps());
-      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
-         System.out.println("Point cloud size: " + sweepCollection.getSweep(i).size());
-      long startTime = System.nanoTime();
+      if (REPORT_TIME)
+      {
+         System.out.println("Entering updateNodeFromSweepCollection sweep size: " + sweepCollection.getNumberOfSweeps());
+         for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
+            System.out.println("Point cloud size: " + sweepCollection.getSweep(i).size());
+         stopWatch.reset();
+         stopWatch.start();
+      }
 
       insertSweepCollection(sweepCollection);
 
-      long endTime = System.nanoTime();
-      System.out.println("Exiting  updateNodeFromSweepCollection took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
+      if (REPORT_TIME)
+      {
+         System.out.println("Sweep integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+      }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
 
@@ -107,17 +118,30 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
 
-      startTime = System.nanoTime();
+      if (REPORT_TIME)
+      {
+         stopWatch.reset();
+         stopWatch.start();
+      }
       updateNormals();
-      endTime = System.nanoTime();
-      System.out.println("Exiting  updateNormals took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
+
+      if (REPORT_TIME)
+      {
+         System.out.println("Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+      }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
 
-      startTime = System.nanoTime();
+      if (REPORT_TIME)
+      {
+         stopWatch.reset();
+         stopWatch.start();
+      }
       updatePlanarRegionSegmentation(sweepCollection.getSweepOrigin(sweepCollection.getNumberOfSweeps() - 1));
-      endTime = System.nanoTime();
-      System.out.println("Exiting  updatePlanarRegionSegmentation took: " + TimeTools.nanoSecondstoSeconds(endTime - startTime));
+      if (REPORT_TIME)
+      {
+         System.out.println("Planar region segmentation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+      }
    }
 
    private void insertSweepCollection(SweepCollection sweepCollection)
@@ -236,7 +260,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             node.getCenter(nodeCenter);
             node.getNormal(nodeNormal);
 
-            if (MathTools.epsilonEquals(Math.abs(nodeNormal.angle(rayDirection)) - Math.PI / 2.0, 0.0, Math.toRadians(30.0)) && distanceFromPointToLine(nodeCenter, rayOrigin, rayEnd) > 0.005)
+            if (Precision.equals(Math.abs(nodeNormal.angle(rayDirection)) - Math.PI / 2.0, 0.0, Math.toRadians(30.0)) && distanceFromPointToLine(nodeCenter, rayOrigin, rayEnd) > 0.005)
                return;
          }
          if (COMPUTE_UPDATES_IN_PARALLEL)
