@@ -17,6 +17,7 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
    private final Point3d hitLocation = new Point3d();
    private final Point3d sensorLocation = new Point3d();
    private final Vector3d initialGuessNormal = new Vector3d();
+   private final Vector3d nodeNormal = new Vector3d();
 
    private float updateLogOdds = Float.NaN;
    private final OccupancyParametersReadOnly parameters;
@@ -61,6 +62,13 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
          initialGuessNormal.normalize();
          leafToUpdate.setNormal(initialGuessNormal);
          leafToUpdate.setNormalQuality(Float.POSITIVE_INFINITY, 0);
+      }
+      else // TODO review normal flips.
+      {
+         initialGuessNormal.sub(sensorLocation, hitLocation);
+         leafToUpdate.getNormal(nodeNormal);
+         if (nodeNormal.dot(initialGuessNormal) < 0.0)
+            leafToUpdate.negateNormal();
       }
    }
 

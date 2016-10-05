@@ -37,6 +37,9 @@ public class PlanarRegion
    public void update(NormalOcTreeNode node, OcTreeKeyReadOnly nodeKey)
    {
       node.getNormal(temporaryVector);
+      // TODO Review and possibly improve dealing with normal flips.
+      if (getNumberOfNodes() >= 1 && temporaryVector.dot(normal) < 0.0)
+         temporaryVector.negate();
       normal.update(temporaryVector);
 
       Point3d newPoint = new Point3d();

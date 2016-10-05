@@ -345,8 +345,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          node.getNormal(nodeNormal);
          towardsSensor.sub(lastSensorOrigin, nodeCenter);
 
-         if (towardsSensor.dot(nodeNormal) < 0.0)
-            node.negateNormal();
+         // TODO Review normal flips
+//         if (towardsSensor.dot(nodeNormal) < 0.0)
+//            node.negateNormal();
 
          node.setRegionId(planarRegion.getId());
          node.setHasBeenCandidateForRegion(planarRegion.getId());
@@ -413,8 +414,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          double dot = planarRegion.dot(normalCandidateToCurrentRegion);
          if (planarRegion.absoluteOrthogonalDistance(centerCandidateToCurrentRegion) < maxMistanceFromPlane && Math.abs(dot) > dotThreshold)
          {
-            if (dot < 0.0)
-               currentNode.negateNormal();
+            // TODO review normal flips
+//            if (dot < 0.0)
+//               currentNode.negateNormal();
 
             planarRegion.update(currentNode, nodeKey);
             currentNode.setRegionId(currentPlanarRegionId);
