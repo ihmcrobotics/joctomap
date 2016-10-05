@@ -15,8 +15,8 @@ import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
 import us.ihmc.octoMap.ocTree.implementations.OcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.testTools.TestRandomTools;
 import us.ihmc.octoMap.tools.OctoMapTools;
-import us.ihmc.robotics.random.RandomTools;
 
 public class OcTreeTest
 {
@@ -66,8 +66,8 @@ public class OcTreeTest
 
       for (int i = 0; i < 10000000; i++)
       {
-         Point3d origin = RandomTools.generateRandomPoint(random, 50.0, 50.0, 50.0);
-         Point3d end = RandomTools.generateRandomPoint(random, 50.0, 50.0, 50.0);
+         Point3d origin = TestRandomTools.generateRandomPoint(random, 50.0, 50.0, 50.0);
+         Point3d end = TestRandomTools.generateRandomPoint(random, 50.0, 50.0, 50.0);
 
          OcTree octree = new OcTree(resolution);
          long start = System.nanoTime();
@@ -93,7 +93,7 @@ public class OcTreeTest
       {
          double resolution = 0.15 * random.nextDouble();
          OcTree ocTree = new OcTree(resolution);
-         Point3d coordinate = RandomTools.generateRandomPoint(random, 10.0, 10.0, 10.0);
+         Point3d coordinate = TestRandomTools.generateRandomPoint(random, 10.0, 10.0, 10.0);
 
          OccupancyOcTreeNode node = null;
 

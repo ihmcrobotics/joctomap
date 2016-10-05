@@ -1,6 +1,6 @@
 package us.ihmc.octoMap;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.Map.Entry;
 
@@ -14,7 +14,6 @@ import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.implementations.OcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
-import us.ihmc.robotics.geometry.RotationTools;
 
 public class ChangedKeysTest
 {
@@ -41,6 +40,8 @@ public class ChangedKeysTest
       printChanges(tree);
 
       System.out.println("generating spherical scan at " + origin + " ...");
+      Matrix3d yaw = new Matrix3d();
+      Matrix3d pitch = new Matrix3d();
 
       for (int i = -100; i < 101; i++)
       {
@@ -48,8 +49,10 @@ public class ChangedKeysTest
          for (int j = -100; j < 101; j++)
          {
             Point3d rotated = new Point3d(point_on_surface);
+            yaw.rotZ(Math.toRadians(i * 0.5));
+            pitch.rotY(Math.toRadians(j * 0.5));
             Matrix3d rotation = new Matrix3d();
-            RotationTools.convertYawPitchRollToMatrix(Math.toRadians(i * 0.5), Math.toRadians(j * 0.5), 0.0, rotation);
+            rotation.mul(yaw, pitch);
             rotation.transform(rotated);
             cloud.add(rotated);
          }

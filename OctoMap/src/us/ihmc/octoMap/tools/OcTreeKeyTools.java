@@ -1,12 +1,13 @@
 package us.ihmc.octoMap.tools;
 
+import static us.ihmc.octoMap.tools.OctoMapTools.*;
+
 import java.util.Random;
 
 import us.ihmc.octoMap.exceptions.InvalidKeyException;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
-import us.ihmc.robotics.MathTools;
 
 /**
  * This class provides basic operations on {@linkplain OcTreeKey}.
@@ -367,13 +368,13 @@ public class OcTreeKeyTools
 
       for (int deltaKeyZ = -deltaKeyZMax; deltaKeyZ <= deltaKeyZMax; deltaKeyZ += 1)
       {
-         double radiusAtZ = Math.sqrt(MathTools.square(searchRadius) - MathTools.square(Math.abs(deltaKeyZ) * nodeSize));
+         double radiusAtZ = Math.sqrt(square(searchRadius) - square(Math.abs(deltaKeyZ) * nodeSize));
          int deltaKeyXMax = (int) (Math.floor(radiusAtZ / nodeSize));
          int k2 = deltaKeyZ * keyInterval;
 
          for (int deltaKeyX = -deltaKeyXMax; deltaKeyX <= deltaKeyXMax; deltaKeyX += 1)
          {
-            double maxDistance = Math.sqrt(MathTools.square(radiusAtZ) - MathTools.square(Math.abs(deltaKeyX) * nodeSize));
+            double maxDistance = Math.sqrt(square(radiusAtZ) - square(Math.abs(deltaKeyX) * nodeSize));
             int deltaKeyYMax = (int) (Math.floor(maxDistance / nodeSize));
             int k0 = deltaKeyX * keyInterval;
 

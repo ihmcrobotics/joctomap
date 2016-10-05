@@ -28,4 +28,9 @@ public class OctoMapTools
    {
       return ((double) timeInNanoSeconds) / 1e9;
    }
+
+   public static double square(double x)
+   {
+      return x * x;
+   }
 }
