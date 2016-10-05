@@ -11,7 +11,6 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
-import us.ihmc.octoMap.OctoMapParameters;
 import us.ihmc.octoMap.boundingBox.OcTreeSimpleBoundingBox;
 import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
 import us.ihmc.octoMap.iterators.LeafIterable;
@@ -195,8 +194,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /// Creates (allocates) the i-th child of the node. @return ptr to newly create NODE
    protected NODE createNodeChild(NODE node, int childIndex)
    {
-      if (!OctoMapParameters.FAST_MODE)
-         checkChildIndex(childIndex);
+      checkChildIndex(childIndex);
       assignChildrenArrayIfNecessary(node);
 
       if (OcTreeNodeTools.nodeChildExists(node, childIndex))
@@ -230,12 +228,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /// Deletes the i-th child of the node
    public void deleteNodeChild(NODE node, int childIndex)
    {
-      if (!OctoMapParameters.FAST_MODE)
-      {
-         checkChildIndex(childIndex);
-         checkNodeHasChildren(node);
-         checkNodeChildNotNull(node, childIndex);
-      }
+      if (!nodeChildExists(node, childIndex))
+         return;
 
       unusedNodes.add(node.removeChild(childIndex));
 

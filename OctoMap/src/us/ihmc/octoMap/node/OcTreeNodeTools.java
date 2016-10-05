@@ -1,7 +1,5 @@
 package us.ihmc.octoMap.node;
 
-import us.ihmc.octoMap.OctoMapParameters;
-
 /**
  * This tool class has to live in this package to be able to do operation on node's children field.
  * @author Sylvain
@@ -16,8 +14,7 @@ public class OcTreeNodeTools
     */
    public final static boolean nodeChildExists(AbstractOcTreeNode<?> node, int childIndex)
    {
-      if (!OctoMapParameters.FAST_MODE)
-         checkChildIndex(childIndex);
+      checkChildIndex(childIndex);
       return node.children != null && node.children[childIndex] != null;
    }
 

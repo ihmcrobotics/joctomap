@@ -5,8 +5,6 @@ import static us.ihmc.octoMap.node.OcTreeNodeTools.*;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
-import us.ihmc.octoMap.OctoMapParameters;
-
 public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 {
    protected N[] children;
@@ -67,30 +65,23 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 
    public final void setChild(int childIndex, N newChild)
    {
-      if (!OctoMapParameters.FAST_MODE)
-      {
-         checkChildIndex(childIndex);
-         if (!getClass().isInstance(newChild))
-            throw new RuntimeException("Cannot add a child of a different type");
-      }
+      checkChildIndex(childIndex);
+      if (!getClass().isInstance(newChild))
+         throw new RuntimeException("Cannot add a child of a different type");
       children[childIndex] = newChild;
    }
 
    public final N getChild(int childIndex)
    {
-      if (!OctoMapParameters.FAST_MODE)
-      {
-         checkChildIndex(childIndex);
-         checkNodeHasChildren(this);
-         checkNodeChildNotNull(this, childIndex);
-      }
+      checkChildIndex(childIndex);
+      checkNodeHasChildren(this);
+
       return children == null ? null : children[childIndex];
    }
 
    public final N removeChild(int childIndex)
    {
-      if (!OctoMapParameters.FAST_MODE)
-         OcTreeNodeTools.checkChildIndex(childIndex);
+      OcTreeNodeTools.checkChildIndex(childIndex);
 
       N removedChild = children[childIndex];
       if (removedChild != null)
