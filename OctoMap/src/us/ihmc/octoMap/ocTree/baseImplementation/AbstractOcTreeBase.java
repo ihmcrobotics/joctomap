@@ -2,7 +2,6 @@ package us.ihmc.octoMap.ocTree.baseImplementation;
 
 import static us.ihmc.octoMap.node.OcTreeNodeTools.*;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -49,8 +48,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 {
    protected NODE root; ///< root NODE, null for empty tree
    private final NodeBuilder<NODE> nodeBuilder;
-   private final List<NODE> unusedNodes = new ArrayList<>(50000000);
-   private final List<NODE[]> unusedNodeArrays = new ArrayList<>(50000000 / 8);
+   private final List<NODE> unusedNodes = new ArrayList<>(100000);
+   private final List<NODE[]> unusedNodeArrays = new ArrayList<>(100000 / 8);
 
    // constants of the tree
    /** Maximum tree depth (fixed to 16 usually) */
@@ -83,8 +82,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       nodeBuilder = new NodeBuilder<>(getNodeClass());
 
       initialize();
-      // no longer create an empty root node - only on demand
-      ensureCapacityUnusedPools(2000000);  //TODO: understand this method
    }
 
    public AbstractOcTreeBase(AbstractOcTreeBase<NODE> other)
@@ -94,17 +91,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       nodeBuilder = new NodeBuilder<>(getNodeClass());
       initialize();
       if (other.root != null)
-         root = other.root.cloneRecursive(nodeBuilder); //TODO: understand this method
-   }
-
-   @SuppressWarnings("unchecked")
-   public void ensureCapacityUnusedPools(int minCapacity)
-   {
-      while (unusedNodes.size() < minCapacity)
-         unusedNodes.add(nodeBuilder.createNode());
-
-      while (unusedNodeArrays.size() < minCapacity)
-         unusedNodeArrays.add((NODE[]) Array.newInstance(getNodeClass(), 8));
+         root = other.root.cloneRecursive(nodeBuilder);
    }
 
    /**
@@ -137,7 +124,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       Iterator<OcTreeSuperNode<NODE>> thisIterator = treeIterator();
       Iterator<OcTreeSuperNode<NODE>> otherIterator = other.treeIterator();
 
-      for (OcTreeSuperNode<NODE> thisNode = thisIterator.next(), otherNode = otherIterator.next(); thisIterator.hasNext(); thisNode = thisIterator.next(), otherNode = otherIterator.next()) //TODO: understand this
+      for (OcTreeSuperNode<NODE> thisNode = thisIterator.next(), otherNode = otherIterator.next(); thisIterator.hasNext(); thisNode = thisIterator.next(), otherNode = otherIterator.next())
       {
          if (!otherIterator.hasNext()) // The other tree has less nodes
             return false;
@@ -687,7 +674,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       OcTreeSimpleBoundingBox boundingBox = new OcTreeSimpleBoundingBox(min, max);
       boundingBox.update(resolution, treeDepth);
       iterable.setBoundingBox(boundingBox);
-      return iterable; // TODO Organize imports;
+      return iterable;
    }
 
    //
@@ -819,7 +806,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       for (OcTreeSuperNode<NODE> node : this)
       {
          double size = node.getSize();
-         double halfSize = size / 2.0; //TODO: why halfSize?
+         double halfSize = size / 2.0;
          double x = node.getX() - halfSize;
          double y = node.getY() - halfSize;
          double z = node.getZ() - halfSize;

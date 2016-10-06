@@ -106,7 +106,7 @@ public abstract class OcTreeSearchTools
             // we expected a child but did not get it
             // is the current node a leaf already?
             if (!currentNode.hasAtLeastOneChild())
-            { // TODO similar check to nodeChildExists?
+            {
                return currentNode;
             }
             else

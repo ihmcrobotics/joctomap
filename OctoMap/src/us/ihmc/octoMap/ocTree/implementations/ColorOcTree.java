@@ -35,7 +35,7 @@ public class ColorOcTree extends AbstractOccupancyOcTree<ColorOcTreeNode>
       // set value to children's values (all assumed equal)
       node.copyData(node.getChild(0));
 
-      if (node.isColorSet()) // TODO check
+      if (node.isColorSet())
          node.setColor(node.getAverageChildColor());
 
       // delete children

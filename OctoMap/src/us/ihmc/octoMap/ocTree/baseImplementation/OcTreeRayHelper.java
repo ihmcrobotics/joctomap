@@ -236,8 +236,8 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
          if (step[i] != 0)
          {
             // corner point of voxel (in direction of ray)
-            double voxelBorder = keyToCoordinate(currentKey.getKey(i), resolution, treeDepth); //TODO understand this part
-            voxelBorder += (float) (step[i] * resolution * 0.5);
+            double voxelBorder = keyToCoordinate(currentKey.getKey(i), resolution, treeDepth);
+            voxelBorder += step[i] * resolution * 0.5;
 
             tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
             tDelta[i] = resolution / Math.abs(directionArray[i]);
@@ -658,7 +658,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
          }
       }
 
-      // Subtract (add) a fraction to ensure no ambiguity on the starting voxel //TODO: understand this part
+      // Subtract (add) a fraction to ensure no ambiguity on the starting voxel
       // Don't start on a boundary.
       if (found)
          intersectionToPack.scaleAdd(outD + delta, direction, origin);

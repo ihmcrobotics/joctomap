@@ -327,7 +327,7 @@ public class OcTreeKeyDeque extends ArrayDeque<OcTreeKey>
 
       StringBuilder sb = new StringBuilder();
       sb.append('[');
-      for (;;)  //TODO
+      while (true)
       {
          OcTreeKey nextKey = iterator.next();
          sb.append(nextKey);

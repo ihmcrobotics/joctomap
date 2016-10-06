@@ -381,7 +381,7 @@ public class OcTreeKeyTools
             for (int deltaKeyY = -deltaKeyYMax; deltaKeyY <= deltaKeyYMax; deltaKeyY += 1)
             {
                int k1 = deltaKeyY * keyInterval;
-               if (k0 != 0 || k1 != 0 || k2 != 0) // TODO optimize me
+               if (k0 != 0 || k1 != 0 || k2 != 0)
                   neighborKeyOffsetsToPack.add(k0, k1, k2);
             }
          }
