@@ -90,16 +90,16 @@ public class OcTreeKeyTools
       OctoMapTools.checkIfDepthValid(depth, treeDepth);
 
       int childIndex = 0;
-      int temp = (1 << treeDepth - 1 - depth) % computeNumberOfNodesAtDepth(treeDepth);
+      int temp = computeMinimumKeyAtDepth(depth, treeDepth) % computeNumberOfNodesAtDepth(treeDepth);
 
       if ((k0 & temp) != 0)
-         childIndex += 1;
+         childIndex |= 1;
 
       if ((k1 & temp) != 0)
-         childIndex += 2;
+         childIndex |= 2;
 
       if ((k2 & temp) != 0)
-         childIndex += 4;
+         childIndex |= 4;
       return childIndex;
    }
 
@@ -353,5 +353,13 @@ public class OcTreeKeyTools
          return adjusted;
       else
          return (adjusted + maxValue) % maxValue;
+   }
+   
+   public static void main(String[] args)
+   {
+      int blop = 0;
+      System.out.println((blop |= 1));
+      System.out.println((blop |= 2));
+      System.out.println((blop |= 4));
    }
 }
