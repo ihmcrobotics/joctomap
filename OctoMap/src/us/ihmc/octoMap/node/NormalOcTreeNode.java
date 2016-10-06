@@ -14,6 +14,7 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    private float normalZ = Float.NaN;
    private float normalAverageDeviation = Float.NaN;
    private int normalConsensusSize = 0;
+   // TODO Rename center variables to be less confusing.
    private float centerX = Float.NaN;
    private float centerY = Float.NaN;
    private float centerZ = Float.NaN;
@@ -357,5 +358,20 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public void setHasBeenCandidateForRegion(int hasBeenCandidateForRegion)
    {
       this.hasBeenCandidateForRegion = hasBeenCandidateForRegion;
+   }
+
+   public double getCenterX()
+   {
+      return centerX;
+   }
+
+   public double getCenterY()
+   {
+      return centerY;
+   }
+
+   public double getCenterZ()
+   {
+      return centerZ;
    }
 }
