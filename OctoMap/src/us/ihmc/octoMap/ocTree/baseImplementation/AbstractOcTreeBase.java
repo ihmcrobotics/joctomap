@@ -179,7 +179,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    // -- Tree structure operations formerly contained in the nodes ---
 
    /// Creates (allocates) the i-th child of the node. @return ptr to newly create NODE
-   protected NODE createNodeChild(NODE node, int childIndex)
+   protected NODE createNodeChild(NODE node, int childIndex, int childDepth)
    {
       checkChildIndex(childIndex);
       assignChildrenArrayIfNecessary(node);
@@ -187,7 +187,9 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (OcTreeNodeTools.nodeChildExists(node, childIndex))
          throw new RuntimeException("Something went wrong.");
 
-      NODE newChildNode = getOrCreateNode();
+      OcTreeKey childKey = OcTreeKeyTools.computeChildKey(childIndex, node, childDepth, treeDepth);
+      NODE newChildNode = getOrCreateNode(childKey, childDepth);
+
       node.setChild(childIndex, newChildNode);
 
       treeSize++;
@@ -207,9 +209,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
    }
 
-   private NODE getOrCreateNode()
+   private NODE getOrCreateNode(OcTreeKeyReadOnly nodeKey, int nodeDepth)
    {
-      return unusedNodes.isEmpty() ? nodeBuilder.createNode() : unusedNodes.remove(unusedNodes.size() - 1);
+      NODE newNode = unusedNodes.isEmpty() ? nodeBuilder.createNode() : unusedNodes.remove(unusedNodes.size() - 1);
+      newNode.setProperties(nodeKey, nodeDepth, resolution, treeDepth);
+      return newNode;
    }
 
    /// Deletes the i-th child of the node
@@ -291,7 +295,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       if (root == null)
       {
-         root = getOrCreateNode();
+         root = getOrCreateNode(OcTreeKeyTools.getRootKey(treeDepth), 0);
          treeSize++;
          sizeChanged = true;
          createdRoot = true;
@@ -314,16 +318,17 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     *
     * You need to verify that this is indeed a pruned node (i.e. not a
     * leaf at the lowest level)
+    * @param depth 
     *
     */
-   public void expandNode(NODE node)
+   public void expandNode(NODE node, int depth)
    {
       if (node.hasAtLeastOneChild())
          throw new RuntimeException("Node has already been expanded.");
 
       for (int k = 0; k < 8; k++)
       {
-         NODE newNode = createNodeChild(node, k);
+         NODE newNode = createNodeChild(node, k, depth + 1);
          newNode.copyData(node);
       }
    }
@@ -889,7 +894,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          { // TODO double check for exists / root exception?
               // current node does not have children AND it's not the root node
            // -> expand pruned node
-            expandNode(node);
+            expandNode(node, depth);
             // tree_size and size_changed adjusted in createNodeChild(...)
          }
          else
@@ -938,11 +943,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             // child does not exist, but maybe it's a pruned node?
             if (!node.hasAtLeastOneChild() && !nodeJustCreated)
             { // current node does not have children AND it is not a new node -> expand pruned node
-               expandNode(node);
+               expandNode(node, depth);
             }
             else
             { // not a pruned node, create requested child
-               createNodeChild(node, childIndex);
+               createNodeChild(node, childIndex, depth + 1);
                createdNode = true;
             }
          }
@@ -1022,7 +1027,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       // current node has no children => can be expanded
       if (!node.hasAtLeastOneChild())
       {
-         expandNode(node);
+         expandNode(node, depth);
       }
       // recursively expand children
       for (int i = 0; i < 8; i++)

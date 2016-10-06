@@ -135,7 +135,7 @@ public class ColorTreeTest
          assertEquals(tree.size(), tree.calculateNumberOfNodes());
          assertEquals(tree.size(), insertedSize - 1);
 
-         tree.expandNode(parentNode);
+         tree.expandNode(parentNode, 0);
          assertEquals(tree.size(), tree.calculateNumberOfNodes());
          assertEquals(tree.size(), insertedSize + 7);
 

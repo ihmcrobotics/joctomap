@@ -8,6 +8,7 @@ import us.ihmc.octoMap.exceptions.InvalidKeyException;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
+import us.ihmc.octoMap.node.AbstractOcTreeNode;
 
 /**
  * This class provides basic operations on {@linkplain OcTreeKey}.
@@ -34,6 +35,13 @@ public class OcTreeKeyTools
       return childKey;
    }
 
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeKey computeChildKey(int childIndex, NODE parentNode, int childDepth, int treeDepth)
+   {
+      OcTreeKey childKey = new OcTreeKey();
+      computeChildKey(childIndex, parentNode, childKey, childDepth, treeDepth);
+      return childKey;
+   }
+
    /**
     * Computes the key of a child node while traversing the octree, given
     * child index and current key
@@ -44,28 +52,43 @@ public class OcTreeKeyTools
     */
    public static void computeChildKey(int childIndex, OcTreeKeyReadOnly parentKey, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
    {
-      int keyMin = computeMinimumKeyAtDepth(childDepth, treeDepth);
-      int k0, k1, k2;
+      int k0 = parentKey.getKey(0);
+      int k1 = parentKey.getKey(1);
+      int k2 = parentKey.getKey(2);
+      computeChildKey(childIndex, k0, k1, k2, childKeyToPack, childDepth, treeDepth);
+   }
+
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeChildKey(int childIndex, NODE parentNode, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
+   {
+      int k0 = parentNode.getKey0();
+      int k1 = parentNode.getKey1();
+      int k2 = parentNode.getKey2();
+      computeChildKey(childIndex, k0, k1, k2, childKeyToPack, childDepth, treeDepth);
+   }
+
+   private static void computeChildKey(int childIndex, int parentKey0, int parentKey1, int parentKey2, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
+   {
+      int childKeyMin = computeMinimumKeyAtDepth(childDepth, treeDepth);
 
       // x-axis
       if ((childIndex & 1) != 0)
-         k0 = parentKey.getKey(0) + keyMin;
+         parentKey0 += childKeyMin;
       else
-         k0 = parentKey.getKey(0) - keyMin - (keyMin != 0 ? 0 : 1);
+         parentKey0 -= childKeyMin + (childKeyMin != 0 ? 0 : 1);
       // y-axis
       if ((childIndex & 2) != 0)
-         k1 = parentKey.getKey(1) + keyMin;
+         parentKey1 += childKeyMin;
       else
-         k1 = parentKey.getKey(1) - keyMin - (keyMin != 0 ? 0 : 1);
+         parentKey1 -= childKeyMin + (childKeyMin != 0 ? 0 : 1);
       // z-axis
       if ((childIndex & 4) != 0)
-         k2 = parentKey.getKey(2) + keyMin;
+         parentKey2 += childKeyMin;
       else
-         k2 = parentKey.getKey(2) - keyMin - (keyMin != 0 ? 0 : 1);
+         parentKey2 -= childKeyMin + (childKeyMin != 0 ? 0 : 1);
 
-      childKeyToPack.setKey(0, adjustToUnsignedNBits(k0, treeDepth));
-      childKeyToPack.setKey(1, adjustToUnsignedNBits(k1, treeDepth));
-      childKeyToPack.setKey(2, adjustToUnsignedNBits(k2, treeDepth));
+      childKeyToPack.setKey(0, adjustToUnsignedNBits(parentKey0, treeDepth));
+      childKeyToPack.setKey(1, adjustToUnsignedNBits(parentKey1, treeDepth));
+      childKeyToPack.setKey(2, adjustToUnsignedNBits(parentKey2, treeDepth));
    }
 
    /**
