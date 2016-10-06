@@ -104,32 +104,6 @@ public class OcTreeKeyTools
    }
 
    /**
-    * Generates a unique key for all keys on a certain level of the tree
-    * @param key input indexing key (at lowest resolution / level)
-    * @param level from the bottom (= tree_depth - depth of key)
-    *
-    * @return key corresponding to the input key at the given level
-    */
-   public static OcTreeKey computeIndexKey(OcTreeKeyReadOnly key, int depth, int treeDepth)
-   {
-      int level = treeDepth - depth;
-
-      if (level == 0)
-      {
-         return new OcTreeKey(key);
-      }
-      else
-      {
-         int mask = adjustToUnsignedNBits(computeMaximumKey(treeDepth) << level, treeDepth);
-         OcTreeKey result = new OcTreeKey(key);
-         result.setKey(0, result.getKey(0) & mask);
-         result.setKey(1, result.getKey(1) & mask);
-         result.setKey(2, result.getKey(2) & mask);
-         return result;
-      }
-   }
-
-   /**
     * Adjusts a single key value from the lowest level to correspond to a higher depth (by
     * shifting the key value)
     *
@@ -267,24 +241,6 @@ public class OcTreeKeyTools
    public static int computeNumberOfNodesAtDepth(int depth)
    {
       return 1 << depth;
-   }
-
-   public static boolean isInsideBoundingBox(OcTreeKeyReadOnly minKey, OcTreeKeyReadOnly maxKey, OcTreeKeyReadOnly keyToTest, int depth, int treeDepth)
-   {
-      int minKeyValue = OcTreeKeyTools.computeMinimumKeyAtDepth(depth, treeDepth);
-      if (keyToTest.getKey(0) < minKey.getKey(0) - minKeyValue)
-         return false;
-      if (keyToTest.getKey(0) > maxKey.getKey(0) + minKeyValue)
-         return false;
-      if (keyToTest.getKey(1) < minKey.getKey(1) - minKeyValue)
-         return false;
-      if (keyToTest.getKey(1) > maxKey.getKey(1) + minKeyValue)
-         return false;
-      if (keyToTest.getKey(2) < minKey.getKey(2) - minKeyValue)
-         return false;
-      if (keyToTest.getKey(2) > maxKey.getKey(2) + minKeyValue)
-         return false;
-      return true;
    }
 
    public static int generateRandomKey(Random random, int depth, int treeDepth)

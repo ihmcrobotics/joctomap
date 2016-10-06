@@ -97,21 +97,10 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
       return node;
    }
 
-   /** @return the OcTreeKey of this node, for nodes with depth != maxDepth */
-   public OcTreeKeyReadOnly getIndexKey()
-   {
-      return OcTreeKeyTools.computeIndexKey(key, depth, tree.getTreeDepth());
-   }
-
    /** @return whether the current node is a leaf, i.e. has no children or is at max level */
    public boolean isLeaf()
    {
       return !node.hasAtLeastOneChild() || depth == maxDepth;
-   }
-
-   public boolean isInsideBoundingBox(OcTreeKeyReadOnly minKey, OcTreeKeyReadOnly maxKey)
-   {
-      return OcTreeKeyTools.isInsideBoundingBox(minKey, maxKey, key, depth, tree.getTreeDepth());
    }
 
    public boolean epsilonEquals(OcTreeSuperNode<NODE> other)
