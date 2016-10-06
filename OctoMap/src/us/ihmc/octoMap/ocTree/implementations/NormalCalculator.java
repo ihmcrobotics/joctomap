@@ -1,168 +1,60 @@
 package us.ihmc.octoMap.ocTree.implementations;
 
-import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.*;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
+import gnu.trove.map.hash.TDoubleObjectHashMap;
+import us.ihmc.octoMap.key.OcTreeKey;
+import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
-import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
+import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools.NeighborActionRule;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;
-import us.ihmc.robotics.lists.RecyclingArrayList;
 
 public final class NormalCalculator
 {
-   private final Random random = new Random(1651L);
-
-   private NormalOcTreeNode currentNode;
-   private final Vector3d currentNodeNormal = new Vector3d();
-   private final Point3d currentNodeCenter = new Point3d();
-
-   private final Vector3d normalCandidate = new Vector3d();
-   private final Point3d[] randomDraw = {new Point3d(), new Point3d()};
-   private final Vector3d nodeCenterToNeighborCenter = new Vector3d();
-
-   private final RecyclingArrayList<Point3d> tempNeighborCenters = new RecyclingArrayList<>(Point3d.class);
-   private final NeighborActionRule<NormalOcTreeNode> collectNodeCentersRule = new NeighborActionRule<NormalOcTreeNode>()
+   public static void computeNodeNormalRansac(NormalOcTreeNode root, OcTreeKeyReadOnly key, double searchRadius, double maxDistanceFromPlane, int treeDepth)
    {
-      @Override
-      public void doActionOnNeighbor(NormalOcTreeNode node, OcTreeKeyReadOnly nodeKey)
-      {
-         if (currentNode != node)
-            node.getCenter(tempNeighborCenters.add());
-      }
-   };
-
-   private NormalOcTreeNode root;
-   private double resolution;
-   private int treeDepth;
-
-   public NormalCalculator()
-   {
+      NormalOcTreeNode currentNode = OcTreeSearchTools.search(root, key, treeDepth);
+      computeNodeNormalRansac(root, currentNode, searchRadius, maxDistanceFromPlane);
    }
 
-   public void setOcTreeParameters(NormalOcTreeNode root, double resolution, int treeDepth)
+   public static void computeNodeNormalRansac(NormalOcTreeNode root, NormalOcTreeNode currentNode, double searchRadius, double maxDistanceFromPlane)
    {
-      this.root = root;
-      this.resolution = resolution;
-      this.treeDepth = treeDepth;
-   }
-
-   public void computeNodeNormalRansac(NormalOcTreeNode node, OcTreeKeyReadOnly key, double searchRadius, double maxDistanceFromPlane)
-   {
-      if (!node.isCenterSet() || !node.isNormalSet())
+      if (!currentNode.isCenterSet() || !currentNode.isNormalSet())
       {
-         node.resetNormal();
+         currentNode.resetNormal();
          return;
       }
 
-      currentNode = node;
-      currentNode.getNormal(currentNodeNormal);
-      currentNode.getCenter(currentNodeCenter);
-
-      // Need to be recomputed as the neighbors may have changed
-      double nodeNormalQuality = 0.0;
-      int nodeNumberOfPoints = 0;
-
-      Point3d coord = OcTreeKeyConversionTools.keyToCoordinate(key, resolution, treeDepth);
-      tempNeighborCenters.clear();
-      OcTreeNearestNeighborTools.findRadiusNeighbors(root, coord, searchRadius, collectNodeCentersRule, resolution, treeDepth);
-
-      for (int i = 0; i < tempNeighborCenters.size(); i++)
+      List<NormalOcTreeNode> neighbors = new ArrayList<>();
+      NeighborActionRule<NormalOcTreeNode> collectNodeCentersRule = new NeighborActionRule<NormalOcTreeNode>()
       {
-         Point3d neighborCenter = tempNeighborCenters.get(i);
-
-         nodeCenterToNeighborCenter.sub(currentNodeCenter, neighborCenter);
-         double distanceFromPlane = Math.abs(currentNodeNormal.dot(nodeCenterToNeighborCenter));
-         if (distanceFromPlane <= maxDistanceFromPlane)
+         @Override
+         public void doActionOnNeighbor(NormalOcTreeNode node)
          {
-            nodeNormalQuality += distanceFromPlane;
-            nodeNumberOfPoints++;
+            if (currentNode != node)
+               neighbors.add(node);
          }
-      }
+      };
 
-      if (nodeNumberOfPoints == 0)
-         nodeNormalQuality = Double.POSITIVE_INFINITY;
-      else
-         nodeNormalQuality /= nodeNumberOfPoints;
+      OcTreeNearestNeighborTools.findRadiusNeighbors(root, currentNode, searchRadius, collectNodeCentersRule);
 
-      normalCandidate.set(0.0, 0.0, 0.0);
-
-      boolean hasNormalBeenUpdatedAtLeastOnce = false;
-      do
-      {
-         int index = 0;
-
-         while (index < 2)
-         {
-            // Did not find two other points. Give up for now.
-            if (tempNeighborCenters.isEmpty())
-               return;
-
-            int nextInt = random.nextInt(tempNeighborCenters.size());
-            randomDraw[index++].set(tempNeighborCenters.get(nextInt));
-            tempNeighborCenters.fastRemove(nextInt);
-         }
-
-         double v1_x = randomDraw[0].getX() - currentNodeCenter.getX();
-         double v1_y = randomDraw[0].getY() - currentNodeCenter.getY();
-         double v1_z = randomDraw[0].getZ() - currentNodeCenter.getZ();
-
-         double v2_x = randomDraw[1].getX() - currentNodeCenter.getX();
-         double v2_y = randomDraw[1].getY() - currentNodeCenter.getY();
-         double v2_z = randomDraw[1].getZ() - currentNodeCenter.getZ();
-
-         normalCandidate.setX(v1_y * v2_z - v1_z * v2_y);
-         normalCandidate.setY(v2_x * v1_z - v2_z * v1_x);
-         normalCandidate.setZ(v1_x * v2_y - v1_y * v2_x);
-         normalCandidate.normalize();
-
-         float candidateNormalQuality = 0.0f;
-         int candidateNumberOfPoints = 2; // The two points picked randomly are exactly on the plane
-
-         for (int i = 0; i < tempNeighborCenters.size(); i++)
-         {
-            nodeCenterToNeighborCenter.sub(currentNodeCenter, tempNeighborCenters.get(i));
-            double distanceFromPlane = Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
-            if (distanceFromPlane < maxDistanceFromPlane)
-            {
-               candidateNormalQuality += distanceFromPlane;
-               candidateNumberOfPoints++;
-            }
-         }
-
-         candidateNormalQuality /= candidateNumberOfPoints;
-
-         boolean isSimplyBetter = candidateNumberOfPoints >= nodeNumberOfPoints && candidateNormalQuality <= nodeNormalQuality;
-         boolean hasLittleLessNodesButIsMuchBetter = candidateNumberOfPoints >= (int) (0.75 * nodeNumberOfPoints)
-               && candidateNormalQuality <= 0.5 * nodeNormalQuality;
-
-         if (isSimplyBetter || hasLittleLessNodesButIsMuchBetter)
-         {
-            if (currentNodeNormal.dot(normalCandidate) < 0.0)
-               normalCandidate.negate();
-
-            currentNode.setNormal(normalCandidate);
-            currentNode.setNormalQuality(candidateNormalQuality, candidateNumberOfPoints);
-            nodeNormalQuality = candidateNormalQuality;
-            hasNormalBeenUpdatedAtLeastOnce = true;
-         }
-      }
-      while (!hasNormalBeenUpdatedAtLeastOnce && nodeNormalQuality > 0.005); // TODO Check if necessary, maybe only one iteration when normal is pretty good already.
+      computeNormalRansac(currentNode, maxDistanceFromPlane, neighbors);
    }
 
-   public static void computeNodeNormalRansac(NormalOcTreeNode root, OcTreeKeyReadOnly key, double searchRadius, double maxDistanceFromPlane,
-         double resolution, int treeDepth)
+   public static void computeNodeNormalRansac(OcTreeKey currentNodeKey, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap,
+         double searchRadius, double maxDistanceFromPlane, double resolution, int treeDepth)
    {
-      NormalOcTreeNode currentNode = OcTreeSearchTools.search(root, key, treeDepth);
+      NormalOcTreeNode currentNode = keyToNodeMap.get(currentNodeKey);
 
       if (!currentNode.isCenterSet() || !currentNode.isNormalSet())
       {
@@ -170,12 +62,45 @@ public final class NormalCalculator
          return;
       }
 
+      List<NormalOcTreeNode> neighbors = new ArrayList<>();
+
+      List<OcTreeKey> cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(searchRadius, resolution, treeDepth);
+
+      OcTreeKey currentKey = new OcTreeKey();
+
+      for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
+      {
+         currentKey.add(currentNodeKey, cachedNeighborKeyOffsets.get(i));
+         NormalOcTreeNode neighborNode = keyToNodeMap.get(currentKey);
+
+         if (neighborNode != null && neighborNode.isCenterSet())
+            neighbors.add(neighborNode);
+      }
+
+      computeNormalRansac(currentNode, maxDistanceFromPlane, neighbors);
+   }
+
+   private static final TDoubleObjectHashMap<OcTreeKeyList> neighborOffsetsCached = new TDoubleObjectHashMap<>(1);
+
+   public static OcTreeKeyList getCachedNeighborKeyOffsets(double searchRadius, double resolution, int treeDepth)
+   {
+      OcTreeKeyList cachedNeighborOffsets = neighborOffsetsCached.get(searchRadius);
+      if (cachedNeighborOffsets == null)
+      {
+         cachedNeighborOffsets = new OcTreeKeyList();
+         neighborOffsetsCached.put(searchRadius, cachedNeighborOffsets);
+         OcTreeKeyTools.computeNeighborKeyOffsets(treeDepth, resolution, treeDepth, searchRadius, cachedNeighborOffsets);
+      }
+      return cachedNeighborOffsets;
+   }
+
+   private static void computeNormalRansac(NormalOcTreeNode currentNode, double maxDistanceFromPlane, List<NormalOcTreeNode> neighbors)
+   {
       Vector3d normalCandidate = new Vector3d();
       Random random = ThreadLocalRandom.current();
       Point3d[] randomDraw = {new Point3d(), new Point3d()};
       Vector3d currentNodeNormal = new Vector3d();
       Point3d currentNodeCenter = new Point3d();
-      List<Point3d> neighborCenters = new ArrayList<>();
       Vector3d nodeCenterToNeighborCenter = new Vector3d();
 
       currentNode.getNormal(currentNodeNormal);
@@ -185,33 +110,12 @@ public final class NormalCalculator
       double nodeNormalQuality = 0.0;
       int nodeNumberOfPoints = 0;
 
-
-      NeighborActionRule<NormalOcTreeNode> collectNodeCentersRule = new NeighborActionRule<NormalOcTreeNode>()
+      for (int i = 0; i < neighbors.size(); i++)
       {
-         @Override
-         public void doActionOnNeighbor(NormalOcTreeNode node, OcTreeKeyReadOnly nodeKey)
-         {
-            if (currentNode != node)
-            {
-               Point3d center = new Point3d();
-               node.getCenter(center);
-               neighborCenters.add(center);
-            }
-         }
-      };
+         NormalOcTreeNode neighbor = neighbors.get(i);
 
-      double xNode = keyToCoordinate(key.getKey(0), resolution, treeDepth);
-      double yNode = keyToCoordinate(key.getKey(1), resolution, treeDepth);
-      double zNode = keyToCoordinate(key.getKey(2), resolution, treeDepth);
-
-      OcTreeNearestNeighborTools.findRadiusNeighbors(root, xNode, yNode, zNode, searchRadius, collectNodeCentersRule, resolution, treeDepth);
-
-
-      for (int i = 0; i < neighborCenters.size(); i++)
-      {
-         Point3d neighborCenter = neighborCenters.get(i);
-
-         nodeCenterToNeighborCenter.sub(currentNodeCenter, neighborCenter);
+         nodeCenterToNeighborCenter.set(neighbor.getCenterX(), neighbor.getCenterY(), neighbor.getCenterZ());
+         nodeCenterToNeighborCenter.sub(currentNodeCenter);
          double distanceFromPlane = Math.abs(currentNodeNormal.dot(nodeCenterToNeighborCenter));
          if (distanceFromPlane <= maxDistanceFromPlane)
          {
@@ -233,12 +137,13 @@ public final class NormalCalculator
          while (index < 2)
          {
             // Did not find two other points. Give up for now.
-            if (neighborCenters.isEmpty())
+            if (neighbors.isEmpty())
                return;
 
-            int nextInt = random.nextInt(neighborCenters.size());
-            randomDraw[index++].set(neighborCenters.get(nextInt));
-            neighborCenters.remove(nextInt);
+            int nextInt = random.nextInt(neighbors.size());
+            NormalOcTreeNode neighbor = neighbors.get(nextInt);
+            randomDraw[index++].set(neighbor.getCenterX(), neighbor.getCenterY(), neighbor.getCenterZ());
+            neighbors.remove(nextInt);
          }
 
          double v1_x = randomDraw[0].getX() - currentNodeCenter.getX();
@@ -257,9 +162,11 @@ public final class NormalCalculator
          float candidateNormalQuality = 0.0f;
          int candidateNumberOfPoints = 2; // The two points picked randomly are exactly on the plane
 
-         for (int i = 0; i < neighborCenters.size(); i++)
+         for (int i = 0; i < neighbors.size(); i++)
          {
-            nodeCenterToNeighborCenter.sub(currentNodeCenter, neighborCenters.get(i));
+            NormalOcTreeNode neighbor = neighbors.get(i);
+            nodeCenterToNeighborCenter.set(neighbor.getCenterX(), neighbor.getCenterY(), neighbor.getCenterZ());
+            nodeCenterToNeighborCenter.sub(currentNodeCenter);
             double distanceFromPlane = Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
             if (distanceFromPlane < maxDistanceFromPlane)
             {

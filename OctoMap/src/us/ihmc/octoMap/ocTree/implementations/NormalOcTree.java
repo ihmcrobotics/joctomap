@@ -50,6 +50,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private static final boolean COMPUTE_NORMALS_IN_PARALLEL = true;
    private static final boolean COMPUTE_UPDATES_IN_PARALLEL = true;
+   private static final boolean USE_KEY_NODE_MAP_WITH_UPDATES = true;
+   private static final boolean USE_KEY_NODE_MAP_WITH_NORMALS = true;
    private static final boolean USE_RADIUS_NEIGHBORS_FOR_SEGMENTATION = false;
 
    public static final boolean UPDATE_NODE_HIT_WITH_AVERAGE = true;
@@ -250,8 +252,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private void doRayActionOnFreeCell(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, OcTreeKeyReadOnly key)
    {
-      NormalOcTreeNode node = search(key);
-      if (node != null && isInBoundingBox(key) && !occupiedCells.contains(key))
+      NormalOcTreeNode node = USE_KEY_NODE_MAP_WITH_UPDATES ? keyToNodeMap.get(key) : search(key);
+      if (node != null && !occupiedCells.contains(key))
       {
          if (node.getNormalConsensusSize() > 10 && node.isCenterSet() && node.isNormalSet())
          {
@@ -276,8 +278,14 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       double searchRadius = normalEstimationParameters.getSearchRadius();
       double maxDistanceFromPlane = normalEstimationParameters.getMaxDistanceFromPlane();
 
+      if (USE_KEY_NODE_MAP_WITH_NORMALS)
+         NormalCalculator.getCachedNeighborKeyOffsets(searchRadius, resolution, treeDepth);
+
       Stream<OcTreeKey> keyStream = COMPUTE_NORMALS_IN_PARALLEL ? keyList.stream() : keyList.parallelStream();
-      keyStream.forEach(key -> NormalCalculator.computeNodeNormalRansac(root, key, searchRadius, maxDistanceFromPlane, resolution, treeDepth));
+      if (USE_KEY_NODE_MAP_WITH_NORMALS)
+         keyStream.forEach(key -> NormalCalculator.computeNodeNormalRansac(key, keyToNodeMap, searchRadius, maxDistanceFromPlane, resolution, treeDepth));
+      else
+         keyStream.forEach(key -> NormalCalculator.computeNodeNormalRansac(root, keyToNodeMap.get(key), searchRadius, maxDistanceFromPlane));
 
       if (root != null)
          updateInnerNormalsRecursive(root, 0);
@@ -370,7 +378,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private final NeighborActionRule<NormalOcTreeNode> extendSearchRule = new NeighborActionRule<NormalOcTreeNode>()
    {
       @Override
-      public void doActionOnNeighbor(NormalOcTreeNode neighborNode, OcTreeKeyReadOnly neighborKey)
+      public void doActionOnNeighbor(NormalOcTreeNode neighborNode)
       {
          if (neighborNode.getHasBeenCandidateForRegion() == currentPlanarRegionId || neighborNode.isPartOfRegion())
             return;
@@ -396,7 +404,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       if (USE_RADIUS_NEIGHBORS_FOR_SEGMENTATION)
       {
          keyToCoordinate(nodeKey, nodeCoordinate);
-         OcTreeNearestNeighborTools.findRadiusNeighbors(root, nodeCoordinate, searchRadius, extendSearchRule, resolution, treeDepth);
+         OcTreeNearestNeighborTools.findRadiusNeighbors(root, nodeCoordinate, searchRadius, extendSearchRule);
       }
       else
       {
@@ -424,7 +432,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             if (USE_RADIUS_NEIGHBORS_FOR_SEGMENTATION)
             {
                keyToCoordinate(currentKey, nodeCoordinate);
-               OcTreeNearestNeighborTools.findRadiusNeighbors(root, nodeCoordinate, searchRadius, extendSearchRule, resolution, treeDepth);
+               OcTreeNearestNeighborTools.findRadiusNeighbors(root, nodeCoordinate, searchRadius, extendSearchRule);
             }
             else
             {

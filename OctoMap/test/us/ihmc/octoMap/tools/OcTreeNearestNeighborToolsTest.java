@@ -43,17 +43,18 @@ public class OcTreeNearestNeighborToolsTest
          OcTreeKeyList foundNeighborKeys = new OcTreeKeyList();
          NeighborActionRule<TestOcTreeNode> recordNeighborsRule = new NeighborActionRule<TestOcTreeNode>()
          {
-
             @Override
-            public void doActionOnNeighbor(TestOcTreeNode node, OcTreeKeyReadOnly nodeKey)
+            public void doActionOnNeighbor(TestOcTreeNode node)
             {
                foundNeighbors.add(node);
+               OcTreeKey nodeKey = new OcTreeKey();
+               node.getKey(nodeKey);
                foundNeighborKeys.add(nodeKey);
             }
          };
          double randomRadius = random.nextDouble() * sphereRadius;
 
-         OcTreeNearestNeighborTools.findRadiusNeighbors(ocTree.getRoot(), randomQuery, randomRadius, recordNeighborsRule, resolution, treeDepth);
+         OcTreeNearestNeighborTools.findRadiusNeighbors(ocTree.getRoot(), randomQuery, randomRadius, recordNeighborsRule);
 
          List<TestOcTreeNode> expectedNeighbors = new ArrayList<>();
          OcTreeKeyList expectedNeighborKeys = new OcTreeKeyList();
