@@ -7,11 +7,6 @@ public final class OccupancyOcTreeNode extends AbstractOccupancyOcTreeNode<Occup
       super();
    }
 
-   public OccupancyOcTreeNode(float initialValue)
-   {
-      super(initialValue);
-   }
-
    @Override
    public void clear()
    {
