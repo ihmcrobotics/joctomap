@@ -18,11 +18,29 @@ public class PointMean extends Point3d
 
    public void update(Point3d point)
    {
-      meanX.increment(point.getX());
-      meanY.increment(point.getY());
-      meanZ.increment(point.getZ());
+      update(point.getX(), point.getY(), point.getZ());
+   }
+
+   public void update(double x, double y, double z)
+   {
+      meanX.increment(x);
+      meanY.increment(y);
+      meanZ.increment(z);
       setX(meanX.getResult());
       setY(meanY.getResult());
       setZ(meanZ.getResult());
+   }
+
+   public void clear()
+   {
+      meanX.clear();
+      meanY.clear();
+      meanZ.clear();
+      set(0.0, 0.0, 0.0);
+   }
+
+   public int getNumberOfSamples()
+   {
+      return (int) meanX.getN();
    }
 }
