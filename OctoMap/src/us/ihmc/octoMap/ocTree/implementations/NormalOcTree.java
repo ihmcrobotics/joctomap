@@ -121,8 +121,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
          NormalOcTreeNode node = superNode.getNode();
-         node.resetRegionId();
-         node.resetHasBeenCandidateForRegion();
          OcTreeKey key = new OcTreeKey(superNode.getKey());
          keyToNodeMap.put(key, node);
          keyList.add(key);
@@ -155,6 +153,13 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             stopWatch.reset();
             stopWatch.start();
          }
+
+         for (NormalOcTreeNode node : keyToNodeMap.values())
+         {
+            node.resetRegionId();
+            node.resetHasBeenCandidateForRegion();
+         }
+
          updatePlanarRegionSegmentation(sweepCollection.getSweepOrigin(sweepCollection.getNumberOfSweeps() - 1));
          if (REPORT_TIME)
          {
