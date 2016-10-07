@@ -9,7 +9,6 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 
 public class PlanarRegion
@@ -34,7 +33,7 @@ public class PlanarRegion
       points.add(point);
    }
 
-   public void update(NormalOcTreeNode node, OcTreeKeyReadOnly nodeKey)
+   public void update(NormalOcTreeNode node)
    {
       node.getNormal(temporaryVector);
       // TODO Review and possibly improve dealing with normal flips.
@@ -47,7 +46,9 @@ public class PlanarRegion
       points.add(newPoint);
       point.update(newPoint);
 
-      keys.add(new OcTreeKey(nodeKey));
+      OcTreeKey nodeKey = new OcTreeKey();
+      node.getKey(nodeKey);
+      keys.add(nodeKey);
    }
 
    public double distanceFromCenterSquared(Point3d point)
