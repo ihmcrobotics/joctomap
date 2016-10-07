@@ -99,10 +99,7 @@ public class OcTreeKeyTools
       int k0 = key.getKey(0);
       int k1 = key.getKey(1);
       int k2 = key.getKey(2);
-
-      int childIndex = computeChildIndex(k0, k1, k2, depth, treeDepth);
-
-      return childIndex;
+      return computeChildIndex(k0, k1, k2, depth, treeDepth);
    }
 
    /**
