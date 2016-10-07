@@ -97,7 +97,6 @@ public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcT
    /**
     * Update this node's occupancy according to its children's maximum occupancy
     */
-   @Override
    public void updateOccupancyChildren()
    {
       setLogOdds(getMaxChildLogOdds()); // conservative

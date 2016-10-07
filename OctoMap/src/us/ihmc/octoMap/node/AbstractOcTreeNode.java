@@ -26,8 +26,6 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 
    public abstract void copyData(N other);
 
-   public abstract void updateOccupancyChildren();
-
    protected abstract void clear();
 
    final void clearProperties()
@@ -73,7 +71,7 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       children = (N[]) Array.newInstance(getClass(), 8);
    }
 
-   public void assignChildren(N[] newChildren)
+   public final void assignChildren(N[] newChildren)
    {
       children = newChildren;
    }
@@ -148,8 +146,6 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       return removedChildren;
    }
 
-   public abstract boolean epsilonEquals(N other);
-
    public final int getKey0()
    {
       if (DEBUG_PROPERTIES)
@@ -205,6 +201,8 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
             throw new RuntimeException("Size has not been set");
       return size;
    }
+
+   public abstract boolean epsilonEquals(N other);
 
    @Override
    public String toString()

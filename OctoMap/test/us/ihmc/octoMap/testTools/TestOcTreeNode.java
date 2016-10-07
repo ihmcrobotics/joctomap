@@ -15,11 +15,6 @@ public class TestOcTreeNode extends AbstractOcTreeNode<TestOcTreeNode>
    }
 
    @Override
-   public void updateOccupancyChildren()
-   {
-   }
-
-   @Override
    public void clear()
    {
    }

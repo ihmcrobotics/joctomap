@@ -20,6 +20,7 @@ import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.NodeBuilder;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
+import us.ihmc.octoMap.ocTree.rules.interfaces.DeletionRule;
 import us.ihmc.octoMap.ocTree.rules.interfaces.EarlyAbortRule;
 import us.ihmc.octoMap.ocTree.rules.interfaces.UpdateRule;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
@@ -414,13 +415,14 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     *  Delete a node (if exists) given a 3d point. Will always
     *  delete at the lowest level unless depth !=0, and expand pruned inner nodes as needed.
     *  Pruned nodes at level "depth" will directly be deleted as a whole.
+    * @param deletionRule 
     */
-   public boolean deleteNode(double x, double y, double z)
+   public boolean deleteNode(double x, double y, double z, DeletionRule<NODE> deletionRule)
    {
-      return deleteNode(x, y, z, 0);
+      return deleteNode(x, y, z, 0, deletionRule);
    }
 
-   public boolean deleteNode(double x, double y, double z, int depth)
+   public boolean deleteNode(double x, double y, double z, int depth, DeletionRule<NODE> deletionRule)
    {
       OcTreeKey key = coordinateToKey(x, y, z);
       if (key == null)
@@ -430,7 +432,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
       else
       {
-         return deleteNode(key, depth);
+         return deleteNode(key, depth, deletionRule);
       }
    }
 
@@ -438,28 +440,30 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     *  Delete a node (if exists) given a 3d point. Will always
     *  delete at the lowest level unless depth !=0, and expand pruned inner nodes as needed.
     *  Pruned nodes at level "depth" will directly be deleted as a whole.
+    * @param deletionRule 
     */
-   public boolean deleteNode(Point3d value)
+   public boolean deleteNode(Point3d value, DeletionRule<NODE> deletionRule)
    {
-      return deleteNode(value, 0);
+      return deleteNode(value, 0, deletionRule);
    }
 
-   public boolean deleteNode(Point3d coord, int depth)
+   public boolean deleteNode(Point3d coord, int depth, DeletionRule<NODE> deletionRule)
    {
-      return deleteNode(coord.getX(), coord.getY(), coord.getZ(), depth);
+      return deleteNode(coord.getX(), coord.getY(), coord.getZ(), depth, deletionRule);
    }
 
    /** 
     *  Delete a node (if exists) given an addressing key. Will always
     *  delete at the lowest level unless depth !=0, and expand pruned inner nodes as needed.
     *  Pruned nodes at level "depth" will directly be deleted as a whole.
+    * @param deletionRule 
     */
-   public boolean deleteNode(OcTreeKeyReadOnly key)
+   public boolean deleteNode(OcTreeKeyReadOnly key, DeletionRule<NODE> deletionRule)
    {
-      return deleteNode(key, 0);
+      return deleteNode(key, 0, deletionRule);
    }
 
-   public boolean deleteNode(OcTreeKeyReadOnly key, int depth)
+   public boolean deleteNode(OcTreeKeyReadOnly key, int depth, DeletionRule<NODE> deletionRule)
    {
       if (root == null)
          return true;
@@ -467,7 +471,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (depth == 0)
          depth = treeDepth;
 
-      return deleteNodeRecursively(root, 0, depth, key);
+      return deleteNodeRecursively(root, 0, depth, key, deletionRule);
    }
 
    /// Deletes the complete tree structure
@@ -877,13 +881,15 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive call of deleteNode()
-   protected boolean deleteNodeRecursively(NODE node, int depth, int maxDepth, OcTreeKeyReadOnly key)
+   private boolean deleteNodeRecursively(NODE node, int depth, int maxDepth, OcTreeKeyReadOnly key, DeletionRule<NODE> deletionRule)
    {
       if (depth >= maxDepth) // on last level: delete child when going up
          return true;
 
       if (node == null)
          throw new RuntimeException("The given node is null");
+      if (root == null)
+         throw new RuntimeException("The root node is null");
 
       int childIndex = OcTreeKeyTools.computeChildIndex(key, depth, treeDepth);
 
@@ -891,11 +897,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          // child does not exist, but maybe it's a pruned node?
          if (!node.hasAtLeastOneChild() && node != root)
-         { // TODO double check for exists / root exception?
-              // current node does not have children AND it's not the root node
-           // -> expand pruned node
-            expandNode(node, depth);
-            // tree_size and size_changed adjusted in createNodeChild(...)
+         { // current node does not have children AND it's not the root node -> expand pruned node
+            expandNode(node, depth); // tree_size and size_changed adjusted in createNodeChild(...)
          }
          else
          { // no branch here, node does not exist
@@ -904,19 +907,15 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
 
       // follow down further, fix inner nodes on way back up
-      boolean deleteChild = deleteNodeRecursively(node.getChild(childIndex), depth + 1, maxDepth, key);
+      boolean deleteChild = deleteNodeRecursively(node.getChild(childIndex), depth + 1, maxDepth, key, deletionRule);
       if (deleteChild)
       {
-         // TODO: lazy eval?
-         // TODO delete check depth, what happens to inner nodes with children?
          deleteNodeChild(node, childIndex);
 
          if (!node.hasAtLeastOneChild())
             return true;
-         else
-         {
-            node.updateOccupancyChildren(); // TODO: occupancy?
-         }
+         else if (deletionRule != null)
+            deletionRule.updateInnerNodeAfterChildDeletion(node, childIndex);
       }
       // node did not lose a child, or still has other children
       return false;

@@ -38,12 +38,6 @@ public class CountingOcTreeNode extends AbstractOcTreeNode<CountingOcTreeNode>
    }
 
    @Override
-   public void updateOccupancyChildren()
-   {
-      // Do nothing, should already be up-to-date.
-   }
-
-   @Override
    public boolean epsilonEquals(CountingOcTreeNode other)
    {
       return count == other.count;
