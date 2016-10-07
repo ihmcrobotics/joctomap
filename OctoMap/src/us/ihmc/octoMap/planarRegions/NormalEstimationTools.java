@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree.implementations;
+package us.ihmc.octoMap.planarRegions;
 
 import java.util.ArrayList;
 import java.util.List;

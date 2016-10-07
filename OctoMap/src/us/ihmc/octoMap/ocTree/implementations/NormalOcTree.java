@@ -34,6 +34,7 @@ import us.ihmc.octoMap.ocTree.rules.interfaces.RayActionRule;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.occupancy.OccupancyTools;
+import us.ihmc.octoMap.planarRegions.NormalEstimationTools;
 import us.ihmc.octoMap.planarRegions.PlanarRegion;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
