@@ -20,7 +20,6 @@ public class PlanarRegion
    private final VectorMean normal = new VectorMean();
    private final PointMean point = new PointMean();
    private final Vector3d temporaryVector = new Vector3d();
-   private final List<Point3d> points = new ArrayList<>();
 
    private final List<NormalOcTreeNode> nodes = new ArrayList<>();
 
@@ -124,7 +123,7 @@ public class PlanarRegion
 
    public int getNumberOfNodes()
    {
-      return points.size();
+      return nodes.size();
    }
 
    public Stream<NormalOcTreeNode> nodeStream()
@@ -139,8 +138,8 @@ public class PlanarRegion
          FileWriter fw = new FileWriter("regionPoints");
          for (int i = 0; i < getNumberOfNodes(); i++)
          {
-            Point3d point = points.get(i);
-            fw.write(point.x + ", " + point.y + ", " + point.z + "\n");
+            NormalOcTreeNode point = nodes.get(i);
+            fw.write(point.getHitLocationX() + ", " + point.getHitLocationY() + ", " + point.getHitLocationZ() + "\n");
          }
          fw.close();
       }
@@ -155,7 +154,7 @@ public class PlanarRegion
    {
       String ret = "Region ID: " + id;
       ret += ", origin: " + point + ", normal: " + normal;
-      ret += ", size: " + points.size();
+      ret += ", size: " + getNumberOfNodes();
       return ret;
    }
 }
