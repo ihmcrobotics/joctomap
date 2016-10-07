@@ -34,6 +34,18 @@ public class PlanarRegion
       nodes.add(node);
    }
 
+   public void merge(PlanarRegion other)
+   {
+      other.nodeStream().forEach(node -> update(node));
+   }
+
+   public void recomputeNormalAndOrigin()
+   {
+      point.clear();
+      normal.clear();
+      nodes.stream().forEach(node -> updateNormalAndOriginOnly(node));
+   }
+
    private void updateNormalAndOriginOnly(NormalOcTreeNode node)
    {
       node.getNormal(temporaryVector);
