@@ -195,18 +195,21 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       Vector3d direction = new Vector3d();
       Point3d point = new Point3d();
 
-      for (int i = 0; i < scan.size(); ++i)
+      for (int i = scan.size() - 1; i >= 0; i--)
       {
          point.set(scan.getPoint(i));
          direction.sub(point, sensorOrigin);
          double length = direction.length();
 
-         if (isInBoundingBox(point) && (maxInsertRange < 0.0 || length <= maxInsertRange) && (minInsertRange < 0.0 || length >= minInsertRange))
+         if ((maxInsertRange < 0.0 || length <= maxInsertRange) && (minInsertRange < 0.0 || length >= minInsertRange) && isInBoundingBox(point))
          {
             OcTreeKey occupiedKey = coordinateToKey(point);
-            occupiedCells.add(occupiedKey);
             hitUpdateRule.setHitLocation(sensorOrigin, point);
             updateNodeInternal(occupiedKey, hitUpdateRule, null);
+            // Add the key to the occupied set.
+            // if it was already present, remove the point from the scan to speed up integration of miss.
+            if (!occupiedCells.add(occupiedKey))
+               scan.removePoint(i);
          }
       }
 
