@@ -106,11 +106,6 @@ public class PlanarRegion
       nodes.get(index).getHitLocation(pointToPack);
    }
 
-   public Point3d getPoint(int index)
-   {
-      return points.get(index);
-   }
-
    public int getId()
    {
       return id;
