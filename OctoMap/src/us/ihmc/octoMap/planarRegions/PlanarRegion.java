@@ -28,11 +28,6 @@ public class PlanarRegion
       this.id = id;
    }
 
-   public void addPoint(Point3d point)
-   {
-      points.add(point);
-   }
-
    public void update(NormalOcTreeNode node)
    {
       node.getNormal(temporaryVector);
