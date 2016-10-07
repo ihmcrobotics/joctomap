@@ -18,7 +18,7 @@ public class TestOcTree extends AbstractOcTreeBase<TestOcTreeNode>
       public void updateLeaf(TestOcTreeNode leafToUpdate, OcTreeKeyReadOnly leafKey, boolean nodeJustCreated)
       {
       }
-      
+
       @Override
       public void updateInnerNode(TestOcTreeNode innerNodeToUpdate)
       {
@@ -28,6 +28,11 @@ public class TestOcTree extends AbstractOcTreeBase<TestOcTreeNode>
    public TestOcTree(double resolution, int treeDepth)
    {
       super(resolution, treeDepth);
+   }
+
+   public TestOcTree(TestOcTree other)
+   {
+      super(other);
    }
 
    public void insertNode(OcTreeKeyReadOnly key)
@@ -40,26 +45,24 @@ public class TestOcTree extends AbstractOcTreeBase<TestOcTreeNode>
       updateNodeInternal(coordinate, doNothingRule, null);
    }
 
-   public void fillRandomly(Random random, int numberOfLeavesToCreate, TestOcTree ocTree)
+   public void fillRandomly(Random random, int numberOfLeavesToCreate)
    {
-      int treeDepth = ocTree.getTreeDepth();
-
-      while (ocTree.getNumLeafNodes() < numberOfLeavesToCreate)
+      while (getNumLeafNodes() < numberOfLeavesToCreate)
       {
          OcTreeKey randomKey = new OcTreeKey(random, treeDepth, treeDepth);
-         ocTree.insertNode(randomKey);
+         insertNode(randomKey);
       }
    }
 
-   public void fillRandomlyWithinSphere(Random random, int numberOfLeavesToCreate, Point3d sphereCenter, double sphereRadius, TestOcTree ocTree)
+   public void fillRandomlyWithinSphere(Random random, int numberOfLeavesToCreate, Point3d sphereCenter, double sphereRadius)
    {
-      while (ocTree.getNumLeafNodes() < numberOfLeavesToCreate)
+      while (getNumLeafNodes() < numberOfLeavesToCreate)
       {
          Vector3d randomTranslation = new Vector3d(random.nextDouble() - 0.5, random.nextDouble() - 0.5, random.nextDouble() - 0.5);
          randomTranslation.scale(sphereRadius * random.nextDouble() / randomTranslation.length());
          Point3d randomCoordinateInSphere = new Point3d();
          randomCoordinateInSphere.add(sphereCenter, randomTranslation);
-         ocTree.insertNode(randomCoordinateInSphere);
+         insertNode(randomCoordinateInSphere);
       }
    }
 

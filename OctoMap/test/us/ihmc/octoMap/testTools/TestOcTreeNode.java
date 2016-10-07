@@ -20,8 +20,8 @@ public class TestOcTreeNode extends AbstractOcTreeNode<TestOcTreeNode>
    }
 
    @Override
-   public boolean epsilonEquals(TestOcTreeNode other)
+   protected boolean epsilonEqualsInternal(TestOcTreeNode other, double epsilon)
    {
-      return false;
+      return true;
    }
 }

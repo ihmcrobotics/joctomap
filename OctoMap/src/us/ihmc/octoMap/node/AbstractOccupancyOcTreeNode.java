@@ -111,12 +111,7 @@ public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcT
    }
 
    @Override
-   public boolean epsilonEquals(N other)
-   {
-      return epsilonEquals(other, 1.0e-7f);
-   }
-
-   public boolean epsilonEquals(N other, float epsilon)
+   protected boolean epsilonEqualsInternal(N other, double epsilon)
    {
       return Math.abs(logOdds - other.logOdds) <= epsilon;
    }

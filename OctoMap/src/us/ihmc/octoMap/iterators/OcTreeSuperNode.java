@@ -103,9 +103,9 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
       return !node.hasAtLeastOneChild() || depth == maxDepth;
    }
 
-   public boolean epsilonEquals(OcTreeSuperNode<NODE> other)
+   public boolean epsilonEquals(OcTreeSuperNode<NODE> other, double epsilon)
    {
-      if (!node.epsilonEquals(other.node))
+      if (!node.epsilonEquals(other.node, epsilon))
          return false;
       if (!key.equals(other.key))
          return false;

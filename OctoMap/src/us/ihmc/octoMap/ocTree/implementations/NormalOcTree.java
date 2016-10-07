@@ -85,6 +85,12 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       leafIterable = new LeafBoundingBoxIterable<>(this, treeDepth, true);
    }
 
+   public NormalOcTree(NormalOcTree other)
+   {
+      super(other);
+      leafIterable = new LeafBoundingBoxIterable<>(this, treeDepth, true);
+   }
+
    public void update(SweepCollection sweepCollection)
    {
       if (REPORT_TIME)

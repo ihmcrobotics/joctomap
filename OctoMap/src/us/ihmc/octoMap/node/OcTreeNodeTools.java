@@ -42,7 +42,7 @@ public class OcTreeNodeTools
     * @param node
     * @return
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> boolean isNodeCollapsible(NODE node)
+   public static <NODE extends AbstractOcTreeNode<NODE>> boolean isNodeCollapsible(NODE node, double epsilon)
    {
       // All children must exist, must not have children of
       // their own and have the same occupancy probability
@@ -57,7 +57,7 @@ public class OcTreeNodeTools
       {
          NODE currentChild = node.children[i];
    
-         if (currentChild == null || currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild))
+         if (currentChild == null || currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild, epsilon))
             return false;
       }
       return true;

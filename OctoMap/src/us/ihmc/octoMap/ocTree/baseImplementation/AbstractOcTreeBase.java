@@ -11,6 +11,8 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
+import org.apache.commons.lang3.mutable.MutableInt;
+
 import us.ihmc.octoMap.boundingBox.OcTreeSimpleBoundingBox;
 import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
 import us.ihmc.octoMap.iterators.LeafIterable;
@@ -92,8 +94,10 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       treeDepth = other.treeDepth;
       nodeBuilder = new NodeBuilder<>(getNodeClass());
       initialize();
+      MutableInt mutableTreeSize = new MutableInt(0);
       if (other.root != null)
-         root = other.root.cloneRecursive(nodeBuilder);
+         root = other.root.cloneRecursive(nodeBuilder, mutableTreeSize);
+      treeSize = mutableTreeSize.intValue();
    }
 
    /**
@@ -115,12 +119,10 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    /// Comparison between two octrees, all meta data, all
    /// nodes, and the structure must be identical
-   public boolean epsilonEquals(AbstractOcTreeBase<NODE> other)
+   public boolean epsilonEquals(AbstractOcTreeBase<NODE> other, double epsilon)
    {
       if (treeDepth != other.treeDepth || resolution != other.resolution || treeSize != other.treeSize)
-      {
          return false;
-      }
 
       // traverse all nodes, check if structure the same
       Iterator<OcTreeSuperNode<NODE>> thisIterator = treeIterator();
@@ -130,7 +132,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       {
          if (!otherIterator.hasNext()) // The other tree has less nodes
             return false;
-         if (!thisNode.epsilonEquals(otherNode))
+         if (!thisNode.epsilonEquals(otherNode, epsilon))
             return false;
       }
 
@@ -341,7 +343,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     */
    public boolean pruneNode(NODE node)
    {
-      if (!OcTreeNodeTools.isNodeCollapsible(node))
+      return pruneNode(node, 1.0e-7);
+   }
+
+   public boolean pruneNode(NODE node, double epsilon)
+   {
+      if (!OcTreeNodeTools.isNodeCollapsible(node, epsilon))
          return false;
 
       // set value to children's values (all assumed equal)

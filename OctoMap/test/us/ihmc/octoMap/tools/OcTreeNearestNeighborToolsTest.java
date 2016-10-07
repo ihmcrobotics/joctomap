@@ -35,7 +35,7 @@ public class OcTreeNearestNeighborToolsTest
       randomQuery.setZ(25.0 - 50.0 * random.nextDouble());
 
       double sphereRadius = 1.5;
-      ocTree.fillRandomlyWithinSphere(random, numberOfLeavesToCreate, randomQuery, sphereRadius, ocTree);
+      ocTree.fillRandomlyWithinSphere(random, numberOfLeavesToCreate, randomQuery, sphereRadius);
 
       for (int i = 0; i < 100; i++)
       {
@@ -111,7 +111,7 @@ public class OcTreeNearestNeighborToolsTest
       Random random = new Random(345435L);
       int numberOfLeavesToCreate = 10;
 
-      ocTree.fillRandomly(random, numberOfLeavesToCreate, ocTree);
+      ocTree.fillRandomly(random, numberOfLeavesToCreate);
 
       Point3d randomQuery = new Point3d();
 

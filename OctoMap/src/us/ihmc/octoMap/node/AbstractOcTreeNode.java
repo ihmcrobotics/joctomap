@@ -7,6 +7,9 @@ import java.util.Arrays;
 
 import javax.vecmath.Point3d;
 
+import org.apache.commons.lang3.mutable.MutableInt;
+import org.apache.commons.math3.util.Precision;
+
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
@@ -28,7 +31,7 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 
    protected abstract void clear();
 
-   final void clearProperties()
+   private final void clearProperties()
    {
       k0 = -1;
       k1 = -1;
@@ -77,16 +80,32 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
    }
 
    @SuppressWarnings("unchecked")
-   public final N cloneRecursive(NodeBuilder<N> nodeBuilder)
+   public final N cloneRecursive(NodeBuilder<N> nodeBuilder, MutableInt treeSize)
    {
       N ret = nodeBuilder.createNode();
+      treeSize.increment();
       ret.copyData((N) this);
 
-      if (!hasAtLeastOneChild())
-         allocateChildren();
+      AbstractOcTreeNode<?> retCasted = ret;
+      retCasted.k0 = k0;
+      retCasted.k1 = k1;
+      retCasted.k2 = k2;
+      retCasted.x = x;
+      retCasted.y = y;
+      retCasted.z = z;
+      retCasted.size = size;
 
-      for (int i = 0; i < 8; i++)
-         ret.children[i] = children[i].cloneRecursive(nodeBuilder);
+      if (hasArrayForChildren())
+      {
+         if (!ret.hasArrayForChildren())
+            ret.allocateChildren();
+
+         for (int i = 0; i < 8; i++)
+         {
+            if (children[i] != null)
+               ret.children[i] = children[i].cloneRecursive(nodeBuilder, treeSize);
+         }
+      }
 
       return ret;
    }
@@ -133,7 +152,7 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       if (removedChild != null)
       {
          removedChild.clear();
-         removedChild.clearProperties();
+         ((AbstractOcTreeNode<?>) removedChild).clearProperties();
       }
       children[childIndex] = null;
       return removedChild;
@@ -202,7 +221,27 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       return size;
    }
 
-   public abstract boolean epsilonEquals(N other);
+   public final boolean epsilonEquals(N other, double epsilon)
+   {
+      AbstractOcTreeNode<?> otherCasted = other;
+      if (k0 != otherCasted.k0)
+         return false;
+      if (k1 != otherCasted.k1)
+         return false;
+      if (k2 != otherCasted.k2)
+         return false;
+      if (!Precision.equals(x, otherCasted.x, 1.0e-7))
+         return false;
+      if (!Precision.equals(y, otherCasted.y, 1.0e-7))
+         return false;
+      if (!Precision.equals(z, otherCasted.z, 1.0e-7))
+         return false;
+      if (!Precision.equals(size, otherCasted.size, 1.0e-7))
+         return false;
+      return epsilonEqualsInternal(other, epsilon);
+   }
+
+   protected abstract boolean epsilonEqualsInternal(N other, double epsilon);
 
    @Override
    public String toString()

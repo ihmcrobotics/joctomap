@@ -76,5 +76,6 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
    public void updateInnerNode(NormalOcTreeNode innerNodeToUpdate)
    {
       innerNodeToUpdate.updateOccupancyChildren();
+      innerNodeToUpdate.updateCenterChildren();
    }
 }

@@ -4,6 +4,8 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
+import org.apache.commons.math3.util.Precision;
+
 import us.ihmc.octoMap.ocTree.implementations.NormalOcTree;
 import us.ihmc.octoMap.planarRegions.PlanarRegion;
 
@@ -373,5 +375,25 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public double getCenterZ()
    {
       return centerZ;
+   }
+
+   @Override
+   protected boolean epsilonEqualsInternal(NormalOcTreeNode other, double epsilon)
+   {
+      if (!Precision.equals(normalX, other.normalX, epsilon))
+         return false;
+      if (!Precision.equals(normalY, other.normalY, epsilon))
+         return false;
+      if (!Precision.equals(normalZ, other.normalZ, epsilon))
+         return false;
+      if (!Precision.equals(centerX, other.centerX, epsilon))
+         return false;
+      if (!Precision.equals(centerY, other.centerY, epsilon))
+         return false;
+      if (!Precision.equals(centerZ, other.centerZ, epsilon))
+         return false;
+      if (regionId != other.regionId)
+         return false;
+      return super.epsilonEqualsInternal(other, epsilon);
    }
 }
