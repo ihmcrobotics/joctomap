@@ -54,7 +54,7 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
    {
       OccupancyTools.updateNodeLogOdds(parameters, leafToUpdate, updateLogOdds);
 
-      leafToUpdate.updateCenter(hitLocation, alphaHitLocationUpdate);
+      leafToUpdate.updateHitLocation(hitLocation, alphaHitLocationUpdate);
 
       if (!leafToUpdate.isNormalSet())
       {
@@ -76,6 +76,6 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
    public void updateInnerNode(NormalOcTreeNode innerNodeToUpdate)
    {
       innerNodeToUpdate.updateOccupancyChildren();
-      innerNodeToUpdate.updateCenterChildren();
+      innerNodeToUpdate.updateHitLocationChildren();
    }
 }

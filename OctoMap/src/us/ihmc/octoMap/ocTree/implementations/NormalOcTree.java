@@ -261,14 +261,14 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       NormalOcTreeNode node = USE_KEY_NODE_MAP_WITH_UPDATES ? keyToNodeMap.get(key) : search(key);
       if (node != null && !occupiedCells.contains(key))
       {
-         if (node.getNormalConsensusSize() > 10 && node.isCenterSet() && node.isNormalSet())
+         if (node.getNormalConsensusSize() > 10 && node.isHitLocationSet() && node.isNormalSet())
          {
-            Point3d nodeCenter = new Point3d();
+            Point3d nodeHitLocation = new Point3d();
             Vector3d nodeNormal = new Vector3d();
-            node.getCenter(nodeCenter);
+            node.getHitLocation(nodeHitLocation);
             node.getNormal(nodeNormal);
 
-            if (Precision.equals(Math.abs(nodeNormal.angle(rayDirection)) - Math.PI / 2.0, 0.0, Math.toRadians(30.0)) && distanceFromPointToLine(nodeCenter, rayOrigin, rayEnd) > 0.005)
+            if (Precision.equals(Math.abs(nodeNormal.angle(rayDirection)) - Math.PI / 2.0, 0.0, Math.toRadians(30.0)) && distanceFromPointToLine(nodeHitLocation, rayOrigin, rayEnd) > 0.005)
                return;
          }
          if (COMPUTE_UPDATES_IN_PARALLEL)
@@ -338,7 +338,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       Vector3d towardsSensor = new Vector3d();
       Vector3d nodeNormal = new Vector3d();
-      Point3d nodeCenter = new Point3d();
+      Point3d nodeHitLocation = new Point3d();
 
       Random random = new Random(45561L);
       planarRegions.clear();
@@ -355,9 +355,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          int regionId = random.nextInt(Integer.MAX_VALUE);
          PlanarRegion planarRegion = new PlanarRegion(regionId);
          planarRegion.update(node, nodeKey);
-         node.getCenter(nodeCenter);
+         node.getHitLocation(nodeHitLocation);
          node.getNormal(nodeNormal);
-         towardsSensor.sub(lastSensorOrigin, nodeCenter);
+         towardsSensor.sub(lastSensorOrigin, nodeHitLocation);
 
          // TODO Review normal flips
 //         if (towardsSensor.dot(nodeNormal) < 0.0)
@@ -376,7 +376,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    }
 
    private final Vector3d normalCandidateToCurrentRegion = new Vector3d();
-   private final Point3d centerCandidateToCurrentRegion = new Point3d();
+   private final Point3d hitLocationCandidateToCurrentRegion = new Point3d();
    private final OcTreeKeyDeque keysToExplore = new OcTreeKeyDeque();
    private final ArrayDeque<NormalOcTreeNode> nodesToExplore = new ArrayDeque<>();
    private final OcTreeKey neighborKey = new OcTreeKey();
@@ -388,7 +388,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       {
          if (neighborNode.getHasBeenCandidateForRegion() == currentPlanarRegionId || neighborNode.isPartOfRegion())
             return;
-         if (!neighborNode.isNormalSet() || !neighborNode.isCenterSet())
+         if (!neighborNode.isNormalSet() || !neighborNode.isHitLocationSet())
             return;
          neighborNode.setHasBeenCandidateForRegion(currentPlanarRegionId);
          keysToExplore.add(neighborKey);
@@ -423,10 +423,10 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          NormalOcTreeNode currentNode = nodesToExplore.poll(); //keyToNodeMap.get(currentKey.hashCode());
 
          currentNode.getNormal(normalCandidateToCurrentRegion);
-         currentNode.getCenter(centerCandidateToCurrentRegion);
+         currentNode.getHitLocation(hitLocationCandidateToCurrentRegion);
 
          double dot = planarRegion.dot(normalCandidateToCurrentRegion);
-         if (planarRegion.absoluteOrthogonalDistance(centerCandidateToCurrentRegion) < maxMistanceFromPlane && Math.abs(dot) > dotThreshold)
+         if (planarRegion.absoluteOrthogonalDistance(hitLocationCandidateToCurrentRegion) < maxMistanceFromPlane && Math.abs(dot) > dotThreshold)
          {
             // TODO review normal flips
 //            if (dot < 0.0)
@@ -458,7 +458,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             continue;
          if (neighborNode.getHasBeenCandidateForRegion() == planarRegionId || neighborNode.isPartOfRegion())
             continue;
-         if (!neighborNode.isNormalSet() || !neighborNode.isCenterSet())
+         if (!neighborNode.isNormalSet() || !neighborNode.isHitLocationSet())
             continue;
          neighborNode.setHasBeenCandidateForRegion(planarRegionId);
          keysToExplore.add(neighborKey);

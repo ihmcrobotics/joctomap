@@ -29,7 +29,7 @@ public final class NormalCalculator
 
    public static void computeNodeNormalRansac(NormalOcTreeNode root, NormalOcTreeNode currentNode, double searchRadius, double maxDistanceFromPlane)
    {
-      if (!currentNode.isCenterSet() || !currentNode.isNormalSet())
+      if (!currentNode.isHitLocationSet() || !currentNode.isNormalSet())
       {
          currentNode.resetNormal();
          return;
@@ -56,7 +56,7 @@ public final class NormalCalculator
    {
       NormalOcTreeNode currentNode = keyToNodeMap.get(currentNodeKey);
 
-      if (!currentNode.isCenterSet() || !currentNode.isNormalSet())
+      if (!currentNode.isHitLocationSet() || !currentNode.isNormalSet())
       {
          currentNode.resetNormal();
          return;
@@ -73,7 +73,7 @@ public final class NormalCalculator
          currentKey.add(currentNodeKey, cachedNeighborKeyOffsets.get(i));
          NormalOcTreeNode neighborNode = keyToNodeMap.get(currentKey);
 
-         if (neighborNode != null && neighborNode.isCenterSet())
+         if (neighborNode != null && neighborNode.isHitLocationSet())
             neighbors.add(neighborNode);
       }
 
@@ -100,11 +100,11 @@ public final class NormalCalculator
       Random random = ThreadLocalRandom.current();
       Point3d[] randomDraw = {new Point3d(), new Point3d()};
       Vector3d currentNodeNormal = new Vector3d();
-      Point3d currentNodeCenter = new Point3d();
-      Vector3d nodeCenterToNeighborCenter = new Vector3d();
+      Point3d currentNodeHitLocation = new Point3d();
+      Vector3d currentNodeToNeighbor = new Vector3d();
 
       currentNode.getNormal(currentNodeNormal);
-      currentNode.getCenter(currentNodeCenter);
+      currentNode.getHitLocation(currentNodeHitLocation);
 
       // Need to be recomputed as the neighbors may have changed
       double nodeNormalQuality = 0.0;
@@ -114,9 +114,9 @@ public final class NormalCalculator
       {
          NormalOcTreeNode neighbor = neighbors.get(i);
 
-         nodeCenterToNeighborCenter.set(neighbor.getCenterX(), neighbor.getCenterY(), neighbor.getCenterZ());
-         nodeCenterToNeighborCenter.sub(currentNodeCenter);
-         double distanceFromPlane = Math.abs(currentNodeNormal.dot(nodeCenterToNeighborCenter));
+         currentNodeToNeighbor.set(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
+         currentNodeToNeighbor.sub(currentNodeHitLocation);
+         double distanceFromPlane = Math.abs(currentNodeNormal.dot(currentNodeToNeighbor));
          if (distanceFromPlane <= maxDistanceFromPlane)
          {
             nodeNormalQuality += distanceFromPlane;
@@ -142,17 +142,17 @@ public final class NormalCalculator
 
             int nextInt = random.nextInt(neighbors.size());
             NormalOcTreeNode neighbor = neighbors.get(nextInt);
-            randomDraw[index++].set(neighbor.getCenterX(), neighbor.getCenterY(), neighbor.getCenterZ());
+            randomDraw[index++].set(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
             neighbors.remove(nextInt);
          }
 
-         double v1_x = randomDraw[0].getX() - currentNodeCenter.getX();
-         double v1_y = randomDraw[0].getY() - currentNodeCenter.getY();
-         double v1_z = randomDraw[0].getZ() - currentNodeCenter.getZ();
+         double v1_x = randomDraw[0].getX() - currentNodeHitLocation.getX();
+         double v1_y = randomDraw[0].getY() - currentNodeHitLocation.getY();
+         double v1_z = randomDraw[0].getZ() - currentNodeHitLocation.getZ();
 
-         double v2_x = randomDraw[1].getX() - currentNodeCenter.getX();
-         double v2_y = randomDraw[1].getY() - currentNodeCenter.getY();
-         double v2_z = randomDraw[1].getZ() - currentNodeCenter.getZ();
+         double v2_x = randomDraw[1].getX() - currentNodeHitLocation.getX();
+         double v2_y = randomDraw[1].getY() - currentNodeHitLocation.getY();
+         double v2_z = randomDraw[1].getZ() - currentNodeHitLocation.getZ();
 
          normalCandidate.setX(v1_y * v2_z - v1_z * v2_y);
          normalCandidate.setY(v2_x * v1_z - v2_z * v1_x);
@@ -165,9 +165,9 @@ public final class NormalCalculator
          for (int i = 0; i < neighbors.size(); i++)
          {
             NormalOcTreeNode neighbor = neighbors.get(i);
-            nodeCenterToNeighborCenter.set(neighbor.getCenterX(), neighbor.getCenterY(), neighbor.getCenterZ());
-            nodeCenterToNeighborCenter.sub(currentNodeCenter);
-            double distanceFromPlane = Math.abs(normalCandidate.dot(nodeCenterToNeighborCenter));
+            currentNodeToNeighbor.set(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
+            currentNodeToNeighbor.sub(currentNodeHitLocation);
+            double distanceFromPlane = Math.abs(normalCandidate.dot(currentNodeToNeighbor));
             if (distanceFromPlane < maxDistanceFromPlane)
             {
                candidateNormalQuality += distanceFromPlane;

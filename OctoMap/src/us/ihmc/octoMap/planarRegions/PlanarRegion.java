@@ -43,7 +43,7 @@ public class PlanarRegion
       normal.update(temporaryVector);
 
       Point3d newPoint = new Point3d();
-      node.getCenter(newPoint);
+      node.getHitLocation(newPoint);
       points.add(newPoint);
       point.update(newPoint);
 
