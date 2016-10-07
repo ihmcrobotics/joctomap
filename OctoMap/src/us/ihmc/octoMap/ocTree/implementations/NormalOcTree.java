@@ -279,13 +279,13 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       double maxDistanceFromPlane = normalEstimationParameters.getMaxDistanceFromPlane();
 
       if (USE_KEY_NODE_MAP_WITH_NORMALS)
-         NormalCalculator.getCachedNeighborKeyOffsets(searchRadius, resolution, treeDepth);
+         NormalEstimationTools.getCachedNeighborKeyOffsets(searchRadius, resolution, treeDepth);
 
       Stream<OcTreeKey> keyStream = COMPUTE_NORMALS_IN_PARALLEL ? keyList.stream() : keyList.parallelStream();
       if (USE_KEY_NODE_MAP_WITH_NORMALS)
-         keyStream.forEach(key -> NormalCalculator.computeNodeNormalRansac(key, keyToNodeMap, searchRadius, maxDistanceFromPlane, resolution, treeDepth));
+         keyStream.forEach(key -> NormalEstimationTools.computeNodeNormalRansac(key, keyToNodeMap, searchRadius, maxDistanceFromPlane, resolution, treeDepth));
       else
-         keyStream.forEach(key -> NormalCalculator.computeNodeNormalRansac(root, keyToNodeMap.get(key), searchRadius, maxDistanceFromPlane));
+         keyStream.forEach(key -> NormalEstimationTools.computeNodeNormalRansac(root, keyToNodeMap.get(key), searchRadius, maxDistanceFromPlane));
 
       if (root != null)
          updateInnerNormalsRecursive(root, 0);
