@@ -16,7 +16,7 @@ import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 
 public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 {
-   private static boolean DEBUG_PROPERTIES = false;
+   private static final boolean DEBUG_PROPERTIES = false;
 
    protected N[] children;
    private int k0 = -1, k1 = -1, k2 = -1;
