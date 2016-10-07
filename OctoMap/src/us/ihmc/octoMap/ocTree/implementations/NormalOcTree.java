@@ -92,6 +92,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void update(SweepCollection sweepCollection)
    {
+      update(sweepCollection, true, true);
+   }
+
+   public void update(SweepCollection sweepCollection, boolean updateNormals, boolean updateRegions)
+   {
       if (REPORT_TIME)
       {
          System.out.println(getTreeType() + ": Entering updateNodeFromSweepCollection sweep size: " + sweepCollection.getNumberOfSweeps());
@@ -125,29 +130,35 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
 
-      if (REPORT_TIME)
+      if (updateNormals)
       {
-         stopWatch.reset();
-         stopWatch.start();
-      }
-      updateNormals();
-
-      if (REPORT_TIME)
-      {
-         System.out.println(getTreeType() + ": Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+         if (REPORT_TIME)
+         {
+            stopWatch.reset();
+            stopWatch.start();
+         }
+         updateNormals();
+         
+         if (REPORT_TIME)
+         {
+            System.out.println(getTreeType() + ": Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+         }
       }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
 
-      if (REPORT_TIME)
+      if (updateRegions)
       {
-         stopWatch.reset();
-         stopWatch.start();
-      }
-      updatePlanarRegionSegmentation(sweepCollection.getSweepOrigin(sweepCollection.getNumberOfSweeps() - 1));
-      if (REPORT_TIME)
-      {
-         System.out.println(getTreeType() + ": Planar region segmentation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+         if (REPORT_TIME)
+         {
+            stopWatch.reset();
+            stopWatch.start();
+         }
+         updatePlanarRegionSegmentation(sweepCollection.getSweepOrigin(sweepCollection.getNumberOfSweeps() - 1));
+         if (REPORT_TIME)
+         {
+            System.out.println(getTreeType() + ": Planar region segmentation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+         }
       }
    }
 
