@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -111,9 +112,24 @@ public class PlanarRegion
       return id;
    }
 
+   public NormalOcTreeNode getNode(int index)
+   {
+      return nodes.get(index);
+   }
+
+   public void removeNode(int index)
+   {
+      nodes.remove(index);
+   }
+
    public int getNumberOfNodes()
    {
       return points.size();
+   }
+
+   public Stream<NormalOcTreeNode> nodeStream()
+   {
+      return nodes.stream();
    }
 
    public void printPointsToFile()
