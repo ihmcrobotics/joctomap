@@ -196,7 +196,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       Stream<Point3f> stream = COMPUTE_UPDATES_IN_PARALLEL ? scan.parallelStream() : scan.stream();
 
-      stream.forEach(scanPoint -> insertScanPoint(sensorOrigin, scanPoint));
+      stream.forEach(scanPoint -> insertMissRay(sensorOrigin, scanPoint));
 
       if (COMPUTE_UPDATES_IN_PARALLEL)
       {
@@ -205,7 +205,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   public void insertScanPoint(Point3d sensorOrigin, Point3f scanPoint)
+   private void insertMissRay(Point3d sensorOrigin, Point3f scanPoint)
    {
       Point3d point = new Point3d();
       Vector3d direction = new Vector3d();
