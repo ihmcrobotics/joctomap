@@ -164,31 +164,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   private void integrateHitsOnly(PointCloud scan, Point3d sensorOrigin)
-   {
-      Point3d scanPoint = new Point3d();
-      double minRangeSquared = minInsertRange < 0.0 ? 0.0 : minInsertRange * minInsertRange;
-      double maxRangeSquared = maxInsertRange < 0.0 ? Double.POSITIVE_INFINITY : maxInsertRange * maxInsertRange;
-
-      hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
-      hitUpdateRule.setAlphaHitLocationUpdate(alphaCenterUpdate);
-
-      for (int i = 0; i < scan.size(); i++)
-      {
-         scanPoint.set(scan.getPoint(i));
-
-         if (!isInBoundingBox(scanPoint))
-            continue;
-
-         double distanceSquared = scanPoint.distanceSquared(sensorOrigin);
-         if (distanceSquared < maxRangeSquared && distanceSquared > minRangeSquared)
-         {
-            hitUpdateRule.setHitLocation(sensorOrigin, scanPoint);
-            updateNodeInternal(scanPoint, hitUpdateRule, null);
-         }
-      }
-   }
-
    private final HashSet<OcTreeKey> occupiedCells = new HashSet<>();
    private final ConcurrentLinkedQueue<OcTreeKeyReadOnly> freeKeysToUpdate = new ConcurrentLinkedQueue<>();
 
