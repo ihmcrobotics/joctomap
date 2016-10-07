@@ -88,6 +88,16 @@ public class PlanarRegion
       return Math.abs(dot(normal));
    }
 
+   public double dot(PlanarRegion other)
+   {
+      return dot(other.normal);
+   }
+
+   public double absoluteDot(PlanarRegion other)
+   {
+      return Math.abs(dot(other));
+   }
+
    public Vector3d getNormal()
    {
       return normal;
@@ -98,14 +108,14 @@ public class PlanarRegion
       return point;
    }
 
+   public void getPoint(int index, Point3d pointToPack)
+   {
+      nodes.get(index).getHitLocation(pointToPack);
+   }
+
    public Point3d getPoint(int index)
    {
       return points.get(index);
-   }
- 
-   public List<Point3d> getPoints()
-   {
-      return points;
    }
 
    public int getId()
