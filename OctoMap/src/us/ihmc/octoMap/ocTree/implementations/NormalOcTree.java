@@ -113,7 +113,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          System.out.println(getTreeType() + ": Sweep integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
       }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
 
       keyToNodeMap.clear();
       keyList.clear();
@@ -128,7 +128,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          keyList.add(key);
       }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
 
       if (updateNormals)
       {
@@ -137,15 +137,16 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             stopWatch.reset();
             stopWatch.start();
          }
+
          updateNormals();
-         
+
          if (REPORT_TIME)
          {
             System.out.println(getTreeType() + ": Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
          }
       }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
 
       if (updateRegions)
       {
@@ -219,7 +220,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       Point3d point = new Point3d();
       Vector3d direction = new Vector3d();
-      
+
       point.set(scanPoint);
       direction.sub(point, sensorOrigin);
       double length = direction.length();
@@ -344,10 +345,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          node.getNormal(nodeNormal);
          towardsSensor.sub(lastSensorOrigin, nodeHitLocation);
 
-         // TODO Review normal flips
-//         if (towardsSensor.dot(nodeNormal) < 0.0)
-//            node.negateNormal();
-
          node.setRegionId(planarRegion.getId());
          node.setHasBeenCandidateForRegion(planarRegion.getId());
 
@@ -410,10 +407,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          double dot = planarRegion.dot(normalCandidateToCurrentRegion);
          if (planarRegion.absoluteOrthogonalDistance(hitLocationCandidateToCurrentRegion) < maxMistanceFromPlane && Math.abs(dot) > dotThreshold)
          {
-            // TODO review normal flips
-//            if (dot < 0.0)
-//               currentNode.negateNormal();
-
             planarRegion.update(currentNode);
             currentNode.setRegionId(currentPlanarRegionId);
 
