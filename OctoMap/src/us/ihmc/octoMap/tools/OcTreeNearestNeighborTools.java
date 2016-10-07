@@ -13,6 +13,11 @@ public class OcTreeNearestNeighborTools
    public static interface NeighborActionRule<NODE extends AbstractOcTreeNode<NODE>>
    {
       public void doActionOnNeighbor(NODE node);
+
+      default public boolean earlyAbort()
+      {
+         return false;
+      }
    }
 
    /**
@@ -81,6 +86,8 @@ public class OcTreeNearestNeighborTools
          if (!overlaps(child, x, y, z, radius, radiusSquared))
             continue;
          findRadiusNeighbors(child, x, y, z, radius, radiusSquared, actionRule);
+         if (actionRule.earlyAbort())
+            return;
       }
    }
 
@@ -199,7 +206,11 @@ public class OcTreeNearestNeighborTools
       {
          NODE childNode = node.getChild(childIndex);
          if (childNode != null)
+         {
             doActionOnLeavesRecursively(childNode, actionRule);
+            if (actionRule.earlyAbort())
+               return;
+         }
       }
    }
 
