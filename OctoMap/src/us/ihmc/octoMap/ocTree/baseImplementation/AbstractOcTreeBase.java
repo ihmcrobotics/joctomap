@@ -2,9 +2,10 @@ package us.ihmc.octoMap.ocTree.baseImplementation;
 
 import static us.ihmc.octoMap.node.OcTreeNodeTools.*;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
@@ -49,8 +50,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 {
    protected NODE root; ///< root NODE, null for empty tree
    private final NodeBuilder<NODE> nodeBuilder;
-   private final List<NODE> unusedNodes = new ArrayList<>(100000);
-   private final List<NODE[]> unusedNodeArrays = new ArrayList<>(100000 / 8);
+   private final Queue<NODE> unusedNodes = new ArrayDeque<>(1000);
+   private final Queue<NODE[]> unusedNodeArrays = new ArrayDeque<>(1000 / 8);
 
    // constants of the tree
    /** Maximum tree depth (fixed to 16 usually) */
@@ -206,13 +207,13 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          if (unusedNodeArrays.isEmpty())
             node.allocateChildren();
          else
-            node.assignChildren(unusedNodeArrays.remove(unusedNodeArrays.size() - 1));
+            node.assignChildren(unusedNodeArrays.poll());
       }
    }
 
    private NODE getOrCreateNode(OcTreeKeyReadOnly nodeKey, int nodeDepth)
    {
-      NODE newNode = unusedNodes.isEmpty() ? nodeBuilder.createNode() : unusedNodes.remove(unusedNodes.size() - 1);
+      NODE newNode = unusedNodes.isEmpty() ? nodeBuilder.createNode() : unusedNodes.poll();
       newNode.setProperties(nodeKey, nodeDepth, resolution, treeDepth);
       return newNode;
    }
@@ -862,7 +863,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive delete of node and all children (deallocates memory)
-   protected void deleteNodeRecursively(NODE node)
+   private void deleteNodeRecursively(NODE node)
    {
       if (node.hasAtLeastOneChild())
       {
@@ -985,7 +986,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive call of prune()
-   protected int pruneRecursively(NODE node, int depth, int maxDepth, int numberOfPrunedNode)
+   private int pruneRecursively(NODE node, int depth, int maxDepth, int numberOfPrunedNode)
    {
       if (node == null)
          throw new RuntimeException("The given node is null");
@@ -1015,7 +1016,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /** recursive call of expand() */
-   protected void expandRecursively(NODE node, int depth, int maxDepth)
+   private void expandRecursively(NODE node, int depth, int maxDepth)
    {
       if (depth >= maxDepth)
          return;
