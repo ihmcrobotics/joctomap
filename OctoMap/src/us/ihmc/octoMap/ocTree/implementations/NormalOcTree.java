@@ -161,7 +161,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          }
          else
          {
-            leafNodes.stream().forEach(NormalOcTreeNode::resetRegionId);
+            planarRegions.parallelStream().forEach(PlanarRegion::clearRegion);
             planarRegions = RegionSegmentationTools.searchNewPlanarRegions(root, boundingBox, planarRegionSegmentationParameters, random, leafNodes);
          }
 
@@ -313,7 +313,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
                   updateInnerNormalsRecursive(childNode, depth + 1);
             }
          }
-         node.resetRegionId();
          node.updateNormalChildren();
       }
    }
@@ -333,7 +332,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
                   updateInnerRegionIdsRecursive(childNode, depth + 1);
             }
          }
-         node.resetRegionId();
          node.updateRegionIdChildren();
       }
    }

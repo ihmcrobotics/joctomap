@@ -80,7 +80,9 @@ public class RegionSegmentationTools
    public static boolean isNodeInOtherRegionNeighborhood(NormalOcTreeNode root, NormalOcTreeNode nodeFromOneRegion, int otherRegionId, double searchRadius)
    {
       if (!nodeFromOneRegion.isPartOfRegion())
-         return false; //throw new PlanarRegionSegmentationException("Problem Houston.");
+         //throw new PlanarRegionSegmentationException("Problem Houston.");
+         // TODO This is a weird case that happens sometimes, need to figure out what's wrong.
+         return false;
 
       MutableBoolean foundNeighborFromOtherRegion = new MutableBoolean(false);
 
@@ -99,12 +101,16 @@ public class RegionSegmentationTools
             return foundNeighborFromOtherRegion.booleanValue();
          }
       };
+
       OcTreeNearestNeighborTools.findRadiusNeighbors(root, nodeFromOneRegion, searchRadius, actionRule);
       return foundNeighborFromOtherRegion.booleanValue();
    }
 
    public static boolean isNodePartOfRegion(NormalOcTreeNode node, PlanarRegion planarRegion, double maxDistanceFromPlane, double dotThreshold)
    {
+      if (!node.isNormalSet())
+         return false;
+
       double absoluteOrthogonalDistance = planarRegion.absoluteOrthogonalDistance(node);
       if (absoluteOrthogonalDistance > maxDistanceFromPlane)
          return false;
@@ -196,10 +202,9 @@ public class RegionSegmentationTools
                continue;
    
             // Removes the nodes if: 1- node has been deleted (normal has been reset), 2- the node is physically not part of the region anymore.
-            if (!node.isNormalSet() || !isNodePartOfRegion(node, planarRegion, maxDistanceFromPlane, dotThreshold))
+            if (!isNodePartOfRegion(node, planarRegion, maxDistanceFromPlane, dotThreshold))
             {
                planarRegion.removeNode(i);
-               node.resetRegionId();
                removedAtLeastOneNode = true;
             }
          }
@@ -228,7 +233,7 @@ public class RegionSegmentationTools
          PlanarRegion planarRegion = createNewPlanarRegion(root, node, regionId, boundingBox, parameters);
    
          if (planarRegion.getNumberOfNodes() < 10)
-            planarRegion.nodeStream().forEach(nodeToReset -> nodeToReset.resetRegionId());
+            planarRegion.clearRegion();
          else
             newPlanarRegions.add(planarRegion);
       }

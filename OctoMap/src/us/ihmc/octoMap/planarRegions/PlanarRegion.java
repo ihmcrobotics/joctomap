@@ -44,7 +44,7 @@ public class PlanarRegion
    {
       point.clear();
       normal.clear();
-      nodes.stream().forEach(node -> updateNormalAndOriginOnly(node));
+      nodes.stream().forEach(this::updateNormalAndOriginOnly);
    }
 
    private void updateNormalAndOriginOnly(NormalOcTreeNode node)
@@ -151,9 +151,18 @@ public class PlanarRegion
       return nodes.get(index);
    }
 
+   public void clearRegion()
+   {
+      nodes.parallelStream().forEach(NormalOcTreeNode::resetRegionId);
+      nodes.clear();
+      point.clear();
+      normal.clear();
+   }
+
    public void removeNode(int index)
    {
-      nodes.remove(index);
+      NormalOcTreeNode removedNode = nodes.remove(index);
+      removedNode.resetRegionId();
    }
 
    public int getNumberOfNodes()
