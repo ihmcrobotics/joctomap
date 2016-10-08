@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -12,7 +13,7 @@ import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 
-public class PlanarRegion
+public class PlanarRegion implements Iterable<NormalOcTreeNode>
 {
    public static final int NO_REGION_ID = Integer.MIN_VALUE;
 
@@ -177,6 +178,13 @@ public class PlanarRegion
       removedNode.resetRegionId();
    }
 
+   public void removeNode(NormalOcTreeNode node)
+   {
+      boolean existed = nodes.remove(node);
+      if (existed)
+         node.resetRegionId();
+   }
+
    public void removeNodesAndUpdate(Collection<NormalOcTreeNode> nodesToRemove)
    {
       nodesToRemove.stream().forEach(NormalOcTreeNode::resetRegionId);
@@ -194,16 +202,19 @@ public class PlanarRegion
       return nodes.stream();
    }
 
+   @Override
+   public Iterator<NormalOcTreeNode> iterator()
+   {
+      return nodes.iterator();
+   }
+
    public void printPointsToFile()
    {
       try
       {
          FileWriter fw = new FileWriter("regionPoints");
-         for (int i = 0; i < getNumberOfNodes(); i++)
-         {
-            NormalOcTreeNode point = nodes.get(i);
-            fw.write(point.getHitLocationX() + ", " + point.getHitLocationY() + ", " + point.getHitLocationZ() + "\n");
-         }
+         for (NormalOcTreeNode node : this)
+            fw.write(node.getHitLocationX() + ", " + node.getHitLocationY() + ", " + node.getHitLocationZ() + "\n");
          fw.close();
       }
       catch (IOException e)
