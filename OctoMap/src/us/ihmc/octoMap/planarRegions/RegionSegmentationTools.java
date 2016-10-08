@@ -187,46 +187,25 @@ public class RegionSegmentationTools
 
    public static void updatePlanarRegions(NormalOcTreeNode root, OcTreeBoundingBoxInterface boundingBox, PlanarRegionSegmentationParameters parameters, List<PlanarRegion> planarRegions)
    {
+      planarRegions.parallelStream().forEach(region -> removeBadNodesFromRegion(boundingBox, parameters, region));
+      planarRegions.stream().forEach(region -> growPlanarRegion(root, region, boundingBox, parameters));
+   }
+
+   private static void removeBadNodesFromRegion(OcTreeBoundingBoxInterface boundingBox, PlanarRegionSegmentationParameters parameters,
+         PlanarRegion planarRegion)
+   {
       double dotThreshold = Math.cos(parameters.getMaxAngleFromPlane());
       double maxDistanceFromPlane = parameters.getMaxDistanceFromPlane();
-   
-      // TODO Try to switch to the following.
-//      for (PlanarRegion planarRegion : planarRegions)
-//      {
-//         List<NormalOcTreeNode> nodesToRemove = planarRegion.nodeStream()
-//                     // Let's not update nodes that are outside the bounding box as the OcTree should be frozen there.
-//                     .filter(node -> isNodeInBoundingBox(node, boundingBox))
-//                     // Group nodes by whether they are part of the region.
-//                     .collect(Collectors.groupingBy(node -> !isNodePartOfRegion(node, planarRegion, maxDistanceFromPlane, dotThreshold)))
-//                     .getOrDefault(true, Collections.emptyList());
-//
-//         planarRegion.removeNodesAndUpdate(nodesToRemove);
-//      }
 
-      for (PlanarRegion planarRegion : planarRegions)
-      {
-         boolean removedAtLeastOneNode = false;
-   
-         for (int i = planarRegion.getNumberOfNodes() - 1; i >= 0; i--)
-         {
-            NormalOcTreeNode node = planarRegion.getNode(i);
+      List<NormalOcTreeNode> nodesToRemove = planarRegion.nodeStream()
             // Let's not update nodes that are outside the bounding box as the OcTree should be frozen there.
-            if (!isNodeInBoundingBox(node, boundingBox))
-               continue;
-   
-            // Removes the nodes if: 1- node has been deleted (normal has been reset), 2- the node is physically not part of the region anymore.
-            if (!isNodePartOfRegion(node, planarRegion, maxDistanceFromPlane, dotThreshold))
-            {
-               planarRegion.removeNode(i);
-               removedAtLeastOneNode = true;
-            }
-         }
-   
-         if (removedAtLeastOneNode)
-            planarRegion.recomputeNormalAndOrigin();
-      }
+            .filter(node -> isNodeInBoundingBox(node, boundingBox))
+            // Group nodes by whether they are part of the region or not.
+            .collect(Collectors.groupingBy(node -> !isNodePartOfRegion(node, planarRegion, maxDistanceFromPlane, dotThreshold)))
+            // Keep only the nodes that should be removed.
+            .getOrDefault(true, Collections.emptyList());
 
-      planarRegions.stream().forEach(region -> growPlanarRegion(root, region, boundingBox, parameters));
+      planarRegion.removeNodesAndUpdate(nodesToRemove);
    }
 
    private static boolean isNodeInBoundingBox(NormalOcTreeNode node, OcTreeBoundingBoxInterface boundingBox)
@@ -237,25 +216,25 @@ public class RegionSegmentationTools
    public static List<PlanarRegion> searchNewPlanarRegions(NormalOcTreeNode root, OcTreeBoundingBoxInterface boundingBox, PlanarRegionSegmentationParameters parameters, Random random, List<NormalOcTreeNode> leafNodes)
    {
       List<PlanarRegion> newPlanarRegions = new ArrayList<>();
-   
+
       float minNormalQuality = (float) parameters.getMinNormalQuality();
-   
+
       for (NormalOcTreeNode node : leafNodes)
       {
          if (node.isPartOfRegion() || !node.isNormalSet())
             continue;
          if (node.getNormalAverageDeviation() > minNormalQuality)
             continue;
-   
+
          int regionId = random.nextInt(Integer.MAX_VALUE);
          PlanarRegion planarRegion = createNewPlanarRegion(root, node, regionId, boundingBox, parameters);
-   
+
          if (planarRegion.getNumberOfNodes() < 10)
             planarRegion.clearRegion();
          else
             newPlanarRegions.add(planarRegion);
       }
-   
+
       return newPlanarRegions;
    }
 
