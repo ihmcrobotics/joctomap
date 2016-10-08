@@ -346,6 +346,21 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       return hitLocationZ;
    }
 
+   public double getNormalX()
+   {
+      return normalX;
+   }
+
+   public double getNormalY()
+   {
+      return normalY;
+   }
+
+   public double getNormalZ()
+   {
+      return normalZ;
+   }
+
    @Override
    protected boolean epsilonEqualsInternal(NormalOcTreeNode other, double epsilon)
    {
