@@ -100,9 +100,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       if (REPORT_TIME)
       {
-         System.out.println(getTreeType() + ": Entering updateNodeFromSweepCollection sweep size: " + sweepCollection.getNumberOfSweeps());
-         for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
-            System.out.println(getTreeType() + ": Point cloud size: " + sweepCollection.getSweep(i).size());
          stopWatch.reset();
          stopWatch.start();
       }
@@ -111,7 +108,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       if (REPORT_TIME)
       {
-         System.out.println(getTreeType() + ": Sweep integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+         System.out.println(getTreeType() + ": Sweep integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (Sweep size: " + sweepCollection.getNumberOfPoints() + ").");
       }
 
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      

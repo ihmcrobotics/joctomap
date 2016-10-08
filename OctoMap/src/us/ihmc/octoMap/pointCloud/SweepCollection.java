@@ -71,4 +71,12 @@ public class SweepCollection
    {
       return sweeps.size();
    }
+
+   public int getNumberOfPoints()
+   {
+      int numberOfPoints = 0;
+      for (PointCloud pointCloud : sweeps)
+         numberOfPoints += pointCloud.size();
+      return numberOfPoints;
+   }
 }
