@@ -9,7 +9,7 @@ import javax.vecmath.Point3d;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.junit.Test;
 
-import us.ihmc.octoMap.testTools.TestRandomTools;
+import us.ihmc.octoMap.testTools.OctoMapRandomTools;
 
 public class NormalOcTreeNodeTest
 {
@@ -27,7 +27,7 @@ public class NormalOcTreeNodeTest
 
       for (int i = 0; i < 1000; i++)
       {
-         randomPoint.add(TestRandomTools.generateRandomPoint3d(random, 1.0, 1.0, 1.0));
+         randomPoint.add(OctoMapRandomTools.generateRandomPoint3d(random, 1.0, 1.0, 1.0));
          node.updateHitLocation(randomPoint, 0);
          xMean.increment(randomPoint.getX());
          yMean.increment(randomPoint.getY());

@@ -13,7 +13,7 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.ocTree.implementations.NormalOcTree;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.testTools.TestOcTree;
-import us.ihmc.octoMap.testTools.TestRandomTools;
+import us.ihmc.octoMap.testTools.OctoMapRandomTools;
 import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class CloneEpsilonEqualsTest
@@ -49,17 +49,17 @@ public class CloneEpsilonEqualsTest
       NormalOcTree octree2 = new NormalOcTree(resolution);
 
       // Create 2 identical octrees
-      Point3d sensorOrigin = TestRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
+      Point3d sensorOrigin = OctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
       for (int i = 0; i < 5; i++)
       {
-         SweepCollection sweepCollection = TestRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+         SweepCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
          octree1.update(sweepCollection);
          octree2.update(sweepCollection);
       }
       assertTrue(octree1.epsilonEquals(octree2, 1.0e-7));
 //
       // Make octree2 different from octree1
-      SweepCollection sweepCollection = TestRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+      SweepCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
       octree2.update(sweepCollection);
       assertFalse(octree1.epsilonEquals(octree2, 1.0e-7));
    }
@@ -88,10 +88,10 @@ public class CloneEpsilonEqualsTest
       double resolution = 0.02;
       NormalOcTree octree1 = new NormalOcTree(resolution);
 
-      Point3d sensorOrigin = TestRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
+      Point3d sensorOrigin = OctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
       for (int i = 0; i < 5; i++)
       {
-         SweepCollection sweepCollection = TestRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+         SweepCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
          octree1.update(sweepCollection);
       }
 

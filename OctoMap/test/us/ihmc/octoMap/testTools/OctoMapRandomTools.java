@@ -8,7 +8,7 @@ import javax.vecmath.Point3f;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 
-public class TestRandomTools
+public class OctoMapRandomTools
 {
    public static double generateRandomDouble(Random random, double maxAbsolute)
    {
@@ -52,7 +52,7 @@ public class TestRandomTools
    {
       PointCloud pointCloud = new PointCloud();
       for (int i = 0; i < pointCloudSize; i++)
-         pointCloud.add(TestRandomTools.generateRandomPoint3f(random, xRange, yRange, zRange));
+         pointCloud.add(OctoMapRandomTools.generateRandomPoint3f(random, xRange, yRange, zRange));
       return pointCloud;
    }
 
