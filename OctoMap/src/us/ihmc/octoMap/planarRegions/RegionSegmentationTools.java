@@ -158,6 +158,12 @@ public class RegionSegmentationTools
       return planarRegion;
    }
 
+   public static void updatePlanarRegions(NormalOcTreeNode root, OcTreeBoundingBoxInterface boundingBox, PlanarRegionSegmentationParameters parameters, List<PlanarRegion> planarRegions)
+   {
+      planarRegions.parallelStream().forEach(region -> removeBadNodesFromRegion(boundingBox, parameters, region));
+      planarRegions.stream().forEach(region -> growPlanarRegion(root, region, boundingBox, parameters));
+   }
+
    public static void growPlanarRegion(NormalOcTreeNode root, PlanarRegion planarRegion, OcTreeBoundingBoxInterface boundingBox, PlanarRegionSegmentationParameters parameters)
    {
       double dotThreshold = Math.cos(parameters.getMaxAngleFromPlane());
@@ -183,12 +189,6 @@ public class RegionSegmentationTools
             OcTreeNearestNeighborTools.findRadiusNeighbors(root, currentNode, searchRadius, extendSearchRule);
          }
       }
-   }
-
-   public static void updatePlanarRegions(NormalOcTreeNode root, OcTreeBoundingBoxInterface boundingBox, PlanarRegionSegmentationParameters parameters, List<PlanarRegion> planarRegions)
-   {
-      planarRegions.parallelStream().forEach(region -> removeBadNodesFromRegion(boundingBox, parameters, region));
-      planarRegions.stream().forEach(region -> growPlanarRegion(root, region, boundingBox, parameters));
    }
 
    private static void removeBadNodesFromRegion(OcTreeBoundingBoxInterface boundingBox, PlanarRegionSegmentationParameters parameters,
