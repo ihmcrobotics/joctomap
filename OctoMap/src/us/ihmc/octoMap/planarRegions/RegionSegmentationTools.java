@@ -145,7 +145,7 @@ public class RegionSegmentationTools
       while (!nodesToExplore.isEmpty())
       {
          NormalOcTreeNode currentNode = nodesToExplore.poll();
-         if (boundingBox != null && !boundingBox.isInBoundingBox(currentNode.getX(), currentNode.getY(), currentNode.getZ()))
+         if (isNodeInBoundingBox(currentNode, boundingBox))
             continue;
    
          if (isNodePartOfRegion(currentNode, planarRegion, maxDistanceFromPlane, dotThreshold))
@@ -174,7 +174,7 @@ public class RegionSegmentationTools
       while (!nodesToExplore.isEmpty())
       {
          NormalOcTreeNode currentNode = nodesToExplore.poll();
-         if (boundingBox != null && !boundingBox.isInBoundingBox(currentNode.getX(), currentNode.getY(), currentNode.getZ()))
+         if (isNodeInBoundingBox(currentNode, boundingBox))
             continue;
    
          if (isNodePartOfRegion(currentNode, planarRegion, maxDistanceFromPlane, dotThreshold))
@@ -198,7 +198,7 @@ public class RegionSegmentationTools
          {
             NormalOcTreeNode node = planarRegion.getNode(i);
             // Let's not update nodes that are outside the bounding box as the OcTree should be frozen there.
-            if (boundingBox != null && !boundingBox.isInBoundingBox(node.getX(), node.getY(), node.getZ()))
+            if (isNodeInBoundingBox(node, boundingBox))
                continue;
    
             // Removes the nodes if: 1- node has been deleted (normal has been reset), 2- the node is physically not part of the region anymore.
@@ -214,6 +214,11 @@ public class RegionSegmentationTools
       }
    
       planarRegions.stream().forEach(region -> growPlanarRegion(root, region, boundingBox, parameters));
+   }
+
+   private static boolean isNodeInBoundingBox(NormalOcTreeNode node, OcTreeBoundingBoxInterface boundingBox)
+   {
+      return boundingBox != null && !boundingBox.isInBoundingBox(node.getX(), node.getY(), node.getZ());
    }
 
    public static List<PlanarRegion> searchNewPlanarRegions(NormalOcTreeNode root, OcTreeBoundingBoxInterface boundingBox, PlanarRegionSegmentationParameters parameters, Random random, List<NormalOcTreeNode> leafNodes)
