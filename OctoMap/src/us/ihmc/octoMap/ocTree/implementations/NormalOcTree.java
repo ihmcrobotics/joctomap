@@ -2,7 +2,6 @@ package us.ihmc.octoMap.ocTree.implementations;
 
 import static us.ihmc.robotics.geometry.GeometryTools.*;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,12 +17,10 @@ import javax.vecmath.Vector3d;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.math3.util.Precision;
 
-import gnu.trove.map.hash.TDoubleObjectHashMap;
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
@@ -36,11 +33,9 @@ import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.occupancy.OccupancyTools;
 import us.ihmc.octoMap.planarRegions.NormalEstimationTools;
 import us.ihmc.octoMap.planarRegions.PlanarRegion;
+import us.ihmc.octoMap.planarRegions.RegionSegmentationTools;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
-import us.ihmc.octoMap.tools.OcTreeKeyTools;
-import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
-import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools.NeighborActionRule;
 import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
@@ -52,7 +47,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private static final boolean COMPUTE_UPDATES_IN_PARALLEL = true;
    private static final boolean USE_KEY_NODE_MAP_WITH_UPDATES = true;
    private static final boolean USE_KEY_NODE_MAP_WITH_NORMALS = true;
-   private static final boolean USE_RADIUS_NEIGHBORS_FOR_SEGMENTATION = false;
 
    public static final boolean UPDATE_NODE_HIT_WITH_AVERAGE = true;
 
@@ -69,10 +63,10 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private final NormalOcTreeHitUpdateRule hitUpdateRule = new NormalOcTreeHitUpdateRule(occupancyParameters);
    private final NormalOcTreeMissUpdateRule missUpdateRule = new NormalOcTreeMissUpdateRule(occupancyParameters);
 
-   private final List<PlanarRegion> planarRegions = new ArrayList<>();
+   private List<PlanarRegion> planarRegions = new ArrayList<>();
 
-   private final TDoubleObjectHashMap<OcTreeKeyList> neighborOffsetsCached = new TDoubleObjectHashMap<>(4);
    private final LeafBoundingBoxIterable<NormalOcTreeNode> leafIterable;
+   private final Random random = new Random(45561L);
 
    private double alphaCenterUpdate = 0.1;
 
@@ -161,7 +155,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             node.resetHasBeenCandidateForRegion();
          }
 
-         updatePlanarRegionSegmentation(sweepCollection.getSweepOrigin(sweepCollection.getNumberOfSweeps() - 1));
+         planarRegions = RegionSegmentationTools.searchNewPlanarRegions(root, boundingBox, planarRegionSegmentationParameters, random, leafNodes);
+
+         if (root != null)
+            updateInnerRegionIdsRecursive(root, 0);
+
          if (REPORT_TIME)
          {
             System.out.println(getTreeType() + ": Planar region segmentation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
@@ -309,140 +307,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          }
          node.resetRegionId();
          node.updateNormalChildren();
-      }
-   }
-
-   private OcTreeKeyList getCachedNeighborKeyOffsets(double searchRadius)
-   {
-      OcTreeKeyList cachedNeighborOffsets = neighborOffsetsCached.get(searchRadius);
-      if (cachedNeighborOffsets == null)
-      {
-         cachedNeighborOffsets = new OcTreeKeyList();
-         neighborOffsetsCached.put(searchRadius, cachedNeighborOffsets);
-         OcTreeKeyTools.computeNeighborKeyOffsets(treeDepth, resolution, treeDepth, searchRadius, cachedNeighborOffsets);
-      }
-      return cachedNeighborOffsets;
-   }
-
-   private void updatePlanarRegionSegmentation(Point3d lastSensorOrigin)
-   {
-      double dotThreshold = Math.cos(planarRegionSegmentationParameters.getMaxAngleFromPlane());
-      float minNormalQuality = (float) planarRegionSegmentationParameters.getMinNormalQuality();
-      double searchRadius = planarRegionSegmentationParameters.getSearchRadius();
-      double maxDistanceFromPlane = planarRegionSegmentationParameters.getMaxDistanceFromPlane();
-
-      Vector3d towardsSensor = new Vector3d();
-      Vector3d nodeNormal = new Vector3d();
-      Point3d nodeHitLocation = new Point3d();
-
-      Random random = new Random(45561L);
-      planarRegions.clear();
-
-      for (OcTreeKey nodeKey : keyList)
-      {
-         NormalOcTreeNode node = keyToNodeMap.get(nodeKey);
-
-         if (!isNodeOccupied(node) || node.isPartOfRegion() || !node.isNormalSet())
-            continue;
-         if (node.getNormalAverageDeviation() > minNormalQuality)
-            continue;
-
-         int regionId = random.nextInt(Integer.MAX_VALUE);
-         PlanarRegion planarRegion = new PlanarRegion(regionId);
-         planarRegion.addNode(node);
-         node.getHitLocation(nodeHitLocation);
-         node.getNormal(nodeNormal);
-         towardsSensor.sub(lastSensorOrigin, nodeHitLocation);
-
-         node.setHasBeenCandidateForRegion(planarRegion.getId());
-
-         growPlanarRegionIteratively(planarRegion, node, searchRadius, maxDistanceFromPlane, dotThreshold);
-
-         planarRegions.add(planarRegion);
-      }
-
-      if (root != null)
-         updateInnerRegionIdsRecursive(root, 0);
-   }
-
-   private final Vector3d normalCandidateToCurrentRegion = new Vector3d();
-   private final Point3d hitLocationCandidateToCurrentRegion = new Point3d();
-   private final ArrayDeque<NormalOcTreeNode> nodesToExplore = new ArrayDeque<>();
-   private final OcTreeKey neighborKey = new OcTreeKey();
-
-   private final NeighborActionRule<NormalOcTreeNode> extendSearchRule = new NeighborActionRule<NormalOcTreeNode>()
-   {
-      @Override
-      public void doActionOnNeighbor(NormalOcTreeNode neighborNode)
-      {
-         if (neighborNode.getHasBeenCandidateForRegion() == currentPlanarRegionId || neighborNode.isPartOfRegion())
-            return;
-         if (!neighborNode.isNormalSet() || !neighborNode.isHitLocationSet())
-            return;
-         neighborNode.setHasBeenCandidateForRegion(currentPlanarRegionId);
-         nodesToExplore.add(neighborNode);
-      }
-   };
-
-   private int currentPlanarRegionId;
-
-   private void growPlanarRegionIteratively(PlanarRegion planarRegion, NormalOcTreeNode node, double searchRadius, double maxMistanceFromPlane,
-         double dotThreshold)
-   {
-      nodesToExplore.clear();
-      OcTreeKey currentKey = new OcTreeKey();
-      node.getKey(currentKey);
-
-      OcTreeKeyList cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(searchRadius);
-
-      currentPlanarRegionId = planarRegion.getId();
-      if (USE_RADIUS_NEIGHBORS_FOR_SEGMENTATION)
-      {
-         OcTreeNearestNeighborTools.findRadiusNeighbors(root, node, searchRadius, extendSearchRule);
-      }
-      else
-      {
-         extendSearch(currentKey, cachedNeighborKeyOffsets, currentPlanarRegionId);
-      }
-
-      while (!nodesToExplore.isEmpty())
-      {
-         NormalOcTreeNode currentNode = nodesToExplore.poll(); //keyToNodeMap.get(currentKey.hashCode());
-         currentNode.getKey(currentKey);
-         currentNode.getNormal(normalCandidateToCurrentRegion);
-         currentNode.getHitLocation(hitLocationCandidateToCurrentRegion);
-
-         double dot = planarRegion.dot(normalCandidateToCurrentRegion);
-         if (planarRegion.absoluteOrthogonalDistance(hitLocationCandidateToCurrentRegion) < maxMistanceFromPlane && Math.abs(dot) > dotThreshold)
-         {
-            planarRegion.addNode(currentNode);
-
-            if (USE_RADIUS_NEIGHBORS_FOR_SEGMENTATION)
-            {
-               OcTreeNearestNeighborTools.findRadiusNeighbors(root, currentNode, searchRadius, extendSearchRule);
-            }
-            else
-            {
-               extendSearch(currentKey, cachedNeighborKeyOffsets, currentPlanarRegionId);
-            }
-         }
-      }
-   }
-
-   private void extendSearch(OcTreeKeyReadOnly nodeKey, OcTreeKeyList cachedNeighborKeyOffsets, int planarRegionId)
-   {
-      for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
-      {
-         neighborKey.add(nodeKey, cachedNeighborKeyOffsets.get(i));
-         NormalOcTreeNode neighborNode = keyToNodeMap.get(neighborKey);
-         if (neighborNode == null || !isNodeOccupied(neighborNode))
-            continue;
-         if (neighborNode.getHasBeenCandidateForRegion() == planarRegionId || neighborNode.isPartOfRegion())
-            continue;
-         if (!neighborNode.isNormalSet() || !neighborNode.isHitLocationSet())
-            continue;
-         neighborNode.setHasBeenCandidateForRegion(planarRegionId);
-         nodesToExplore.add(neighborNode);
       }
    }
 
