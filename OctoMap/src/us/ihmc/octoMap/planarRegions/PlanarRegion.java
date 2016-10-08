@@ -31,6 +31,7 @@ public class PlanarRegion
    public void addNode(NormalOcTreeNode node)
    {
       updateNormalAndOriginOnly(node);
+      node.setRegionId(id);
       nodes.add(node);
    }
 
@@ -65,7 +66,7 @@ public class PlanarRegion
    {
       temporaryVector.set(point);
       temporaryVector.sub(this.point);
-      return temporaryVector.dot(this.normal);
+      return temporaryVector.dot(normal);
    }
 
    public double absoluteOrthogonalDistance(Point3d point)
