@@ -28,7 +28,7 @@ public class PlanarRegion
       this.id = id;
    }
 
-   public void update(NormalOcTreeNode node)
+   public void addNode(NormalOcTreeNode node)
    {
       updateNormalAndOriginOnly(node);
       nodes.add(node);
@@ -36,7 +36,7 @@ public class PlanarRegion
 
    public void merge(PlanarRegion other)
    {
-      other.nodeStream().forEach(node -> update(node));
+      other.nodeStream().forEach(this::addNode);
    }
 
    public void recomputeNormalAndOrigin()

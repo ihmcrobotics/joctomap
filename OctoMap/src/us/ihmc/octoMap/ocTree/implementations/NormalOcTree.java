@@ -349,7 +349,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
          int regionId = random.nextInt(Integer.MAX_VALUE);
          PlanarRegion planarRegion = new PlanarRegion(regionId);
-         planarRegion.update(node);
+         planarRegion.addNode(node);
          node.getHitLocation(nodeHitLocation);
          node.getNormal(nodeNormal);
          towardsSensor.sub(lastSensorOrigin, nodeHitLocation);
@@ -416,7 +416,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          double dot = planarRegion.dot(normalCandidateToCurrentRegion);
          if (planarRegion.absoluteOrthogonalDistance(hitLocationCandidateToCurrentRegion) < maxMistanceFromPlane && Math.abs(dot) > dotThreshold)
          {
-            planarRegion.update(currentNode);
+            planarRegion.addNode(currentNode);
             currentNode.setRegionId(currentPlanarRegionId);
 
             if (USE_RADIUS_NEIGHBORS_FOR_SEGMENTATION)
