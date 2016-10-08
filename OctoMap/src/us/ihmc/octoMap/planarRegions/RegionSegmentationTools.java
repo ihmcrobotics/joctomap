@@ -190,6 +190,19 @@ public class RegionSegmentationTools
       double dotThreshold = Math.cos(parameters.getMaxAngleFromPlane());
       double maxDistanceFromPlane = parameters.getMaxDistanceFromPlane();
    
+      // TODO Try to switch to the following.
+//      for (PlanarRegion planarRegion : planarRegions)
+//      {
+//         List<NormalOcTreeNode> nodesToRemove = planarRegion.nodeStream()
+//                     // Let's not update nodes that are outside the bounding box as the OcTree should be frozen there.
+//                     .filter(node -> isNodeInBoundingBox(node, boundingBox))
+//                     // Group nodes by whether they are part of the region.
+//                     .collect(Collectors.groupingBy(node -> !isNodePartOfRegion(node, planarRegion, maxDistanceFromPlane, dotThreshold)))
+//                     .getOrDefault(true, Collections.emptyList());
+//
+//         planarRegion.removeNodesAndUpdate(nodesToRemove);
+//      }
+
       for (PlanarRegion planarRegion : planarRegions)
       {
          boolean removedAtLeastOneNode = false;
@@ -212,7 +225,7 @@ public class RegionSegmentationTools
          if (removedAtLeastOneNode)
             planarRegion.recomputeNormalAndOrigin();
       }
-   
+
       planarRegions.stream().forEach(region -> growPlanarRegion(root, region, boundingBox, parameters));
    }
 
