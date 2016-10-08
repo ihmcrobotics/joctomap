@@ -3,6 +3,7 @@ package us.ihmc.octoMap.planarRegions;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -28,6 +29,12 @@ public class PlanarRegion
       this.id = id;
    }
 
+   public PlanarRegion(int id, Collection<NormalOcTreeNode> nodes)
+   {
+      this(id);
+      addNodes(nodes);
+   }
+
    public void addNode(NormalOcTreeNode node)
    {
       updateNormalAndOriginOnly(node);
@@ -35,7 +42,12 @@ public class PlanarRegion
       nodes.add(node);
    }
 
-   public void merge(PlanarRegion other)
+   public void addNodes(Collection<NormalOcTreeNode> nodes)
+   {
+      nodes.stream().forEach(this::addNode);
+   }
+
+   public void addNodesFromOtherRegion(PlanarRegion other)
    {
       other.nodeStream().forEach(this::addNode);
    }
@@ -163,6 +175,13 @@ public class PlanarRegion
    {
       NormalOcTreeNode removedNode = nodes.remove(index);
       removedNode.resetRegionId();
+   }
+
+   public void removeNodesAndUpdate(Collection<NormalOcTreeNode> nodesToRemove)
+   {
+      nodesToRemove.stream().forEach(NormalOcTreeNode::resetRegionId);
+      if (nodes.removeAll(nodesToRemove))
+         recomputeNormalAndOrigin();
    }
 
    public int getNumberOfNodes()

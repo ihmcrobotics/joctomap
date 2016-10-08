@@ -32,7 +32,7 @@ public class RegionSegmentationTools
                     .collect(Collectors.groupingBy(other -> areRegionsMergeable(root, candidateForMergeOtherRegions, other, parameters)));
 
          // Merge all the mergeable regions onto the candidate.
-         mergeableAndNonMergeableGroups.getOrDefault(true, Collections.emptyList()).forEach(candidateForMergeOtherRegions::merge);
+         mergeableAndNonMergeableGroups.getOrDefault(true, Collections.emptyList()).forEach(candidateForMergeOtherRegions::addNodesFromOtherRegion);
          // All non mergeable regions, used for the next iteration.
          inputRegions = mergeableAndNonMergeableGroups.getOrDefault(false, Collections.emptyList());
          // We're done with candidate, put it in the output list.
