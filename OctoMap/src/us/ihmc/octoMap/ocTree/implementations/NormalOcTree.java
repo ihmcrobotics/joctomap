@@ -50,6 +50,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public static final boolean UPDATE_NODE_HIT_WITH_AVERAGE = true;
 
+   public static final boolean USE_REMANENT_REGIONS = true;
+
    // occupancy parameters of tree, stored in logodds:
    private final OccupancyParameters occupancyParameters = new OccupancyParameters();
    private final NormalEstimationParameters normalEstimationParameters = new NormalEstimationParameters();
@@ -149,13 +151,19 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             stopWatch.start();
          }
 
-         for (NormalOcTreeNode node : keyToNodeMap.values())
-         {
-            node.resetRegionId();
-            node.resetHasBeenCandidateForRegion();
-         }
+         leafNodes.stream().forEach(NormalOcTreeNode::resetHasBeenCandidateForRegion);
 
-         planarRegions = RegionSegmentationTools.searchNewPlanarRegions(root, boundingBox, planarRegionSegmentationParameters, random, leafNodes);
+         if (USE_REMANENT_REGIONS)
+         {
+            RegionSegmentationTools.updatePlanarRegions(root, boundingBox, planarRegionSegmentationParameters, planarRegions);
+            planarRegions.addAll(RegionSegmentationTools.searchNewPlanarRegions(root, boundingBox, planarRegionSegmentationParameters, random, leafNodes));
+            planarRegions = RegionSegmentationTools.mergePlanarRegionsIfPossible(root, planarRegions, planarRegionSegmentationParameters);
+         }
+         else
+         {
+            leafNodes.stream().forEach(NormalOcTreeNode::resetRegionId);
+            planarRegions = RegionSegmentationTools.searchNewPlanarRegions(root, boundingBox, planarRegionSegmentationParameters, random, leafNodes);
+         }
 
          if (root != null)
             updateInnerRegionIdsRecursive(root, 0);
