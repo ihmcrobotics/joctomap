@@ -73,6 +73,18 @@ public class PlanarRegion
       return Math.abs(orthogonalDistance(point));
    }
 
+   public double orhtogonalDistance(NormalOcTreeNode node)
+   {
+      temporaryVector.set(node.getHitLocationX(), node.getHitLocationY(), node.getHitLocationZ());
+      temporaryVector.sub(point);
+      return temporaryVector.dot(normal);
+   }
+
+   public double absoluteOrthogonalDistance(NormalOcTreeNode node)
+   {
+      return Math.abs(orhtogonalDistance(node));
+   }
+
    public double angle(Vector3d normal)
    {
       return this.normal.angle(normal);
@@ -101,6 +113,16 @@ public class PlanarRegion
    public double absoluteDot(PlanarRegion other)
    {
       return Math.abs(dot(other));
+   }
+
+   public double dotWithNodeNormal(NormalOcTreeNode node)
+   {
+      return normal.getX() * node.getNormalX() + normal.getY() * node.getNormalY() + normal.getZ() * node.getNormalZ();
+   }
+
+   public double absoluteDotWithNodeNormal(NormalOcTreeNode node)
+   {
+      return Math.abs(dotWithNodeNormal(node));
    }
 
    public Vector3d getNormal()
