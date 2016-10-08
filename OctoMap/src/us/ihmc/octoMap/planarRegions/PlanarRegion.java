@@ -4,8 +4,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.vecmath.Point3d;
@@ -24,6 +26,7 @@ public class PlanarRegion implements Iterable<NormalOcTreeNode>
    private final Vector3d temporaryVector = new Vector3d();
 
    private final List<NormalOcTreeNode> nodes = new ArrayList<>();
+   private final Set<NormalOcTreeNode> nodeSet = new HashSet<>();
 
    public PlanarRegion(int id)
    {
@@ -38,9 +41,12 @@ public class PlanarRegion implements Iterable<NormalOcTreeNode>
 
    public void addNode(NormalOcTreeNode node)
    {
-      updateNormalAndOriginOnly(node);
-      node.setRegionId(id);
-      nodes.add(node);
+      if (nodeSet.add(node))
+      {
+         updateNormalAndOriginOnly(node);
+         node.setRegionId(id);
+         nodes.add(node);
+      }
    }
 
    public void addNodes(Collection<NormalOcTreeNode> nodes)
@@ -57,7 +63,7 @@ public class PlanarRegion implements Iterable<NormalOcTreeNode>
    {
       point.clear();
       normal.clear();
-      nodes.stream().forEach(this::updateNormalAndOriginOnly);
+      nodeStream().forEach(this::updateNormalAndOriginOnly);
    }
 
    private void updateNormalAndOriginOnly(NormalOcTreeNode node)
@@ -172,24 +178,35 @@ public class PlanarRegion implements Iterable<NormalOcTreeNode>
       normal.clear();
    }
 
+   public boolean containsNode(NormalOcTreeNode node)
+   {
+      return nodeSet.contains(node);
+   }
+
    public void removeNode(int index)
    {
       NormalOcTreeNode removedNode = nodes.remove(index);
+      nodeSet.remove(removedNode);
       removedNode.resetRegionId();
    }
 
    public void removeNode(NormalOcTreeNode node)
    {
-      boolean existed = nodes.remove(node);
-      if (existed)
+      if (nodeSet.remove(node))
+      {
+         nodes.remove(node);
          node.resetRegionId();
+      }
    }
 
    public void removeNodesAndUpdate(Collection<NormalOcTreeNode> nodesToRemove)
    {
       nodesToRemove.stream().forEach(NormalOcTreeNode::resetRegionId);
-      if (nodes.removeAll(nodesToRemove))
+      if (nodeSet.removeAll(nodesToRemove))
+      {
+         nodes.removeAll(nodesToRemove);
          recomputeNormalAndOrigin();
+      }
    }
 
    public int getNumberOfNodes()

@@ -58,26 +58,27 @@ public class RegionSegmentationTools
          return false;
 
       double searchRadius = parameters.getSearchRadius();
-      int otherRegionId;
       PlanarRegion regionToNavigate;
+      PlanarRegion otherRegion;
+
       if (potentialRegionToMerge.getNumberOfNodes() < currentRegion.getNumberOfNodes())
       {
          regionToNavigate = potentialRegionToMerge;
-         otherRegionId = currentRegion.getId();
+         otherRegion = currentRegion;
       }
       else
       {
          regionToNavigate = currentRegion;
-         otherRegionId = potentialRegionToMerge.getId();
+         otherRegion = potentialRegionToMerge;
       }
 
       return regionToNavigate.nodeStream()
-                             .filter(node -> isNodeInOtherRegionNeighborhood(root, node, otherRegionId, searchRadius))
+                             .filter(node -> isNodeInOtherRegionNeighborhood(root, node, otherRegion, searchRadius))
                              .findFirst()
                              .isPresent();
    }
 
-   public static boolean isNodeInOtherRegionNeighborhood(NormalOcTreeNode root, NormalOcTreeNode nodeFromOneRegion, int otherRegionId, double searchRadius)
+   public static boolean isNodeInOtherRegionNeighborhood(NormalOcTreeNode root, NormalOcTreeNode nodeFromOneRegion, PlanarRegion otherRegion, double searchRadius)
    {
       if (!nodeFromOneRegion.isPartOfRegion())
          //throw new PlanarRegionSegmentationException("Problem Houston.");
@@ -91,7 +92,7 @@ public class RegionSegmentationTools
          @Override
          public void doActionOnNeighbor(NormalOcTreeNode node)
          {
-            if (node.getRegionId() == otherRegionId)
+            if (otherRegion.containsNode(node))
                foundNeighborFromOtherRegion.setTrue();
          }
 
