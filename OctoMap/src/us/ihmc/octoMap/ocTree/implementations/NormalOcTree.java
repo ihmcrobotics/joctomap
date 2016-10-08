@@ -76,8 +76,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private double alphaCenterUpdate = 0.1;
 
-   private final HashMap<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
    private final List<OcTreeKey> keyList = new ArrayList<>();
+   private final List<NormalOcTreeNode> leafNodes = new ArrayList<>();
+   private final HashMap<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
 
    public NormalOcTree(double resolution)
    {
@@ -115,6 +116,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       keyToNodeMap.clear();
       keyList.clear();
+      leafNodes.clear();
 
       for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
       {
@@ -122,6 +124,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          OcTreeKey key = new OcTreeKey(superNode.getKey());
          keyToNodeMap.put(key, node);
          keyList.add(key);
+         leafNodes.add(node);
       }
 
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
