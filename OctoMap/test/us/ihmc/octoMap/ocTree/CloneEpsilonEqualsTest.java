@@ -13,7 +13,7 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.ocTree.implementations.NormalOcTree;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.testTools.TestOcTree;
-import us.ihmc.octoMap.testTools.OctoMapRandomTools;
+import us.ihmc.octoMap.tools.OctoMapRandomTools;
 import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class CloneEpsilonEqualsTest

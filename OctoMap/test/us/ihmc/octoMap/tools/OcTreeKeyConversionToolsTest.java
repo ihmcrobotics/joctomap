@@ -13,7 +13,6 @@ import javax.vecmath.Vector3d;
 import org.junit.Test;
 
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.testTools.OctoMapRandomTools;
 
 public class OcTreeKeyConversionToolsTest
 {

@@ -15,7 +15,7 @@ import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
 import us.ihmc.octoMap.ocTree.implementations.OcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
-import us.ihmc.octoMap.testTools.OctoMapRandomTools;
+import us.ihmc.octoMap.tools.OctoMapRandomTools;
 import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class OcTreeTest

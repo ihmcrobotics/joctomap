@@ -9,7 +9,7 @@ import javax.vecmath.Point3d;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.junit.Test;
 
-import us.ihmc.octoMap.testTools.OctoMapRandomTools;
+import us.ihmc.octoMap.tools.OctoMapRandomTools;
 
 public class NormalOcTreeNodeTest
 {

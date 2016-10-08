@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.testTools;
+package us.ihmc.octoMap.tools;
 
 import java.util.Random;
 
