@@ -132,30 +132,9 @@ public class RegionSegmentationTools
 
    public static PlanarRegion createNewPlanarRegion(NormalOcTreeNode root, NormalOcTreeNode seedNode, int regionId, OcTreeBoundingBoxInterface boundingBox, PlanarRegionSegmentationParameters parameters)
    {
-      double dotThreshold = Math.cos(parameters.getMaxAngleFromPlane());
-      double searchRadius = parameters.getSearchRadius();
-      double maxDistanceFromPlane = parameters.getMaxDistanceFromPlane();
-   
       PlanarRegion planarRegion = new PlanarRegion(regionId);
       planarRegion.addNode(seedNode);
-   
-      ArrayDeque<NormalOcTreeNode> nodesToExplore = new ArrayDeque<>();
-      NeighborActionRule<NormalOcTreeNode> extendSearchRule = neighborNode -> addNodeToExplorationIfPossible(neighborNode, regionId, nodesToExplore);
-      OcTreeNearestNeighborTools.findRadiusNeighbors(root, seedNode, searchRadius, extendSearchRule);
-   
-      while (!nodesToExplore.isEmpty())
-      {
-         NormalOcTreeNode currentNode = nodesToExplore.poll();
-         if (!isNodeInBoundingBox(currentNode, boundingBox))
-            continue;
-   
-         if (isNodePartOfRegion(currentNode, planarRegion, maxDistanceFromPlane, dotThreshold))
-         {
-            planarRegion.addNode(currentNode);
-            OcTreeNearestNeighborTools.findRadiusNeighbors(root, currentNode, searchRadius, extendSearchRule);
-         }
-      }
-   
+      growPlanarRegion(root, planarRegion, boundingBox, parameters);
       return planarRegion;
    }
 
