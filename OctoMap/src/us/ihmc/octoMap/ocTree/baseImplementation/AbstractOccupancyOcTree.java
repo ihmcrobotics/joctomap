@@ -15,15 +15,15 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.key.OcTreeKeySet;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.rules.SetOccupancyRule;
-import us.ihmc.octoMap.ocTree.rules.UpdateOccupancyRule;
-import us.ihmc.octoMap.ocTree.rules.interfaces.CollidableRule;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.occupancy.OccupancyTools;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.ScanNode;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
+import us.ihmc.octoMap.rules.SetOccupancyRule;
+import us.ihmc.octoMap.rules.UpdateOccupancyRule;
+import us.ihmc.octoMap.rules.interfaces.CollidableRule;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 
 public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOcTreeBase<NODE>

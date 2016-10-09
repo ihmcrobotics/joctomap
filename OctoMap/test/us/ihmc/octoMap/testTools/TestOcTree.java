@@ -8,7 +8,7 @@ import javax.vecmath.Vector3d;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
-import us.ihmc.octoMap.ocTree.rules.interfaces.UpdateRule;
+import us.ihmc.octoMap.rules.interfaces.UpdateRule;
 
 public class TestOcTree extends AbstractOcTreeBase<TestOcTreeNode>
 {
