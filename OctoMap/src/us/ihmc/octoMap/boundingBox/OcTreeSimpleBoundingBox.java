@@ -199,16 +199,17 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
    }
 
    @Override
-   public boolean isInBoundingBox(OcTreeKeyReadOnly candidate)
+   public boolean isInBoundingBox(int k0, int k1, int k2)
    {
       if (minKeyDirtyBit || maxKeyDirtyBit)
          throw new RuntimeException("The bounding box keys are not up to date.");
 
-      for (int i = 0; i < 3; i++)
-      {
-         if (candidate.getKey(i) < minKey.getKey(i) || candidate.getKey(i) > maxKey.getKey(i))
-            return false;
-      }
+      if (k0 < minKey.getKey(0) || k0 > maxKey.getKey(0))
+         return false;
+      if (k1 < minKey.getKey(1) || k1 > maxKey.getKey(1))
+         return false;
+      if (k2 < minKey.getKey(2) || k2 > maxKey.getKey(2))
+         return false;
       return true;
    }
 
