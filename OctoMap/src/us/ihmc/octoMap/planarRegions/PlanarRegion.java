@@ -183,27 +183,20 @@ public class PlanarRegion implements Iterable<NormalOcTreeNode>
       return nodeSet.contains(node);
    }
 
-   public void removeNode(int index)
-   {
-      NormalOcTreeNode removedNode = nodes.remove(index);
-      nodeSet.remove(removedNode);
-      removedNode.resetRegionId();
-   }
-
-   public void removeNode(NormalOcTreeNode node)
-   {
-      if (nodeSet.remove(node))
-      {
-         nodes.remove(node);
-         node.resetRegionId();
-      }
-   }
-
    public void removeNodesAndUpdate(Collection<NormalOcTreeNode> nodesToRemove)
    {
-      nodesToRemove.stream().forEach(NormalOcTreeNode::resetRegionId);
-      if (nodeSet.removeAll(nodesToRemove))
+      boolean containsAtLeastOne = nodesToRemove.parallelStream()
+                                                .filter(nodeSet::contains)
+                                                .findFirst()
+                                                .isPresent();
+
+      if (containsAtLeastOne)
       {
+         nodesToRemove.parallelStream()
+                      // Remove node and filter based on if the nodeSet contained the node.
+                      .filter(nodeSet::remove)
+                      // For each node actually removed from the region, reset their region ID.
+                      .forEach(NormalOcTreeNode::resetRegionId);
          nodes.removeAll(nodesToRemove);
          recomputeNormalAndOrigin();
       }
