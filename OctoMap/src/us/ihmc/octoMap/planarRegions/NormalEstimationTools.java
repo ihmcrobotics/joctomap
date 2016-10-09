@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree.implementations;
+package us.ihmc.octoMap.planarRegions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools.NeighborActionRule;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;
 
-public final class NormalCalculator
+public final class NormalEstimationTools
 {
    public static void computeNodeNormalRansac(NormalOcTreeNode root, OcTreeKeyReadOnly key, double searchRadius, double maxDistanceFromPlane, int treeDepth)
    {
@@ -178,8 +178,8 @@ public final class NormalCalculator
          candidateNormalQuality /= candidateNumberOfPoints;
 
          boolean isSimplyBetter = candidateNumberOfPoints >= nodeNumberOfPoints && candidateNormalQuality <= nodeNormalQuality;
-         boolean hasLittleLessNodesButIsMuchBetter = candidateNumberOfPoints >= (int) (0.75 * nodeNumberOfPoints)
-               && candidateNormalQuality <= 0.5 * nodeNormalQuality;
+         boolean hasLittleLessNodesButIsMuchBetter = candidateNumberOfPoints >= (int) (0.5 * nodeNumberOfPoints)
+               && candidateNormalQuality <= 0.75 * nodeNormalQuality;
 
          if (isSimplyBetter || hasLittleLessNodesButIsMuchBetter)
          {

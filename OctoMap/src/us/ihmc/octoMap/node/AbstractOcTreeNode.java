@@ -16,7 +16,7 @@ import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 
 public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 {
-   private static boolean DEBUG_PROPERTIES = false;
+   private static final boolean DEBUG_PROPERTIES = false;
 
    protected N[] children;
    private int k0 = -1, k1 = -1, k2 = -1;
@@ -134,6 +134,19 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       if (!getClass().isInstance(newChild))
          throw new RuntimeException("Cannot add a child of a different type");
       children[childIndex] = newChild;
+   }
+
+   public final int getNumberOfNonNullChildren()
+   {
+      if (!hasAtLeastOneChild())
+         return 0;
+      int number = 0;
+      for (N child : children)
+      {
+         if (child != null)
+            number++;
+      }
+      return number;
    }
 
    public final N getChild(int childIndex)

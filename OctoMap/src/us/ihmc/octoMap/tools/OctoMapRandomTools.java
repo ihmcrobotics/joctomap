@@ -1,14 +1,18 @@
-package us.ihmc.octoMap.testTools;
+package us.ihmc.octoMap.tools;
 
 import java.util.Random;
 
+import javax.vecmath.Matrix3d;
+import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
+import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
+import us.ihmc.robotics.geometry.GeometryTools;
 
-public class TestRandomTools
+public class OctoMapRandomTools
 {
    public static double generateRandomDouble(Random random, double maxAbsolute)
    {
@@ -18,6 +22,14 @@ public class TestRandomTools
    public static double generateRandomDouble(Random random, double boundaryOne, double boundaryTwo)
    {
       return boundaryOne + random.nextDouble() * (boundaryTwo - boundaryOne);
+   }
+
+   public static Point2d generateRandomPoint2d(Random random, double maxAbsoluteX, double maxAbsoluteY)
+   {
+      double x = generateRandomDouble(random, -maxAbsoluteX, maxAbsoluteX);
+      double y = generateRandomDouble(random, -maxAbsoluteY, maxAbsoluteY);
+
+      return new Point2d(x, y);
    }
 
    public static Point3d generateRandomPoint3d(Random random, double maxAbsoluteX, double maxAbsoluteY, double maxAbsoluteZ)
@@ -52,7 +64,7 @@ public class TestRandomTools
    {
       PointCloud pointCloud = new PointCloud();
       for (int i = 0; i < pointCloudSize; i++)
-         pointCloud.add(TestRandomTools.generateRandomPoint3f(random, xRange, yRange, zRange));
+         pointCloud.add(OctoMapRandomTools.generateRandomPoint3f(random, xRange, yRange, zRange));
       return pointCloud;
    }
 
@@ -63,6 +75,33 @@ public class TestRandomTools
 
       for (int i = 0; i < sweepSize; i++)
          sweepCollection.addSweep(generateRandomPointCloud(random, xRange, yRange, zRange, pointCloudSize), sensorOrigin);
+      return sweepCollection;
+   }
+
+   public static SweepCollection createSingleSweepInPlane(Random random, double sensorDistanceFromPlane, Point3d center, Vector3d normal, double length, double width, int numberOfPoints)
+   {
+      SweepCollection sweepCollection = new SweepCollection();
+      normal.normalize();
+   
+      Matrix3d orientation = new Matrix3d();
+      orientation.set(GeometryTools.getRotationBasedOnNormal(normal));
+   
+      PointCloud pointCloud = new PointCloud();
+   
+      for (int i = 0; i < numberOfPoints; i++)
+      {
+         Point3d pointInPlane = generateRandomPoint3d(random, length, width, 0.0);
+         Point3d pointInWorld = new Point3d();
+         orientation.transform(pointInPlane, pointInWorld);
+         pointInWorld.add(center);
+         pointCloud.add(pointInWorld);
+      }
+   
+      Point3d sensorOrigin = new Point3d();
+      sensorOrigin.scaleAdd(sensorDistanceFromPlane, normal, center);
+   
+      sweepCollection.addSweep(pointCloud, sensorOrigin);
+      
       return sweepCollection;
    }
 }

@@ -18,12 +18,25 @@ public class VectorMean extends Vector3d
 
    public void update(Vector3d vector)
    {
-      meanX.increment(vector.getX());
-      meanY.increment(vector.getY());
-      meanZ.increment(vector.getZ());
+      update(vector.getX(), vector.getY(), vector.getZ());
+   }
+
+   public void update(double x, double y, double z)
+   {
+      meanX.increment(x);
+      meanY.increment(y);
+      meanZ.increment(z);
       setX(meanX.getResult());
       setY(meanY.getResult());
       setZ(meanZ.getResult());
+   }
+
+   public void clear()
+   {
+      meanX.clear();
+      meanY.clear();
+      meanZ.clear();
+      set(0.0, 0.0, 0.0);
    }
 
    public int getNumberOfSamples()

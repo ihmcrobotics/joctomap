@@ -22,10 +22,7 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    private int regionId = PlanarRegion.NO_REGION_ID;
    private int hasBeenCandidateForRegion = PlanarRegion.NO_REGION_ID;
 
-   private long n;
-   private float devX, nDevX;
-   private float devY, nDevY;
-   private float devZ, nDevZ;
+   private long numberOfHits;
 
    public NormalOcTreeNode()
    {
@@ -47,15 +44,7 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       hasBeenCandidateForRegion = other.hasBeenCandidateForRegion;
 
       if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
-      {
-         n = other.n;
-         devX = other.devX;
-         devY = other.devY;
-         devZ = other.devZ;
-         nDevX = other.nDevX;
-         nDevY = other.nDevY;
-         nDevZ = other.nDevZ;
-      }
+         numberOfHits = other.numberOfHits;
    }
 
    @Override
@@ -90,12 +79,7 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       hitLocationZ = Float.NaN;
 
       if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
-      {
-         n = 0;
-         devX = Float.NaN; nDevX = Float.NaN;
-         devY = Float.NaN; nDevY = Float.NaN;
-         devZ = Float.NaN; nDevZ = Float.NaN;
-      }
+         numberOfHits = 0;
    }
 
    public void resetRegionId()
@@ -216,25 +200,18 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    {
       if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
       {
-         if (n == 0)
+         if (numberOfHits == 0)
          {
             hitLocationX = 0.0f;
             hitLocationY = 0.0f;
             hitLocationZ = 0.0f;
          }
-         n++;
-         float n0 = n;
-         devX = xUpdate - hitLocationX;
-         nDevX = devX / n0;
-         hitLocationX += nDevX;
 
-         devY = yUpdate - hitLocationY;
-         nDevY = devY / n0;
-         hitLocationY += nDevY;
-
-         devZ = zUpdate - hitLocationZ;
-         nDevZ = devZ / n0;
-         hitLocationZ += nDevZ;
+         numberOfHits++;
+         float nInv = 1.0f / numberOfHits;
+         hitLocationX += (xUpdate - hitLocationX) * nInv;
+         hitLocationY += (yUpdate - hitLocationY) * nInv;
+         hitLocationZ += (zUpdate - hitLocationZ) * nInv;
       }
       else
       {
@@ -367,6 +344,21 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public double getHitLocationZ()
    {
       return hitLocationZ;
+   }
+
+   public double getNormalX()
+   {
+      return normalX;
+   }
+
+   public double getNormalY()
+   {
+      return normalY;
+   }
+
+   public double getNormalZ()
+   {
+      return normalZ;
    }
 
    @Override

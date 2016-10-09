@@ -38,6 +38,7 @@ public class NormalOcTreeMissUpdateRule implements UpdateRule<NormalOcTreeNode>,
    public void updateInnerNode(NormalOcTreeNode innerNodeToUpdate)
    {
       innerNodeToUpdate.updateOccupancyChildren();
+      innerNodeToUpdate.updateHitLocationChildren();
    }
 
    @Override
