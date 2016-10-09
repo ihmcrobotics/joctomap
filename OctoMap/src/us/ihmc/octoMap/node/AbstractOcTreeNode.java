@@ -136,6 +136,19 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       children[childIndex] = newChild;
    }
 
+   public final int getNumberOfNonNullChildren()
+   {
+      if (!hasAtLeastOneChild())
+         return 0;
+      int number = 0;
+      for (N child : children)
+      {
+         if (child != null)
+            number++;
+      }
+      return number;
+   }
+
    public final N getChild(int childIndex)
    {
       checkChildIndex(childIndex);
