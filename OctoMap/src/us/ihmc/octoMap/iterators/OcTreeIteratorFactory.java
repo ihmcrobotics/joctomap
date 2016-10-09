@@ -39,16 +39,21 @@ public class OcTreeIteratorFactory
 
    public static <NODE extends AbstractOcTreeNode<NODE>> IteratorSelectionRule<NODE> leavesInsideBoundingBoxOnly(OcTreeBoundingBoxInterface boundingBox)
    {
-      return (node, maxDetph) -> isLeaf(node, maxDetph) && (boundingBox == null || boundingBox.isInBoundingBox(node.getKey0(), node.getKey1(), node.getKey2()));
+      return (node, iteratorMaxDepth) -> isLeaf(node, iteratorMaxDepth) && isNodeInsideBoundingBox(boundingBox, node);
    }
    
    public static <NODE extends AbstractOcTreeNode<NODE>> IteratorSelectionRule<NODE> nodesInsideBoundingBoxOnly(OcTreeBoundingBoxInterface boundingBox)
    {
-      return (node, maxDetph) -> boundingBox == null || boundingBox.isInBoundingBox(node.getKey0(), node.getKey1(), node.getKey2());
+      return (node, iteratorMaxDepth) -> isNodeInsideBoundingBox(boundingBox, node);
    }
 
-   private static <NODE extends AbstractOcTreeNode<NODE>> boolean isLeaf(NODE node, int maxDepth)
+   private static <NODE extends AbstractOcTreeNode<NODE>> boolean isLeaf(NODE node, int iteratorMaxDepth)
    {
-      return node.getDepth() >= maxDepth || !node.hasAtLeastOneChild();
+      return node.getDepth() >= iteratorMaxDepth || !node.hasAtLeastOneChild();
+   }
+
+   private static <NODE extends AbstractOcTreeNode<NODE>> boolean isNodeInsideBoundingBox(OcTreeBoundingBoxInterface boundingBox, NODE node)
+   {
+      return boundingBox == null || boundingBox.isInBoundingBox(node.getKey0(), node.getKey1(), node.getKey2());
    }
 }

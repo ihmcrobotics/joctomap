@@ -4,5 +4,5 @@ import us.ihmc.octoMap.node.AbstractOcTreeNode;
 
 public interface IteratorSelectionRule<NODE extends AbstractOcTreeNode<NODE>>
 {
-   public boolean test(NODE superNode, int maxDepth);
+   public boolean test(NODE node, int iteratorMaxDepth);
 }
