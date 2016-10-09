@@ -34,16 +34,21 @@ public class OcTreeIteratorFactory
 
    public static <NODE extends AbstractOcTreeNode<NODE>> IteratorSelectionRule<NODE> leavesOnly()
    {
-      return OcTreeSuperNode::isLeaf;
+      return (node, maxDepth) -> isLeaf(node, maxDepth);
    }
 
    public static <NODE extends AbstractOcTreeNode<NODE>> IteratorSelectionRule<NODE> leavesInsideBoundingBoxOnly(OcTreeBoundingBoxInterface boundingBox)
    {
-      return superNode -> superNode.isLeaf() && (boundingBox == null || boundingBox.isInBoundingBox(superNode.getKey()));
+      return (node, maxDetph) -> isLeaf(node, maxDetph) && (boundingBox == null || boundingBox.isInBoundingBox(node.getKey0(), node.getKey1(), node.getKey2()));
    }
    
    public static <NODE extends AbstractOcTreeNode<NODE>> IteratorSelectionRule<NODE> nodesInsideBoundingBoxOnly(OcTreeBoundingBoxInterface boundingBox)
    {
-      return superNode -> boundingBox == null || boundingBox.isInBoundingBox(superNode.getKey());
+      return (node, maxDetph) -> boundingBox == null || boundingBox.isInBoundingBox(node.getKey0(), node.getKey1(), node.getKey2());
+   }
+
+   private static <NODE extends AbstractOcTreeNode<NODE>> boolean isLeaf(NODE node, int maxDepth)
+   {
+      return node.getDepth() >= maxDepth || !node.hasAtLeastOneChild();
    }
 }

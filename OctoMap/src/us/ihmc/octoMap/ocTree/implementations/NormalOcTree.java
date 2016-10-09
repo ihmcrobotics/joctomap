@@ -19,9 +19,8 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.math3.util.Precision;
 
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
-import us.ihmc.octoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.octoMap.iterators.OcTreeIterable;
-import us.ihmc.octoMap.iterators.OcTreeSuperNode;
+import us.ihmc.octoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
@@ -113,10 +112,10 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       keyList.clear();
       leafNodes.clear();
 
-      for (OcTreeSuperNode<NormalOcTreeNode> superNode : this)
+      for (NormalOcTreeNode node : this)
       {
-         NormalOcTreeNode node = superNode.getNode();
-         OcTreeKey key = new OcTreeKey(superNode.getKey());
+         OcTreeKey key = new OcTreeKey();
+         node.getKey(key);
          keyToNodeMap.put(key, node);
          keyList.add(key);
          leafNodes.add(node);
@@ -335,7 +334,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    }
 
    @Override
-   public Iterator<OcTreeSuperNode<NormalOcTreeNode>> iterator()
+   public Iterator<NormalOcTreeNode> iterator()
    {
       OcTreeIterable<NormalOcTreeNode> leafIteratable = OcTreeIteratorFactory.createLeafIteratable(root);
       leafIteratable.setRule(OcTreeIteratorFactory.leavesInsideBoundingBoxOnly(boundingBox));

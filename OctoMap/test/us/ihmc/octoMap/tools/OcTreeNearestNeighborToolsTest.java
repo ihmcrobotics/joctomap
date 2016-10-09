@@ -10,7 +10,6 @@ import javax.vecmath.Point3d;
 
 import org.junit.Test;
 
-import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
@@ -59,13 +58,16 @@ public class OcTreeNearestNeighborToolsTest
          List<TestOcTreeNode> expectedNeighbors = new ArrayList<>();
          OcTreeKeyList expectedNeighborKeys = new OcTreeKeyList();
 
-         for (OcTreeSuperNode<TestOcTreeNode> superNode : ocTree)
+         for (TestOcTreeNode node : ocTree)
          {
-            Point3d coordinate = superNode.getCoordinate();
+            Point3d coordinate = new Point3d();
+            node.getCoordinate(coordinate);
             if (coordinate.distance(randomQuery) < randomRadius)
             {
-               expectedNeighborKeys.add(superNode.getKey());
-               expectedNeighbors.add(superNode.getNode());
+               OcTreeKey nodeKey = new OcTreeKey();
+               node.getKey(nodeKey);
+               expectedNeighborKeys.add(nodeKey);
+               expectedNeighbors.add(node);
             }
          }
 
@@ -132,14 +134,17 @@ public class OcTreeNearestNeighborToolsTest
          OcTreeKeyReadOnly expectedNearestNeighborKey = null;
          double distanceFromQueryToNearestNeighbor = Double.POSITIVE_INFINITY;
 
-         for (OcTreeSuperNode<TestOcTreeNode> superNode : ocTree)
+         for (TestOcTreeNode node : ocTree)
          {
-            Point3d coordinate = superNode.getCoordinate();
+            Point3d coordinate = new Point3d();
+            node.getCoordinate(coordinate);
             double distance = coordinate.distance(randomQuery);
             if (distance < distanceFromQueryToNearestNeighbor)
             {
+               OcTreeKey nodeKey = new OcTreeKey();
+               node.getKey(nodeKey);
                distanceFromQueryToNearestNeighbor = distance;
-               expectedNearestNeighborKey = superNode.getKey();
+               expectedNearestNeighborKey = nodeKey;
             }
          }
 

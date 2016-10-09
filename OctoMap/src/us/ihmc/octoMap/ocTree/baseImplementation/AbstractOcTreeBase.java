@@ -14,7 +14,6 @@ import javax.vecmath.Vector3d;
 import org.apache.commons.lang3.mutable.MutableInt;
 
 import us.ihmc.octoMap.iterators.OcTreeIteratorFactory;
-import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
@@ -45,7 +44,7 @@ import us.ihmc.octoMap.tools.OctoMapTools;
  * \tparam NODE Node class to be used in tree (usually derived from
  *    OcTreeDataNode)
  */
-public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
+public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<NODE>
 {
    private static final boolean RECYCLE_NODES = false;
 
@@ -124,10 +123,10 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          return false;
 
       // traverse all nodes, check if structure the same
-      Iterator<OcTreeSuperNode<NODE>> thisIterator = OcTreeIteratorFactory.createIteratable(root).iterator();
-      Iterator<OcTreeSuperNode<NODE>> otherIterator = OcTreeIteratorFactory.createIteratable(other.root).iterator();
+      Iterator<NODE> thisIterator = OcTreeIteratorFactory.createIteratable(root).iterator();
+      Iterator<NODE> otherIterator = OcTreeIteratorFactory.createIteratable(other.root).iterator();
 
-      for (OcTreeSuperNode<NODE> thisNode = thisIterator.next(), otherNode = otherIterator.next(); thisIterator.hasNext(); thisNode = thisIterator.next(), otherNode = otherIterator.next())
+      for (NODE thisNode = thisIterator.next(), otherNode = otherIterator.next(); thisIterator.hasNext(); thisNode = thisIterator.next(), otherNode = otherIterator.next())
       {
          if (!otherIterator.hasNext()) // The other tree has less nodes
             return false;
@@ -667,7 +666,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    @Override
-   public Iterator<OcTreeSuperNode<NODE>> iterator()
+   public Iterator<NODE> iterator()
    {
       return OcTreeIteratorFactory.createLeafIteratable(root).iterator();
    }
@@ -798,7 +797,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          minCoordinate[i] = Double.POSITIVE_INFINITY;
       }
 
-      for (OcTreeSuperNode<NODE> node : this)
+      for (NODE node : this)
       {
          double size = node.getSize();
          double halfSize = size / 2.0;

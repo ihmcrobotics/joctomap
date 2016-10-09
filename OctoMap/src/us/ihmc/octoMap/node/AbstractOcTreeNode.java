@@ -16,12 +16,13 @@ import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 
 public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 {
-   private static final boolean DEBUG_PROPERTIES = false;
+   private static final boolean DEBUG_PROPERTIES = true;
 
    protected N[] children;
    private int k0 = -1, k1 = -1, k2 = -1;
    private float x = Float.NaN, y = Float.NaN, z = Float.NaN;
    private float size = Float.NaN;
+   private int depth;
 
    public AbstractOcTreeNode()
    {
@@ -40,6 +41,7 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       y = Float.NaN;
       z = Float.NaN;
       size = Float.NaN;
+      depth = -1;
    }
 
    public final void setProperties(OcTreeKeyReadOnly key, int depth, double resolution, int treeDepth)
@@ -56,6 +58,7 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       this.y = (float) OcTreeKeyConversionTools.keyToCoordinate(k1, depth, resolution, treeDepth);
       this.z = (float) OcTreeKeyConversionTools.keyToCoordinate(k2, depth, resolution, treeDepth);
       this.size = (float) OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
+      this.depth = depth;
    }
 
    public final void getKey(OcTreeKey keyToPack)
@@ -232,6 +235,11 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
          if (Float.isNaN(size))
             throw new RuntimeException("Size has not been set");
       return size;
+   }
+
+   public final int getDepth()
+   {
+      return depth;
    }
 
    public final boolean epsilonEquals(N other, double epsilon)

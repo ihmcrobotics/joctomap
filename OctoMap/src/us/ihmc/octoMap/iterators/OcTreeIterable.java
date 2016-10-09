@@ -4,10 +4,9 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
-import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.rules.interfaces.IteratorSelectionRule;
 
-public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
+public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<NODE>
 {
    private NODE root;
    private int maxDepth;
@@ -29,18 +28,18 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
    }
 
    @Override
-   public Iterator<OcTreeSuperNode<NODE>> iterator()
+   public Iterator<NODE> iterator()
    {
       return new OcTreeIterator<>(root, maxDepth, rule);
    }
 
-   public static class OcTreeIterator<NODE extends AbstractOcTreeNode<NODE>> implements Iterator<OcTreeSuperNode<NODE>>
+   public static class OcTreeIterator<NODE extends AbstractOcTreeNode<NODE>> implements Iterator<NODE>
    {
       private final NODE root;
       private final IteratorSelectionRule<NODE> rule;
 
       /// Internal recursion stack.
-      private final ArrayDeque<OcTreeSuperNode<NODE>> stack = new ArrayDeque<>();
+      private final ArrayDeque<NODE> stack = new ArrayDeque<>();
 
       private int maxDepth; ///< Maximum depth for depth-limited queries
 
@@ -60,9 +59,7 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
 
          if (root != null)
          { // tree is not empty
-            OcTreeSuperNode<NODE> superNode = new OcTreeSuperNode<>();
-            superNode.setAsRootSuperNode(root, this.maxDepth);
-            stack.add(superNode);
+            stack.add(root);
          }
       }
 
@@ -74,7 +71,7 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
             this.maxDepth = maxDepth;
       }
 
-      private OcTreeSuperNode<NODE> next = null;
+      private NODE next = null;
       private boolean hasNextHasBeenCalled = false;
 
       @Override
@@ -95,7 +92,7 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
       }
 
       @Override
-      public OcTreeSuperNode<NODE> next()
+      public NODE next()
       {
          if (!hasNextHasBeenCalled)
          {
@@ -104,12 +101,12 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
          }
 
          hasNextHasBeenCalled = false;
-         OcTreeSuperNode<NODE> ret = next;
+         NODE ret = next;
          next = null;
          return ret;
       }
 
-      private OcTreeSuperNode<NODE> searchNextNodePassingRule()
+      private NODE searchNextNodePassingRule()
       {
          if (stack.isEmpty())
             return null;
@@ -119,31 +116,28 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
 
          while (!stack.isEmpty())
          {
-            OcTreeSuperNode<NODE> currentNode = searchNextNode();
-            if (currentNode == null || rule.test(currentNode))
+            NODE currentNode = searchNextNode();
+            if (currentNode == null || rule.test(currentNode, maxDepth))
                return currentNode;
          }
          return null;
       }
 
-      private OcTreeSuperNode<NODE> searchNextNode()
+      private NODE searchNextNode()
       {
          if (stack.isEmpty())
             return null;
 
-         OcTreeSuperNode<NODE> currentNode = stack.poll();
+         NODE currentNode = stack.poll();
 
-         if (currentNode.getDepth() < maxDepth)
+         if (currentNode.hasArrayForChildren() && currentNode.getDepth() < maxDepth)
          {
             // push on stack in reverse order
             for (int i = 7; i >= 0; i--)
             {
-               if (OcTreeNodeTools.nodeChildExists(currentNode.getNode(), i))
-               {
-                  OcTreeSuperNode<NODE> newNode = new OcTreeSuperNode<>();
-                  newNode.setAsChildSuperNode(currentNode, i);
-                  stack.add(newNode);
-               }
+               NODE child = currentNode.getChild(i);
+               if (child != null)
+                  stack.add(child);
             }
          }
 
