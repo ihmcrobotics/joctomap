@@ -2,39 +2,34 @@ package us.ihmc.octoMap.iterators;
 
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
-import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.rules.interfaces.IteratorSelectionRule;
 
 public class OcTreeIteratorFactory
 {
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createLeafIteratable(AbstractOcTreeBase<NODE> tree)
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createLeafIteratable(NODE root)
    {
-      return createLeafIteratable(tree, tree.getTreeDepth(), false);
+      OcTreeIterable<NODE> ocTreeIterable = new OcTreeIterable<>(root);
+      ocTreeIterable.setRule(leavesOnly());
+      return ocTreeIterable;
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createLeafIteratable(AbstractOcTreeBase<NODE> tree, int maxDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createLeafIteratable(NODE root, int maxDepth)
    {
-      return createLeafIteratable(tree, maxDepth, false);
+      OcTreeIterable<NODE> ocTreeIterable = createLeafIteratable(root);
+      ocTreeIterable.setMaxDepth(maxDepth);
+      return ocTreeIterable;
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createLeafIteratable(AbstractOcTreeBase<NODE> tree, int maxDepth, boolean recycleIterator)
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createIteratable(NODE root)
    {
-      return new OcTreeIterable<>(tree, maxDepth, leavesOnly(), recycleIterator);
+      return new OcTreeIterable<>(root);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createIteratable(AbstractOcTreeBase<NODE> tree)
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createIteratable(NODE root, int maxDepth)
    {
-      return createIteratable(tree, tree.getTreeDepth(), false);
-   }
-
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createIteratable(AbstractOcTreeBase<NODE> tree, int maxDepth)
-   {
-      return createIteratable(tree, maxDepth, false);
-   }
-
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createIteratable(AbstractOcTreeBase<NODE> tree, int maxDepth, boolean recycleIterator)
-   {
-      return new OcTreeIterable<>(tree, maxDepth, null, recycleIterator);
+      OcTreeIterable<NODE> ocTreeIterable = new OcTreeIterable<NODE>(root);
+      ocTreeIterable.setMaxDepth(maxDepth);
+      return ocTreeIterable;
    }
 
    public static <NODE extends AbstractOcTreeNode<NODE>> IteratorSelectionRule<NODE> leavesOnly()

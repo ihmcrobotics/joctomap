@@ -124,8 +124,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          return false;
 
       // traverse all nodes, check if structure the same
-      Iterator<OcTreeSuperNode<NODE>> thisIterator = treeIterator();
-      Iterator<OcTreeSuperNode<NODE>> otherIterator = other.treeIterator();
+      Iterator<OcTreeSuperNode<NODE>> thisIterator = OcTreeIteratorFactory.createIteratable(root).iterator();
+      Iterator<OcTreeSuperNode<NODE>> otherIterator = OcTreeIteratorFactory.createIteratable(other.root).iterator();
 
       for (OcTreeSuperNode<NODE> thisNode = thisIterator.next(), otherNode = otherIterator.next(); thisIterator.hasNext(); thisNode = thisIterator.next(), otherNode = otherIterator.next())
       {
@@ -669,27 +669,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    @Override
    public Iterator<OcTreeSuperNode<NODE>> iterator()
    {
-      return leafIterable().iterator();
-   }
-
-   public Iterator<OcTreeSuperNode<NODE>> treeIterator()
-   {
-      return treeIterable().iterator();
-   }
-
-   public Iterable<OcTreeSuperNode<NODE>> leafIterable()
-   {
-      return OcTreeIteratorFactory.createLeafIteratable(this);
-   }
-
-   public Iterable<OcTreeSuperNode<NODE>> treeIterable()
-   {
-      return OcTreeIteratorFactory.createIteratable(this);
-   }
-
-   public Iterable<OcTreeSuperNode<NODE>> treeIterable(int maxDepth)
-   {
-      return OcTreeIteratorFactory.createIteratable(this, maxDepth);
+      return OcTreeIteratorFactory.createLeafIteratable(root).iterator();
    }
 
    //

@@ -59,7 +59,7 @@ public class OcTreeNearestNeighborToolsTest
          List<TestOcTreeNode> expectedNeighbors = new ArrayList<>();
          OcTreeKeyList expectedNeighborKeys = new OcTreeKeyList();
 
-         for (OcTreeSuperNode<TestOcTreeNode> superNode : ocTree.leafIterable())
+         for (OcTreeSuperNode<TestOcTreeNode> superNode : ocTree)
          {
             Point3d coordinate = superNode.getCoordinate();
             if (coordinate.distance(randomQuery) < randomRadius)
@@ -132,7 +132,7 @@ public class OcTreeNearestNeighborToolsTest
          OcTreeKeyReadOnly expectedNearestNeighborKey = null;
          double distanceFromQueryToNearestNeighbor = Double.POSITIVE_INFINITY;
 
-         for (OcTreeSuperNode<TestOcTreeNode> superNode : ocTree.leafIterable())
+         for (OcTreeSuperNode<TestOcTreeNode> superNode : ocTree)
          {
             Point3d coordinate = superNode.getCoordinate();
             double distance = coordinate.distance(randomQuery);

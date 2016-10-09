@@ -98,7 +98,7 @@ public class ChangedKeysTest
       }
 
       // iterate through the entire tree
-      for (OcTreeSuperNode<OccupancyOcTreeNode> node : tree.treeIterable())
+      for (OcTreeSuperNode<OccupancyOcTreeNode> node : tree)
       {
          if (node.isLeaf())
          {

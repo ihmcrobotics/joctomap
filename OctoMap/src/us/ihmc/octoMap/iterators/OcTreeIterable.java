@@ -5,101 +5,73 @@ import java.util.Iterator;
 
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
-import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.rules.interfaces.IteratorSelectionRule;
-import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
-   private final AbstractOcTreeBase<NODE> tree;
-   private final OcTreeIterator<NODE> iterator;
+   private NODE root;
    private int maxDepth;
    private IteratorSelectionRule<NODE> rule;
 
-   OcTreeIterable(AbstractOcTreeBase<NODE> tree, int maxDepth, IteratorSelectionRule<NODE> rule, boolean recycleIterator)
+   OcTreeIterable(NODE root)
    {
-      this.tree = tree;
-      this.maxDepth = maxDepth;
-      this.rule = rule;
-      if (recycleIterator)
-         iterator = new OcTreeIterator<>(tree, maxDepth, rule);
-      else
-         iterator = null;
-   }
-
-   @Override
-   public Iterator<OcTreeSuperNode<NODE>> iterator()
-   {
-      if (iterator == null)
-      {
-         return new OcTreeIterator<>(tree, maxDepth, rule);
-      }
-      else
-      {
-         iterator.reset();
-         return iterator;
-      }
+      this.root = root;
    }
 
    public void setMaxDepth(int maxDepth)
    {
       this.maxDepth = maxDepth;
-      if (iterator != null)
-         iterator.setMaxDepth(maxDepth);
    }
 
    public void setRule(IteratorSelectionRule<NODE> rule)
    {
       this.rule = rule;
-      if (iterator != null)
-         iterator.setRule(rule);
+   }
+
+   @Override
+   public Iterator<OcTreeSuperNode<NODE>> iterator()
+   {
+      return new OcTreeIterator<>(root, maxDepth, rule);
    }
 
    public static class OcTreeIterator<NODE extends AbstractOcTreeNode<NODE>> implements Iterator<OcTreeSuperNode<NODE>>
    {
-      private IteratorSelectionRule<NODE> rule;
+      private final NODE root;
+      private final IteratorSelectionRule<NODE> rule;
 
       /// Internal recursion stack.
       private final ArrayDeque<OcTreeSuperNode<NODE>> stack = new ArrayDeque<>();
 
-      private AbstractOcTreeBase<NODE> tree;
       private int maxDepth; ///< Maximum depth for depth-limited queries
 
-      private OcTreeIterator(AbstractOcTreeBase<NODE> tree, int maxDepth, IteratorSelectionRule<NODE> rule)
+      private OcTreeIterator(NODE root, int maxDepth, IteratorSelectionRule<NODE> rule)
       {
-         this.tree = tree;
+         this.root = root;
          this.rule = rule;
-         if (tree == null)
-            throw new RuntimeException("Creating an iterator with no tree.");
 
          setMaxDepth(maxDepth);
-         reset();
+         initialize();
       }
 
-      public void reset()
+      private void initialize()
       {
          hasNextHasBeenCalled = false;
          stack.clear();
 
-         if (tree.getRoot() != null)
+         if (root != null)
          { // tree is not empty
             OcTreeSuperNode<NODE> superNode = new OcTreeSuperNode<>();
-            superNode.setAsRootSuperNode(tree.getRoot(), this.maxDepth);
+            superNode.setAsRootSuperNode(root, this.maxDepth);
             stack.add(superNode);
          }
       }
 
-      public void setMaxDepth(int maxDepth)
+      private void setMaxDepth(int maxDepth)
       {
          if (maxDepth == 0)
-            this.maxDepth = tree.getTreeDepth();
+            this.maxDepth = Integer.MAX_VALUE;
          else
             this.maxDepth = maxDepth;
-      }
-
-      public void setRule(IteratorSelectionRule<NODE> newRule)
-      {
-         rule = newRule;
       }
 
       private OcTreeSuperNode<NODE> next = null;
@@ -171,7 +143,6 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
                   OcTreeSuperNode<NODE> newNode = new OcTreeSuperNode<>();
                   newNode.setAsChildSuperNode(currentNode, i);
                   stack.add(newNode);
-                  OctoMapTools.checkIfDepthValid(newNode.getDepth(), maxDepth);
                }
             }
          }

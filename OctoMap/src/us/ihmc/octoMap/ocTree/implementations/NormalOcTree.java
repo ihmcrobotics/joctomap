@@ -5,6 +5,7 @@ import static us.ihmc.robotics.geometry.GeometryTools.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -41,7 +42,7 @@ import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
-   private static final boolean REPORT_TIME = false;
+   private static final boolean REPORT_TIME = true;
    private final StopWatch stopWatch = REPORT_TIME ? new StopWatch() : null;
 
    private static final boolean COMPUTE_NORMALS_IN_PARALLEL = true;
@@ -68,7 +69,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private List<PlanarRegion> planarRegions = new ArrayList<>();
 
-   private final OcTreeIterable<NormalOcTreeNode> ocTreeIterable;
    private final Random random = new Random(45561L);
 
    private double alphaCenterUpdate = 0.1;
@@ -80,13 +80,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public NormalOcTree(double resolution)
    {
       super(resolution);
-      ocTreeIterable = OcTreeIteratorFactory.createLeafIteratable(this, treeDepth, true);
    }
 
    public NormalOcTree(NormalOcTree other)
    {
       super(other);
-      ocTreeIterable = OcTreeIteratorFactory.createLeafIteratable(this, treeDepth, true);
    }
 
    public void update(SweepCollection sweepCollection)
@@ -115,7 +113,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       keyList.clear();
       leafNodes.clear();
 
-      for (OcTreeSuperNode<NormalOcTreeNode> superNode : ocTreeIterable)
+      for (OcTreeSuperNode<NormalOcTreeNode> superNode : this)
       {
          NormalOcTreeNode node = superNode.getNode();
          OcTreeKey key = new OcTreeKey(superNode.getKey());
@@ -336,10 +334,17 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
    }
 
+   @Override
+   public Iterator<OcTreeSuperNode<NormalOcTreeNode>> iterator()
+   {
+      OcTreeIterable<NormalOcTreeNode> leafIteratable = OcTreeIteratorFactory.createLeafIteratable(root);
+      leafIteratable.setRule(OcTreeIteratorFactory.leavesInsideBoundingBoxOnly(boundingBox));
+      return leafIteratable.iterator();
+   }
+
    public void disableBoundingBox()
    {
       boundingBox = null;
-      ocTreeIterable.setRule(OcTreeIteratorFactory.leavesOnly());
    }
 
    /**
@@ -350,7 +355,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public void setBoundingBox(OcTreeBoundingBoxInterface boundingBox)
    {
       this.boundingBox = boundingBox;
-      ocTreeIterable.setRule(OcTreeIteratorFactory.leavesInsideBoundingBoxOnly(boundingBox));
    }
 
    public OcTreeBoundingBoxInterface getBoundingBox()

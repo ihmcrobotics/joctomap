@@ -133,7 +133,7 @@ public class OcTreeTest
          int numberOfDuplicates = 0;
          HashSet<OccupancyOcTreeNode> foundNodes = new HashSet<>();
 
-         for (OcTreeSuperNode<OccupancyOcTreeNode> superNode : ocTree.treeIterable())
+         for (OcTreeSuperNode<OccupancyOcTreeNode> superNode : ocTree)
          {
             if (foundNodes.contains(superNode.getNode()))
                numberOfDuplicates++;
