@@ -167,11 +167,11 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       }
 
       // insert data into tree  -----------------------
-      for (int i = 0; i < occupiedCells.size(); i++)
-         updateNode(occupiedCells.get(i), true);
+      for (OcTreeKeyReadOnly key : occupiedCells)
+         updateNode(key, true);
 
-      for (int i = 0; i < freeCells.size(); i++)
-         updateNode(freeCells.get(i), false);
+      for (OcTreeKeyReadOnly key : freeCells)
+         updateNode(key, false);
    }
 
    /**
@@ -197,11 +197,11 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
 
       // insert data into tree  -----------------------
-      for (int i = 0; i < occupiedCells.size(); i++)
-         updateNode(occupiedCells.get(i), true);
+      for (OcTreeKeyReadOnly key : occupiedCells)
+         updateNode(key, true);
 
-      for (int i = 0; i < freeCells.size(); i++)
-         updateNode(freeCells.get(i), false);
+      for (OcTreeKeyReadOnly key : freeCells)
+         updateNode(key, false);
    }
 
    /**

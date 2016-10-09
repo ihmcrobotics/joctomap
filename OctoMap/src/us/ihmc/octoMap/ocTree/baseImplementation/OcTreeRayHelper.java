@@ -150,9 +150,8 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       } // end for all points, end of parallel OMP loop
 
       // prefer occupied cells over free ones (and make sets disjunct)
-      for (int i = 0; i < unfilteredFreeCells.size(); i++)
+      for (OcTreeKeyReadOnly possibleFreeCell : unfilteredFreeCells)
       {
-         OcTreeKeyReadOnly possibleFreeCell = unfilteredFreeCells.get(i);
          if (!occupiedCells.contains(possibleFreeCell))
             freeCells.add(possibleFreeCell);
       }
