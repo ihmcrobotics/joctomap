@@ -13,19 +13,15 @@ import javax.vecmath.Vector3d;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 
-import us.ihmc.octoMap.boundingBox.OcTreeSimpleBoundingBox;
-import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
-import us.ihmc.octoMap.iterators.LeafIterable;
-import us.ihmc.octoMap.iterators.OcTreeIterable;
-import us.ihmc.octoMap.iterators.OcTreeSuperNode;
+import us.ihmc.octoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.NodeBuilder;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
-import us.ihmc.octoMap.ocTree.rules.interfaces.DeletionRule;
-import us.ihmc.octoMap.ocTree.rules.interfaces.EarlyAbortRule;
-import us.ihmc.octoMap.ocTree.rules.interfaces.UpdateRule;
+import us.ihmc.octoMap.rules.interfaces.DeletionRule;
+import us.ihmc.octoMap.rules.interfaces.EarlyAbortRule;
+import us.ihmc.octoMap.rules.interfaces.UpdateRule;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;
@@ -48,7 +44,7 @@ import us.ihmc.octoMap.tools.OctoMapTools;
  * \tparam NODE Node class to be used in tree (usually derived from
  *    OcTreeDataNode)
  */
-public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
+public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<NODE>
 {
    private static final boolean RECYCLE_NODES = false;
 
@@ -127,10 +123,10 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          return false;
 
       // traverse all nodes, check if structure the same
-      Iterator<OcTreeSuperNode<NODE>> thisIterator = treeIterator();
-      Iterator<OcTreeSuperNode<NODE>> otherIterator = other.treeIterator();
+      Iterator<NODE> thisIterator = OcTreeIteratorFactory.createIteratable(root).iterator();
+      Iterator<NODE> otherIterator = OcTreeIteratorFactory.createIteratable(other.root).iterator();
 
-      for (OcTreeSuperNode<NODE> thisNode = thisIterator.next(), otherNode = otherIterator.next(); thisIterator.hasNext(); thisNode = thisIterator.next(), otherNode = otherIterator.next())
+      for (NODE thisNode = thisIterator.next(), otherNode = otherIterator.next(); thisIterator.hasNext(); thisNode = thisIterator.next(), otherNode = otherIterator.next())
       {
          if (!otherIterator.hasNext()) // The other tree has less nodes
             return false;
@@ -670,43 +666,9 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    @Override
-   public Iterator<OcTreeSuperNode<NODE>> iterator()
+   public Iterator<NODE> iterator()
    {
-      return leafIterable().iterator();
-   }
-
-   public Iterable<OcTreeSuperNode<NODE>> leafIterable()
-   {
-      return new LeafIterable<>(this);
-   }
-
-   public Iterable<OcTreeSuperNode<NODE>> leafIterable(int maxDepth)
-   {
-      return new LeafIterable<>(this, maxDepth);
-   }
-
-   public Iterator<OcTreeSuperNode<NODE>> treeIterator()
-   {
-      return treeIterable().iterator();
-   }
-
-   public Iterable<OcTreeSuperNode<NODE>> treeIterable()
-   {
-      return new OcTreeIterable<>(this);
-   }
-
-   public Iterable<OcTreeSuperNode<NODE>> treeIterable(int maxDepth)
-   {
-      return new OcTreeIterable<>(this, maxDepth);
-   }
-
-   public Iterable<OcTreeSuperNode<NODE>> leafBoundingBoxIterable(OcTreeKeyReadOnly min, OcTreeKeyReadOnly max)
-   {
-      LeafBoundingBoxIterable<NODE> iterable = new LeafBoundingBoxIterable<>(this, 0);
-      OcTreeSimpleBoundingBox boundingBox = new OcTreeSimpleBoundingBox(min, max);
-      boundingBox.update(resolution, treeDepth);
-      iterable.setBoundingBox(boundingBox);
-      return iterable;
+      return OcTreeIteratorFactory.createLeafIteratable(root).iterator();
    }
 
    //
@@ -835,7 +797,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          minCoordinate[i] = Double.POSITIVE_INFINITY;
       }
 
-      for (OcTreeSuperNode<NODE> node : this)
+      for (NODE node : this)
       {
          double size = node.getSize();
          double halfSize = size / 2.0;

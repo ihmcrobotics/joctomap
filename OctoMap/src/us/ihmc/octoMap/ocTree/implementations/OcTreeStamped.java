@@ -1,6 +1,5 @@
 package us.ihmc.octoMap.ocTree.implementations;
 
-import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OcTreeNodeStamped;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTree;
 
@@ -24,9 +23,8 @@ public class OcTreeStamped extends AbstractOccupancyOcTree<OcTreeNodeStamped>
    {
       long query_time = System.currentTimeMillis();
 
-      for (OcTreeSuperNode<OcTreeNodeStamped> superNode : this)
+      for (OcTreeNodeStamped node : this)
       {
-         OcTreeNodeStamped node = superNode.getNode();
          if (isNodeOccupied(node) && query_time - node.getTimestamp() > timeThreshold)
          {
             integrateMissNoTime(node);

@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree.rules.interfaces;
+package us.ihmc.octoMap.rules.interfaces;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;

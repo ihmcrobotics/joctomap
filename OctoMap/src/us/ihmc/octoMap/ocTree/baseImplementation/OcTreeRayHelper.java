@@ -13,9 +13,9 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.key.OcTreeKeySet;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
-import us.ihmc.octoMap.ocTree.rules.interfaces.CollidableRule;
-import us.ihmc.octoMap.ocTree.rules.interfaces.RayActionRule;
 import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.rules.interfaces.CollidableRule;
+import us.ihmc.octoMap.rules.interfaces.RayActionRule;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
@@ -150,9 +150,8 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       } // end for all points, end of parallel OMP loop
 
       // prefer occupied cells over free ones (and make sets disjunct)
-      for (int i = 0; i < unfilteredFreeCells.size(); i++)
+      for (OcTreeKeyReadOnly possibleFreeCell : unfilteredFreeCells)
       {
-         OcTreeKeyReadOnly possibleFreeCell = unfilteredFreeCells.get(i);
          if (!occupiedCells.contains(possibleFreeCell))
             freeCells.add(possibleFreeCell);
       }

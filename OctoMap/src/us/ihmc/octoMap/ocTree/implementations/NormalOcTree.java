@@ -5,6 +5,7 @@ import static us.ihmc.robotics.geometry.GeometryTools.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -18,16 +19,13 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.math3.util.Precision;
 
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
-import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
-import us.ihmc.octoMap.iterators.OcTreeSuperNode;
+import us.ihmc.octoMap.iterators.OcTreeIterable;
+import us.ihmc.octoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
-import us.ihmc.octoMap.ocTree.rules.NormalOcTreeHitUpdateRule;
-import us.ihmc.octoMap.ocTree.rules.NormalOcTreeMissUpdateRule;
-import us.ihmc.octoMap.ocTree.rules.interfaces.RayActionRule;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.occupancy.OccupancyTools;
@@ -36,11 +34,14 @@ import us.ihmc.octoMap.planarRegions.PlanarRegion;
 import us.ihmc.octoMap.planarRegions.RegionSegmentationTools;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
+import us.ihmc.octoMap.rules.NormalOcTreeHitUpdateRule;
+import us.ihmc.octoMap.rules.NormalOcTreeMissUpdateRule;
+import us.ihmc.octoMap.rules.interfaces.RayActionRule;
 import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
-   private static final boolean REPORT_TIME = false;
+   private static final boolean REPORT_TIME = true;
    private final StopWatch stopWatch = REPORT_TIME ? new StopWatch() : null;
 
    private static final boolean COMPUTE_NORMALS_IN_PARALLEL = true;
@@ -67,7 +68,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private List<PlanarRegion> planarRegions = new ArrayList<>();
 
-   private final LeafBoundingBoxIterable<NormalOcTreeNode> leafIterable;
    private final Random random = new Random(45561L);
 
    private double alphaCenterUpdate = 0.1;
@@ -79,13 +79,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public NormalOcTree(double resolution)
    {
       super(resolution);
-      leafIterable = new LeafBoundingBoxIterable<>(this, treeDepth, true);
    }
 
    public NormalOcTree(NormalOcTree other)
    {
       super(other);
-      leafIterable = new LeafBoundingBoxIterable<>(this, treeDepth, true);
    }
 
    public void update(SweepCollection sweepCollection)
@@ -114,10 +112,10 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       keyList.clear();
       leafNodes.clear();
 
-      for (OcTreeSuperNode<NormalOcTreeNode> superNode : leafIterable)
+      for (NormalOcTreeNode node : this)
       {
-         NormalOcTreeNode node = superNode.getNode();
-         OcTreeKey key = new OcTreeKey(superNode.getKey());
+         OcTreeKey key = new OcTreeKey();
+         node.getKey(key);
          keyToNodeMap.put(key, node);
          keyList.add(key);
          leafNodes.add(node);
@@ -281,7 +279,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private void updateNormals()
    {
-      leafIterable.setMaxDepth(treeDepth);
       double searchRadius = normalEstimationParameters.getSearchRadius();
       double maxDistanceFromPlane = normalEstimationParameters.getMaxDistanceFromPlane();
 
@@ -336,10 +333,17 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
    }
 
+   @Override
+   public Iterator<NormalOcTreeNode> iterator()
+   {
+      OcTreeIterable<NormalOcTreeNode> leafIteratable = OcTreeIteratorFactory.createLeafIteratable(root);
+      leafIteratable.setRule(OcTreeIteratorFactory.leavesInsideBoundingBoxOnly(boundingBox));
+      return leafIteratable.iterator();
+   }
+
    public void disableBoundingBox()
    {
       boundingBox = null;
-      leafIterable.setBoundingBox(null);
    }
 
    /**
@@ -350,7 +354,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public void setBoundingBox(OcTreeBoundingBoxInterface boundingBox)
    {
       this.boundingBox = boundingBox;
-      leafIterable.setBoundingBox(boundingBox);
    }
 
    public OcTreeBoundingBoxInterface getBoundingBox()

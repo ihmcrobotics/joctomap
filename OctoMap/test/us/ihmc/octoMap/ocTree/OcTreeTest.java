@@ -10,7 +10,6 @@ import javax.vecmath.Vector3d;
 
 import org.junit.Test;
 
-import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
 import us.ihmc.octoMap.ocTree.implementations.OcTree;
@@ -133,20 +132,20 @@ public class OcTreeTest
          int numberOfDuplicates = 0;
          HashSet<OccupancyOcTreeNode> foundNodes = new HashSet<>();
 
-         for (OcTreeSuperNode<OccupancyOcTreeNode> superNode : ocTree.treeIterable())
+         for (OccupancyOcTreeNode currentNode : ocTree)
          {
-            if (foundNodes.contains(superNode.getNode()))
+            if (foundNodes.contains(currentNode))
                numberOfDuplicates++;
-            foundNodes.add(superNode.getNode());
-            if (superNode.isLeaf())
+            foundNodes.add(currentNode);
+            if (!currentNode.hasArrayForChildren())
             {
                numberOfLeafs++;
-               if (ocTree.isNodeOccupied(superNode.getNode()))
+               if (ocTree.isNodeOccupied(currentNode))
                   numberOfOccupiedLeafs++;
             }
             else
             {
-               assertTrue(ocTree.isNodeOccupied(superNode.getNode()));
+               assertTrue(ocTree.isNodeOccupied(currentNode));
             }
          }
 

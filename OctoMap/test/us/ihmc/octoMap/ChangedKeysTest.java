@@ -9,7 +9,6 @@ import javax.vecmath.Point3d;
 
 import org.junit.Test;
 
-import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.implementations.OcTree;
@@ -98,11 +97,11 @@ public class ChangedKeysTest
       }
 
       // iterate through the entire tree
-      for (OcTreeSuperNode<OccupancyOcTreeNode> node : tree.treeIterable())
+      for (OccupancyOcTreeNode node : tree)
       {
-         if (node.isLeaf())
+         if (!node.hasAtLeastOneChild())
          {
-            if (tree.isNodeOccupied(node.getNode()))
+            if (tree.isNodeOccupied(node))
             {
                actualOccupied += 1;
             }

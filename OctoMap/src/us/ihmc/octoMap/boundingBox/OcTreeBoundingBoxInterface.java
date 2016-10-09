@@ -20,7 +20,12 @@ public interface OcTreeBoundingBoxInterface
       return isInBoundingBox(candidate.getX(), candidate.getY(), candidate.getZ());
    }
 
-   boolean isInBoundingBox(OcTreeKeyReadOnly candidate);
+   default boolean isInBoundingBox(OcTreeKeyReadOnly candidate)
+   {
+      return isInBoundingBox(candidate.getKey(0), candidate.getKey(1), candidate.getKey(2));
+   }
+
+   boolean isInBoundingBox(int k0, int k1, int k2);
 
    OcTreeBoundingBoxInterface getCopy();
 }

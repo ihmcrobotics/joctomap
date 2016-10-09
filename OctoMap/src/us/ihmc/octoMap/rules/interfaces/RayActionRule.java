@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree.rules.interfaces;
+package us.ihmc.octoMap.rules.interfaces;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;

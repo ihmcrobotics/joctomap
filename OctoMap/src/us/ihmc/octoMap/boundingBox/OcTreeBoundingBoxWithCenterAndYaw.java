@@ -123,13 +123,13 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       return simpleBoundingBox.isInBoundingBox(xLocal, yLocal, zLocal);
    }
 
-   private final Point3d transformedKey = new Point3d();
-
    @Override
-   public boolean isInBoundingBox(OcTreeKeyReadOnly candidate)
+   public boolean isInBoundingBox(int k0, int k1, int k2)
    {
-      OcTreeKeyConversionTools.keyToCoordinate(candidate, transformedKey, resolution, treeDepth);
-      return isInBoundingBox(transformedKey);
+      double x = OcTreeKeyConversionTools.keyToCoordinate(k0, resolution, treeDepth);
+      double y = OcTreeKeyConversionTools.keyToCoordinate(k1, resolution, treeDepth);
+      double z = OcTreeKeyConversionTools.keyToCoordinate(k2, resolution, treeDepth);
+      return isInBoundingBox(x, y, z);
    }
 
    @Override
