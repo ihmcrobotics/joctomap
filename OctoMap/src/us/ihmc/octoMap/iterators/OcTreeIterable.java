@@ -57,7 +57,6 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
 
    public static class OcTreeIterator<NODE extends AbstractOcTreeNode<NODE>> implements Iterator<OcTreeSuperNode<NODE>>
    {
-      private final ArrayDeque<OcTreeSuperNode<NODE>> pool = new ArrayDeque<>();
       private IteratorSelectionRule<NODE> rule;
 
       /// Internal recursion stack.
@@ -79,12 +78,12 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
 
       public void reset()
       {
-         while (!stack.isEmpty())
-            pool.add(stack.pop());
+         hasNextHasBeenCalled = false;
+         stack.clear();
 
          if (tree.getRoot() != null)
          { // tree is not empty
-            OcTreeSuperNode<NODE> superNode = getOrCreateSuperNode();
+            OcTreeSuperNode<NODE> superNode = new OcTreeSuperNode<>();
             superNode.setAsRootSuperNode(tree, this.maxDepth);
             stack.add(superNode);
          }
@@ -103,28 +102,63 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
          rule = newRule;
       }
 
+      private OcTreeSuperNode<NODE> next = null;
+      private boolean hasNextHasBeenCalled = false;
+
       @Override
       public boolean hasNext()
       {
-         return !stack.isEmpty();
+         next = null;
+
+         if (stack.isEmpty())
+            return false;
+
+         if (!hasNextHasBeenCalled)
+         {
+            next = searchNextNodePassingRule();
+            hasNextHasBeenCalled = true;
+         }
+
+         return next != null;
       }
 
       @Override
       public OcTreeSuperNode<NODE> next()
       {
-         OcTreeSuperNode<NODE> currentNode = nextInternal();
-
-         if (rule != null)
+         if (!hasNextHasBeenCalled)
          {
-            while (!rule.test(currentNode))
-               currentNode = nextInternal();
+            if (!hasNext())
+               throw new NullPointerException();
          }
 
-         return currentNode;
+         hasNextHasBeenCalled = false;
+         OcTreeSuperNode<NODE> ret = next;
+         next = null;
+         return ret;
       }
 
-      private OcTreeSuperNode<NODE> nextInternal()
+      private OcTreeSuperNode<NODE> searchNextNodePassingRule()
       {
+         if (stack.isEmpty())
+            return null;
+
+         if (rule == null)
+            return searchNextNode();
+
+         while (!stack.isEmpty())
+         {
+            OcTreeSuperNode<NODE> currentNode = searchNextNode();
+            if (currentNode == null || rule.test(currentNode))
+               return currentNode;
+         }
+         return null;
+      }
+
+      private OcTreeSuperNode<NODE> searchNextNode()
+      {
+         if (stack.isEmpty())
+            return null;
+
          OcTreeSuperNode<NODE> currentNode = stack.poll();
 
          if (currentNode.getDepth() < maxDepth)
@@ -134,27 +168,15 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
             {
                if (OcTreeNodeTools.nodeChildExists(currentNode.getNode(), i))
                {
-                  OcTreeSuperNode<NODE> newNode = getOrCreateSuperNode();
+                  OcTreeSuperNode<NODE> newNode = new OcTreeSuperNode<>();
                   newNode.setAsChildSuperNode(currentNode, i);
                   stack.add(newNode);
                   OctoMapTools.checkIfDepthValid(newNode.getDepth(), maxDepth);
                }
             }
          }
-         pool.add(currentNode);
-         return currentNode;
-      }
 
-      private OcTreeSuperNode<NODE> getOrCreateSuperNode()
-      {
-         if (pool.isEmpty())
-            return new OcTreeSuperNode<>();
-         else
-         {
-            OcTreeSuperNode<NODE> ret = pool.pop();
-            ret.clear();
-            return ret;
-         }
+         return currentNode;
       }
    }
 }
