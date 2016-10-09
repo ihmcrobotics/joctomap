@@ -994,10 +994,16 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             if (updateRule.deleteUpdatedNode(leafToReturn))
             {
                deleteNodeChild(node, childIndex);
+
+               // Update the parent, properties changed.
+               updateRule.updateInnerNode(node);
+
                leafToReturn = node;
             }
             else if (pruneNode(node)) // return pointer to current parent (pruned), the just updated node no longer exists
+            {
                leafToReturn = node;
+            }
 
             return leafToReturn;
          }
