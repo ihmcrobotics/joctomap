@@ -5,14 +5,10 @@ import javax.vecmath.Point3d;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
-import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
-import us.ihmc.octoMap.tools.OcTreeKeyTools;
 
 public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
 {
-   private AbstractOcTreeBase<NODE> tree;
    private NODE node;
-   private OcTreeKey key = new OcTreeKey();
    private int depth = -1;
    private int maxDepth = -1;
 
@@ -23,60 +19,54 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
 
    public void clear()
    {
-      tree = null;
       node = null;
-      key.set(0, 0, 0);
       depth = -1;
       maxDepth = -1;
    }
 
-   public void setAsRootSuperNode(AbstractOcTreeBase<NODE> tree, int maxDepth)
+   public void setAsRootSuperNode(NODE root, int maxDepth)
    {
-      this.tree = tree;
       this.maxDepth = maxDepth;
 
-      node = tree.getRoot();
+      node = root;
       depth = 0;
-      OcTreeKeyTools.getRootKey(tree.getTreeDepth(), key);
    }
 
    public void setAsChildSuperNode(OcTreeSuperNode<NODE> parentNode, int childIndex)
    {
-      this.tree = parentNode.tree;
       this.maxDepth = parentNode.maxDepth;
       this.depth = parentNode.depth + 1;
-      OcTreeKeyTools.computeChildKey(childIndex, parentNode.key, key, depth, tree.getTreeDepth());
       node = parentNode.node.getChild(childIndex);
    }
 
    /** @return the center coordinate of this node */
    public Point3d getCoordinate()
    {
-      return tree.keyToCoordinate(key, depth);
+      return new Point3d(getX(), getY(), getZ());
    }
 
    /** @return single coordinate of this node */
    public double getX()
    {
-      return tree.keyToCoordinate(key.getKey(0), depth);
+      return node.getX();
    }
 
    /** @return single coordinate of this node */
    public double getY()
    {
-      return tree.keyToCoordinate(key.getKey(1), depth);
+      return node.getY();
    }
 
    /** @return single coordinate of this node */
    public double getZ()
    {
-      return tree.keyToCoordinate(key.getKey(2), depth);
+      return node.getZ();
    }
 
    /** @return the side of the volume occupied by this node */
    public double getSize()
    {
-      return tree.getNodeSize(depth);
+      return node.getSize();
    }
 
    /** return depth of this node */
@@ -88,7 +78,22 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
    /** @return the OcTreeKey of this node */
    public OcTreeKeyReadOnly getKey()
    {
-      return key;
+      return new OcTreeKey(getKey0(), getKey1(), getKey2());
+   }
+
+   public int getKey0()
+   {
+      return node.getKey0();
+   }
+
+   public int getKey1()
+   {
+      return node.getKey1();
+   }
+
+   public int getKey2()
+   {
+      return node.getKey2();
    }
 
    /** @return the NODE contained in this. */
@@ -106,8 +111,6 @@ public class OcTreeSuperNode<NODE extends AbstractOcTreeNode<NODE>>
    public boolean epsilonEquals(OcTreeSuperNode<NODE> other, double epsilon)
    {
       if (!node.epsilonEquals(other.node, epsilon))
-         return false;
-      if (!key.equals(other.key))
          return false;
       return depth == other.depth;
    }
