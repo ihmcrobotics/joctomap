@@ -13,10 +13,7 @@ import javax.vecmath.Vector3d;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 
-import us.ihmc.octoMap.boundingBox.OcTreeSimpleBoundingBox;
-import us.ihmc.octoMap.iterators.LeafBoundingBoxIterable;
-import us.ihmc.octoMap.iterators.LeafIterable;
-import us.ihmc.octoMap.iterators.OcTreeIterable;
+import us.ihmc.octoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
@@ -675,38 +672,24 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return leafIterable().iterator();
    }
 
-   public Iterable<OcTreeSuperNode<NODE>> leafIterable()
-   {
-      return new LeafIterable<>(this);
-   }
-
-   public Iterable<OcTreeSuperNode<NODE>> leafIterable(int maxDepth)
-   {
-      return new LeafIterable<>(this, maxDepth);
-   }
-
    public Iterator<OcTreeSuperNode<NODE>> treeIterator()
    {
       return treeIterable().iterator();
    }
 
+   public Iterable<OcTreeSuperNode<NODE>> leafIterable()
+   {
+      return OcTreeIteratorFactory.createLeafIteratable(this);
+   }
+
    public Iterable<OcTreeSuperNode<NODE>> treeIterable()
    {
-      return new OcTreeIterable<>(this);
+      return OcTreeIteratorFactory.createIteratable(this);
    }
 
    public Iterable<OcTreeSuperNode<NODE>> treeIterable(int maxDepth)
    {
-      return new OcTreeIterable<>(this, maxDepth);
-   }
-
-   public Iterable<OcTreeSuperNode<NODE>> leafBoundingBoxIterable(OcTreeKeyReadOnly min, OcTreeKeyReadOnly max)
-   {
-      LeafBoundingBoxIterable<NODE> iterable = new LeafBoundingBoxIterable<>(this, 0);
-      OcTreeSimpleBoundingBox boundingBox = new OcTreeSimpleBoundingBox(min, max);
-      boundingBox.update(resolution, treeDepth);
-      iterable.setBoundingBox(boundingBox);
-      return iterable;
+      return OcTreeIteratorFactory.createIteratable(this, maxDepth);
    }
 
    //

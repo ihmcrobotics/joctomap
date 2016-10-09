@@ -6,35 +6,23 @@ import java.util.Iterator;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
+import us.ihmc.octoMap.rules.interfaces.IteratorSelectionRule;
 import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
 {
    private final AbstractOcTreeBase<NODE> tree;
-   private final int maxDepth;
    private final OcTreeIterator<NODE> iterator;
+   private int maxDepth;
+   private IteratorSelectionRule<NODE> rule;
 
-   public OcTreeIterable(AbstractOcTreeBase<NODE> tree)
-   {
-      this(tree, 0, false);
-   }
-
-   public OcTreeIterable(AbstractOcTreeBase<NODE> tree, int maxDepth)
-   {
-      this(tree, maxDepth, false);
-   }
-
-   public OcTreeIterable(AbstractOcTreeBase<NODE> tree, boolean recycleIterator)
-   {
-      this(tree, 0, recycleIterator);
-   }
-
-   public OcTreeIterable(AbstractOcTreeBase<NODE> tree, int maxDepth, boolean recycleIterator)
+   OcTreeIterable(AbstractOcTreeBase<NODE> tree, int maxDepth, IteratorSelectionRule<NODE> rule, boolean recycleIterator)
    {
       this.tree = tree;
       this.maxDepth = maxDepth;
+      this.rule = rule;
       if (recycleIterator)
-         iterator = new OcTreeIterator<>(tree, maxDepth);
+         iterator = new OcTreeIterator<>(tree, maxDepth, rule);
       else
          iterator = null;
    }
@@ -44,7 +32,7 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
    {
       if (iterator == null)
       {
-         return new OcTreeIterator<>(tree, maxDepth);
+         return new OcTreeIterator<>(tree, maxDepth, rule);
       }
       else
       {
@@ -53,9 +41,24 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
       }
    }
 
+   public void setMaxDepth(int maxDepth)
+   {
+      this.maxDepth = maxDepth;
+      if (iterator != null)
+         iterator.setMaxDepth(maxDepth);
+   }
+
+   public void setRule(IteratorSelectionRule<NODE> rule)
+   {
+      this.rule = rule;
+      if (iterator != null)
+         iterator.setRule(rule);
+   }
+
    public static class OcTreeIterator<NODE extends AbstractOcTreeNode<NODE>> implements Iterator<OcTreeSuperNode<NODE>>
    {
       private final ArrayDeque<OcTreeSuperNode<NODE>> pool = new ArrayDeque<>();
+      private IteratorSelectionRule<NODE> rule;
 
       /// Internal recursion stack.
       private final ArrayDeque<OcTreeSuperNode<NODE>> stack = new ArrayDeque<>();
@@ -63,14 +66,10 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
       private AbstractOcTreeBase<NODE> tree;
       private int maxDepth; ///< Maximum depth for depth-limited queries
 
-      public OcTreeIterator(AbstractOcTreeBase<NODE> tree)
-      {
-         this(tree, 0);
-      }
-
-      public OcTreeIterator(AbstractOcTreeBase<NODE> tree, int maxDepth)
+      private OcTreeIterator(AbstractOcTreeBase<NODE> tree, int maxDepth, IteratorSelectionRule<NODE> rule)
       {
          this.tree = tree;
+         this.rule = rule;
          if (tree == null)
             throw new RuntimeException("Creating an iterator with no tree.");
 
@@ -99,6 +98,11 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
             this.maxDepth = maxDepth;
       }
 
+      public void setRule(IteratorSelectionRule<NODE> newRule)
+      {
+         rule = newRule;
+      }
+
       @Override
       public boolean hasNext()
       {
@@ -107,6 +111,19 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
 
       @Override
       public OcTreeSuperNode<NODE> next()
+      {
+         OcTreeSuperNode<NODE> currentNode = nextInternal();
+
+         if (rule != null)
+         {
+            while (!rule.test(currentNode))
+               currentNode = nextInternal();
+         }
+
+         return currentNode;
+      }
+
+      private OcTreeSuperNode<NODE> nextInternal()
       {
          OcTreeSuperNode<NODE> currentNode = stack.poll();
 
