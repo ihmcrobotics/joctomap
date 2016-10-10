@@ -1,6 +1,6 @@
 package us.ihmc.octoMap.node;
 
-import static us.ihmc.octoMap.node.OcTreeNodeTools.*;
+import static us.ihmc.octoMap.tools.OcTreeNodeTools.*;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -13,6 +13,7 @@ import org.apache.commons.math3.util.Precision;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
+import us.ihmc.octoMap.tools.OcTreeNodeTools;
 
 public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
 {
@@ -155,8 +156,6 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
    public final N getChild(int childIndex)
    {
       checkChildIndex(childIndex);
-      checkNodeHasChildren(this);
-
       return children == null ? null : children[childIndex];
    }
 

@@ -1,6 +1,7 @@
-package us.ihmc.octoMap.occupancy;
+package us.ihmc.octoMap.tools;
 
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
+import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 
 public abstract class OccupancyTools
 {

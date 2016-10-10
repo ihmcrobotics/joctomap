@@ -1,6 +1,6 @@
 package us.ihmc.octoMap.ocTree.baseImplementation;
 
-import static us.ihmc.octoMap.node.OcTreeNodeTools.*;
+import static us.ihmc.octoMap.tools.OcTreeNodeTools.*;
 
 import java.util.ArrayDeque;
 import java.util.Iterator;
@@ -18,12 +18,12 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.NodeBuilder;
-import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.rules.interfaces.DeletionRule;
 import us.ihmc.octoMap.rules.interfaces.EarlyAbortRule;
 import us.ihmc.octoMap.rules.interfaces.UpdateRule;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
+import us.ihmc.octoMap.tools.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;
 import us.ihmc.octoMap.tools.OctoMapTools;
 

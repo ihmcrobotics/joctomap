@@ -1,14 +1,12 @@
 package us.ihmc.octoMap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.node.ColorOcTreeNode;
-import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.implementations.ColorOcTree;
+import us.ihmc.octoMap.tools.OcTreeNodeTools;
 
 public class ColorTreeTest
 {

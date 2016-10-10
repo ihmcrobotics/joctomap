@@ -3,8 +3,8 @@ package us.ihmc.octoMap.ocTree.implementations;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.ColorOcTreeNode;
-import us.ihmc.octoMap.node.OcTreeNodeTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTree;
+import us.ihmc.octoMap.tools.OcTreeNodeTools;
 
 public class ColorOcTree extends AbstractOccupancyOcTree<ColorOcTreeNode>
 {

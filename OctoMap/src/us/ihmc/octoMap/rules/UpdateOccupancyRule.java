@@ -5,9 +5,9 @@ import java.util.Map;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
-import us.ihmc.octoMap.occupancy.OccupancyTools;
 import us.ihmc.octoMap.rules.interfaces.EarlyAbortRule;
 import us.ihmc.octoMap.rules.interfaces.UpdateRule;
+import us.ihmc.octoMap.tools.OccupancyTools;
 
 public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> implements UpdateRule<NODE>, EarlyAbortRule<NODE>
 {

@@ -23,17 +23,17 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.normalEstimation.NormalEstimationParameters;
-import us.ihmc.octoMap.normalEstimation.NormalEstimationTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
-import us.ihmc.octoMap.occupancy.OccupancyTools;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.rules.NormalOcTreeHitUpdateRule;
 import us.ihmc.octoMap.rules.NormalOcTreeMissUpdateRule;
 import us.ihmc.octoMap.rules.interfaces.RayActionRule;
+import us.ihmc.octoMap.tools.NormalEstimationTools;
+import us.ihmc.octoMap.tools.OccupancyTools;
 import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
