@@ -168,6 +168,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          if ((maxInsertRange < 0.0 || length <= maxInsertRange) && (minInsertRange < 0.0 || length >= minInsertRange) && isInBoundingBox(point))
          {
             OcTreeKey occupiedKey = coordinateToKey(point);
+            if (occupiedKey == null)
+               continue;
             hitUpdateRule.setHitLocation(sensorOrigin, point);
             updateNodeInternal(occupiedKey, hitUpdateRule, null);
             // Add the key to the occupied set.

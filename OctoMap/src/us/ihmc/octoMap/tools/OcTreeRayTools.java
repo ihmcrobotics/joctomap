@@ -17,6 +17,7 @@ import us.ihmc.octoMap.rules.interfaces.RayActionRule;
 
 public abstract class OcTreeRayTools
 {
+   private static final boolean DEBUG = false;
    public static final int maxRaySize = 100000;
 
    /**
@@ -169,7 +170,8 @@ public abstract class OcTreeRayTools
 
       if (keyOrigin == null || keyEnd == null)
       {
-         System.err.println(OcTreeRayTools.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
+         if (DEBUG)
+            System.err.println(OcTreeRayTools.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
          return;
       }
 
@@ -304,7 +306,8 @@ public abstract class OcTreeRayTools
 
       if (keyOrigin == null || keyEnd == null)
       {
-         System.err.println(OcTreeRayTools.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
+         if (DEBUG)
+            System.err.println(OcTreeRayTools.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
          return;
       }
 
@@ -383,7 +386,8 @@ public abstract class OcTreeRayTools
       OcTreeKey currentKey = OcTreeKeyConversionTools.coordinateToKey(origin, resolution, treeDepth);
       if (currentKey == null)
       {
-         System.err.println(OcTreeRayTools.class.getSimpleName() + " (in castRay): Coordinates out of bounds during ray casting");
+         if (DEBUG)
+            System.err.println(OcTreeRayTools.class.getSimpleName() + " (in castRay): Coordinates out of bounds during ray casting");
          return false;
       }
 
@@ -447,7 +451,8 @@ public abstract class OcTreeRayTools
 
       if (step[0] == 0 && step[1] == 0 && step[2] == 0)
       {
-         System.err.println(OcTreeRayTools.class.getSimpleName() + " (in castRay): Raycasting in direction (0,0,0) is not possible!");
+         if (DEBUG)
+            System.err.println(OcTreeRayTools.class.getSimpleName() + " (in castRay): Raycasting in direction (0,0,0) is not possible!");
          return false;
       }
       int keyMaxValue = OcTreeKeyTools.computeMaximumKey(treeDepth);
@@ -482,7 +487,8 @@ public abstract class OcTreeRayTools
          // check for overflow:
          if (step[dim] < 0 && currentKey.getKey(dim) == 0 || step[dim] > 0 && currentKey.getKey(dim) == keyMaxValue)
          {
-            System.err.println(OcTreeRayTools.class.getSimpleName() + " (in castRay): Coordinate hit bounds in dim " + dim + ", aborting raycast");
+            if (DEBUG)
+               System.err.println(OcTreeRayTools.class.getSimpleName() + " (in castRay): Coordinate hit bounds in dim " + dim + ", aborting raycast");
             // return border point nevertheless:
             OcTreeKeyConversionTools.keyToCoordinate(currentKey, endToPack, resolution, treeDepth);
             return false;

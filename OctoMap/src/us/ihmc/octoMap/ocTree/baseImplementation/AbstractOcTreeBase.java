@@ -42,6 +42,7 @@ import us.ihmc.octoMap.tools.OcTreeSearchTools;
  */
 public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<NODE>
 {
+   private static final int MAX_TREE_DEPTH = 30;
    private static final boolean RECYCLE_NODES = false;
 
    protected NODE root; ///< root NODE, null for empty tree
@@ -73,6 +74,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
       root = null;
       this.resolution = resolution;
+      if (treeDepth > MAX_TREE_DEPTH)
+         throw new RuntimeException("Cannot create a tree with a depth greater than: " + MAX_TREE_DEPTH);
       this.treeDepth = treeDepth;
       treeSize = 0;
       nodeBuilder = new NodeBuilder<>(getNodeClass());
