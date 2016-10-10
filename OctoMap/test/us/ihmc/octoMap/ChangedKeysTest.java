@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.OcTree;
+import us.ihmc.octoMap.ocTree.OccupancyOcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 
 public class ChangedKeysTest
@@ -26,7 +26,7 @@ public class ChangedKeysTest
    @Test
    public void test1() throws Exception
    {
-      OcTree tree = new OcTree(0.05);
+      OccupancyOcTree tree = new OccupancyOcTree(0.05);
       tree.enableChangeDetection(true);
 
       Point3d origin = new Point3d(0.01f, 0.01f, 0.02f);
@@ -65,7 +65,7 @@ public class ChangedKeysTest
       System.out.println("done.");
    }
 
-   void printChanges(OcTree tree)
+   void printChanges(OccupancyOcTree tree)
    {
       int changedOccupied = 0;
       int changedFree = 0;

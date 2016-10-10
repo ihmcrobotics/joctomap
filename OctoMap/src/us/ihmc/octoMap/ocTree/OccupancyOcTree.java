@@ -3,9 +3,9 @@ package us.ihmc.octoMap.ocTree;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTree;
 
-public class OcTree extends AbstractOccupancyOcTree<OccupancyOcTreeNode>
+public class OccupancyOcTree extends AbstractOccupancyOcTree<OccupancyOcTreeNode>
 {
-   public OcTree(double resolution)
+   public OccupancyOcTree(double resolution)
    {
       super(resolution);
    }
