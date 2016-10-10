@@ -3,12 +3,10 @@ package us.ihmc.octoMap.boundingBox;
 import static org.junit.Assert.*;
 
 import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
 
 import org.junit.Test;
 
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 
 public class OcTreeBoundingBoxWithCenterAndYawTest 
 {
@@ -21,10 +19,6 @@ public class OcTreeBoundingBoxWithCenterAndYawTest
 	Point3d maxCoordinate = new Point3d(100.0, 200.0, 100.0);
 	OcTreeKey minKey = new OcTreeKey(32768,32768,32768);
 	OcTreeKey maxKey = new OcTreeKey(36768, 40768, 36768);
-	
-//	Point3d pointA = new Point3d(-150.0, 200.0, 50.0);
-//	OcTreeKey keyB = OcTreeKeyConversionTools.coordinateToKey(pointA, resolution, treeDepth);
-//	System.out.println(keyB);
 	
 	@Test
 	public void isPointInRotatedBoundingBoxTest()
@@ -58,7 +52,7 @@ public class OcTreeBoundingBoxWithCenterAndYawTest
 		OcTreeBoundingBoxWithCenterAndYaw boundingBox = new OcTreeBoundingBoxWithCenterAndYaw(simpleBoundingBox, resolution, treeDepth);
 		boundingBox.setYaw(Math.PI/3);
 
-		assertTrue(boundingBox.trialIsInBoundingBox(key));
+		assertTrue(boundingBox.isInBoundingBox(key));
 	}
 	
 	@Test
@@ -72,28 +66,7 @@ public class OcTreeBoundingBoxWithCenterAndYawTest
 		boundingBox.setYaw(Math.PI/4);
 		boundingBox.setOffsetCoordinate(offset);
 
-		assertTrue(boundingBox.trialIsInBoundingBox(key));
+		assertTrue(boundingBox.isInBoundingBox(key));
 	}
 	
-
-	@Test
-	public void isKeyInBoundingBoxVaryingTreeDepthTest()
-	{
-		OcTreeKey key = new OcTreeKey(23940, 41596, 34768); //45 degrees yaw and offset (-150.0, 150.0, 0.0)
-		OcTreeSimpleBoundingBox simpleBoundingBox = new OcTreeSimpleBoundingBox(minKey, maxKey);
-		simpleBoundingBox.update(resolution, treeDepth);
-		
-		OcTreeBoundingBoxWithCenterAndYaw boundingBox = new OcTreeBoundingBoxWithCenterAndYaw(simpleBoundingBox, resolution, treeDepth);
-		boundingBox.setYaw(Math.PI/4);
-		boundingBox.setOffsetCoordinate(offset);
-		
-		Point3d pointA = new Point3d(1, 0, 0);
-		OcTreeKey keyB = OcTreeKeyConversionTools.coordinateToKey(pointA, resolution, 10);
-		System.out.println(keyB);
-//		OcTreeKey keyB = new OcTreeKey(16384, 16384, 16384);
-//		Point3d coord = OcTreeKeyConversionTools.keyToCoordinate(keyB, resolution, 15);
-//		System.out.println(coord);
-
-		assertTrue(boundingBox.trialIsInBoundingBox(key));
-	}
 }
