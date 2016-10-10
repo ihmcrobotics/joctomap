@@ -48,6 +48,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public static final boolean UPDATE_NODE_HIT_WITH_AVERAGE = true;
 
+   private final String name = getClass().getSimpleName();
+
    // occupancy parameters of tree, stored in logodds:
    private final OccupancyParameters occupancyParameters = new OccupancyParameters();
    private final NormalEstimationParameters normalEstimationParameters = new NormalEstimationParameters();
@@ -93,7 +95,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       if (REPORT_TIME)
       {
-         System.out.println(getTreeType() + ": Sweep integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (Sweep size: " + sweepCollection.getNumberOfPoints() + ").");
+         System.out.println(name + ": Sweep integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (Sweep size: " + sweepCollection.getNumberOfPoints() + ").");
       }
 
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
@@ -125,7 +127,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
          if (REPORT_TIME)
          {
-            System.out.println(getTreeType() + ": Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+            System.out.println(name + ": Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
          }
       }
    }

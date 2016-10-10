@@ -131,11 +131,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return true;
    }
 
-   public final String getTreeType()
-   {
-      return getClass().getSimpleName();
-   }
-
    /**
     * Affect the methods using {@link #updateNodeInternal(OcTreeKeyReadOnly, UpdateRule, EarlyAbortRule)}.
     * @param lazyUpdate whether update of inner nodes is omitted after the update (default: false).
