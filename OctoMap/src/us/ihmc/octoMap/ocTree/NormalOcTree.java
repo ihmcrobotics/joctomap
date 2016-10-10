@@ -3,12 +3,10 @@ package us.ihmc.octoMap.ocTree;
 import static us.ihmc.robotics.geometry.GeometryTools.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Stream;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
@@ -42,11 +40,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private static final boolean REPORT_TIME = true;
    private final StopWatch stopWatch = REPORT_TIME ? new StopWatch() : null;
 
-   private static final boolean COMPUTE_NORMALS_IN_PARALLEL = true;
-   private static final boolean COMPUTE_UPDATES_IN_PARALLEL = true;
-   private static final boolean USE_KEY_NODE_MAP_WITH_UPDATES = true;
-   private static final boolean USE_KEY_NODE_MAP_WITH_NORMALS = true;
-
    public static final boolean UPDATE_NODE_HIT_WITH_AVERAGE = true;
 
    private final String name = getClass().getSimpleName();
@@ -65,10 +58,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private double alphaCenterUpdate = 0.1;
 
-   private final List<OcTreeKey> keyList = new ArrayList<>();
-   private final List<NormalOcTreeNode> leafNodes = new ArrayList<>();
-   private final HashMap<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
-   
    public NormalOcTree(double resolution)
    {
       super(resolution);
@@ -97,21 +86,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       if (REPORT_TIME)
       {
          System.out.println(name + ": ScanCollection integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (number of points: " + scanCollection.getNumberOfPoints() + ").");
-      }
-
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
-
-      keyToNodeMap.clear();
-      keyList.clear();
-      leafNodes.clear();
-
-      for (NormalOcTreeNode node : this)
-      {
-         OcTreeKey key = new OcTreeKey();
-         node.getKey(key);
-         keyToNodeMap.put(key, node);
-         keyList.add(key);
-         leafNodes.add(node);
       }
 
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
@@ -175,15 +149,10 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          }
       }
 
-      Stream<Point3f> stream = COMPUTE_UPDATES_IN_PARALLEL ? pointCloud.parallelStream() : pointCloud.stream();
+      pointCloud.parallelStream().forEach(scanPoint -> insertMissRay(sensorOrigin, scanPoint));
 
-      stream.forEach(scanPoint -> insertMissRay(sensorOrigin, scanPoint));
-
-      if (COMPUTE_UPDATES_IN_PARALLEL)
-      {
-         while (!freeKeysToUpdate.isEmpty())
-            updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);
-      }
+      while (!freeKeysToUpdate.isEmpty())
+         updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);
    }
 
    private void insertMissRay(Point3d sensorOrigin, Point3f scanPoint)
@@ -214,7 +183,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private void doRayActionOnFreeCell(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, OcTreeKeyReadOnly key)
    {
-      NormalOcTreeNode node = USE_KEY_NODE_MAP_WITH_UPDATES ? keyToNodeMap.get(key) : search(key);
+      NormalOcTreeNode node = search(key);
       if (node != null && !occupiedCells.contains(key))
       {
          if (node.getNormalConsensusSize() > 10 && node.isHitLocationSet() && node.isNormalSet())
@@ -227,26 +196,15 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             if (Precision.equals(Math.abs(nodeNormal.angle(rayDirection)) - Math.PI / 2.0, 0.0, Math.toRadians(30.0)) && distanceFromPointToLine(nodeHitLocation, rayOrigin, rayEnd) > 0.005)
                return;
          }
-         if (COMPUTE_UPDATES_IN_PARALLEL)
-            freeKeysToUpdate.offer(new OcTreeKey(key));
-         else
-            updateNodeInternal(key, missUpdateRule, missUpdateRule);
+         freeKeysToUpdate.offer(new OcTreeKey(key));
       }
    }
 
    private void updateNormals()
    {
-      double searchRadius = normalEstimationParameters.getSearchRadius();
-      double maxDistanceFromPlane = normalEstimationParameters.getMaxDistanceFromPlane();
-
-      if (USE_KEY_NODE_MAP_WITH_NORMALS)
-         NormalEstimationTools.getCachedNeighborKeyOffsets(searchRadius, resolution, treeDepth);
-
-      Stream<OcTreeKey> keyStream = COMPUTE_NORMALS_IN_PARALLEL ? keyList.stream() : keyList.parallelStream();
-      if (USE_KEY_NODE_MAP_WITH_NORMALS)
-         keyStream.forEach(key -> NormalEstimationTools.computeNodeNormalRansac(key, keyToNodeMap, searchRadius, maxDistanceFromPlane, resolution, treeDepth));
-      else
-         keyStream.forEach(key -> NormalEstimationTools.computeNodeNormalRansac(root, keyToNodeMap.get(key), searchRadius, maxDistanceFromPlane));
+      List<NormalOcTreeNode> leafNodes = new ArrayList<>();
+      this.forEach(leafNodes::add);
+      leafNodes.parallelStream().forEach(node -> NormalEstimationTools.computeNodeNormalRansac(root, node, normalEstimationParameters));
 
       if (root != null)
          updateInnerNormalsRecursive(root, 0);

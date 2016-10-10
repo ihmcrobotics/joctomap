@@ -2,29 +2,26 @@ package us.ihmc.octoMap.tools;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import gnu.trove.map.hash.TDoubleObjectHashMap;
-import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
+import us.ihmc.octoMap.normalEstimation.NormalEstimationParameters;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools.NeighborActionRule;
 
 public abstract class NormalEstimationTools
 {
-   public static void computeNodeNormalRansac(NormalOcTreeNode root, OcTreeKeyReadOnly key, double searchRadius, double maxDistanceFromPlane, int treeDepth)
+   public static void computeNodeNormalRansac(NormalOcTreeNode root, OcTreeKeyReadOnly key, NormalEstimationParameters parameters, int treeDepth)
    {
       NormalOcTreeNode currentNode = OcTreeSearchTools.search(root, key, treeDepth);
-      computeNodeNormalRansac(root, currentNode, searchRadius, maxDistanceFromPlane);
+      computeNodeNormalRansac(root, currentNode, parameters);
    }
 
-   public static void computeNodeNormalRansac(NormalOcTreeNode root, NormalOcTreeNode currentNode, double searchRadius, double maxDistanceFromPlane)
+   public static void computeNodeNormalRansac(NormalOcTreeNode root, NormalOcTreeNode currentNode, NormalEstimationParameters parameters)
    {
       if (!currentNode.isHitLocationSet() || !currentNode.isNormalSet())
       {
@@ -43,56 +40,11 @@ public abstract class NormalEstimationTools
          }
       };
 
+      double searchRadius = parameters.getSearchRadius();
+      double maxDistanceFromPlane = parameters.getMaxDistanceFromPlane();
+
       OcTreeNearestNeighborTools.findRadiusNeighbors(root, currentNode, searchRadius, collectNodeCentersRule);
 
-      computeNormalRansac(currentNode, maxDistanceFromPlane, neighbors);
-   }
-
-   public static void computeNodeNormalRansac(OcTreeKey currentNodeKey, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap,
-         double searchRadius, double maxDistanceFromPlane, double resolution, int treeDepth)
-   {
-      NormalOcTreeNode currentNode = keyToNodeMap.get(currentNodeKey);
-
-      if (!currentNode.isHitLocationSet() || !currentNode.isNormalSet())
-      {
-         currentNode.resetNormal();
-         return;
-      }
-
-      List<NormalOcTreeNode> neighbors = new ArrayList<>();
-
-      List<OcTreeKey> cachedNeighborKeyOffsets = getCachedNeighborKeyOffsets(searchRadius, resolution, treeDepth);
-
-      OcTreeKey currentKey = new OcTreeKey();
-
-      for (int i = 0; i < cachedNeighborKeyOffsets.size(); i++)
-      {
-         currentKey.add(currentNodeKey, cachedNeighborKeyOffsets.get(i));
-         NormalOcTreeNode neighborNode = keyToNodeMap.get(currentKey);
-
-         if (neighborNode != null && neighborNode.isHitLocationSet())
-            neighbors.add(neighborNode);
-      }
-
-      computeNormalRansac(currentNode, maxDistanceFromPlane, neighbors);
-   }
-
-   private static final TDoubleObjectHashMap<OcTreeKeyList> neighborOffsetsCached = new TDoubleObjectHashMap<>(1);
-
-   public static OcTreeKeyList getCachedNeighborKeyOffsets(double searchRadius, double resolution, int treeDepth)
-   {
-      OcTreeKeyList cachedNeighborOffsets = neighborOffsetsCached.get(searchRadius);
-      if (cachedNeighborOffsets == null)
-      {
-         cachedNeighborOffsets = new OcTreeKeyList();
-         neighborOffsetsCached.put(searchRadius, cachedNeighborOffsets);
-         OcTreeKeyTools.computeNeighborKeyOffsets(treeDepth, resolution, treeDepth, searchRadius, cachedNeighborOffsets);
-      }
-      return cachedNeighborOffsets;
-   }
-
-   private static void computeNormalRansac(NormalOcTreeNode currentNode, double maxDistanceFromPlane, List<NormalOcTreeNode> neighbors)
-   {
       Vector3d normalCandidate = new Vector3d();
       Random random = ThreadLocalRandom.current();
       Point3d[] randomDraw = {new Point3d(), new Point3d()};
