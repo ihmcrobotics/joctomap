@@ -5,10 +5,92 @@ import java.util.List;
 
 import javax.vecmath.Point3d;
 
+import us.ihmc.octoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 
 public class OcTreeTools
 {
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeMinMaxCoordinates(NODE root, Point3d minToPack, Point3d maxToPack, double resolution, int treeDepth)
+   {
+      // empty tree
+      if (root == null)
+      {
+         minToPack.set(0.0, 0.0, 0.0);
+         maxToPack.set(0.0, 0.0, 0.0);
+         return;
+      }
+
+      minToPack.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+      maxToPack.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+
+      for (NODE node : OcTreeIteratorFactory.createLeafIteratable(root))
+      {
+         double size = node.getSize();
+         double halfSize = size / 2.0;
+         double x = node.getX() - halfSize;
+         double y = node.getY() - halfSize;
+         double z = node.getZ() - halfSize;
+
+         minToPack.setX(Math.min(x, minToPack.getX()));
+         minToPack.setY(Math.min(y, minToPack.getY()));
+         minToPack.setZ(Math.min(z, minToPack.getZ()));
+
+         x += size;
+         y += size;
+         z += size;
+
+         maxToPack.setX(Math.max(x, maxToPack.getX()));
+         maxToPack.setY(Math.max(y, maxToPack.getY()));
+         maxToPack.setZ(Math.max(z, maxToPack.getZ()));
+      }
+   }
+
+   public static <NODE extends AbstractOcTreeNode<NODE>> Point3d computeMaxCoordinate(NODE root, double resolution, int treeDepth)
+   {
+      // empty tree
+      if (root == null)
+         return new Point3d();
+
+      Point3d max = new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+
+      for (NODE node : OcTreeIteratorFactory.createLeafIteratable(root))
+      {
+         double size = node.getSize();
+         double halfSize = size / 2.0;
+         double x = node.getX() + halfSize;
+         double y = node.getY() + halfSize;
+         double z = node.getZ() + halfSize;
+
+         max.setX(Math.max(x, max.getX()));
+         max.setY(Math.max(y, max.getY()));
+         max.setZ(Math.max(z, max.getZ()));
+      }
+      return max;
+   }
+
+   public static <NODE extends AbstractOcTreeNode<NODE>> Point3d computeMinCoordinate(NODE root, double resolution, int treeDepth)
+   {
+      // empty tree
+      if (root == null)
+         return new Point3d();
+
+      Point3d min = new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+
+      for (NODE node : OcTreeIteratorFactory.createLeafIteratable(root))
+      {
+         double size = node.getSize();
+         double halfSize = size / 2.0;
+         double x = node.getX() - halfSize;
+         double y = node.getY() - halfSize;
+         double z = node.getZ() - halfSize;
+
+         min.setX(Math.min(x, min.getX()));
+         min.setY(Math.min(y, min.getY()));
+         min.setZ(Math.min(z, min.getZ()));
+      }
+      return min;
+   }
+
    /**
     * Return centers of leafs that do NOT exist (but could) in a given bounding box
     */

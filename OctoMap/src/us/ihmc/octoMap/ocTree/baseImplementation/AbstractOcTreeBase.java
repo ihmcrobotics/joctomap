@@ -8,7 +8,6 @@ import java.util.Queue;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
-import javax.vecmath.Vector3d;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 
@@ -59,8 +58,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /** flag to denote whether the octree extent changed (for lazy min/max eval) */
    protected boolean sizeChanged;
 
-   protected double maxCoordinate[] = new double[3]; ///< max in x, y, z
-   protected double minCoordinate[] = new double[3]; ///< min in x, y, z
    protected boolean lazyUpdate = false;
 
    /// data structure for ray casting, array for multithreading
@@ -79,8 +76,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       this.treeDepth = treeDepth;
       treeSize = 0;
       nodeBuilder = new NodeBuilder<>(getNodeClass());
-
-      initialize();
    }
 
    public AbstractOcTreeBase(AbstractOcTreeBase<NODE> other)
@@ -88,7 +83,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       resolution = other.resolution;
       treeDepth = other.treeDepth;
       nodeBuilder = new NodeBuilder<>(getNodeClass());
-      initialize();
       MutableInt mutableTreeSize = new MutableInt(0);
       if (other.root != null)
          root = other.root.cloneRecursive(nodeBuilder, mutableTreeSize);
@@ -527,55 +521,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return treeSize;
    }
 
-   public double volume()
-   {
-      Vector3d metricSize = getMetricSize();
-      return metricSize.getX() * metricSize.getY() * metricSize.getZ();
-   }
-
-   /// Size of OcTree (all known space) in meters for x, y and z dimension
-   public Vector3d getMetricSize()
-   {
-      Vector3d size = new Vector3d();
-      getMetricSize(size);
-      return size;
-   }
-
-   public void getMetricSize(Vector3d size)
-   {
-      Point3d min = getMetricMin();
-      Point3d max = getMetricMax();
-      size.sub(max, min);
-   }
-
-   /// minimum value of the bounding box of all known space in x, y, z
-   public Point3d getMetricMin()
-   {
-      Point3d min = new Point3d();
-      getMetricMin(min);
-      return min;
-   }
-
-   public void getMetricMin(Point3d min)
-   {
-      calculateMinMax();
-      min.set(minCoordinate[0], minCoordinate[1], minCoordinate[2]);
-   }
-
-   /// maximum value of the bounding box of all known space in x, y, z
-   public Point3d getMetricMax()
-   {
-      Point3d max = new Point3d();
-      getMetricMax(max);
-      return max;
-   }
-
-   public void getMetricMax(Point3d max)
-   {
-      calculateMinMax();
-      max.set(maxCoordinate[0], maxCoordinate[1], maxCoordinate[2]);
-   }
-
    /// Traverses the tree to calculate the total number of nodes
    public int getNumberOfNodes()
    {
@@ -663,66 +608,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public void keyToCoordinate(OcTreeKeyReadOnly key, Point3d coordinateToPack, int depth)
    {
       OcTreeKeyConversionTools.keyToCoordinate(key, depth, coordinateToPack, resolution, treeDepth);
-   }
-
-   /// initialize non-trivial members, helper for constructors
-   protected void initialize()
-   {
-      for (int i = 0; i < 3; i++)
-      {
-         maxCoordinate[i] = Double.NEGATIVE_INFINITY;
-         minCoordinate[i] = Double.POSITIVE_INFINITY;
-      }
-      sizeChanged = true;
-   }
-
-   /** Recalculates min and max in x, y, z. Does nothing when tree size didn't change. Reset {@link #sizeChanged} */
-   protected void calculateMinMax()
-   {
-      if (!sizeChanged)
-         return;
-
-      // empty tree
-      if (root == null)
-      {
-         minCoordinate[0] = minCoordinate[1] = minCoordinate[2] = 0.0;
-         maxCoordinate[0] = maxCoordinate[1] = maxCoordinate[2] = 0.0;
-         sizeChanged = false;
-         return;
-      }
-
-      for (int i = 0; i < 3; i++)
-      {
-         maxCoordinate[i] = Double.NEGATIVE_INFINITY;
-         minCoordinate[i] = Double.POSITIVE_INFINITY;
-      }
-
-      for (NODE node : this)
-      {
-         double size = node.getSize();
-         double halfSize = size / 2.0;
-         double x = node.getX() - halfSize;
-         double y = node.getY() - halfSize;
-         double z = node.getZ() - halfSize;
-         if (x < minCoordinate[0])
-            minCoordinate[0] = x;
-         if (y < minCoordinate[1])
-            minCoordinate[1] = y;
-         if (z < minCoordinate[2])
-            minCoordinate[2] = z;
-
-         x += size;
-         y += size;
-         z += size;
-         if (x > maxCoordinate[0])
-            maxCoordinate[0] = x;
-         if (y > maxCoordinate[1])
-            maxCoordinate[1] = y;
-         if (z > maxCoordinate[2])
-            maxCoordinate[2] = z;
-      }
-
-      sizeChanged = false;
    }
 
    /// recursive delete of node and all children (deallocates memory)
