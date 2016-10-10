@@ -6,6 +6,8 @@ import java.util.List;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 
+import us.ihmc.octoMap.tools.PointCloudTools;
+
 public class SweepCollection
 {
    private final List<PointCloud> sweeps = new ArrayList<>();
@@ -47,13 +49,13 @@ public class SweepCollection
 
    public void addSweep(float[] pointsInWorld, Point3d origin)
    {
-      sweeps.add(PointCloud.createPointCloudFromSubSample(pointsInWorld, subSampleSize));
+      sweeps.add(PointCloudTools.createRandomSample(pointsInWorld, subSampleSize));
       origins.add(new Point3d(origin));
    }
 
    public void addSweep(float[] pointsInWorld, Point3f origin)
    {
-      sweeps.add(PointCloud.createPointCloudFromSubSample(pointsInWorld, subSampleSize));
+      sweeps.add(PointCloudTools.createRandomSample(pointsInWorld, subSampleSize));
       origins.add(new Point3d(origin));
    }
 

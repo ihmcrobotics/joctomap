@@ -16,7 +16,6 @@ import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.pointCloud.PointCloud;
-import us.ihmc.octoMap.pointCloud.ScanNode;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.rules.SetOccupancyRule;
 import us.ihmc.octoMap.rules.UpdateOccupancyRule;
@@ -223,26 +222,6 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       Point3d transformedSensorOrigin = new Point3d(sensorOrigin);
       frameOrigin.transform(transformedSensorOrigin);
       insertPointCloud(transformedScan, transformedSensorOrigin);
-   }
-
-   /**
-   * Insert a 3d scan (given as a ScanNode) into the tree, parallelized with OpenMP.
-   *
-   * @note replaces insertScan
-   *
-   * @param scan ScanNode contains Pointcloud data and frame/sensor origin
-   */
-   public void insertPointCloud(ScanNode scan)
-   {
-      // performs transformation to data and sensor origin first
-      PointCloud cloud = scan.getScan();
-      RigidBodyTransform frameOrigin = new RigidBodyTransform(scan.getPose());
-      frameOrigin.invert();
-      Vector3d tempVector = new Vector3d();
-      scan.getPose().getTranslation(tempVector);
-      Point3d sensorOrigin = new Point3d(tempVector);//frame_origin.inv().transform(scan.pose.trans()); // TODO Sylvain Double-check this transformation
-      frameOrigin.transform(sensorOrigin);
-      insertPointCloud(cloud, sensorOrigin, frameOrigin);
    }
 
    /**
