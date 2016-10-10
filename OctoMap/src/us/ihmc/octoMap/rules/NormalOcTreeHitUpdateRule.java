@@ -8,8 +8,8 @@ import javax.vecmath.Vector3d;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
-import us.ihmc.octoMap.occupancy.OccupancyTools;
 import us.ihmc.octoMap.rules.interfaces.UpdateRule;
+import us.ihmc.octoMap.tools.OccupancyTools;
 
 public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
 {

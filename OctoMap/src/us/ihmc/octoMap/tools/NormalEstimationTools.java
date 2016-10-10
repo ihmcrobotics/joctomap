@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.normalEstimation;
+package us.ihmc.octoMap.tools;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,12 +14,9 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
-import us.ihmc.octoMap.tools.OcTreeKeyTools;
-import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools.NeighborActionRule;
-import us.ihmc.octoMap.tools.OcTreeSearchTools;
 
-public final class NormalEstimationTools
+public abstract class NormalEstimationTools
 {
    public static void computeNodeNormalRansac(NormalOcTreeNode root, OcTreeKeyReadOnly key, double searchRadius, double maxDistanceFromPlane, int treeDepth)
    {

@@ -1,18 +1,19 @@
 package us.ihmc.octoMap.rules;
 
-import us.ihmc.octoMap.key.KeyBoolMap;
+import java.util.Map;
+
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
-import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
-import us.ihmc.octoMap.occupancy.OccupancyTools;
 import us.ihmc.octoMap.rules.interfaces.EarlyAbortRule;
 import us.ihmc.octoMap.rules.interfaces.UpdateRule;
+import us.ihmc.octoMap.tools.OccupancyTools;
 
 public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> implements UpdateRule<NODE>, EarlyAbortRule<NODE>
 {
    private float updateLogOdds = Float.NaN;
    private final OccupancyParametersReadOnly parameters;
-   private KeyBoolMap changedKeys;
+   private Map<OcTreeKeyReadOnly, Boolean> changedKeys;
 
    public UpdateOccupancyRule(OccupancyParametersReadOnly occupancyParameters)
    {
@@ -29,7 +30,7 @@ public class UpdateOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>>
       changedKeys = null;
    }
 
-   public void attachChangedKeys(KeyBoolMap changedKeys)
+   public void attachChangedKeys(Map<OcTreeKeyReadOnly, Boolean> changedKeys)
    {
       this.changedKeys = changedKeys;
    }

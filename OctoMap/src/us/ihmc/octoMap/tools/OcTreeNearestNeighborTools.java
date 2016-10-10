@@ -6,9 +6,9 @@ import org.apache.commons.lang3.mutable.MutableDouble;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
-import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
 
-public class OcTreeNearestNeighborTools
+public abstract class OcTreeNearestNeighborTools
 {
    public static interface NeighborActionRule<NODE extends AbstractOcTreeNode<NODE>>
    {

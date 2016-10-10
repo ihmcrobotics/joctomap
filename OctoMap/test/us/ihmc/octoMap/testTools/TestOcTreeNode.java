@@ -1,6 +1,6 @@
 package us.ihmc.octoMap.testTools;
 
-import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
 
 public class TestOcTreeNode extends AbstractOcTreeNode<TestOcTreeNode>
 {

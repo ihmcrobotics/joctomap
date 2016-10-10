@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.implementations.OcTree;
+import us.ihmc.octoMap.ocTree.OccupancyOcTree;
 
 public class OcTreeSearchToolsTest
 {
@@ -19,7 +19,7 @@ public class OcTreeSearchToolsTest
    {
       Random random = new Random(54564L);
       double resolution = 0.02;
-      OcTree ocTree = new OcTree(resolution);
+      OccupancyOcTree ocTree = new OccupancyOcTree(resolution);
       int treeDepth = ocTree.getTreeDepth();
 
       for (int i = 0; i < 100000; i++)
@@ -51,7 +51,7 @@ public class OcTreeSearchToolsTest
    {
       Random random = new Random(54564L);
       double resolution = 0.02;
-      OcTree ocTree = new OcTree(resolution);
+      OccupancyOcTree ocTree = new OccupancyOcTree(resolution);
       int treeDepth = ocTree.getTreeDepth();
 
       for (int i = 0; i < 100000; i++)

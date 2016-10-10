@@ -1,5 +1,7 @@
 package us.ihmc.octoMap.node;
 
+import us.ihmc.octoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
+
 public class OcTreeNodeStamped extends AbstractOccupancyOcTreeNode<OcTreeNodeStamped>
 {
    private long timestamp;

@@ -8,7 +8,7 @@ import us.ihmc.octoMap.exceptions.InvalidKeyException;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
-import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
 
 /**
  * This class provides basic operations on {@linkplain OcTreeKey}.
@@ -19,7 +19,7 @@ import us.ihmc.octoMap.node.AbstractOcTreeNode;
  * 
  *
  */
-public class OcTreeKeyTools
+public abstract class OcTreeKeyTools
 {
    /**
     * Computes the 

@@ -3,7 +3,7 @@ package us.ihmc.octoMap.iterators;
 import java.util.stream.Stream;
 
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
-import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
 import us.ihmc.octoMap.rules.interfaces.IteratorSelectionRule;
 
 public class OcTreeIteratorFactory

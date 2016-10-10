@@ -1,6 +1,7 @@
 package us.ihmc.octoMap.node;
 
 import us.ihmc.octoMap.OctoMapColor;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
 
 public final class ColorOcTreeNode extends AbstractOccupancyOcTreeNode<ColorOcTreeNode>
 {
