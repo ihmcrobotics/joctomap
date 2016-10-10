@@ -13,7 +13,6 @@ import javax.vecmath.Vector3d;
 import org.junit.Test;
 
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.testTools.TestRandomTools;
 
 public class OcTreeKeyConversionToolsTest
 {
@@ -191,7 +190,7 @@ public class OcTreeKeyConversionToolsTest
 
       for (int i = 0; i < 100000; i++)
       {
-         Point3d randomPoint = TestRandomTools.generateRandomPoint(random, 50.0, 50.0, 50.0);
+         Point3d randomPoint = OctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
          OcTreeKey key = OcTreeKeyConversionTools.coordinateToKey(randomPoint, resolution, treeDepth);
          Point3d nodeCoordinate = keyToCoordinate(key, resolution, treeDepth);
          boolean xInside = Math.abs(randomPoint.getX() - nodeCoordinate.getX()) <= 0.5 * resolution;

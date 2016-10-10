@@ -4,140 +4,150 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
-import us.ihmc.octoMap.node.OcTreeNodeTools;
-import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
-import us.ihmc.octoMap.tools.OctoMapTools;
+import us.ihmc.octoMap.rules.interfaces.IteratorSelectionRule;
 
-public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<OcTreeSuperNode<NODE>>
+public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<NODE>
 {
-   private final AbstractOcTreeBase<NODE> tree;
-   private final int maxDepth;
-   private final OcTreeIterator<NODE> iterator;
+   private NODE root;
+   private int maxDepth;
+   private IteratorSelectionRule<NODE> rule;
 
-   public OcTreeIterable(AbstractOcTreeBase<NODE> tree)
+   public OcTreeIterable(NODE root)
    {
-      this(tree, 0, false);
+      this.root = root;
    }
 
-   public OcTreeIterable(AbstractOcTreeBase<NODE> tree, int maxDepth)
+   public OcTreeIterable(NODE root, IteratorSelectionRule<NODE> rule)
    {
-      this(tree, maxDepth, false);
+      this.root = root;
+      setRule(rule);
    }
-
-   public OcTreeIterable(AbstractOcTreeBase<NODE> tree, boolean recycleIterator)
+   
+   public void setMaxDepth(int maxDepth)
    {
-      this(tree, 0, recycleIterator);
-   }
-
-   public OcTreeIterable(AbstractOcTreeBase<NODE> tree, int maxDepth, boolean recycleIterator)
-   {
-      this.tree = tree;
       this.maxDepth = maxDepth;
-      if (recycleIterator)
-         iterator = new OcTreeIterator<>(tree, maxDepth);
-      else
-         iterator = null;
+   }
+
+   public void setRule(IteratorSelectionRule<NODE> rule)
+   {
+      this.rule = rule;
    }
 
    @Override
-   public Iterator<OcTreeSuperNode<NODE>> iterator()
+   public Iterator<NODE> iterator()
    {
-      if (iterator == null)
-      {
-         return new OcTreeIterator<>(tree, maxDepth);
-      }
-      else
-      {
-         iterator.reset();
-         return iterator;
-      }
+      return new OcTreeIterator<>(root, maxDepth, rule);
    }
 
-   public static class OcTreeIterator<NODE extends AbstractOcTreeNode<NODE>> implements Iterator<OcTreeSuperNode<NODE>>
+   public static class OcTreeIterator<NODE extends AbstractOcTreeNode<NODE>> implements Iterator<NODE>
    {
-      private final ArrayDeque<OcTreeSuperNode<NODE>> pool = new ArrayDeque<>();
+      private final NODE root;
+      private final IteratorSelectionRule<NODE> rule;
 
       /// Internal recursion stack.
-      private final ArrayDeque<OcTreeSuperNode<NODE>> stack = new ArrayDeque<>();
+      private final ArrayDeque<NODE> stack = new ArrayDeque<>();
 
-      private AbstractOcTreeBase<NODE> tree;
       private int maxDepth; ///< Maximum depth for depth-limited queries
 
-      public OcTreeIterator(AbstractOcTreeBase<NODE> tree)
+      private OcTreeIterator(NODE root, int maxDepth, IteratorSelectionRule<NODE> rule)
       {
-         this(tree, 0);
-      }
-
-      public OcTreeIterator(AbstractOcTreeBase<NODE> tree, int maxDepth)
-      {
-         this.tree = tree;
-         if (tree == null)
-            throw new RuntimeException("Creating an iterator with no tree.");
+         this.root = root;
+         this.rule = rule;
 
          setMaxDepth(maxDepth);
-         reset();
+         initialize();
       }
 
-      public void reset()
+      private void initialize()
       {
-         while (!stack.isEmpty())
-            pool.add(stack.pop());
+         hasNextHasBeenCalled = false;
+         stack.clear();
 
-         if (tree.getRoot() != null)
+         if (root != null)
          { // tree is not empty
-            OcTreeSuperNode<NODE> superNode = getOrCreateSuperNode();
-            superNode.setAsRootSuperNode(tree, this.maxDepth);
-            stack.add(superNode);
+            stack.add(root);
          }
       }
 
-      public void setMaxDepth(int maxDepth)
+      private void setMaxDepth(int maxDepth)
       {
          if (maxDepth == 0)
-            this.maxDepth = tree.getTreeDepth();
+            this.maxDepth = Integer.MAX_VALUE;
          else
             this.maxDepth = maxDepth;
       }
 
+      private NODE next = null;
+      private boolean hasNextHasBeenCalled = false;
+
       @Override
       public boolean hasNext()
       {
-         return !stack.isEmpty();
+         next = null;
+
+         if (stack.isEmpty())
+            return false;
+
+         if (!hasNextHasBeenCalled)
+         {
+            next = searchNextNodePassingRule();
+            hasNextHasBeenCalled = true;
+         }
+
+         return next != null;
       }
 
       @Override
-      public OcTreeSuperNode<NODE> next()
+      public NODE next()
       {
-         OcTreeSuperNode<NODE> currentNode = stack.poll();
+         if (!hasNextHasBeenCalled)
+         {
+            if (!hasNext())
+               throw new NullPointerException();
+         }
 
-         if (currentNode.getDepth() < maxDepth)
+         hasNextHasBeenCalled = false;
+         NODE ret = next;
+         next = null;
+         return ret;
+      }
+
+      private NODE searchNextNodePassingRule()
+      {
+         if (stack.isEmpty())
+            return null;
+
+         if (rule == null)
+            return searchNextNode();
+
+         while (!stack.isEmpty())
+         {
+            NODE currentNode = searchNextNode();
+            if (currentNode == null || rule.test(currentNode, maxDepth))
+               return currentNode;
+         }
+         return null;
+      }
+
+      private NODE searchNextNode()
+      {
+         if (stack.isEmpty())
+            return null;
+
+         NODE currentNode = stack.poll();
+
+         if (currentNode.hasArrayForChildren() && currentNode.getDepth() < maxDepth)
          {
             // push on stack in reverse order
             for (int i = 7; i >= 0; i--)
             {
-               if (OcTreeNodeTools.nodeChildExists(currentNode.getNode(), i))
-               {
-                  OcTreeSuperNode<NODE> newNode = getOrCreateSuperNode();
-                  newNode.setAsChildSuperNode(currentNode, i);
-                  stack.add(newNode);
-                  OctoMapTools.checkIfDepthValid(newNode.getDepth(), maxDepth);
-               }
+               NODE child = currentNode.getChild(i);
+               if (child != null)
+                  stack.add(child);
             }
          }
-         pool.add(currentNode);
-         return currentNode;
-      }
 
-      private OcTreeSuperNode<NODE> getOrCreateSuperNode()
-      {
-         if (pool.isEmpty())
-            return new OcTreeSuperNode<>();
-         else
-         {
-            OcTreeSuperNode<NODE> ret = pool.pop();
-            ret.clear();
-            return ret;
-         }
+         return currentNode;
       }
    }
 }

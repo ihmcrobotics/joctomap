@@ -10,7 +10,6 @@ import javax.vecmath.Point3d;
 
 import org.junit.Test;
 
-import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
@@ -35,7 +34,7 @@ public class OcTreeNearestNeighborToolsTest
       randomQuery.setZ(25.0 - 50.0 * random.nextDouble());
 
       double sphereRadius = 1.5;
-      ocTree.fillRandomlyWithinSphere(random, numberOfLeavesToCreate, randomQuery, sphereRadius, ocTree);
+      ocTree.fillRandomlyWithinSphere(random, numberOfLeavesToCreate, randomQuery, sphereRadius);
 
       for (int i = 0; i < 100; i++)
       {
@@ -43,28 +42,32 @@ public class OcTreeNearestNeighborToolsTest
          OcTreeKeyList foundNeighborKeys = new OcTreeKeyList();
          NeighborActionRule<TestOcTreeNode> recordNeighborsRule = new NeighborActionRule<TestOcTreeNode>()
          {
-
             @Override
-            public void doActionOnNeighbor(TestOcTreeNode node, OcTreeKeyReadOnly nodeKey)
+            public void doActionOnNeighbor(TestOcTreeNode node)
             {
                foundNeighbors.add(node);
+               OcTreeKey nodeKey = new OcTreeKey();
+               node.getKey(nodeKey);
                foundNeighborKeys.add(nodeKey);
             }
          };
          double randomRadius = random.nextDouble() * sphereRadius;
 
-         OcTreeNearestNeighborTools.findRadiusNeighbors(ocTree.getRoot(), randomQuery, randomRadius, recordNeighborsRule, resolution, treeDepth);
+         OcTreeNearestNeighborTools.findRadiusNeighbors(ocTree.getRoot(), randomQuery, randomRadius, recordNeighborsRule);
 
          List<TestOcTreeNode> expectedNeighbors = new ArrayList<>();
          OcTreeKeyList expectedNeighborKeys = new OcTreeKeyList();
 
-         for (OcTreeSuperNode<TestOcTreeNode> superNode : ocTree.leafIterable())
+         for (TestOcTreeNode node : ocTree)
          {
-            Point3d coordinate = superNode.getCoordinate();
+            Point3d coordinate = new Point3d();
+            node.getCoordinate(coordinate);
             if (coordinate.distance(randomQuery) < randomRadius)
             {
-               expectedNeighborKeys.add(superNode.getKey());
-               expectedNeighbors.add(superNode.getNode());
+               OcTreeKey nodeKey = new OcTreeKey();
+               node.getKey(nodeKey);
+               expectedNeighborKeys.add(nodeKey);
+               expectedNeighbors.add(node);
             }
          }
 
@@ -110,7 +113,7 @@ public class OcTreeNearestNeighborToolsTest
       Random random = new Random(345435L);
       int numberOfLeavesToCreate = 10;
 
-      ocTree.fillRandomly(random, numberOfLeavesToCreate, ocTree);
+      ocTree.fillRandomly(random, numberOfLeavesToCreate);
 
       Point3d randomQuery = new Point3d();
 
@@ -131,14 +134,17 @@ public class OcTreeNearestNeighborToolsTest
          OcTreeKeyReadOnly expectedNearestNeighborKey = null;
          double distanceFromQueryToNearestNeighbor = Double.POSITIVE_INFINITY;
 
-         for (OcTreeSuperNode<TestOcTreeNode> superNode : ocTree.leafIterable())
+         for (TestOcTreeNode node : ocTree)
          {
-            Point3d coordinate = superNode.getCoordinate();
+            Point3d coordinate = new Point3d();
+            node.getCoordinate(coordinate);
             double distance = coordinate.distance(randomQuery);
             if (distance < distanceFromQueryToNearestNeighbor)
             {
+               OcTreeKey nodeKey = new OcTreeKey();
+               node.getKey(nodeKey);
                distanceFromQueryToNearestNeighbor = distance;
-               expectedNearestNeighborKey = superNode.getKey();
+               expectedNearestNeighborKey = nodeKey;
             }
          }
 

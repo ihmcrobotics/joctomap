@@ -13,9 +13,9 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.key.OcTreeKeySet;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
-import us.ihmc.octoMap.ocTree.rules.interfaces.CollidableRule;
-import us.ihmc.octoMap.ocTree.rules.interfaces.RayActionRule;
 import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.rules.interfaces.CollidableRule;
+import us.ihmc.octoMap.rules.interfaces.RayActionRule;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
@@ -150,9 +150,8 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       } // end for all points, end of parallel OMP loop
 
       // prefer occupied cells over free ones (and make sets disjunct)
-      for (int i = 0; i < unfilteredFreeCells.size(); i++)
+      for (OcTreeKeyReadOnly possibleFreeCell : unfilteredFreeCells)
       {
-         OcTreeKeyReadOnly possibleFreeCell = unfilteredFreeCells.get(i);
          if (!occupiedCells.contains(possibleFreeCell))
             freeCells.add(possibleFreeCell);
       }
@@ -236,8 +235,8 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
          if (step[i] != 0)
          {
             // corner point of voxel (in direction of ray)
-            double voxelBorder = keyToCoordinate(currentKey.getKey(i), resolution, treeDepth); //TODO understand this part
-            voxelBorder += (float) (step[i] * resolution * 0.5);
+            double voxelBorder = keyToCoordinate(currentKey.getKey(i), resolution, treeDepth);
+            voxelBorder += step[i] * resolution * 0.5;
 
             tMax[i] = (voxelBorder - originArray[i]) / directionArray[i];
             tDelta[i] = resolution / Math.abs(directionArray[i]);
@@ -658,7 +657,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
          }
       }
 
-      // Subtract (add) a fraction to ensure no ambiguity on the starting voxel //TODO: understand this part
+      // Subtract (add) a fraction to ensure no ambiguity on the starting voxel
       // Don't start on a boundary.
       if (found)
          intersectionToPack.scaleAdd(outD + delta, direction, origin);

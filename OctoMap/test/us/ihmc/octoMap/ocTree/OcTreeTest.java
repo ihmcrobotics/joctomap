@@ -10,12 +10,11 @@ import javax.vecmath.Vector3d;
 
 import org.junit.Test;
 
-import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
 import us.ihmc.octoMap.ocTree.implementations.OcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
-import us.ihmc.octoMap.testTools.TestRandomTools;
+import us.ihmc.octoMap.tools.OctoMapRandomTools;
 import us.ihmc.octoMap.tools.OctoMapTools;
 
 public class OcTreeTest
@@ -66,12 +65,12 @@ public class OcTreeTest
 
       for (int i = 0; i < 10000000; i++)
       {
-         Point3d origin = TestRandomTools.generateRandomPoint(random, 50.0, 50.0, 50.0);
-         Point3d end = TestRandomTools.generateRandomPoint(random, 50.0, 50.0, 50.0);
+         Point3d origin = OctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
+         Point3d end = OctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
 
          OcTree octree = new OcTree(resolution);
          long start = System.nanoTime();
-         OcTreeRayHelper rayTracer = new OcTreeRayHelper();
+         OcTreeRayHelper<OccupancyOcTreeNode> rayTracer = new OcTreeRayHelper<>();
          rayTracer.computeRayKeys(origin, end, resolution, octree.getTreeDepth());
          long endTime = System.nanoTime();
          System.out.println(OctoMapTools.nanoSecondsToSeconds(endTime - start));
@@ -93,7 +92,7 @@ public class OcTreeTest
       {
          double resolution = 0.15 * random.nextDouble();
          OcTree ocTree = new OcTree(resolution);
-         Point3d coordinate = TestRandomTools.generateRandomPoint(random, 10.0, 10.0, 10.0);
+         Point3d coordinate = OctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
 
          OccupancyOcTreeNode node = null;
 
@@ -133,20 +132,20 @@ public class OcTreeTest
          int numberOfDuplicates = 0;
          HashSet<OccupancyOcTreeNode> foundNodes = new HashSet<>();
 
-         for (OcTreeSuperNode<OccupancyOcTreeNode> superNode : ocTree.treeIterable())
+         for (OccupancyOcTreeNode currentNode : ocTree)
          {
-            if (foundNodes.contains(superNode.getNode()))
+            if (foundNodes.contains(currentNode))
                numberOfDuplicates++;
-            foundNodes.add(superNode.getNode());
-            if (superNode.isLeaf())
+            foundNodes.add(currentNode);
+            if (!currentNode.hasArrayForChildren())
             {
                numberOfLeafs++;
-               if (ocTree.isNodeOccupied(superNode.getNode()))
+               if (ocTree.isNodeOccupied(currentNode))
                   numberOfOccupiedLeafs++;
             }
             else
             {
-               assertTrue(ocTree.isNodeOccupied(superNode.getNode()));
+               assertTrue(ocTree.isNodeOccupied(currentNode));
             }
          }
 

@@ -8,13 +8,8 @@ public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcT
 {
    float logOdds;
 
-   AbstractOccupancyOcTreeNode()
+   public AbstractOccupancyOcTreeNode()
    {
-   }
-
-   AbstractOccupancyOcTreeNode(float initialValue)
-   {
-      logOdds = initialValue;
    }
 
    @Override
@@ -102,7 +97,6 @@ public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcT
    /**
     * Update this node's occupancy according to its children's maximum occupancy
     */
-   @Override
    public void updateOccupancyChildren()
    {
       setLogOdds(getMaxChildLogOdds()); // conservative
@@ -117,12 +111,7 @@ public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcT
    }
 
    @Override
-   public boolean epsilonEquals(N other)
-   {
-      return epsilonEquals(other, 1.0e-7f);
-   }
-
-   public boolean epsilonEquals(N other, float epsilon)
+   protected boolean epsilonEqualsInternal(N other, double epsilon)
    {
       return Math.abs(logOdds - other.logOdds) <= epsilon;
    }

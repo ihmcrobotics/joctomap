@@ -4,8 +4,9 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
+import org.apache.commons.math3.util.Precision;
+
 import us.ihmc.octoMap.ocTree.implementations.NormalOcTree;
-import us.ihmc.octoMap.planarRegions.PlanarRegion;
 
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
 {
@@ -14,16 +15,11 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    private float normalZ = Float.NaN;
    private float normalAverageDeviation = Float.NaN;
    private int normalConsensusSize = 0;
-   private float centerX = Float.NaN;
-   private float centerY = Float.NaN;
-   private float centerZ = Float.NaN;
-   private int regionId = PlanarRegion.NO_REGION_ID;
-   private int hasBeenCandidateForRegion = PlanarRegion.NO_REGION_ID;
+   private float hitLocationX = Float.NaN;
+   private float hitLocationY = Float.NaN;
+   private float hitLocationZ = Float.NaN;
 
-   private long n;
-   private float devX, nDevX;
-   private float devY, nDevY;
-   private float devZ, nDevZ;
+   private long numberOfHits;
 
    public NormalOcTreeNode()
    {
@@ -38,22 +34,12 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       normalZ = other.normalZ;
       normalAverageDeviation = other.normalAverageDeviation;
       normalConsensusSize = other.normalConsensusSize;
-      centerX = other.centerX;
-      centerY = other.centerY;
-      centerZ = other.centerZ;
-      regionId = other.regionId;
-      hasBeenCandidateForRegion = other.hasBeenCandidateForRegion;
+      hitLocationX = other.hitLocationX;
+      hitLocationY = other.hitLocationY;
+      hitLocationZ = other.hitLocationZ;
 
       if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
-      {
-         n = other.n;
-         devX = other.devX;
-         devY = other.devY;
-         devZ = other.devZ;
-         nDevX = other.nDevX;
-         nDevY = other.nDevY;
-         nDevZ = other.nDevZ;
-      }
+         numberOfHits = other.numberOfHits;
    }
 
    @Override
@@ -67,9 +53,7 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    {
       super.resetLogOdds();
       resetNormal();
-      resetCenter();
-      resetRegionId();
-      resetHasBeenCandidateForRegion();
+      resetHitLocation();
    }
 
    public void resetNormal()
@@ -81,29 +65,14 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       normalConsensusSize = 0;
    }
 
-   public void resetCenter()
+   public void resetHitLocation()
    {
-      centerX = Float.NaN;
-      centerY = Float.NaN;
-      centerZ = Float.NaN;
+      hitLocationX = Float.NaN;
+      hitLocationY = Float.NaN;
+      hitLocationZ = Float.NaN;
 
       if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
-      {
-         n = 0;
-         devX = Float.NaN; nDevX = Float.NaN;
-         devY = Float.NaN; nDevY = Float.NaN;
-         devZ = Float.NaN; nDevZ = Float.NaN;
-      }
-   }
-
-   public void resetRegionId()
-   {
-      regionId = PlanarRegion.NO_REGION_ID;
-   }
-
-   public void resetHasBeenCandidateForRegion()
-   {
-      hasBeenCandidateForRegion = PlanarRegion.NO_REGION_ID;
+         numberOfHits = 0;
    }
 
    public void updateNormalChildren()
@@ -184,178 +153,148 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       return !Float.isNaN(normalX) && !Float.isNaN(normalY) && !Float.isNaN(normalZ);
    }
 
-   public boolean isCenterSet()
+   public boolean isHitLocationSet()
    {
-      return !Float.isNaN(centerX) && !Float.isNaN(centerY) && !Float.isNaN(centerY);
+      return !Float.isNaN(hitLocationX) && !Float.isNaN(hitLocationY) && !Float.isNaN(hitLocationY);
    }
 
-   public void getCenter(Point3d centerToPack)
+   public void getHitLocation(Point3d hitLocationToPack)
    {
-      centerToPack.set(centerX, centerY, centerZ);
+      hitLocationToPack.set(hitLocationX, hitLocationY, hitLocationZ);
    }
 
-   public void setCenter(Point3d center)
-   {
-      centerX = (float) center.getX();
-      centerY = (float) center.getY();
-      centerZ = (float) center.getZ();
-   }
-
-   public void updateCenter(Point3d centerUpdate, double alphaUpdate)
+   public void updateHitLocation(Point3d centerUpdate, double alphaUpdate)
    {
       float xUpdate = (float) centerUpdate.getX();
       float yUpdate = (float) centerUpdate.getY();
       float zUpdate = (float) centerUpdate.getZ();
-      updateCenter(xUpdate, yUpdate, zUpdate, (float) alphaUpdate);
+      updateHitLocation(xUpdate, yUpdate, zUpdate, (float) alphaUpdate);
    }
 
-   public void updateCenter(Point3f centerUpdate, double alphaUpdate)
+   public void updateHitLocation(Point3f centerUpdate, double alphaUpdate)
    {
       float xUpdate = centerUpdate.getX();
       float yUpdate = centerUpdate.getY();
       float zUpdate = centerUpdate.getZ();
-      updateCenter(xUpdate, yUpdate, zUpdate, (float) alphaUpdate);
+      updateHitLocation(xUpdate, yUpdate, zUpdate, (float) alphaUpdate);
    }
 
-   public void updateCenter(float xUpdate, float yUpdate, float zUpdate, float alphaUpdate)
+   public void updateHitLocation(float xUpdate, float yUpdate, float zUpdate, float alphaUpdate)
    {
       if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
       {
-         if (n == 0)
+         if (numberOfHits == 0)
          {
-            centerX = 0.0f;
-            centerY = 0.0f;
-            centerZ = 0.0f;
+            hitLocationX = 0.0f;
+            hitLocationY = 0.0f;
+            hitLocationZ = 0.0f;
          }
-         n++;
-         float n0 = n;
-         devX = xUpdate - centerX;
-         nDevX = devX / n0;
-         centerX += nDevX;
 
-         devY = yUpdate - centerY;
-         nDevY = devY / n0;
-         centerY += nDevY;
-
-         devZ = zUpdate - centerZ;
-         nDevZ = devZ / n0;
-         centerZ += nDevZ;
+         numberOfHits++;
+         float nInv = 1.0f / numberOfHits;
+         hitLocationX += (xUpdate - hitLocationX) * nInv;
+         hitLocationY += (yUpdate - hitLocationY) * nInv;
+         hitLocationZ += (zUpdate - hitLocationZ) * nInv;
       }
       else
       {
-         if (!isCenterSet())
+         if (!isHitLocationSet())
          {
-            centerX = xUpdate;
-            centerY = yUpdate;
-            centerZ = zUpdate;
+            hitLocationX = xUpdate;
+            hitLocationY = yUpdate;
+            hitLocationZ = zUpdate;
          }
          else
          {
-            centerX = alphaUpdate * xUpdate + (1.0f - alphaUpdate) * centerX;
-            centerY = alphaUpdate * yUpdate + (1.0f - alphaUpdate) * centerY;
-            centerZ = alphaUpdate * zUpdate + (1.0f - alphaUpdate) * centerZ;
+            hitLocationX = alphaUpdate * xUpdate + (1.0f - alphaUpdate) * hitLocationX;
+            hitLocationY = alphaUpdate * yUpdate + (1.0f - alphaUpdate) * hitLocationY;
+            hitLocationZ = alphaUpdate * zUpdate + (1.0f - alphaUpdate) * hitLocationZ;
          }
       }
    }
 
-   public void updateCenterChildren()
+   public void updateHitLocationChildren()
    {
       if (children == null)
       {
-         resetCenter();
+         resetHitLocation();
          return;
       }
 
-      centerX = 0.0f;
-      centerY = 0.0f;
-      centerZ = 0.0f;
+      hitLocationX = 0.0f;
+      hitLocationY = 0.0f;
+      hitLocationZ = 0.0f;
       int count = 0;
 
       for (int i = 0; i < 8; i++)
       {
          NormalOcTreeNode child = children[i];
 
-         if (child != null && child.isCenterSet())
+         if (child != null && child.isHitLocationSet())
          {
-            centerX += child.centerX;
-            centerY += child.centerY;
-            centerZ += child.centerZ;
+            hitLocationX += child.hitLocationX;
+            hitLocationY += child.hitLocationY;
+            hitLocationZ += child.hitLocationZ;
             count++;
          }
       }
 
       if (count == 0)
       {
-         resetCenter();
+         resetHitLocation();
          return;
       }
       double invCount = 1.0 / count;
-      centerX *= invCount;
-      centerY *= invCount;
-      centerZ *= invCount;
+      hitLocationX *= invCount;
+      hitLocationY *= invCount;
+      hitLocationZ *= invCount;
    }
 
-   public boolean isPartOfRegion()
+   public double getHitLocationX()
    {
-      return regionId != PlanarRegion.NO_REGION_ID;
+      return hitLocationX;
    }
 
-   public void setRegionId(int regionId)
+   public double getHitLocationY()
    {
-      this.regionId = regionId;
+      return hitLocationY;
    }
 
-   public int getRegionId()
+   public double getHitLocationZ()
    {
-      return regionId;
+      return hitLocationZ;
    }
 
-   public void updateRegionIdChildren()
+   public double getNormalX()
    {
-      if (!hasAtLeastOneChild())
-      {
-         resetRegionId();
-         return;
-      }
-
-      int indexRegionWithHighestCount = -1;
-      int highestCount = -1;
-
-      for (int i = 0; i < 8; i++)
-      {
-         NormalOcTreeNode currentChild = children[i];
-         if (currentChild != null && currentChild.isPartOfRegion())
-         {
-            int currentCount = 1;
-            
-            for (int j = 0; j < i; j++)
-            {
-               NormalOcTreeNode other = children[j];
-               if (other != null && currentChild.getRegionId() == other.getRegionId())
-                  currentCount++;
-            }
-
-            if (indexRegionWithHighestCount < 0 || currentCount > highestCount)
-            {
-               indexRegionWithHighestCount = i;
-               highestCount = currentCount;
-            }
-         }
-      }
-
-      if (indexRegionWithHighestCount < 0)
-         resetRegionId();
-      else
-         regionId = children[indexRegionWithHighestCount].regionId;
+      return normalX;
    }
 
-   public int getHasBeenCandidateForRegion()
+   public double getNormalY()
    {
-      return hasBeenCandidateForRegion;
+      return normalY;
    }
 
-   public void setHasBeenCandidateForRegion(int hasBeenCandidateForRegion)
+   public double getNormalZ()
    {
-      this.hasBeenCandidateForRegion = hasBeenCandidateForRegion;
+      return normalZ;
+   }
+
+   @Override
+   protected boolean epsilonEqualsInternal(NormalOcTreeNode other, double epsilon)
+   {
+      if (!Precision.equals(normalX, other.normalX, epsilon))
+         return false;
+      if (!Precision.equals(normalY, other.normalY, epsilon))
+         return false;
+      if (!Precision.equals(normalZ, other.normalZ, epsilon))
+         return false;
+      if (!Precision.equals(hitLocationX, other.hitLocationX, epsilon))
+         return false;
+      if (!Precision.equals(hitLocationY, other.hitLocationY, epsilon))
+         return false;
+      if (!Precision.equals(hitLocationZ, other.hitLocationZ, epsilon))
+         return false;
+      return super.epsilonEqualsInternal(other, epsilon);
    }
 }

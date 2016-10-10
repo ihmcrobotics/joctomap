@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree.rules;
+package us.ihmc.octoMap.rules;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
@@ -7,9 +7,9 @@ import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
-import us.ihmc.octoMap.ocTree.rules.interfaces.UpdateRule;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.occupancy.OccupancyTools;
+import us.ihmc.octoMap.rules.interfaces.UpdateRule;
 
 public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
 {
@@ -54,7 +54,7 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
    {
       OccupancyTools.updateNodeLogOdds(parameters, leafToUpdate, updateLogOdds);
 
-      leafToUpdate.updateCenter(hitLocation, alphaHitLocationUpdate);
+      leafToUpdate.updateHitLocation(hitLocation, alphaHitLocationUpdate);
 
       if (!leafToUpdate.isNormalSet())
       {
@@ -76,5 +76,6 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
    public void updateInnerNode(NormalOcTreeNode innerNodeToUpdate)
    {
       innerNodeToUpdate.updateOccupancyChildren();
+      innerNodeToUpdate.updateHitLocationChildren();
    }
 }

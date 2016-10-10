@@ -71,7 +71,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
     */
    public OcTreeKey add()
    {
-      return unsafeGetAndGrowIfNeeded(size);    //TODO why unsafe
+      return getAndGrowIfNeeded(size);
    }
 
    /** Unsupported operation. */
@@ -179,11 +179,6 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    {
       positiveIndexCheck(index);
 
-      return unsafeGetAndGrowIfNeeded(index);
-   }
-
-   private OcTreeKey unsafeGetAndGrowIfNeeded(int index)
-   {
       if (index >= size)
       {
          size = index + 1;
@@ -450,7 +445,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
 
       for (int i = 0; i < size - 1; i++)
          ret += get(i).toString() + "\n";
-      ret += get(size - 1).toString();  //TODO why outside the loop?
+      ret += get(size - 1).toString();
 
       return ret;
    }

@@ -39,7 +39,7 @@ public class CountingOcTree extends AbstractOcTreeBase<CountingOcTreeNode>
          // requested node does not exist
          if (!OcTreeNodeTools.nodeChildExists(curNode, pos))
          {
-            createNodeChild(curNode, pos);
+            createNodeChild(curNode, pos, depth + 1);
          }
          // descent tree
          curNode = curNode.getChild(pos);

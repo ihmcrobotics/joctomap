@@ -1,6 +1,6 @@
 package us.ihmc.octoMap.tools;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.Random;
 
@@ -8,9 +8,7 @@ import javax.vecmath.Point3d;
 
 import org.junit.Test;
 
-import us.ihmc.octoMap.iterators.OcTreeSuperNode;
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
 import us.ihmc.octoMap.ocTree.implementations.OcTree;
 
@@ -30,11 +28,12 @@ public class OcTreeSearchToolsTest
          ocTree.updateNode(randomKey, true);
       }
 
-      for (OcTreeSuperNode<OccupancyOcTreeNode> superNode : ocTree)
+      for (OccupancyOcTreeNode node : ocTree)
       {
-         int nodeDepth = superNode.getDepth();
-         OcTreeKeyReadOnly key = superNode.getKey();
-         OccupancyOcTreeNode expectedNode = superNode.getNode();
+         int nodeDepth = node.getDepth();
+         OcTreeKey key = new OcTreeKey();
+         node.getKey(key);
+         OccupancyOcTreeNode expectedNode = node;
 
          if (nodeDepth == treeDepth)
          {
@@ -61,12 +60,13 @@ public class OcTreeSearchToolsTest
          ocTree.updateNode(randomKey, true);
       }
 
-      for (OcTreeSuperNode<OccupancyOcTreeNode> superNode : ocTree)
+      for (OccupancyOcTreeNode node : ocTree)
       {
-         int nodeDepth = superNode.getDepth();
-         OcTreeKeyReadOnly key = superNode.getKey();
+         int nodeDepth = node.getDepth();
+         OcTreeKey key = new OcTreeKey();
+         node.getKey(key);
          Point3d nodeCoordinate = OcTreeKeyConversionTools.keyToCoordinate(key, nodeDepth, resolution, treeDepth);
-         OccupancyOcTreeNode expectedNode = superNode.getNode();
+         OccupancyOcTreeNode expectedNode = node;
 
          if (nodeDepth == treeDepth)
          {

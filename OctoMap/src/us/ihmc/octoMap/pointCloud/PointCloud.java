@@ -247,6 +247,11 @@ public class PointCloud implements Iterable<Point3f>
       return points.get(i);
    }
 
+   public Point3f removePoint(int i)
+   {
+      return points.remove(i);
+   }
+
    public Stream<Point3f> stream()
    {
       return points.stream();

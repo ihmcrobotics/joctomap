@@ -8,6 +8,7 @@ import us.ihmc.octoMap.exceptions.InvalidKeyException;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyList;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
+import us.ihmc.octoMap.node.AbstractOcTreeNode;
 
 /**
  * This class provides basic operations on {@linkplain OcTreeKey}.
@@ -34,6 +35,13 @@ public class OcTreeKeyTools
       return childKey;
    }
 
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeKey computeChildKey(int childIndex, NODE parentNode, int childDepth, int treeDepth)
+   {
+      OcTreeKey childKey = new OcTreeKey();
+      computeChildKey(childIndex, parentNode, childKey, childDepth, treeDepth);
+      return childKey;
+   }
+
    /**
     * Computes the key of a child node while traversing the octree, given
     * child index and current key
@@ -44,28 +52,43 @@ public class OcTreeKeyTools
     */
    public static void computeChildKey(int childIndex, OcTreeKeyReadOnly parentKey, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
    {
-      int keyMin = computeMinimumKeyAtDepth(childDepth, treeDepth);
-      int k0, k1, k2;
+      int k0 = parentKey.getKey(0);
+      int k1 = parentKey.getKey(1);
+      int k2 = parentKey.getKey(2);
+      computeChildKey(childIndex, k0, k1, k2, childKeyToPack, childDepth, treeDepth);
+   }
+
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeChildKey(int childIndex, NODE parentNode, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
+   {
+      int k0 = parentNode.getKey0();
+      int k1 = parentNode.getKey1();
+      int k2 = parentNode.getKey2();
+      computeChildKey(childIndex, k0, k1, k2, childKeyToPack, childDepth, treeDepth);
+   }
+
+   private static void computeChildKey(int childIndex, int parentKey0, int parentKey1, int parentKey2, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
+   {
+      int childKeyMin = computeMinimumKeyAtDepth(childDepth, treeDepth);
 
       // x-axis
       if ((childIndex & 1) != 0)
-         k0 = parentKey.getKey(0) + keyMin;
+         parentKey0 += childKeyMin;
       else
-         k0 = parentKey.getKey(0) - keyMin - (keyMin != 0 ? 0 : 1);
+         parentKey0 -= childKeyMin + (childKeyMin != 0 ? 0 : 1);
       // y-axis
       if ((childIndex & 2) != 0)
-         k1 = parentKey.getKey(1) + keyMin;
+         parentKey1 += childKeyMin;
       else
-         k1 = parentKey.getKey(1) - keyMin - (keyMin != 0 ? 0 : 1);
+         parentKey1 -= childKeyMin + (childKeyMin != 0 ? 0 : 1);
       // z-axis
       if ((childIndex & 4) != 0)
-         k2 = parentKey.getKey(2) + keyMin;
+         parentKey2 += childKeyMin;
       else
-         k2 = parentKey.getKey(2) - keyMin - (keyMin != 0 ? 0 : 1);
+         parentKey2 -= childKeyMin + (childKeyMin != 0 ? 0 : 1);
 
-      childKeyToPack.setKey(0, adjustToUnsignedNBits(k0, treeDepth));
-      childKeyToPack.setKey(1, adjustToUnsignedNBits(k1, treeDepth));
-      childKeyToPack.setKey(2, adjustToUnsignedNBits(k2, treeDepth));
+      childKeyToPack.setKey(0, adjustToUnsignedNBits(parentKey0, treeDepth));
+      childKeyToPack.setKey(1, adjustToUnsignedNBits(parentKey1, treeDepth));
+      childKeyToPack.setKey(2, adjustToUnsignedNBits(parentKey2, treeDepth));
    }
 
    /**
@@ -76,10 +99,7 @@ public class OcTreeKeyTools
       int k0 = key.getKey(0);
       int k1 = key.getKey(1);
       int k2 = key.getKey(2);
-
-      int childIndex = computeChildIndex(k0, k1, k2, depth, treeDepth);
-
-      return childIndex;
+      return computeChildIndex(k0, k1, k2, depth, treeDepth);
    }
 
    /**
@@ -90,43 +110,17 @@ public class OcTreeKeyTools
       OctoMapTools.checkIfDepthValid(depth, treeDepth);
 
       int childIndex = 0;
-      int temp = (1 << treeDepth - 1 - depth) % computeNumberOfNodesAtDepth(treeDepth);
+      int temp = computeMinimumKeyAtDepth(depth, treeDepth) % computeNumberOfNodesAtDepth(treeDepth);
 
       if ((k0 & temp) != 0)
-         childIndex += 1;
+         childIndex |= 1;
 
       if ((k1 & temp) != 0)
-         childIndex += 2;
+         childIndex |= 2;
 
       if ((k2 & temp) != 0)
-         childIndex += 4;
+         childIndex |= 4;
       return childIndex;
-   }
-
-   /**
-    * Generates a unique key for all keys on a certain level of the tree
-    * @param key input indexing key (at lowest resolution / level)
-    * @param level from the bottom (= tree_depth - depth of key)
-    *
-    * @return key corresponding to the input key at the given level
-    */
-   public static OcTreeKey computeIndexKey(OcTreeKeyReadOnly key, int depth, int treeDepth)
-   {
-      int level = treeDepth - depth;
-
-      if (level == 0)
-      {
-         return new OcTreeKey(key);
-      }
-      else
-      {
-         int mask = adjustToUnsignedNBits(computeMaximumKey(treeDepth) << level, treeDepth);
-         OcTreeKey result = new OcTreeKey(key);
-         result.setKey(0, result.getKey(0) & mask);
-         result.setKey(1, result.getKey(1) & mask);
-         result.setKey(2, result.getKey(2) & mask);
-         return result;
-      }
    }
 
    /**
@@ -269,24 +263,6 @@ public class OcTreeKeyTools
       return 1 << depth;
    }
 
-   public static boolean isInsideBoundingBox(OcTreeKeyReadOnly minKey, OcTreeKeyReadOnly maxKey, OcTreeKeyReadOnly keyToTest, int depth, int treeDepth)
-   {
-      int minKeyValue = OcTreeKeyTools.computeMinimumKeyAtDepth(depth, treeDepth);
-      if (keyToTest.getKey(0) < minKey.getKey(0) - minKeyValue)
-         return false;
-      if (keyToTest.getKey(0) > maxKey.getKey(0) + minKeyValue)
-         return false;
-      if (keyToTest.getKey(1) < minKey.getKey(1) - minKeyValue)
-         return false;
-      if (keyToTest.getKey(1) > maxKey.getKey(1) + minKeyValue)
-         return false;
-      if (keyToTest.getKey(2) < minKey.getKey(2) - minKeyValue)
-         return false;
-      if (keyToTest.getKey(2) > maxKey.getKey(2) + minKeyValue)
-         return false;
-      return true;
-   }
-
    public static int generateRandomKey(Random random, int depth, int treeDepth)
    {
       int numberOfNodes = OcTreeKeyTools.computeNumberOfNodesAtDepth(depth);
@@ -381,7 +357,7 @@ public class OcTreeKeyTools
             for (int deltaKeyY = -deltaKeyYMax; deltaKeyY <= deltaKeyYMax; deltaKeyY += 1)
             {
                int k1 = deltaKeyY * keyInterval;
-               if (k0 != 0 || k1 != 0 || k2 != 0) // TODO optimize me
+               if (k0 != 0 || k1 != 0 || k2 != 0)
                   neighborKeyOffsetsToPack.add(k0, k1, k2);
             }
          }
@@ -397,5 +373,13 @@ public class OcTreeKeyTools
          return adjusted;
       else
          return (adjusted + maxValue) % maxValue;
+   }
+   
+   public static void main(String[] args)
+   {
+      int blop = 0;
+      System.out.println((blop |= 1));
+      System.out.println((blop |= 2));
+      System.out.println((blop |= 4));
    }
 }

@@ -27,15 +27,15 @@ public class ColorOcTree extends AbstractOccupancyOcTree<ColorOcTreeNode>
    * @return true if pruning was successful
    */
    @Override
-   public boolean pruneNode(ColorOcTreeNode node)
+   public boolean pruneNode(ColorOcTreeNode node, double epsilon)
    {
-      if (!OcTreeNodeTools.isNodeCollapsible(node))
+      if (!OcTreeNodeTools.isNodeCollapsible(node, epsilon))
          return false;
 
       // set value to children's values (all assumed equal)
       node.copyData(node.getChild(0));
 
-      if (node.isColorSet()) // TODO check
+      if (node.isColorSet())
          node.setColor(node.getAverageChildColor());
 
       // delete children
