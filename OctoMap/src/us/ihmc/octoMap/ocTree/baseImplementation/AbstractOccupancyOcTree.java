@@ -21,6 +21,7 @@ import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.rules.SetOccupancyRule;
 import us.ihmc.octoMap.rules.UpdateOccupancyRule;
 import us.ihmc.octoMap.rules.interfaces.CollidableRule;
+import us.ihmc.octoMap.tools.OcTreeRayTools;
 import us.ihmc.octoMap.tools.OccupancyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 
@@ -53,7 +54,6 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
    protected final Map<OcTreeKeyReadOnly, Boolean> changedKeys = new HashMap<>();
    
-   protected final OcTreeRayHelper<NODE> rayHelper = new OcTreeRayHelper<>();
    private final OcTreeKeySet freeCells = new OcTreeKeySet(1000000);
    private final OcTreeKeySet occupiedCells = new OcTreeKeySet(1000000);
 
@@ -159,9 +159,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
 
          if (discretizePointCloud)
-            rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+            OcTreeRayTools.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
          else
-            rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+            OcTreeRayTools.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
       }
 
       // insert data into tree  -----------------------
@@ -190,9 +190,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       occupiedCells.clear();
 
       if (discretizePointCloud)
-         rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+         OcTreeRayTools.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
       else
-         rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+         OcTreeRayTools.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
 
       // insert data into tree  -----------------------
       for (OcTreeKeyReadOnly key : occupiedCells)
@@ -272,7 +272,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          if (maxInsertRange > 0.0 && length > maxInsertRange)
          {
             point.scaleAdd(maxInsertRange / length, direction, sensorOrigin);
-            KeyRayReadOnly ray = rayHelper.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
+            KeyRayReadOnly ray = OcTreeRayTools.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
             if (ray != null)
             {
                for (int j = 0; j < ray.size(); j++)
@@ -281,7 +281,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          }
          else
          {
-            KeyRayReadOnly ray = rayHelper.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
+            KeyRayReadOnly ray = OcTreeRayTools.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
             if (ray != null)
             {
                for (int j = 0; j < ray.size(); j++)
@@ -513,7 +513,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public boolean castRay(Point3d origin, Vector3d direction, Point3d endToPack, boolean ignoreUnknownCells, double maxRange)
    {
-      return rayHelper.castRay(root, origin, direction, endToPack, ignoreUnknownCells, maxRange, collidableRule, resolution, treeDepth);
+      return OcTreeRayTools.castRay(root, origin, direction, endToPack, ignoreUnknownCells, maxRange, collidableRule, resolution, treeDepth);
    }
 
    public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersection)
@@ -534,7 +534,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersectionToPack, double delta)
    {
-      return rayHelper.getRayIntersection(origin, direction, center, intersectionToPack, delta, resolution);
+      return OcTreeRayTools.getRayIntersection(origin, direction, center, intersectionToPack, delta, resolution);
    }
 
    public void disableBoundingBox()
@@ -655,7 +655,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    protected boolean integrateMissOnRay(Point3d origin, Point3d end)
    {
-      KeyRayReadOnly ray = rayHelper.computeRayKeys(origin, end, resolution, treeDepth);
+      KeyRayReadOnly ray = OcTreeRayTools.computeRayKeys(origin, end, resolution, treeDepth);
 
       if (ray == null)
          return false;

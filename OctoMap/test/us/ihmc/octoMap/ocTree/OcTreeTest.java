@@ -11,9 +11,9 @@ import javax.vecmath.Vector3d;
 import org.junit.Test;
 
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
 import us.ihmc.octoMap.ocTree.implementations.OcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.tools.OcTreeRayTools;
 import us.ihmc.octoMap.tools.OctoMapRandomTools;
 import us.ihmc.octoMap.tools.OctoMapTools;
 
@@ -70,8 +70,7 @@ public class OcTreeTest
 
          OcTree octree = new OcTree(resolution);
          long start = System.nanoTime();
-         OcTreeRayHelper<OccupancyOcTreeNode> rayTracer = new OcTreeRayHelper<>();
-         rayTracer.computeRayKeys(origin, end, resolution, octree.getTreeDepth());
+         OcTreeRayTools.computeRayKeys(origin, end, resolution, octree.getTreeDepth());
          long endTime = System.nanoTime();
          System.out.println(OctoMapTools.nanoSecondsToSeconds(endTime - start));
          

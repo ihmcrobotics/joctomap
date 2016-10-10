@@ -1,14 +1,12 @@
-package us.ihmc.octoMap.ocTree.baseImplementation;
+package us.ihmc.octoMap.tools;
 
-import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.coordinateToKey;
-import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.keyToCoordinate;
+import static us.ihmc.octoMap.tools.OcTreeKeyConversionTools.*;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.octoMap.key.KeyRay;
-import us.ihmc.octoMap.key.KeyRayReadOnly;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.key.OcTreeKeySet;
@@ -16,35 +14,10 @@ import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.rules.interfaces.CollidableRule;
 import us.ihmc.octoMap.rules.interfaces.RayActionRule;
-import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
-import us.ihmc.octoMap.tools.OcTreeKeyTools;
-import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools;
-import us.ihmc.octoMap.tools.OcTreeSearchTools;
 
-public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
+public abstract class OcTreeRayTools
 {
    public static final int maxRaySize = 100000;
-
-   private final OcTreeKey keyOrigin = new OcTreeKey();
-   private final OcTreeKey keyEnd = new OcTreeKey();
-   private final OcTreeKey currentKey = new OcTreeKey();
-   private final OcTreeKeySet unfilteredFreeCells = new OcTreeKeySet();
-
-   private final KeyRay ray = new KeyRay();
-   private final RayActionRule growKeyRayActionRule = new RayActionRule()
-   {
-      @Override
-      public void doAction(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, OcTreeKeyReadOnly key)
-      {
-         ray.add(key);
-      }
-   };
-
-   private final Vector3d direction = new Vector3d();
-
-   public OcTreeRayHelper()
-   {
-   }
 
    /**
     * Helper for insertPointCloud(). Computes all octree nodes affected by the point cloud
@@ -58,7 +31,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxRange maximum range for raycasting (-1: unlimited)
     */
-   public void computeDiscreteUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells,
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeDiscreteUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells,
          OcTreeBoundingBoxInterface boundingBox, double minRange, double maxRange, double resolution, int treeDepth)
    {
       PointCloud discretePC = new PointCloud();
@@ -85,10 +58,10 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxRange maximum range for raycasting (-1: unlimited)
     */
-   public void computeUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBoxInterface boundingBox,
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBoxInterface boundingBox,
          double minRange, double maxRange, double resolution, int treeDepth)
    {
-      unfilteredFreeCells.clear();
+      OcTreeKeySet unfilteredFreeCells = new OcTreeKeySet();
       OcTreeKey key = new OcTreeKey();
       Vector3d direction = new Vector3d();
       Point3d point = new Point3d();
@@ -107,10 +80,9 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             if (maxRange < 0.0 || length <= maxRange)
             { // is not maxrange meas.
                  // free cells
-               if (computeRayKeys(origin, point, resolution, treeDepth) != null)
-               {
+               KeyRay ray = computeRayKeys(origin, point, resolution, treeDepth);
+               if (ray != null)
                   unfilteredFreeCells.addAll(ray);
-               }
                // occupied endpoint
                if (OcTreeKeyConversionTools.coordinateToKey(point, resolution, treeDepth, key))
                   occupiedCells.add(key);
@@ -119,7 +91,8 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
             { // user set a maxrange and length is above
                Point3d newEnd = new Point3d();
                newEnd.scaleAdd(maxRange / length, direction, origin);
-               if (computeRayKeys(origin, newEnd, resolution, treeDepth) != null)
+               KeyRay ray = computeRayKeys(origin, newEnd, resolution, treeDepth);
+               if (ray != null)
                   unfilteredFreeCells.addAll(ray);
             } // end if maxrange
          }
@@ -133,7 +106,8 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
                   occupiedCells.add(key);
 
                // update freespace, break as soon as bbx limit is reached
-               if (computeRayKeys(origin, point, resolution, treeDepth) != null)
+               KeyRay ray = computeRayKeys(origin, point, resolution, treeDepth);
+               if (ray != null)
                {
                   for (int j = ray.size() - 1; j >= 0; j--)
                   {
@@ -167,16 +141,17 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
    * @param ray KeyRay structure that holds the keys of all nodes traversed by the ray, excluding "end"
    * @return Success of operation. Returning false usually means that one of the coordinates is out of the OcTree's range
    */
-   public KeyRayReadOnly computeRayKeys(Point3d origin, Point3d end, double resolution, int treeDepth)
+   public static KeyRay computeRayKeys(Point3d origin, Point3d end, double resolution, int treeDepth)
    {
       return computeRayKeys(origin, end, null, resolution, treeDepth);
    }
 
-   public KeyRayReadOnly computeRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, double resolution, int treeDepth)
+   public static KeyRay computeRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, double resolution, int treeDepth)
    {
-      ray.clear();
+      KeyRay keyRay = new KeyRay();
+      RayActionRule growKeyRayActionRule = (rayOrigin, rayEnd, rayDirection, key) -> keyRay.add(key);
       doActionOnRayKeys(origin, end, boundingBox, growKeyRayActionRule, resolution, treeDepth);
-      return ray;
+      return keyRay;
    }
 
    /**
@@ -194,7 +169,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
 
       if (keyOrigin == null || keyEnd == null)
       {
-         System.err.println(OcTreeRayHelper.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
+         System.err.println(OcTreeRayTools.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
          return;
       }
 
@@ -316,27 +291,29 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       } // end while
    }
 
-   private final Point3d currentPosition = new Point3d();
-
    /**
     * Traces a ray from origin to end (excluding), returning an
     * OcTreeKey of all nodes traversed by the beam. You still need to check
     * if a node at that coordinate exists (e.g. with search()).
     */
-   public void doActionOnRayKeysUsingRayMarching(NODE root, Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule,
+   public static <NODE extends AbstractOcTreeNode<NODE>> void doActionOnRayKeysUsingRayMarching(NODE root, Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule,
          double resolution, int treeDepth)
    {
-      boolean foundKeyOrigin = coordinateToKey(origin, resolution, treeDepth, keyOrigin);
-      boolean foundKeyEnd = coordinateToKey(end, resolution, treeDepth, keyEnd);
+      OcTreeKey keyOrigin = coordinateToKey(origin, resolution, treeDepth);
+      OcTreeKey keyEnd = coordinateToKey(end, resolution, treeDepth);
 
-      if (!foundKeyOrigin || !foundKeyEnd)
+      if (keyOrigin == null || keyEnd == null)
       {
-         System.err.println(OcTreeRayHelper.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
+         System.err.println(OcTreeRayTools.class.getSimpleName() + " coordinates ( " + origin + " -> " + end + ") out of bounds in computeRayKeys");
          return;
       }
 
       if (keyOrigin.equals(keyEnd))
          return; // same tree cell, we're done.
+
+      Vector3d direction = new Vector3d();
+      Point3d currentPosition = new Point3d();
+      OcTreeKey currentKey = new OcTreeKey();
 
       direction.sub(end, origin);
       double rayLength = direction.length();
@@ -397,7 +374,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
     * @param[in] maxRange Maximum range after which the raycast is aborted (<= 0: no limit, default)
     * @return true if an occupied cell was hit, false if the maximum range or octree bounds are reached, or if an unknown node was hit.
     */
-   public boolean castRay(NODE root, Point3d origin, Vector3d direction, Point3d endToPack, boolean ignoreUnknownCells, double maxRange,
+   public static <NODE extends AbstractOcTreeNode<NODE>> boolean castRay(NODE root, Point3d origin, Vector3d direction, Point3d endToPack, boolean ignoreUnknownCells, double maxRange,
          CollidableRule<NODE> collidableRule, double resolution, int treeDepth)
    {
       /// ----------  see OcTreeBase::computeRayKeys  -----------
@@ -406,7 +383,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
       OcTreeKey currentKey = OcTreeKeyConversionTools.coordinateToKey(origin, resolution, treeDepth);
       if (currentKey == null)
       {
-         System.err.println(OcTreeRayHelper.class.getSimpleName() + " (in castRay): Coordinates out of bounds during ray casting");
+         System.err.println(OcTreeRayTools.class.getSimpleName() + " (in castRay): Coordinates out of bounds during ray casting");
          return false;
       }
 
@@ -470,7 +447,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
 
       if (step[0] == 0 && step[1] == 0 && step[2] == 0)
       {
-         System.err.println(OcTreeRayHelper.class.getSimpleName() + " (in castRay): Raycasting in direction (0,0,0) is not possible!");
+         System.err.println(OcTreeRayTools.class.getSimpleName() + " (in castRay): Raycasting in direction (0,0,0) is not possible!");
          return false;
       }
       int keyMaxValue = OcTreeKeyTools.computeMaximumKey(treeDepth);
@@ -505,7 +482,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
          // check for overflow:
          if (step[dim] < 0 && currentKey.getKey(dim) == 0 || step[dim] > 0 && currentKey.getKey(dim) == keyMaxValue)
          {
-            System.err.println(OcTreeRayHelper.class.getSimpleName() + " (in castRay): Coordinate hit bounds in dim " + dim + ", aborting raycast");
+            System.err.println(OcTreeRayTools.class.getSimpleName() + " (in castRay): Coordinate hit bounds in dim " + dim + ", aborting raycast");
             // return border point nevertheless:
             OcTreeKeyConversionTools.keyToCoordinate(currentKey, endToPack, resolution, treeDepth);
             return false;
@@ -561,7 +538,7 @@ public class OcTreeRayHelper<NODE extends AbstractOcTreeNode<NODE>>
     * @param[in] delta A small increment to avoid ambiguity of being exactly on a voxel surface. A positive value will get the point out of the hit voxel, while a negative value will get it inside.
     * @return Whether or not an intesection point has been found. Either, the ray never cross the voxel or the ray is exactly parallel to the only surface it intersect.
     */
-   public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersectionToPack, double delta, double resolution)
+   public static <NODE extends AbstractOcTreeNode<NODE>> boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersectionToPack, double delta, double resolution)
    {
       // We only need three normals for the six planes
       Vector3d normalX = new Vector3d(1, 0, 0);
