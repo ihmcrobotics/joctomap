@@ -8,7 +8,7 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 
-public class OcTreeNearestNeighborTools
+public abstract class OcTreeNearestNeighborTools
 {
    public static interface NeighborActionRule<NODE extends AbstractOcTreeNode<NODE>>
    {

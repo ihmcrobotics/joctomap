@@ -10,7 +10,7 @@ import javax.vecmath.Point3f;
 
 import us.ihmc.octoMap.pointCloud.PointCloud;
 
-public class PointCloudTools
+public abstract class PointCloudTools
 {
    public static PointCloud createRandomSample(float[] points, int numberOfSamples)
    {

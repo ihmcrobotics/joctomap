@@ -8,7 +8,7 @@ import javax.vecmath.Point3d;
 import us.ihmc.octoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 
-public class OcTreeTools
+public abstract class OcTreeTools
 {
    public static <NODE extends AbstractOcTreeNode<NODE>> void computeMinMaxCoordinates(NODE root, Point3d minToPack, Point3d maxToPack, double resolution, int treeDepth)
    {

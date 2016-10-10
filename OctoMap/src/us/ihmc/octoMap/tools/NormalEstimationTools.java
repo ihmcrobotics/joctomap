@@ -16,7 +16,7 @@ import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
 import us.ihmc.octoMap.tools.OcTreeNearestNeighborTools.NeighborActionRule;
 
-public final class NormalEstimationTools
+public abstract class NormalEstimationTools
 {
    public static void computeNodeNormalRansac(NormalOcTreeNode root, OcTreeKeyReadOnly key, double searchRadius, double maxDistanceFromPlane, int treeDepth)
    {

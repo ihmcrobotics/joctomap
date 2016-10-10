@@ -19,7 +19,7 @@ import us.ihmc.octoMap.node.AbstractOcTreeNode;
  * 
  *
  */
-public class OcTreeKeyTools
+public abstract class OcTreeKeyTools
 {
    /**
     * Computes the 

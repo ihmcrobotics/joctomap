@@ -7,7 +7,7 @@ import us.ihmc.octoMap.node.AbstractOcTreeNode;
  * @author Sylvain
  *
  */
-public class OcTreeNodeTools
+public abstract class OcTreeNodeTools
 {
    /** 
     * Safe test if node has a child at index childIdx.

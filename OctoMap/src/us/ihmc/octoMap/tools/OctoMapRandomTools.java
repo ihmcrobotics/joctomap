@@ -12,7 +12,7 @@ import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.robotics.geometry.GeometryTools;
 
-public class OctoMapRandomTools
+public abstract class OctoMapRandomTools
 {
    public static double generateRandomDouble(Random random, double maxAbsolute)
    {
