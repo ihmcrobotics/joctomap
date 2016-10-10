@@ -4,7 +4,6 @@ import static us.ihmc.octoMap.tools.OcTreeNodeTools.*;
 
 import java.util.ArrayDeque;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Queue;
 
 import javax.vecmath.Point3d;
@@ -18,14 +17,12 @@ import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.NodeBuilder;
-import us.ihmc.octoMap.rules.interfaces.DeletionRule;
 import us.ihmc.octoMap.rules.interfaces.EarlyAbortRule;
 import us.ihmc.octoMap.rules.interfaces.UpdateRule;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.octoMap.tools.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;
-import us.ihmc.octoMap.tools.OctoMapTools;
 
 /**
  * OcTree base class, to be used with with any kind of OcTreeDataNode.
@@ -436,12 +433,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     *  Pruned nodes at level "depth" will directly be deleted as a whole.
     * @param deletionRule 
     */
-   public boolean deleteNode(double x, double y, double z, DeletionRule<NODE> deletionRule)
+   public boolean deleteNode(double x, double y, double z)
    {
-      return deleteNode(x, y, z, 0, deletionRule);
+      return deleteNode(x, y, z, 0);
    }
 
-   public boolean deleteNode(double x, double y, double z, int depth, DeletionRule<NODE> deletionRule)
+   public boolean deleteNode(double x, double y, double z, int depth)
    {
       OcTreeKey key = coordinateToKey(x, y, z);
       if (key == null)
@@ -451,7 +448,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
       else
       {
-         return deleteNode(key, depth, deletionRule);
+         return deleteNode(key, depth);
       }
    }
 
@@ -461,14 +458,14 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     *  Pruned nodes at level "depth" will directly be deleted as a whole.
     * @param deletionRule 
     */
-   public boolean deleteNode(Point3d value, DeletionRule<NODE> deletionRule)
+   public boolean deleteNode(Point3d value)
    {
-      return deleteNode(value, 0, deletionRule);
+      return deleteNode(value);
    }
 
-   public boolean deleteNode(Point3d coord, int depth, DeletionRule<NODE> deletionRule)
+   public boolean deleteNode(Point3d coord, int depth)
    {
-      return deleteNode(coord.getX(), coord.getY(), coord.getZ(), depth, deletionRule);
+      return deleteNode(coord.getX(), coord.getY(), coord.getZ(), depth);
    }
 
    /** 
@@ -477,12 +474,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     *  Pruned nodes at level "depth" will directly be deleted as a whole.
     * @param deletionRule 
     */
-   public boolean deleteNode(OcTreeKeyReadOnly key, DeletionRule<NODE> deletionRule)
+   public boolean deleteNode(OcTreeKeyReadOnly key)
    {
-      return deleteNode(key, 0, deletionRule);
+      return deleteNode(key, 0);
    }
 
-   public boolean deleteNode(OcTreeKeyReadOnly key, int depth, DeletionRule<NODE> deletionRule)
+   public boolean deleteNode(OcTreeKeyReadOnly key, int depth)
    {
       if (root == null)
          return true;
@@ -490,7 +487,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (depth == 0)
          depth = treeDepth;
 
-      return deleteNodeRecursively(root, 0, depth, key, deletionRule);
+      return deleteNodeRecursively(root, 0, depth, key);
    }
 
    /// Deletes the complete tree structure
@@ -606,57 +603,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    // -- access tree nodes  ------------------
 
-   /// return centers of leafs that do NOT exist (but could) in a given bounding box
-   public void getUnknownLeafCenters(List<Point3d> nodeCenters, Point3d pmin, Point3d pmax)
-   {
-      getUnknownLeafCenters(nodeCenters, pmin, pmax, 0);
-   }
-
-   public void getUnknownLeafCenters(List<Point3d> nodeCenters, Point3d pmin, Point3d pmax, int depth)
-   {
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
-      if (depth == 0)
-         depth = treeDepth;
-
-      double[] pminArray = new double[3];
-      double[] pmaxArray = new double[3];
-      pmin.get(pminArray);
-      pmax.get(pmaxArray);
-
-      double[] diff = new double[3];
-      int[] steps = new int[3];
-      double stepSize = resolution * Math.pow(2, treeDepth - depth);
-      for (int i = 0; i < 3; ++i)
-      {
-         diff[i] = pmaxArray[i] - pminArray[i];
-         steps[i] = (int) Math.floor(diff[i] / stepSize);
-         //      std::cout << "bbx " << i << " size: " << diff[i] << " " << steps[i] << " steps\n";
-      }
-
-      Point3d p = new Point3d(pmin);
-      NODE res;
-      for (int x = 0; x < steps[0]; ++x)
-      {
-         p.setX(p.getX() + stepSize);
-         for (int y = 0; y < steps[1]; ++y)
-         {
-            p.setY(p.getY() + stepSize);
-            for (int z = 0; z < steps[2]; ++z)
-            {
-               //          std::cout << "querying p=" << p << std::endl;
-               p.setZ(p.getZ() + stepSize);
-               res = search(p, depth);
-               if (res == null)
-               {
-                  nodeCenters.add(p);
-               }
-            }
-            p.setZ(pmin.getZ());
-         }
-         p.setY(pmin.getY());
-      }
-   }
-
    @Override
    public Iterator<NODE> iterator()
    {
@@ -666,30 +612,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    //
    // Key / coordinate conversion functions
    //
-
-   /** Converts from a single coordinate into a discrete key */
-   public int coordinateToKey(double coordinate)
-   {
-      return OcTreeKeyConversionTools.coordinateToKey(coordinate, resolution, treeDepth);
-   }
-
-   /** Converts from a single coordinate into a discrete key at a given depth */
-   public int coordinateToKey(double coordinate, int depth)
-   {
-      return OcTreeKeyConversionTools.coordinateToKey(coordinate, depth, coordinate, treeDepth);
-   }
-
-   /** Converts from a 3D coordinate into a 3D addressing key */
-   public OcTreeKey coordinateToKey(Point3f coord)
-   {
-      return OcTreeKeyConversionTools.coordinateToKey(coord, resolution, treeDepth);
-   }
-
-   /** Converts from a 3D coordinate into a 3D addressing key */
-   public boolean coordinateToKey(Point3f coord, OcTreeKey keyToPack)
-   {
-      return OcTreeKeyConversionTools.coordinateToKey(coord, resolution, treeDepth, keyToPack);
-   }
 
    /** Converts from a 3D coordinate into a 3D addressing key */
    public OcTreeKey coordinateToKey(Point3d coord)
@@ -839,7 +761,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive call of deleteNode()
-   private boolean deleteNodeRecursively(NODE node, int depth, int maxDepth, OcTreeKeyReadOnly key, DeletionRule<NODE> deletionRule)
+   private boolean deleteNodeRecursively(NODE node, int depth, int maxDepth, OcTreeKeyReadOnly key)
    {
       if (depth >= maxDepth) // on last level: delete child when going up
          return true;
@@ -865,15 +787,13 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
 
       // follow down further, fix inner nodes on way back up
-      boolean deleteChild = deleteNodeRecursively(node.getChild(childIndex), depth + 1, maxDepth, key, deletionRule);
+      boolean deleteChild = deleteNodeRecursively(node.getChild(childIndex), depth + 1, maxDepth, key);
       if (deleteChild)
       {
          deleteNodeChild(node, childIndex);
 
          if (!node.hasAtLeastOneChild())
             return true;
-         else if (deletionRule != null)
-            deletionRule.updateInnerNodeAfterChildDeletion(node, childIndex);
       }
       // node did not lose a child, or still has other children
       return false;
