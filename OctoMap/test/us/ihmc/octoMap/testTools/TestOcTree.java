@@ -47,7 +47,7 @@ public class TestOcTree extends AbstractOcTreeBase<TestOcTreeNode>
 
    public void fillRandomly(Random random, int numberOfLeavesToCreate)
    {
-      while (getNumLeafNodes() < numberOfLeavesToCreate)
+      while (getNumberOfLeafNodes() < numberOfLeavesToCreate)
       {
          OcTreeKey randomKey = new OcTreeKey(random, treeDepth, treeDepth);
          insertNode(randomKey);
@@ -56,7 +56,7 @@ public class TestOcTree extends AbstractOcTreeBase<TestOcTreeNode>
 
    public void fillRandomlyWithinSphere(Random random, int numberOfLeavesToCreate, Point3d sphereCenter, double sphereRadius)
    {
-      while (getNumLeafNodes() < numberOfLeavesToCreate)
+      while (getNumberOfLeafNodes() < numberOfLeavesToCreate)
       {
          Vector3d randomTranslation = new Vector3d(random.nextDouble() - 0.5, random.nextDouble() - 0.5, random.nextDouble() - 0.5);
          randomTranslation.scale(sphereRadius * random.nextDouble() / randomTranslation.length());

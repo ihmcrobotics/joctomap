@@ -53,7 +53,7 @@ public class OcTreeNodeTools
       return true;
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> int getNumberOfLeafNodesRecursive(NODE parent)
+   public static <NODE extends AbstractOcTreeNode<NODE>> int computeNumberOfLeafDescendants(NODE parent)
    {
       if (parent == null)
          throw new RuntimeException("The given parent node is null");
@@ -61,13 +61,42 @@ public class OcTreeNodeTools
       if (!parent.hasAtLeastOneChild()) // this is a leaf -> terminate
          return 1;
    
-      int sumLeafsChildren = 0;
+      int sumOfLeafChildren = 0;
       for (int i = 0; i < 8; ++i)
       {
          NODE child = parent.getChild(i);
          if (child != null)
-            sumLeafsChildren += getNumberOfLeafNodesRecursive(child);
+            sumOfLeafChildren += computeNumberOfLeafDescendants(child);
       }
-      return sumLeafsChildren;
+      return sumOfLeafChildren;
+   }
+
+   public static <NODE extends AbstractOcTreeNode<NODE>> int computeNumberOfDescedants(NODE node)
+   {
+      if (node != null)
+         return computeNumberOfNodesRecursively(node, 1);
+      else
+         return 0;
+   }
+
+   private static <NODE extends AbstractOcTreeNode<NODE>> int computeNumberOfNodesRecursively(NODE node, int currentNumberOfNodes)
+   {
+      if (node == null)
+         throw new RuntimeException("The given node is null");
+
+      if (node.hasAtLeastOneChild())
+      {
+         for (int i = 0; i < 8; i++)
+         {
+            NODE childNode = node.getChild(i);
+            if (childNode != null)
+            {
+               currentNumberOfNodes++;
+               currentNumberOfNodes = computeNumberOfNodesRecursively(childNode, currentNumberOfNodes);
+            }
+         }
+      }
+
+      return currentNumberOfNodes;
    }
 }

@@ -77,7 +77,7 @@ public class CloneEpsilonEqualsTest
       stopWatch.start();
       TestOcTree octree2 = new TestOcTree(octree1);
       System.out.println("Cloning took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()));
-      assertEquals(octree1.getNumLeafNodes(), octree2.getNumLeafNodes());
+      assertEquals(octree1.getNumberOfLeafNodes(), octree2.getNumberOfLeafNodes());
       assertTrue(octree1.epsilonEquals(octree2, 1.0e-7));
    }
 
@@ -99,7 +99,7 @@ public class CloneEpsilonEqualsTest
       stopWatch.start();
       NormalOcTree octree2 = new NormalOcTree(octree1);
       System.out.println("Cloning took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + ", tree size: " + octree1.size());
-      assertEquals(octree1.getNumLeafNodes(), octree2.getNumLeafNodes());
+      assertEquals(octree1.getNumberOfLeafNodes(), octree2.getNumberOfLeafNodes());
       assertTrue(octree1.epsilonEquals(octree2, 1.0e-7));
    }
 }

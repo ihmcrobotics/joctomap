@@ -593,23 +593,15 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// Traverses the tree to calculate the total number of nodes
-   public int calculateNumberOfNodes()
+   public int getNumberOfNodes()
    {
-      int retval = 0; // root node
-      if (root != null)
-      {
-         retval = calculateNumberOfNodesRecursively(root, 1);
-      }
-      return retval;
+      return OcTreeNodeTools.computeNumberOfDescedants(root);
    }
 
    /// Traverses the tree to calculate the total number of leaf nodes
-   public int getNumLeafNodes()
+   public int getNumberOfLeafNodes()
    {
-      if (root == null)
-         return 0;
-
-      return OcTreeNodeTools.getNumberOfLeafNodesRecursive(root);
+      return OcTreeNodeTools.computeNumberOfLeafDescendants(root);
    }
 
    // -- access tree nodes  ------------------
@@ -823,27 +815,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
 
       sizeChanged = false;
-   }
-
-   protected int calculateNumberOfNodesRecursively(NODE node, int currentNumberOfNodes)
-   {
-      if (node == null)
-         throw new RuntimeException("The given node is null");
-
-      if (node.hasAtLeastOneChild())
-      {
-         for (int i = 0; i < 8; i++)
-         {
-            NODE childNode = node.getChild(i);
-            if (childNode != null)
-            {
-               currentNumberOfNodes++;
-               currentNumberOfNodes = calculateNumberOfNodesRecursively(childNode, currentNumberOfNodes);
-            }
-         }
-      }
-
-      return currentNumberOfNodes;
    }
 
    /// recursive delete of node and all children (deallocates memory)
