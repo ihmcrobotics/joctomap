@@ -2,14 +2,15 @@ package us.ihmc.octoMap.ocTree.baseImplementation;
 
 import static us.ihmc.octoMap.MarchingCubesTables.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
-import us.ihmc.octoMap.key.KeyBoolMap;
 import us.ihmc.octoMap.key.KeyRayReadOnly;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
@@ -53,7 +54,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
 
    protected boolean useChangeDetection;
    /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
-   protected final KeyBoolMap changedKeys = new KeyBoolMap();
+   protected final Map<OcTreeKeyReadOnly, Boolean> changedKeys = new HashMap<>();
    
    protected final OcTreeRayHelper<NODE> rayHelper = new OcTreeRayHelper<>();
    private final OcTreeKeySet freeCells = new OcTreeKeySet(1000000);
@@ -739,7 +740,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       return changedKeys.size();
    }
 
-   public KeyBoolMap getChangedKeys()
+   public Map<OcTreeKeyReadOnly, Boolean> getChangedKeys()
    {
       return changedKeys;
    }
