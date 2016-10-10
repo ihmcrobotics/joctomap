@@ -131,6 +131,32 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       OcTreeKeyConversionTools.keyToCoordinate(candidate, transformedKey, resolution, treeDepth);
       return isInBoundingBox(transformedKey);
    }
+   
+   //@Override
+   public boolean trialIsInBoundingBox(OcTreeKeyReadOnly candidate)
+   {
+	   OcTreeKeyReadOnly minKey = simpleBoundingBox.getMinKey();
+	   OcTreeKeyReadOnly maxKey = simpleBoundingBox.getMaxKey();
+	   int offsetX = 40 * (int) offsetMetric.getX();
+	   int offsetY = 40 * (int) offsetMetric.getY();
+	   int offsetZ = 40 * (int) offsetMetric.getZ();
+	   int referenceCorrection = 1 << (treeDepth - 1);
+	   int[] array = new int[3];
+	   
+	   
+	   array[0] = (int) ((candidate.getKey(0) - referenceCorrection - offsetX) * cosYaw + 
+			   (candidate.getKey(1) - referenceCorrection - offsetY) * sinYaw + referenceCorrection);
+	   array[1] = (int) (-(candidate.getKey(0) - referenceCorrection - offsetX) * sinYaw + 
+			   (candidate.getKey(1) - referenceCorrection - offsetY) * cosYaw + referenceCorrection);
+	   array[2] = (int) (candidate.getKey(2) - offsetZ);
+	   
+	   for (int i = 0; i < 3; i++)
+	      {
+	         if (array[i] < minKey.getKey(i) || array[i] > maxKey.getKey(i))
+	            return false;
+	      }
+	      return true;
+   }
 
    @Override
    public OcTreeBoundingBoxWithCenterAndYaw getCopy()
