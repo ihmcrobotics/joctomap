@@ -68,12 +68,13 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       super(other);
    }
 
-   public void update(ScanCollection sweepCollection)
+   public void update(ScanCollection scanCollection)
    {
-      update(sweepCollection, true);
+      insertScanCollection(scanCollection);
+      updateNormals();
    }
 
-   public void update(ScanCollection scanCollection, boolean updateNormals)
+   public void insertScanCollection(ScanCollection scanCollection)
    {
       if (REPORT_TIME)
       {
@@ -81,35 +82,34 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          stopWatch.start();
       }
 
-      insertSweepCollection(scanCollection);
+      scanCollection.forEach(this::insertScan);
 
       if (REPORT_TIME)
       {
          System.out.println(name + ": ScanCollection integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (number of points: " + scanCollection.getNumberOfPoints() + ").");
       }
-
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
-
-      if (updateNormals)
-      {
-         if (REPORT_TIME)
-         {
-            stopWatch.reset();
-            stopWatch.start();
-         }
-
-         updateNormals();
-
-         if (REPORT_TIME)
-         {
-            System.out.println(name + ": Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
-         }
-      }
    }
 
-   private void insertSweepCollection(ScanCollection scanCollection)
+   public void updateNormals()
    {
-      scanCollection.forEach(this::insertScan);
+
+      if (REPORT_TIME)
+      {
+         stopWatch.reset();
+         stopWatch.start();
+      }
+
+      List<NormalOcTreeNode> leafNodes = new ArrayList<>();
+      this.forEach(leafNodes::add);
+      leafNodes.parallelStream().forEach(node -> NormalEstimationTools.computeNodeNormalRansac(root, node, normalEstimationParameters));
+
+      if (root != null)
+         updateInnerNormalsRecursive(root, 0);
+
+      if (REPORT_TIME)
+      {
+         System.out.println(name + ": Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+      }
    }
 
    private final HashSet<OcTreeKey> occupiedCells = new HashSet<>();
@@ -198,16 +198,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          }
          freeKeysToUpdate.offer(new OcTreeKey(key));
       }
-   }
-
-   private void updateNormals()
-   {
-      List<NormalOcTreeNode> leafNodes = new ArrayList<>();
-      this.forEach(leafNodes::add);
-      leafNodes.parallelStream().forEach(node -> NormalEstimationTools.computeNodeNormalRansac(root, node, normalEstimationParameters));
-
-      if (root != null)
-         updateInnerNormalsRecursive(root, 0);
    }
 
    private void updateInnerNormalsRecursive(NormalOcTreeNode node, int depth)
