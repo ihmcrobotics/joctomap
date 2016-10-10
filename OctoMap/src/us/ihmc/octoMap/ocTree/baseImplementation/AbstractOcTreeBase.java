@@ -53,7 +53,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    // constants of the tree
    /** Maximum tree depth (fixed to 16 usually) */
    protected final int treeDepth;
-   protected double resolution; ///< in meters
+   protected final double resolution; ///< in meters
 
    protected int treeSize; ///< number of nodes in tree
    /** flag to denote whether the octree extent changed (for lazy min/max eval) */
@@ -152,14 +152,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       this.lazyUpdate = lazyUpdate;
    }
 
-   /// Change the resolution of the octree, scaling all voxels.
-   /// This will not preserve the (metric) scale!
-   public void setResolution(double newResolution)
-   {
-      resolution = newResolution;
-      sizeChanged = true;
-   }
-
    public double getResolution()
    {
       return resolution;
@@ -168,11 +160,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public int getTreeDepth()
    {
       return treeDepth;
-   }
-
-   public double getNodeSize(int depth)
-   {
-      return OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
    }
 
    // -- Tree structure operations formerly contained in the nodes ---
@@ -681,7 +668,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /// initialize non-trivial members, helper for constructors
    protected void initialize()
    {
-      setResolution(resolution);
       for (int i = 0; i < 3; i++)
       {
          maxCoordinate[i] = Double.NEGATIVE_INFINITY;
