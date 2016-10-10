@@ -3,7 +3,7 @@ package us.ihmc.octoMap.iterators;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 
-import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
 import us.ihmc.octoMap.rules.interfaces.IteratorSelectionRule;
 
 public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<NODE>

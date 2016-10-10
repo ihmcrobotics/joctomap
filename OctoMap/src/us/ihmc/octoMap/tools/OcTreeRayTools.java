@@ -10,7 +10,7 @@ import us.ihmc.octoMap.key.KeyRay;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.key.OcTreeKeySet;
-import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.rules.interfaces.CollidableRule;
 import us.ihmc.octoMap.rules.interfaces.RayActionRule;

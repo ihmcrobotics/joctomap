@@ -12,7 +12,7 @@ import us.ihmc.octoMap.key.KeyRayReadOnly;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.key.OcTreeKeySet;
-import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.pointCloud.PointCloud;

@@ -6,7 +6,7 @@ import java.util.List;
 import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.iterators.OcTreeIteratorFactory;
-import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
 
 public abstract class OcTreeTools
 {

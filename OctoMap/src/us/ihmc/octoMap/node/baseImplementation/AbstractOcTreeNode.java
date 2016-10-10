@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.node;
+package us.ihmc.octoMap.node.baseImplementation;
 
 import static us.ihmc.octoMap.tools.OcTreeNodeTools.*;
 
@@ -12,6 +12,7 @@ import org.apache.commons.math3.util.Precision;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
+import us.ihmc.octoMap.node.NodeBuilder;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeNodeTools;
 

@@ -6,7 +6,7 @@ import javax.vecmath.Point3d;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
-import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
 
 public abstract class OcTreeSearchTools
 {

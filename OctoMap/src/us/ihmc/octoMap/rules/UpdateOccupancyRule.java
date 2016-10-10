@@ -3,7 +3,7 @@ package us.ihmc.octoMap.rules;
 import java.util.Map;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
-import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.rules.interfaces.EarlyAbortRule;
 import us.ihmc.octoMap.rules.interfaces.UpdateRule;

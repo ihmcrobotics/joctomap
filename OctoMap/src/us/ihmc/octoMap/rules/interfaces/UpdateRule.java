@@ -1,7 +1,7 @@
 package us.ihmc.octoMap.rules.interfaces;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
-import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
 
 public interface UpdateRule<NODE extends AbstractOcTreeNode<NODE>>
 {

@@ -1,6 +1,6 @@
 package us.ihmc.octoMap.tools;
 
-import us.ihmc.octoMap.node.AbstractOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
 
 /**
  * This tool class has to live in this package to be able to do operation on node's children field.
