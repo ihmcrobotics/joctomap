@@ -25,41 +25,39 @@ public abstract class OcTreeRayTools
     * integration at once. Here, occupied nodes have a preference over free
     * ones. This function first discretizes the scan with the octree grid, which results
     * in fewer raycasts (=speedup) but a slightly different result than computeUpdate().
-    *
-    * @param scan point cloud measurement to be integrated
     * @param origin origin of the sensor for ray casting
+    * @param pointCloud point cloud measurement to be integrated
     * @param freeCells keys of nodes to be cleared
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxRange maximum range for raycasting (-1: unlimited)
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> void computeDiscreteUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells,
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeDiscreteUpdate(Point3d origin, PointCloud pointCloud, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells,
          OcTreeBoundingBoxInterface boundingBox, double minRange, double maxRange, double resolution, int treeDepth)
    {
       PointCloud discretePC = new PointCloud();
       OcTreeKeySet endpoints = new OcTreeKeySet();
 
-      for (int i = 0; i < scan.size(); ++i)
+      for (int i = 0; i < pointCloud.getNumberOfPoints(); ++i)
       {
-         OcTreeKey key = OcTreeKeyConversionTools.coordinateToKey(scan.getPoint(i), resolution, treeDepth);
+         OcTreeKey key = OcTreeKeyConversionTools.coordinateToKey(pointCloud.getPoint(i), resolution, treeDepth);
          if (endpoints.add(key)) // insertion took place => key was not in set
             discretePC.add(OcTreeKeyConversionTools.keyToCoordinate(key, resolution, treeDepth));
       }
 
-      computeUpdate(discretePC, origin, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
+      computeUpdate(origin, discretePC, freeCells, occupiedCells, boundingBox, minRange, maxRange, resolution, treeDepth);
    }
 
    /**
     * Helper for insertPointCloud(). Computes all octree nodes affected by the point cloud
     * integration at once. Here, occupied nodes have a preference over free
     * ones.
-    *
-    * @param scan point cloud measurement to be integrated
     * @param origin origin of the sensor for ray casting
+    * @param pointCloud point cloud measurement to be integrated
     * @param freeCells keys of nodes to be cleared
     * @param occupiedCells keys of nodes to be marked occupied
     * @param maxRange maximum range for raycasting (-1: unlimited)
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> void computeUpdate(PointCloud scan, Point3d origin, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBoxInterface boundingBox,
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeUpdate(Point3d origin, PointCloud pointCloud, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBoxInterface boundingBox,
          double minRange, double maxRange, double resolution, int treeDepth)
    {
       OcTreeKeySet unfilteredFreeCells = new OcTreeKeySet();
@@ -67,9 +65,9 @@ public abstract class OcTreeRayTools
       Vector3d direction = new Vector3d();
       Point3d point = new Point3d();
 
-      for (int i = 0; i < scan.size(); ++i)
+      for (int i = 0; i < pointCloud.getNumberOfPoints(); ++i)
       {
-         point.set(scan.getPoint(i));
+         point.set(pointCloud.getPoint(i));
          direction.sub(point, origin);
          double length = direction.length();
 

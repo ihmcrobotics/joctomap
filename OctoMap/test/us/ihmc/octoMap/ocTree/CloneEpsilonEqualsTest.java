@@ -10,7 +10,7 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.junit.Test;
 
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.pointCloud.SweepCollection;
+import us.ihmc.octoMap.pointCloud.ScanCollection;
 import us.ihmc.octoMap.testTools.TestOcTree;
 import us.ihmc.octoMap.tools.OctoMapRandomTools;
 import us.ihmc.octoMap.tools.OctoMapTools;
@@ -51,14 +51,14 @@ public class CloneEpsilonEqualsTest
       Point3d sensorOrigin = OctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
       for (int i = 0; i < 5; i++)
       {
-         SweepCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+         ScanCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
          octree1.update(sweepCollection);
          octree2.update(sweepCollection);
       }
       assertTrue(octree1.epsilonEquals(octree2, 1.0e-7));
 //
       // Make octree2 different from octree1
-      SweepCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+      ScanCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
       octree2.update(sweepCollection);
       assertFalse(octree1.epsilonEquals(octree2, 1.0e-7));
    }
@@ -90,7 +90,7 @@ public class CloneEpsilonEqualsTest
       Point3d sensorOrigin = OctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
       for (int i = 0; i < 5; i++)
       {
-         SweepCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+         ScanCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
          octree1.update(sweepCollection);
       }
 

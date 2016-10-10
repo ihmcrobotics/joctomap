@@ -37,7 +37,7 @@ public class PointCloud implements Iterable<Point3f>
       addAll(points);
    }
 
-   public int size()
+   public int getNumberOfPoints()
    {
       return points.size();
    }

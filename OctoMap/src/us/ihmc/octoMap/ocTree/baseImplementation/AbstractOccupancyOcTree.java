@@ -16,7 +16,8 @@ import us.ihmc.octoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.pointCloud.PointCloud;
-import us.ihmc.octoMap.pointCloud.SweepCollection;
+import us.ihmc.octoMap.pointCloud.Scan;
+import us.ihmc.octoMap.pointCloud.ScanCollection;
 import us.ihmc.octoMap.rules.SetOccupancyRule;
 import us.ihmc.octoMap.rules.UpdateOccupancyRule;
 import us.ihmc.octoMap.rules.interfaces.CollidableRule;
@@ -147,20 +148,21 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       return OccupancyTools.isNodeOccupied(occupancyParameters, occupancyNode);
    }
 
-   public void insertSweepCollection(SweepCollection sweepCollection)
+   public void insertSweepCollection(ScanCollection scanCollection)
    {
       freeCells.clear();
       occupiedCells.clear();
 
-      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
+      for (int i = 0; i < scanCollection.getNumberOfScans(); i++)
       {
-         PointCloud scan = sweepCollection.getSweep(i);
-         Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
+         Scan scan = scanCollection.getScan(i);
+         PointCloud pointCloud = scan.getPointCloud();
+         Point3d sensorOrigin = scan.getSensorOrigin();
 
          if (discretizePointCloud)
-            OcTreeRayTools.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+            OcTreeRayTools.computeDiscreteUpdate(sensorOrigin, pointCloud, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
          else
-            OcTreeRayTools.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+            OcTreeRayTools.computeUpdate(sensorOrigin, pointCloud, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
       }
 
       // insert data into tree  -----------------------
@@ -189,9 +191,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       occupiedCells.clear();
 
       if (discretizePointCloud)
-         OcTreeRayTools.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+         OcTreeRayTools.computeDiscreteUpdate(sensorOrigin, scan, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
       else
-         OcTreeRayTools.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+         OcTreeRayTools.computeUpdate(sensorOrigin, scan, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
 
       // insert data into tree  -----------------------
       for (OcTreeKeyReadOnly key : occupiedCells)
@@ -235,12 +237,12 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public void insertPointCloudRays(PointCloud scan, Point3d sensorOrigin)
    {
-      if (scan.size() < 1)
+      if (scan.getNumberOfPoints() < 1)
          return;
 
       Vector3d direction = new Vector3d();
 
-      for (int i = 0; i < scan.size(); i++)
+      for (int i = 0; i < scan.getNumberOfPoints(); i++)
       {
          Point3d point = new Point3d(scan.getPoint(i));
          direction.sub(point, sensorOrigin);

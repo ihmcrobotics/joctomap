@@ -27,7 +27,8 @@ import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.pointCloud.PointCloud;
-import us.ihmc.octoMap.pointCloud.SweepCollection;
+import us.ihmc.octoMap.pointCloud.Scan;
+import us.ihmc.octoMap.pointCloud.ScanCollection;
 import us.ihmc.octoMap.rules.NormalOcTreeHitUpdateRule;
 import us.ihmc.octoMap.rules.NormalOcTreeMissUpdateRule;
 import us.ihmc.octoMap.rules.interfaces.RayActionRule;
@@ -78,12 +79,12 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       super(other);
    }
 
-   public void update(SweepCollection sweepCollection)
+   public void update(ScanCollection sweepCollection)
    {
       update(sweepCollection, true);
    }
 
-   public void update(SweepCollection sweepCollection, boolean updateNormals)
+   public void update(ScanCollection scanCollection, boolean updateNormals)
    {
       if (REPORT_TIME)
       {
@@ -91,11 +92,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          stopWatch.start();
       }
 
-      insertSweepCollection(sweepCollection);
+      insertSweepCollection(scanCollection);
 
       if (REPORT_TIME)
       {
-         System.out.println(name + ": Sweep integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (Sweep size: " + sweepCollection.getNumberOfPoints() + ").");
+         System.out.println(name + ": ScanCollection integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (number of points: " + scanCollection.getNumberOfPoints() + ").");
       }
 
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
@@ -132,16 +133,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   private void insertSweepCollection(SweepCollection sweepCollection)
+   private void insertSweepCollection(ScanCollection scanCollection)
    {
-
-      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
-      {
-         Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
-         PointCloud scan = sweepCollection.getSweep(i);
-
-         insertPointCloud(scan, sensorOrigin);
-      }
+      scanCollection.forEach(this::insertScan);
    }
 
    private final HashSet<OcTreeKey> occupiedCells = new HashSet<>();
@@ -149,7 +143,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private final RayActionRule integrateMissActionRule = (rayOrigin, rayEnd, rayDirection, key) -> doRayActionOnFreeCell(rayOrigin, rayEnd, rayDirection, key);
 
-   private void insertPointCloud(PointCloud scan, Point3d sensorOrigin)
+   private void insertScan(Scan scan)
    {
       missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
       hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
@@ -158,10 +152,12 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       Vector3d direction = new Vector3d();
       Point3d point = new Point3d();
+      Point3d sensorOrigin = scan.getSensorOrigin();
+      PointCloud pointCloud = scan.getPointCloud();
 
-      for (int i = scan.size() - 1; i >= 0; i--)
+      for (int i = pointCloud.getNumberOfPoints() - 1; i >= 0; i--)
       {
-         point.set(scan.getPoint(i));
+         point.set(pointCloud.getPoint(i));
          direction.sub(point, sensorOrigin);
          double length = direction.length();
 
@@ -175,11 +171,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             // Add the key to the occupied set.
             // if it was already present, remove the point from the scan to speed up integration of miss.
             if (!occupiedCells.add(occupiedKey))
-               scan.removePoint(i);
+               pointCloud.removePoint(i);
          }
       }
 
-      Stream<Point3f> stream = COMPUTE_UPDATES_IN_PARALLEL ? scan.parallelStream() : scan.stream();
+      Stream<Point3f> stream = COMPUTE_UPDATES_IN_PARALLEL ? pointCloud.parallelStream() : pointCloud.stream();
 
       stream.forEach(scanPoint -> insertMissRay(sensorOrigin, scanPoint));
 
