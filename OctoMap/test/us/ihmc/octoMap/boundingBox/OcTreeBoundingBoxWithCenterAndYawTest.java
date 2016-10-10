@@ -65,6 +65,7 @@ public class OcTreeBoundingBoxWithCenterAndYawTest
 		OcTreeBoundingBoxWithCenterAndYaw boundingBox = new OcTreeBoundingBoxWithCenterAndYaw(simpleBoundingBox, resolution, treeDepth);
 		boundingBox.setYaw(Math.PI/4);
 		boundingBox.setOffsetCoordinate(offset);
+		boundingBox.update(resolution, treeDepth);
 
 		assertTrue(boundingBox.isInBoundingBox(key));
 	}

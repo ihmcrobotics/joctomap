@@ -7,15 +7,16 @@ import javax.vecmath.Vector3d;
 import org.apache.commons.math3.util.FastMath;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
+import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 
 public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInterface
 {
    private final Vector3d offsetMetric = new Vector3d();
-   private final Vector3d offsetKey = new Vector3d();
    private final OcTreeSimpleBoundingBox simpleBoundingBox = new OcTreeSimpleBoundingBox();
    private double yaw = 0.0, sinYaw = 0.0, cosYaw = 1.0;
+   private OcTreeKey offsetKey = new OcTreeKey();
 
    private double resolution;
    private int treeDepth;
@@ -79,9 +80,11 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
    public void setOffsetCoordinate(Point3d offset)
    {
       offsetMetric.set(offset);
-      offsetKey.setX(OcTreeKeyConversionTools.coordinateToKey(offset.getX(), resolution, treeDepth) - centerOffsetKey);
-      offsetKey.setY(OcTreeKeyConversionTools.coordinateToKey(offset.getY(), resolution, treeDepth) - centerOffsetKey);
-      offsetKey.setZ(OcTreeKeyConversionTools.coordinateToKey(offset.getZ(), resolution, treeDepth) - centerOffsetKey);
+   }
+   
+   public void setOffsetKey(OcTreeKey offset)
+   {
+      offsetKey.set(offset);
    }
 
    public void setHalfSize(Vector3d halfSize)
@@ -118,6 +121,7 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       this.resolution = resolution;
       this.treeDepth = treeDepth;
       this.centerOffsetKey = OcTreeKeyTools.computeCenterOffsetKey(treeDepth);
+      this.offsetKey = OcTreeKeyConversionTools.coordinateToKey(offsetMetric, resolution, treeDepth);
       simpleBoundingBox.update(resolution, treeDepth);
    }
 
@@ -134,9 +138,9 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
    @Override
    public boolean isInBoundingBox(int k0, int k1, int k2)
    {
-	   int k0Local = (int) ((k0 - centerOffsetKey - offsetKey.getX()) * cosYaw + (k1 - centerOffsetKey - offsetKey.getY()) * sinYaw + centerOffsetKey);
-	   int k1Local = (int) (-(k0 - centerOffsetKey - offsetKey.getX()) * sinYaw +  (k1 - centerOffsetKey - offsetKey.getY()) * cosYaw + centerOffsetKey);
-	   int k2Local = (int) (k2 - offsetKey.getZ());
+	   int k0Local = (int) ((k0 - offsetKey.getKey(0)) * cosYaw + (k1 - offsetKey.getKey(1)) * sinYaw + centerOffsetKey);
+	   int k1Local = (int) (-(k0 - offsetKey.getKey(0)) * sinYaw +  (k1 - offsetKey.getKey(1)) * cosYaw + centerOffsetKey);
+	   int k2Local = (int) (k2 - offsetKey.getKey(2) + centerOffsetKey);
 	   
 	   return simpleBoundingBox.isInBoundingBox(k0Local, k1Local, k2Local);
    }
