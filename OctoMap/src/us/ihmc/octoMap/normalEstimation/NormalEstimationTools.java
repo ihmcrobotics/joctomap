@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.planarRegions;
+package us.ihmc.octoMap.normalEstimation;
 
 import java.util.ArrayList;
 import java.util.List;

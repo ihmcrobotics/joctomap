@@ -1,11 +1,20 @@
 package us.ihmc.octoMap.iterators;
 
+import java.util.stream.Stream;
+
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.rules.interfaces.IteratorSelectionRule;
 
 public class OcTreeIteratorFactory
 {
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createLeafBoundingBoxIteratable(NODE root, OcTreeBoundingBoxInterface boundingBox)
+   {
+      OcTreeIterable<NODE> ocTreeIterable = new OcTreeIterable<>(root);
+      ocTreeIterable.setRule(leavesInsideBoundingBoxOnly(boundingBox));
+      return ocTreeIterable;
+   }
+
    public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createLeafIteratable(NODE root)
    {
       OcTreeIterable<NODE> ocTreeIterable = new OcTreeIterable<>(root);
@@ -55,5 +64,11 @@ public class OcTreeIteratorFactory
    private static <NODE extends AbstractOcTreeNode<NODE>> boolean isNodeInsideBoundingBox(OcTreeBoundingBoxInterface boundingBox, NODE node)
    {
       return boundingBox == null || boundingBox.isInBoundingBox(node.getKey0(), node.getKey1(), node.getKey2());
+   }
+
+   @SafeVarargs
+   public static <NODE extends AbstractOcTreeNode<NODE>> IteratorSelectionRule<NODE> multipleRule(IteratorSelectionRule<NODE>... iteratorSelectionRules)
+   {
+      return (node, maxDepth) -> !Stream.of(iteratorSelectionRules).filter(rule -> !rule.test(node, maxDepth)).findFirst().isPresent();
    }
 }

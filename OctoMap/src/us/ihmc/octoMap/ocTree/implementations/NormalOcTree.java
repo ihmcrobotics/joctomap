@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Stream;
 
@@ -19,19 +18,17 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.math3.util.Precision;
 
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
-import us.ihmc.octoMap.iterators.OcTreeIterable;
 import us.ihmc.octoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.NormalOcTreeNode;
+import us.ihmc.octoMap.normalEstimation.NormalEstimationParameters;
+import us.ihmc.octoMap.normalEstimation.NormalEstimationTools;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOcTreeBase;
 import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
 import us.ihmc.octoMap.occupancy.OccupancyTools;
-import us.ihmc.octoMap.planarRegions.NormalEstimationTools;
-import us.ihmc.octoMap.planarRegions.PlanarRegion;
-import us.ihmc.octoMap.planarRegions.RegionSegmentationTools;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.rules.NormalOcTreeHitUpdateRule;
@@ -51,12 +48,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public static final boolean UPDATE_NODE_HIT_WITH_AVERAGE = true;
 
-   public static final boolean USE_REMANENT_REGIONS = true;
-
    // occupancy parameters of tree, stored in logodds:
    private final OccupancyParameters occupancyParameters = new OccupancyParameters();
    private final NormalEstimationParameters normalEstimationParameters = new NormalEstimationParameters();
-   private final PlanarRegionSegmentationParameters planarRegionSegmentationParameters = new PlanarRegionSegmentationParameters();
    private OcTreeBoundingBoxInterface boundingBox = null;
    /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    private double minInsertRange = -1.0;
@@ -66,16 +60,12 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private final NormalOcTreeHitUpdateRule hitUpdateRule = new NormalOcTreeHitUpdateRule(occupancyParameters);
    private final NormalOcTreeMissUpdateRule missUpdateRule = new NormalOcTreeMissUpdateRule(occupancyParameters);
 
-   private List<PlanarRegion> planarRegions = new ArrayList<>();
-
-   private final Random random = new Random(45561L);
-
    private double alphaCenterUpdate = 0.1;
 
    private final List<OcTreeKey> keyList = new ArrayList<>();
    private final List<NormalOcTreeNode> leafNodes = new ArrayList<>();
    private final HashMap<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
-
+   
    public NormalOcTree(double resolution)
    {
       super(resolution);
@@ -88,10 +78,10 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void update(SweepCollection sweepCollection)
    {
-      update(sweepCollection, true, true);
+      update(sweepCollection, true);
    }
 
-   public void update(SweepCollection sweepCollection, boolean updateNormals, boolean updateRegions)
+   public void update(SweepCollection sweepCollection, boolean updateNormals)
    {
       if (REPORT_TIME)
       {
@@ -136,39 +126,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          if (REPORT_TIME)
          {
             System.out.println(getTreeType() + ": Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
-         }
-      }
-
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
-
-      if (updateRegions)
-      {
-         if (REPORT_TIME)
-         {
-            stopWatch.reset();
-            stopWatch.start();
-         }
-
-         leafNodes.stream().forEach(NormalOcTreeNode::resetHasBeenCandidateForRegion);
-
-         if (USE_REMANENT_REGIONS)
-         {
-            RegionSegmentationTools.updatePlanarRegions(root, boundingBox, planarRegionSegmentationParameters, planarRegions);
-            planarRegions.addAll(RegionSegmentationTools.searchNewPlanarRegions(root, boundingBox, planarRegionSegmentationParameters, random, leafNodes));
-            planarRegions = RegionSegmentationTools.mergePlanarRegionsIfPossible(root, planarRegions, planarRegionSegmentationParameters);
-         }
-         else
-         {
-            planarRegions.parallelStream().forEach(PlanarRegion::clearRegion);
-            planarRegions = RegionSegmentationTools.searchNewPlanarRegions(root, boundingBox, planarRegionSegmentationParameters, random, leafNodes);
-         }
-
-         if (root != null)
-            updateInnerRegionIdsRecursive(root, 0);
-
-         if (REPORT_TIME)
-         {
-            System.out.println(getTreeType() + ": Planar region segmentation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
          }
       }
    }
@@ -314,31 +271,10 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   private void updateInnerRegionIdsRecursive(NormalOcTreeNode node, int depth)
-   {
-      // only recurse and update for inner nodes:
-      if (node.hasAtLeastOneChild())
-      {
-         // return early for last level:
-         if (depth < treeDepth - 1)
-         {
-            for (int i = 0; i < 8; i++)
-            {
-               NormalOcTreeNode childNode = node.getChild(i);
-               if (childNode != null)
-                  updateInnerRegionIdsRecursive(childNode, depth + 1);
-            }
-         }
-         node.updateRegionIdChildren();
-      }
-   }
-
    @Override
    public Iterator<NormalOcTreeNode> iterator()
    {
-      OcTreeIterable<NormalOcTreeNode> leafIteratable = OcTreeIteratorFactory.createLeafIteratable(root);
-      leafIteratable.setRule(OcTreeIteratorFactory.leavesInsideBoundingBoxOnly(boundingBox));
-      return leafIteratable.iterator();
+      return OcTreeIteratorFactory.createLeafBoundingBoxIteratable(root, boundingBox).iterator();
    }
 
    public void disableBoundingBox()
@@ -410,16 +346,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       return normalEstimationParameters;
    }
 
-   public void setPlanarRegionSegmentationParameters(PlanarRegionSegmentationParameters parameters)
-   {
-      this.planarRegionSegmentationParameters.set(parameters);
-   }
-
-   public PlanarRegionSegmentationParameters getPlanarRegionSegmentationParameters()
-   {
-      return planarRegionSegmentationParameters;
-   }
-
    /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    public void setMinimumInsertRange(double minRange)
    {
@@ -456,21 +382,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       removeMinimumInsertRange();
       removeMaximumInsertRange();
-   }
-
-   public PlanarRegion getPlanarRegion(int index)
-   {
-      return planarRegions.get(index);
-   }
-
-   public List<PlanarRegion> getPlanarRegions()
-   {
-      return planarRegions;
-   }
-
-   public int getNumberOfPlanarRegions()
-   {
-      return planarRegions.size();
    }
 
    @Override

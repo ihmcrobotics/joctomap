@@ -7,7 +7,6 @@ import javax.vecmath.Vector3d;
 import org.apache.commons.math3.util.Precision;
 
 import us.ihmc.octoMap.ocTree.implementations.NormalOcTree;
-import us.ihmc.octoMap.planarRegions.PlanarRegion;
 
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
 {
@@ -19,8 +18,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    private float hitLocationX = Float.NaN;
    private float hitLocationY = Float.NaN;
    private float hitLocationZ = Float.NaN;
-   private int regionId = PlanarRegion.NO_REGION_ID;
-   private int hasBeenCandidateForRegion = PlanarRegion.NO_REGION_ID;
 
    private long numberOfHits;
 
@@ -40,8 +37,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       hitLocationX = other.hitLocationX;
       hitLocationY = other.hitLocationY;
       hitLocationZ = other.hitLocationZ;
-      regionId = other.regionId;
-      hasBeenCandidateForRegion = other.hasBeenCandidateForRegion;
 
       if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
          numberOfHits = other.numberOfHits;
@@ -59,8 +54,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       super.resetLogOdds();
       resetNormal();
       resetHitLocation();
-      resetRegionId();
-      resetHasBeenCandidateForRegion();
    }
 
    public void resetNormal()
@@ -80,16 +73,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
       if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
          numberOfHits = 0;
-   }
-
-   public void resetRegionId()
-   {
-      regionId = PlanarRegion.NO_REGION_ID;
-   }
-
-   public void resetHasBeenCandidateForRegion()
-   {
-      hasBeenCandidateForRegion = PlanarRegion.NO_REGION_ID;
    }
 
    public void updateNormalChildren()
@@ -267,70 +250,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       hitLocationZ *= invCount;
    }
 
-   public boolean isPartOfRegion()
-   {
-      return regionId != PlanarRegion.NO_REGION_ID;
-   }
-
-   public void setRegionId(int regionId)
-   {
-      this.regionId = regionId;
-   }
-
-   public int getRegionId()
-   {
-      return regionId;
-   }
-
-   public void updateRegionIdChildren()
-   {
-      if (!hasAtLeastOneChild())
-      {
-         resetRegionId();
-         return;
-      }
-
-      int indexRegionWithHighestCount = -1;
-      int highestCount = -1;
-
-      for (int i = 0; i < 8; i++)
-      {
-         NormalOcTreeNode currentChild = children[i];
-         if (currentChild != null && currentChild.isPartOfRegion())
-         {
-            int currentCount = 1;
-            
-            for (int j = 0; j < i; j++)
-            {
-               NormalOcTreeNode other = children[j];
-               if (other != null && currentChild.getRegionId() == other.getRegionId())
-                  currentCount++;
-            }
-
-            if (indexRegionWithHighestCount < 0 || currentCount > highestCount)
-            {
-               indexRegionWithHighestCount = i;
-               highestCount = currentCount;
-            }
-         }
-      }
-
-      if (indexRegionWithHighestCount < 0)
-         resetRegionId();
-      else
-         regionId = children[indexRegionWithHighestCount].regionId;
-   }
-
-   public int getHasBeenCandidateForRegion()
-   {
-      return hasBeenCandidateForRegion;
-   }
-
-   public void setHasBeenCandidateForRegion(int hasBeenCandidateForRegion)
-   {
-      this.hasBeenCandidateForRegion = hasBeenCandidateForRegion;
-   }
-
    public double getHitLocationX()
    {
       return hitLocationX;
@@ -375,8 +294,6 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       if (!Precision.equals(hitLocationY, other.hitLocationY, epsilon))
          return false;
       if (!Precision.equals(hitLocationZ, other.hitLocationZ, epsilon))
-         return false;
-      if (regionId != other.regionId)
          return false;
       return super.epsilonEqualsInternal(other, epsilon);
    }
