@@ -48,16 +48,16 @@ public abstract class NormalEstimationTools
       Vector3d normalCandidate = new Vector3d();
       Random random = ThreadLocalRandom.current();
       Point3d[] randomDraw = {new Point3d(), new Point3d()};
-      Vector3d currentNodeNormal = new Vector3d();
+      Vector3d currentNormal = new Vector3d();
       Point3d currentNodeHitLocation = new Point3d();
       Vector3d currentNodeToNeighbor = new Vector3d();
 
-      currentNode.getNormal(currentNodeNormal);
+      currentNode.getNormal(currentNormal);
       currentNode.getHitLocation(currentNodeHitLocation);
 
       // Need to be recomputed as the neighbors may have changed
-      double nodeNormalQuality = 0.0;
-      int nodeNumberOfPoints = 0;
+      double currentAverageDeviation = 0.0;
+      int currentConsensus = 0;
 
       for (int i = 0; i < neighbors.size(); i++)
       {
@@ -65,18 +65,18 @@ public abstract class NormalEstimationTools
 
          currentNodeToNeighbor.set(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
          currentNodeToNeighbor.sub(currentNodeHitLocation);
-         double distanceFromPlane = Math.abs(currentNodeNormal.dot(currentNodeToNeighbor));
+         double distanceFromPlane = Math.abs(currentNormal.dot(currentNodeToNeighbor));
          if (distanceFromPlane <= maxDistanceFromPlane)
          {
-            nodeNormalQuality += distanceFromPlane;
-            nodeNumberOfPoints++;
+            currentAverageDeviation += distanceFromPlane;
+            currentConsensus++;
          }
       }
 
-      if (nodeNumberOfPoints == 0)
-         nodeNormalQuality = Double.POSITIVE_INFINITY;
+      if (currentConsensus == 0)
+         currentAverageDeviation = Double.POSITIVE_INFINITY;
       else
-         nodeNormalQuality /= nodeNumberOfPoints;
+         currentAverageDeviation /= currentConsensus;
 
       boolean hasNormalBeenUpdatedAtLeastOnce = false;
       do
@@ -108,8 +108,8 @@ public abstract class NormalEstimationTools
          normalCandidate.setZ(v1_x * v2_y - v1_y * v2_x);
          normalCandidate.normalize();
 
-         float candidateNormalQuality = 0.0f;
-         int candidateNumberOfPoints = 2; // The two points picked randomly are exactly on the plane
+         float candidateAverageDeviation = 0.0f;
+         int candidateConsensus = 2; // The two points picked randomly are exactly on the plane
 
          for (int i = 0; i < neighbors.size(); i++)
          {
@@ -119,28 +119,28 @@ public abstract class NormalEstimationTools
             double distanceFromPlane = Math.abs(normalCandidate.dot(currentNodeToNeighbor));
             if (distanceFromPlane < maxDistanceFromPlane)
             {
-               candidateNormalQuality += distanceFromPlane;
-               candidateNumberOfPoints++;
+               candidateAverageDeviation += distanceFromPlane;
+               candidateConsensus++;
             }
          }
 
-         candidateNormalQuality /= candidateNumberOfPoints;
+         candidateAverageDeviation /= candidateConsensus;
 
-         boolean isSimplyBetter = candidateNumberOfPoints >= nodeNumberOfPoints && candidateNormalQuality <= nodeNormalQuality;
-         boolean hasLittleLessNodesButIsMuchBetter = candidateNumberOfPoints >= (int) (0.5 * nodeNumberOfPoints)
-               && candidateNormalQuality <= 0.75 * nodeNormalQuality;
+         boolean isSimplyBetter = candidateConsensus >= currentConsensus && candidateAverageDeviation <= currentAverageDeviation;
+         boolean hasSmallerConsensusButIsMuchBetter = candidateConsensus >= (int) (0.5 * currentConsensus)
+               && candidateAverageDeviation <= 0.5 * currentAverageDeviation;
 
-         if (isSimplyBetter || hasLittleLessNodesButIsMuchBetter)
+         if (isSimplyBetter || hasSmallerConsensusButIsMuchBetter)
          {
-            if (currentNodeNormal.dot(normalCandidate) < 0.0)
+            if (currentNormal.dot(normalCandidate) < 0.0)
                normalCandidate.negate();
 
             currentNode.setNormal(normalCandidate);
-            currentNode.setNormalQuality(candidateNormalQuality, candidateNumberOfPoints);
-            nodeNormalQuality = candidateNormalQuality;
+            currentNode.setNormalQuality(candidateAverageDeviation, candidateConsensus);
+            currentAverageDeviation = candidateAverageDeviation;
             hasNormalBeenUpdatedAtLeastOnce = true;
          }
       }
-      while (!hasNormalBeenUpdatedAtLeastOnce && nodeNormalQuality > 0.005); // TODO Check if necessary, maybe only one iteration when normal is pretty good already.
+      while (!hasNormalBeenUpdatedAtLeastOnce && currentAverageDeviation > 0.005); // TODO Check if necessary, maybe only one iteration when normal is pretty good already.
    }
 }
