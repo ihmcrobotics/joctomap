@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.implementations.OcTree;
+import us.ihmc.octoMap.ocTree.OcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 
 public class ChangedKeysTest

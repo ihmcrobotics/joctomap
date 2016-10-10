@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.implementations.OcTree;
+import us.ihmc.octoMap.ocTree.OcTree;
 
 public class OcTreeSearchToolsTest
 {

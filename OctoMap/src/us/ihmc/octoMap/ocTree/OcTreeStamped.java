@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree.implementations;
+package us.ihmc.octoMap.ocTree;
 
 import us.ihmc.octoMap.node.OcTreeNodeStamped;
 import us.ihmc.octoMap.ocTree.baseImplementation.AbstractOccupancyOcTree;

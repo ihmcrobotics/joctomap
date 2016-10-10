@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.ocTree.implementations;
+package us.ihmc.octoMap.ocTree;
 
 import static us.ihmc.robotics.geometry.GeometryTools.*;
 

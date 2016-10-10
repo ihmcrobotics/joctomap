@@ -10,7 +10,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.junit.Test;
 
 import us.ihmc.octoMap.key.OcTreeKey;
-import us.ihmc.octoMap.ocTree.implementations.NormalOcTree;
 import us.ihmc.octoMap.pointCloud.SweepCollection;
 import us.ihmc.octoMap.testTools.TestOcTree;
 import us.ihmc.octoMap.tools.OctoMapRandomTools;

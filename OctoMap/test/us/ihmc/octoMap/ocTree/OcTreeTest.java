@@ -11,7 +11,6 @@ import javax.vecmath.Vector3d;
 import org.junit.Test;
 
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.implementations.OcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
 import us.ihmc.octoMap.tools.OcTreeRayTools;
 import us.ihmc.octoMap.tools.OctoMapRandomTools;

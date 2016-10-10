@@ -7,7 +7,7 @@ import javax.vecmath.Vector3d;
 import org.apache.commons.math3.util.Precision;
 
 import us.ihmc.octoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.implementations.NormalOcTree;
+import us.ihmc.octoMap.ocTree.NormalOcTree;
 
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
 {
