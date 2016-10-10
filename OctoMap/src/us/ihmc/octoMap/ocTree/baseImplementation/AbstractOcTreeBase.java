@@ -59,8 +59,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /** flag to denote whether the octree extent changed (for lazy min/max eval) */
    protected boolean sizeChanged;
 
-   protected boolean lazyUpdate = false;
-
    /// data structure for ray casting, array for multithreading
 
    public AbstractOcTreeBase(double resolution)
@@ -132,16 +130,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          return false;
 
       return true;
-   }
-
-   /**
-    * Affect the methods using {@link #updateNodeInternal(OcTreeKeyReadOnly, UpdateRule, EarlyAbortRule)}.
-    * @param lazyUpdate whether update of inner nodes is omitted after the update (default: false).
-    *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
-    */
-   public void setLazyUpdate(boolean lazyUpdate)
-   {
-      this.lazyUpdate = lazyUpdate;
    }
 
    public double getResolution()
@@ -299,7 +287,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             return leaf;
       }
 
-      return updateNodeRecurs(root, createdRoot, key, updateRule, 0);
+      return updateNodeRecursively(root, createdRoot, key, updateRule, 0);
    }
 
    /**
@@ -361,21 +349,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return root;
    }
 
-   /** 
-    *  Search node at specified depth given a 3d point (depth=0: search full tree depth).
-    *  You need to check if the returned node is NULL, since it can be in unknown space.
-    *  @return pointer to node if found, NULL otherwise
-    */
-   public NODE search(double x, double y, double z)
-   {
-      return OcTreeSearchTools.search(root, x, y, z, resolution, treeDepth);
-   }
-
-   public NODE search(double x, double y, double z, int depth)
-   {
-      return OcTreeSearchTools.search(root, x, y, z, depth, resolution, treeDepth);
-   }
-
    /**
     *  Search node at specified depth given a 3d point (depth=0: search full tree depth)
     *  You need to check if the returned node is NULL, since it can be in unknown space.
@@ -404,47 +377,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public NODE search(OcTreeKeyReadOnly key, int depth)
    {
       return OcTreeSearchTools.search(root, key, depth, treeDepth);
-   }
-
-   /**
-    *  Delete a node (if exists) given a 3d point. Will always
-    *  delete at the lowest level unless depth !=0, and expand pruned inner nodes as needed.
-    *  Pruned nodes at level "depth" will directly be deleted as a whole.
-    * @param deletionRule 
-    */
-   public boolean deleteNode(double x, double y, double z)
-   {
-      return deleteNode(x, y, z, 0);
-   }
-
-   public boolean deleteNode(double x, double y, double z, int depth)
-   {
-      OcTreeKey key = coordinateToKey(x, y, z);
-      if (key == null)
-      {
-         System.err.println(AbstractOcTreeBase.class.getSimpleName() + " Error in deleteNode: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
-         return false;
-      }
-      else
-      {
-         return deleteNode(key, depth);
-      }
-   }
-
-   /** 
-    *  Delete a node (if exists) given a 3d point. Will always
-    *  delete at the lowest level unless depth !=0, and expand pruned inner nodes as needed.
-    *  Pruned nodes at level "depth" will directly be deleted as a whole.
-    * @param deletionRule 
-    */
-   public boolean deleteNode(Point3d value)
-   {
-      return deleteNode(value);
-   }
-
-   public boolean deleteNode(Point3d coord, int depth)
-   {
-      return deleteNode(coord.getX(), coord.getY(), coord.getZ(), depth);
    }
 
    /** 
@@ -668,7 +600,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return false;
    }
 
-   private NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, UpdateRule<NODE> updateRule, int depth)
+   private NODE updateNodeRecursively(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, UpdateRule<NODE> updateRule, int depth)
    {
       boolean createdNode = false;
 
@@ -700,13 +632,13 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
          NODE nodeChild = node.getChild(childIndex);
 
-         if (lazyUpdate)
+         if (updateRule.performLazyUpdate())
          {
-            return updateNodeRecurs(nodeChild, createdNode, key, updateRule, depth + 1);
+            return updateNodeRecursively(nodeChild, createdNode, key, updateRule, depth + 1);
          }
          else
          {
-            NODE leafToReturn = updateNodeRecurs(nodeChild, createdNode, key, updateRule, depth + 1);
+            NODE leafToReturn = updateNodeRecursively(nodeChild, createdNode, key, updateRule, depth + 1);
 
             // That's an inner node, apply the update rule
             updateRule.updateInnerNode(node);
