@@ -112,6 +112,13 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
    }
 
+   public void clearNormals()
+   {
+      List<NormalOcTreeNode> leafNodes = new ArrayList<>();
+      this.forEach(leafNodes::add);
+      leafNodes.parallelStream().forEach(NormalOcTreeNode::resetNormal);
+   }
+
    private final HashSet<OcTreeKey> occupiedCells = new HashSet<>();
    private final ConcurrentLinkedQueue<OcTreeKeyReadOnly> freeKeysToUpdate = new ConcurrentLinkedQueue<>();
 
