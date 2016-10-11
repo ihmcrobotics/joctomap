@@ -126,9 +126,12 @@ public abstract class NormalEstimationTools
 
          candidateAverageDeviation /= candidateConsensus;
 
+         double minConsensusRatio = parameters.getMinConsensusRatio();
+         double maxAverageDeviationRatio = parameters.getMaxAverageDeviationRatio();
+
          boolean isSimplyBetter = candidateConsensus >= currentConsensus && candidateAverageDeviation <= currentAverageDeviation;
-         boolean hasSmallerConsensusButIsMuchBetter = candidateConsensus >= (int) (0.5 * currentConsensus)
-               && candidateAverageDeviation <= 0.5 * currentAverageDeviation;
+         boolean hasSmallerConsensusButIsMuchBetter = candidateConsensus >= (int) (minConsensusRatio * currentConsensus)
+               && candidateAverageDeviation <= maxAverageDeviationRatio * currentAverageDeviation;
 
          if (isSimplyBetter || hasSmallerConsensusButIsMuchBetter)
          {
