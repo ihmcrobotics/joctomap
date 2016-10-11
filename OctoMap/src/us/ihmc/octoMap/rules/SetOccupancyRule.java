@@ -1,7 +1,7 @@
 package us.ihmc.octoMap.rules;
 
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
-import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.rules.interfaces.UpdateRule;
 
 public class SetOccupancyRule<NODE extends AbstractOccupancyOcTreeNode<NODE>> implements UpdateRule<NODE>

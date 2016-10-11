@@ -9,10 +9,10 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.pointCloud.PointCloud;
-import us.ihmc.octoMap.pointCloud.SweepCollection;
+import us.ihmc.octoMap.pointCloud.ScanCollection;
 import us.ihmc.robotics.geometry.GeometryTools;
 
-public class OctoMapRandomTools
+public abstract class OctoMapRandomTools
 {
    public static double generateRandomDouble(Random random, double maxAbsolute)
    {
@@ -68,19 +68,19 @@ public class OctoMapRandomTools
       return pointCloud;
    }
 
-   public static SweepCollection generateRandomSweepCollection(Random random, float xRange, float yRange, float zRange, Point3d sensorOrigin, int sweepSize,
+   public static ScanCollection generateRandomSweepCollection(Random random, float xRange, float yRange, float zRange, Point3d sensorOrigin, int sweepSize,
          int pointCloudSize)
    {
-      SweepCollection sweepCollection = new SweepCollection();
+      ScanCollection sweepCollection = new ScanCollection();
 
       for (int i = 0; i < sweepSize; i++)
-         sweepCollection.addSweep(generateRandomPointCloud(random, xRange, yRange, zRange, pointCloudSize), sensorOrigin);
+         sweepCollection.addScan(generateRandomPointCloud(random, xRange, yRange, zRange, pointCloudSize), sensorOrigin);
       return sweepCollection;
    }
 
-   public static SweepCollection createSingleSweepInPlane(Random random, double sensorDistanceFromPlane, Point3d center, Vector3d normal, double length, double width, int numberOfPoints)
+   public static ScanCollection createSingleSweepInPlane(Random random, double sensorDistanceFromPlane, Point3d center, Vector3d normal, double length, double width, int numberOfPoints)
    {
-      SweepCollection sweepCollection = new SweepCollection();
+      ScanCollection sweepCollection = new ScanCollection();
       normal.normalize();
    
       Matrix3d orientation = new Matrix3d();
@@ -100,7 +100,7 @@ public class OctoMapRandomTools
       Point3d sensorOrigin = new Point3d();
       sensorOrigin.scaleAdd(sensorDistanceFromPlane, normal, center);
    
-      sweepCollection.addSweep(pointCloud, sensorOrigin);
+      sweepCollection.addScan(pointCloud, sensorOrigin);
       
       return sweepCollection;
    }

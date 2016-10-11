@@ -1,6 +1,6 @@
 package us.ihmc.octoMap.tools;
 
-public class OctoMapTools
+public abstract class OctoMapTools
 {
    /**
     * Compute log-odds from probability:

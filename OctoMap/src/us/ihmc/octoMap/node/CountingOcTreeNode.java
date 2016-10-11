@@ -2,6 +2,8 @@ package us.ihmc.octoMap.node;
 
 import java.util.Arrays;
 
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
+
 public class CountingOcTreeNode extends AbstractOcTreeNode<CountingOcTreeNode>
 {
    private int count;

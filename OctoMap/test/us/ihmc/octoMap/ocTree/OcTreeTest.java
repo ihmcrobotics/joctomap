@@ -11,9 +11,8 @@ import javax.vecmath.Vector3d;
 import org.junit.Test;
 
 import us.ihmc.octoMap.node.OccupancyOcTreeNode;
-import us.ihmc.octoMap.ocTree.baseImplementation.OcTreeRayHelper;
-import us.ihmc.octoMap.ocTree.implementations.OcTree;
 import us.ihmc.octoMap.pointCloud.PointCloud;
+import us.ihmc.octoMap.tools.OcTreeRayTools;
 import us.ihmc.octoMap.tools.OctoMapRandomTools;
 import us.ihmc.octoMap.tools.OctoMapTools;
 
@@ -49,7 +48,7 @@ public class OcTreeTest
       while(true)
       {
 
-         OcTree octree = new OcTree(resolution);
+         OccupancyOcTree octree = new OccupancyOcTree(resolution);
          long start = System.nanoTime();
          octree.insertPointCloud(pointcloud, origin);
          long endTime = System.nanoTime();
@@ -68,10 +67,9 @@ public class OcTreeTest
          Point3d origin = OctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
          Point3d end = OctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
 
-         OcTree octree = new OcTree(resolution);
+         OccupancyOcTree octree = new OccupancyOcTree(resolution);
          long start = System.nanoTime();
-         OcTreeRayHelper<OccupancyOcTreeNode> rayTracer = new OcTreeRayHelper<>();
-         rayTracer.computeRayKeys(origin, end, resolution, octree.getTreeDepth());
+         OcTreeRayTools.computeRayKeys(origin, end, resolution, octree.getTreeDepth());
          long endTime = System.nanoTime();
          System.out.println(OctoMapTools.nanoSecondsToSeconds(endTime - start));
          
@@ -91,7 +89,7 @@ public class OcTreeTest
       for (int attempt = 0; attempt < 100; attempt++)
       {
          double resolution = 0.15 * random.nextDouble();
-         OcTree ocTree = new OcTree(resolution);
+         OccupancyOcTree ocTree = new OccupancyOcTree(resolution);
          Point3d coordinate = OctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
 
          OccupancyOcTreeNode node = null;

@@ -1,29 +1,28 @@
 package us.ihmc.octoMap.ocTree.baseImplementation;
 
-import static us.ihmc.octoMap.MarchingCubesTables.*;
-
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
 import us.ihmc.octoMap.boundingBox.OcTreeBoundingBoxInterface;
-import us.ihmc.octoMap.key.KeyBoolMap;
 import us.ihmc.octoMap.key.KeyRayReadOnly;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.octoMap.key.OcTreeKeySet;
-import us.ihmc.octoMap.node.AbstractOccupancyOcTreeNode;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
 import us.ihmc.octoMap.occupancy.OccupancyParameters;
 import us.ihmc.octoMap.occupancy.OccupancyParametersReadOnly;
-import us.ihmc.octoMap.occupancy.OccupancyTools;
 import us.ihmc.octoMap.pointCloud.PointCloud;
-import us.ihmc.octoMap.pointCloud.ScanNode;
-import us.ihmc.octoMap.pointCloud.SweepCollection;
+import us.ihmc.octoMap.pointCloud.Scan;
+import us.ihmc.octoMap.pointCloud.ScanCollection;
 import us.ihmc.octoMap.rules.SetOccupancyRule;
 import us.ihmc.octoMap.rules.UpdateOccupancyRule;
 import us.ihmc.octoMap.rules.interfaces.CollidableRule;
+import us.ihmc.octoMap.tools.OcTreeRayTools;
+import us.ihmc.octoMap.tools.OccupancyTools;
 import us.ihmc.robotics.geometry.RigidBodyTransform;
 
 public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOcTreeBase<NODE>
@@ -53,9 +52,8 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
 
    protected boolean useChangeDetection;
    /** Set of leaf keys (lowest level) which changed since last resetChangeDetection */
-   protected final KeyBoolMap changedKeys = new KeyBoolMap();
+   protected final Map<OcTreeKeyReadOnly, Boolean> changedKeys = new HashMap<>();
    
-   protected final OcTreeRayHelper<NODE> rayHelper = new OcTreeRayHelper<>();
    private final OcTreeKeySet freeCells = new OcTreeKeySet(1000000);
    private final OcTreeKeySet occupiedCells = new OcTreeKeySet(1000000);
 
@@ -150,20 +148,21 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       return OccupancyTools.isNodeOccupied(occupancyParameters, occupancyNode);
    }
 
-   public void insertSweepCollection(SweepCollection sweepCollection)
+   public void insertSweepCollection(ScanCollection scanCollection)
    {
       freeCells.clear();
       occupiedCells.clear();
 
-      for (int i = 0; i < sweepCollection.getNumberOfSweeps(); i++)
+      for (int i = 0; i < scanCollection.getNumberOfScans(); i++)
       {
-         PointCloud scan = sweepCollection.getSweep(i);
-         Point3d sensorOrigin = sweepCollection.getSweepOrigin(i);
+         Scan scan = scanCollection.getScan(i);
+         PointCloud pointCloud = scan.getPointCloud();
+         Point3d sensorOrigin = scan.getSensorOrigin();
 
          if (discretizePointCloud)
-            rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+            OcTreeRayTools.computeDiscreteUpdate(sensorOrigin, pointCloud, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
          else
-            rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+            OcTreeRayTools.computeUpdate(sensorOrigin, pointCloud, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
       }
 
       // insert data into tree  -----------------------
@@ -192,9 +191,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       occupiedCells.clear();
 
       if (discretizePointCloud)
-         rayHelper.computeDiscreteUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+         OcTreeRayTools.computeDiscreteUpdate(sensorOrigin, scan, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
       else
-         rayHelper.computeUpdate(scan, sensorOrigin, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
+         OcTreeRayTools.computeUpdate(sensorOrigin, scan, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
 
       // insert data into tree  -----------------------
       for (OcTreeKeyReadOnly key : occupiedCells)
@@ -228,26 +227,6 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    }
 
    /**
-   * Insert a 3d scan (given as a ScanNode) into the tree, parallelized with OpenMP.
-   *
-   * @note replaces insertScan
-   *
-   * @param scan ScanNode contains Pointcloud data and frame/sensor origin
-   */
-   public void insertPointCloud(ScanNode scan)
-   {
-      // performs transformation to data and sensor origin first
-      PointCloud cloud = scan.getScan();
-      RigidBodyTransform frameOrigin = new RigidBodyTransform(scan.getPose());
-      frameOrigin.invert();
-      Vector3d tempVector = new Vector3d();
-      scan.getPose().getTranslation(tempVector);
-      Point3d sensorOrigin = new Point3d(tempVector);//frame_origin.inv().transform(scan.pose.trans()); // TODO Sylvain Double-check this transformation
-      frameOrigin.transform(sensorOrigin);
-      insertPointCloud(cloud, sensorOrigin, frameOrigin);
-   }
-
-   /**
     * Integrate a Pointcloud (in global reference frame), parallelized with OpenMP.
     * This function simply inserts all rays of the point clouds as batch operation.
     * Discretization effects can lead to the deletion of occupied space, it is
@@ -258,12 +237,12 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public void insertPointCloudRays(PointCloud scan, Point3d sensorOrigin)
    {
-      if (scan.size() < 1)
+      if (scan.getNumberOfPoints() < 1)
          return;
 
       Vector3d direction = new Vector3d();
 
-      for (int i = 0; i < scan.size(); i++)
+      for (int i = 0; i < scan.getNumberOfPoints(); i++)
       {
          Point3d point = new Point3d(scan.getPoint(i));
          direction.sub(point, sensorOrigin);
@@ -274,7 +253,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          if (maxInsertRange > 0.0 && length > maxInsertRange)
          {
             point.scaleAdd(maxInsertRange / length, direction, sensorOrigin);
-            KeyRayReadOnly ray = rayHelper.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
+            KeyRayReadOnly ray = OcTreeRayTools.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
             if (ray != null)
             {
                for (int j = 0; j < ray.size(); j++)
@@ -283,7 +262,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
          }
          else
          {
-            KeyRayReadOnly ray = rayHelper.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
+            KeyRayReadOnly ray = OcTreeRayTools.computeRayKeys(sensorOrigin, point, resolution, treeDepth);
             if (ray != null)
             {
                for (int j = 0; j < ray.size(); j++)
@@ -515,7 +494,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public boolean castRay(Point3d origin, Vector3d direction, Point3d endToPack, boolean ignoreUnknownCells, double maxRange)
    {
-      return rayHelper.castRay(root, origin, direction, endToPack, ignoreUnknownCells, maxRange, collidableRule, resolution, treeDepth);
+      return OcTreeRayTools.castRay(root, origin, direction, endToPack, ignoreUnknownCells, maxRange, collidableRule, resolution, treeDepth);
    }
 
    public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersection)
@@ -536,139 +515,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersectionToPack, double delta)
    {
-      return rayHelper.getRayIntersection(origin, direction, center, intersectionToPack, delta, resolution);
-   }
-
-   public boolean getNormals(Point3d point, List<Vector3d> normals)
-   {
-      return getNormals(point, normals, true);
-   }
-
-   /**
-      * Performs a step of the marching cubes surface reconstruction algorithm
-      * to retrieve the normal of the triangles that fall in the cube
-      * formed by the voxels located at the vertex of a given voxel.
-      *
-      * @param[in] voxel for which retrieve the normals
-      * @param[out] triangles normals
-      * @param[in] unknownStatus consider unknown cells as free (false) or occupied (default, true).
-      * @return True if the input voxel is known in the occupancy grid, and false if it is unknown.
-      */
-   public boolean getNormals(Point3d voxel, List<Vector3d> normals, boolean unknownStatus)
-   {
-      OcTreeKey initKey = coordinateToKey(voxel);
-      if (initKey == null)
-      {
-         System.err.println(getClass().getSimpleName() + " (in getNormals): Voxel out of bounds");
-         return false;
-      }
-
-      return getNormals(initKey, normals, unknownStatus);
-   }
-
-   public boolean getNormals(OcTreeKeyReadOnly key, List<Vector3d> normals)
-   {
-      return getNormals(key, normals, true);
-   }
-
-   public boolean getNormals(OcTreeKeyReadOnly key, List<Vector3d> normals, boolean unknownStatus)
-   {
-      normals.clear();
-      // OCTOMAP_WARNING("Normal for %f, %f, %f\n", point.x(), point.y(), point.z());
-
-      int[] vertexValues = new int[8];
-
-      OcTreeKey currentKey = new OcTreeKey();
-      NODE currentNode;
-
-      // There is 8 neighbouring sets
-      // The current cube can be at any of the 8 vertex
-      int[][] xIndex = new int[][] {{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0, -1, -1}, {0, 0, -1, -1}};
-      int[][] yIndex = new int[][] {{1, 0, 0, 1}, {0, -1, -1, 0}, {0, -1, -1, 0}, {1, 0, 0, 1}};
-      int[][] zIndex = new int[][] {{0, 1}, {-1, 0}};
-
-      // Iterate over the 8 neighboring sets
-      for (int m = 0; m < 2; ++m)
-      {
-         for (int l = 0; l < 4; ++l)
-         {
-            int k = 0;
-            // Iterate over the cubes
-            for (int j = 0; j < 2; ++j)
-            {
-               for (int i = 0; i < 4; ++i)
-               {
-                  currentKey.setKey(0, key.getKey(0) + xIndex[l][i]);
-                  currentKey.setKey(1, key.getKey(1) + yIndex[l][i]);
-                  currentKey.setKey(2, key.getKey(2) + zIndex[m][j]);
-                  currentNode = search(currentKey);
-
-                  if (currentNode != null)
-                  {
-                     vertexValues[k] = isNodeOccupied(currentNode) ? 1 : 0;
-
-                     // point3d coord = this->keyToCoord(current_key);
-                     // OCTOMAP_WARNING_STR("vertex " << k << " at " << coord << "; value " << vertex_values[k]);
-                  }
-                  else
-                  {
-                     // Occupancy of unknown cells
-                     vertexValues[k] = unknownStatus ? 1 : 0;
-                  }
-                  ++k;
-               }
-            }
-
-            int cubeIndex = 0;
-            if (vertexValues[0] != 0)
-               cubeIndex |= 1;
-            if (vertexValues[1] != 0)
-               cubeIndex |= 2;
-            if (vertexValues[2] != 0)
-               cubeIndex |= 4;
-            if (vertexValues[3] != 0)
-               cubeIndex |= 8;
-            if (vertexValues[4] != 0)
-               cubeIndex |= 16;
-            if (vertexValues[5] != 0)
-               cubeIndex |= 32;
-            if (vertexValues[6] != 0)
-               cubeIndex |= 64;
-            if (vertexValues[7] != 0)
-               cubeIndex |= 128;
-
-            // OCTOMAP_WARNING_STR("cubde_index: " << cube_index);
-
-            // All vertices are occupied or free resulting in no normal
-            if (edgeTable[cubeIndex] == 0)
-               continue; //return true;
-
-            // No interpolation is done yet, we use vertexList in <MCTables.h>.
-            for (int i = 0; triTable[cubeIndex][i] != -1; i += 3)
-            {
-               Point3d p1 = new Point3d(vertexList[triTable[cubeIndex][i]]);
-               Point3d p2 = new Point3d(vertexList[triTable[cubeIndex][i + 1]]);
-               Point3d p3 = new Point3d(vertexList[triTable[cubeIndex][i + 2]]);
-               Vector3d v1 = new Vector3d(); //p2 - p1;
-               Vector3d v2 = new Vector3d(); //p3 - p1;
-               Vector3d v3 = new Vector3d();
-               v1.sub(p2, p1);
-               v2.sub(p3, p1);
-               v3.cross(v1, v2);
-               v3.normalize();
-
-               // OCTOMAP_WARNING("Vertex p1 %f, %f, %f\n", p1.x(), p1.y(), p1.z());
-               // OCTOMAP_WARNING("Vertex p2 %f, %f, %f\n", p2.x(), p2.y(), p2.z());
-               // OCTOMAP_WARNING("Vertex p3 %f, %f, %f\n", p3.x(), p3.y(), p3.z());
-
-               // Right hand side cross product to retrieve the normal in the good
-               // direction (pointing to the free nodes).
-               normals.add(v3);
-            }
-         }
-      }
-
-      return true;
+      return OcTreeRayTools.getRayIntersection(origin, direction, center, intersectionToPack, delta, resolution);
    }
 
    public void disableBoundingBox()
@@ -739,7 +586,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       return changedKeys.size();
    }
 
-   public KeyBoolMap getChangedKeys()
+   public Map<OcTreeKeyReadOnly, Boolean> getChangedKeys()
    {
       return changedKeys;
    }
@@ -789,7 +636,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     */
    protected boolean integrateMissOnRay(Point3d origin, Point3d end)
    {
-      KeyRayReadOnly ray = rayHelper.computeRayKeys(origin, end, resolution, treeDepth);
+      KeyRayReadOnly ray = OcTreeRayTools.computeRayKeys(origin, end, resolution, treeDepth);
 
       if (ray == null)
          return false;

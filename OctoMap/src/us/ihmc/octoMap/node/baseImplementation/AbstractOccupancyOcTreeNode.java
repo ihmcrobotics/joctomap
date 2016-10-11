@@ -1,4 +1,4 @@
-package us.ihmc.octoMap.node;
+package us.ihmc.octoMap.node.baseImplementation;
 
 import java.util.Arrays;
 

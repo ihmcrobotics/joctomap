@@ -1,31 +1,27 @@
 package us.ihmc.octoMap.ocTree.baseImplementation;
 
-import static us.ihmc.octoMap.node.OcTreeNodeTools.*;
+import static us.ihmc.octoMap.tools.OcTreeNodeTools.*;
 
 import java.util.ArrayDeque;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Queue;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
-import javax.vecmath.Vector3d;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 
 import us.ihmc.octoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.octoMap.key.OcTreeKey;
 import us.ihmc.octoMap.key.OcTreeKeyReadOnly;
-import us.ihmc.octoMap.node.AbstractOcTreeNode;
 import us.ihmc.octoMap.node.NodeBuilder;
-import us.ihmc.octoMap.node.OcTreeNodeTools;
-import us.ihmc.octoMap.rules.interfaces.DeletionRule;
+import us.ihmc.octoMap.node.baseImplementation.AbstractOcTreeNode;
 import us.ihmc.octoMap.rules.interfaces.EarlyAbortRule;
 import us.ihmc.octoMap.rules.interfaces.UpdateRule;
 import us.ihmc.octoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.octoMap.tools.OcTreeKeyTools;
+import us.ihmc.octoMap.tools.OcTreeNodeTools;
 import us.ihmc.octoMap.tools.OcTreeSearchTools;
-import us.ihmc.octoMap.tools.OctoMapTools;
 
 /**
  * OcTree base class, to be used with with any kind of OcTreeDataNode.
@@ -46,6 +42,7 @@ import us.ihmc.octoMap.tools.OctoMapTools;
  */
 public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<NODE>
 {
+   private static final int MAX_TREE_DEPTH = 30;
    private static final boolean RECYCLE_NODES = false;
 
    protected NODE root; ///< root NODE, null for empty tree
@@ -56,15 +53,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    // constants of the tree
    /** Maximum tree depth (fixed to 16 usually) */
    protected final int treeDepth;
-   protected double resolution; ///< in meters
+   protected final double resolution; ///< in meters
 
    protected int treeSize; ///< number of nodes in tree
    /** flag to denote whether the octree extent changed (for lazy min/max eval) */
    protected boolean sizeChanged;
-
-   protected double maxCoordinate[] = new double[3]; ///< max in x, y, z
-   protected double minCoordinate[] = new double[3]; ///< min in x, y, z
-   protected boolean lazyUpdate = false;
 
    /// data structure for ray casting, array for multithreading
 
@@ -79,11 +72,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    {
       root = null;
       this.resolution = resolution;
+      if (treeDepth > MAX_TREE_DEPTH)
+         throw new RuntimeException("Cannot create a tree with a depth greater than: " + MAX_TREE_DEPTH);
       this.treeDepth = treeDepth;
       treeSize = 0;
       nodeBuilder = new NodeBuilder<>(getNodeClass());
-
-      initialize();
    }
 
    public AbstractOcTreeBase(AbstractOcTreeBase<NODE> other)
@@ -91,7 +84,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       resolution = other.resolution;
       treeDepth = other.treeDepth;
       nodeBuilder = new NodeBuilder<>(getNodeClass());
-      initialize();
       MutableInt mutableTreeSize = new MutableInt(0);
       if (other.root != null)
          root = other.root.cloneRecursive(nodeBuilder, mutableTreeSize);
@@ -140,29 +132,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return true;
    }
 
-   public final String getTreeType()
-   {
-      return getClass().getSimpleName();
-   }
-
-   /**
-    * Affect the methods using {@link #updateNodeInternal(OcTreeKeyReadOnly, UpdateRule, EarlyAbortRule)}.
-    * @param lazyUpdate whether update of inner nodes is omitted after the update (default: false).
-    *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
-    */
-   public void setLazyUpdate(boolean lazyUpdate)
-   {
-      this.lazyUpdate = lazyUpdate;
-   }
-
-   /// Change the resolution of the octree, scaling all voxels.
-   /// This will not preserve the (metric) scale!
-   public void setResolution(double newResolution)
-   {
-      resolution = newResolution;
-      sizeChanged = true;
-   }
-
    public double getResolution()
    {
       return resolution;
@@ -171,11 +140,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    public int getTreeDepth()
    {
       return treeDepth;
-   }
-
-   public double getNodeSize(int depth)
-   {
-      return OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
    }
 
    // -- Tree structure operations formerly contained in the nodes ---
@@ -323,7 +287,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
             return leaf;
       }
 
-      return updateNodeRecurs(root, createdRoot, key, updateRule, 0);
+      return updateNodeRecursively(root, createdRoot, key, updateRule, 0);
    }
 
    /**
@@ -385,21 +349,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return root;
    }
 
-   /** 
-    *  Search node at specified depth given a 3d point (depth=0: search full tree depth).
-    *  You need to check if the returned node is NULL, since it can be in unknown space.
-    *  @return pointer to node if found, NULL otherwise
-    */
-   public NODE search(double x, double y, double z)
-   {
-      return OcTreeSearchTools.search(root, x, y, z, resolution, treeDepth);
-   }
-
-   public NODE search(double x, double y, double z, int depth)
-   {
-      return OcTreeSearchTools.search(root, x, y, z, depth, resolution, treeDepth);
-   }
-
    /**
     *  Search node at specified depth given a 3d point (depth=0: search full tree depth)
     *  You need to check if the returned node is NULL, since it can be in unknown space.
@@ -430,59 +379,18 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return OcTreeSearchTools.search(root, key, depth, treeDepth);
    }
 
-   /**
-    *  Delete a node (if exists) given a 3d point. Will always
-    *  delete at the lowest level unless depth !=0, and expand pruned inner nodes as needed.
-    *  Pruned nodes at level "depth" will directly be deleted as a whole.
-    * @param deletionRule 
-    */
-   public boolean deleteNode(double x, double y, double z, DeletionRule<NODE> deletionRule)
-   {
-      return deleteNode(x, y, z, 0, deletionRule);
-   }
-
-   public boolean deleteNode(double x, double y, double z, int depth, DeletionRule<NODE> deletionRule)
-   {
-      OcTreeKey key = coordinateToKey(x, y, z);
-      if (key == null)
-      {
-         System.err.println(AbstractOcTreeBase.class.getSimpleName() + " Error in deleteNode: [" + x + " " + y + " " + z + "] is out of OcTree bounds!");
-         return false;
-      }
-      else
-      {
-         return deleteNode(key, depth, deletionRule);
-      }
-   }
-
-   /** 
-    *  Delete a node (if exists) given a 3d point. Will always
-    *  delete at the lowest level unless depth !=0, and expand pruned inner nodes as needed.
-    *  Pruned nodes at level "depth" will directly be deleted as a whole.
-    * @param deletionRule 
-    */
-   public boolean deleteNode(Point3d value, DeletionRule<NODE> deletionRule)
-   {
-      return deleteNode(value, 0, deletionRule);
-   }
-
-   public boolean deleteNode(Point3d coord, int depth, DeletionRule<NODE> deletionRule)
-   {
-      return deleteNode(coord.getX(), coord.getY(), coord.getZ(), depth, deletionRule);
-   }
-
    /** 
     *  Delete a node (if exists) given an addressing key. Will always
     *  delete at the lowest level unless depth !=0, and expand pruned inner nodes as needed.
     *  Pruned nodes at level "depth" will directly be deleted as a whole.
     * @param deletionRule 
     */
-   public boolean deleteNode(OcTreeKeyReadOnly key, DeletionRule<NODE> deletionRule)
+   public boolean deleteNode(OcTreeKeyReadOnly key)
    {
-      return deleteNode(key, 0, deletionRule);
+      return deleteNode(key, 0);
    }
 
-   public boolean deleteNode(OcTreeKeyReadOnly key, int depth, DeletionRule<NODE> deletionRule)
+   public boolean deleteNode(OcTreeKeyReadOnly key, int depth)
    {
       if (root == null)
          return true;
@@ -490,7 +398,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       if (depth == 0)
          depth = treeDepth;
 
-      return deleteNodeRecursively(root, 0, depth, key, deletionRule);
+      return deleteNodeRecursively(root, 0, depth, key);
    }
 
    /// Deletes the complete tree structure
@@ -543,127 +451,19 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return treeSize;
    }
 
-   public double volume()
-   {
-      Vector3d metricSize = getMetricSize();
-      return metricSize.getX() * metricSize.getY() * metricSize.getZ();
-   }
-
-   /// Size of OcTree (all known space) in meters for x, y and z dimension
-   public Vector3d getMetricSize()
-   {
-      Vector3d size = new Vector3d();
-      getMetricSize(size);
-      return size;
-   }
-
-   public void getMetricSize(Vector3d size)
-   {
-      Point3d min = getMetricMin();
-      Point3d max = getMetricMax();
-      size.sub(max, min);
-   }
-
-   /// minimum value of the bounding box of all known space in x, y, z
-   public Point3d getMetricMin()
-   {
-      Point3d min = new Point3d();
-      getMetricMin(min);
-      return min;
-   }
-
-   public void getMetricMin(Point3d min)
-   {
-      calculateMinMax();
-      min.set(minCoordinate[0], minCoordinate[1], minCoordinate[2]);
-   }
-
-   /// maximum value of the bounding box of all known space in x, y, z
-   public Point3d getMetricMax()
-   {
-      Point3d max = new Point3d();
-      getMetricMax(max);
-      return max;
-   }
-
-   public void getMetricMax(Point3d max)
-   {
-      calculateMinMax();
-      max.set(maxCoordinate[0], maxCoordinate[1], maxCoordinate[2]);
-   }
-
    /// Traverses the tree to calculate the total number of nodes
-   public int calculateNumberOfNodes()
+   public int getNumberOfNodes()
    {
-      int retval = 0; // root node
-      if (root != null)
-      {
-         retval = calculateNumberOfNodesRecursively(root, 1);
-      }
-      return retval;
+      return OcTreeNodeTools.computeNumberOfDescedants(root);
    }
 
    /// Traverses the tree to calculate the total number of leaf nodes
-   public int getNumLeafNodes()
+   public int getNumberOfLeafNodes()
    {
-      if (root == null)
-         return 0;
-
-      return OcTreeNodeTools.getNumberOfLeafNodesRecursive(root);
+      return OcTreeNodeTools.computeNumberOfLeafDescendants(root);
    }
 
    // -- access tree nodes  ------------------
-
-   /// return centers of leafs that do NOT exist (but could) in a given bounding box
-   public void getUnknownLeafCenters(List<Point3d> nodeCenters, Point3d pmin, Point3d pmax)
-   {
-      getUnknownLeafCenters(nodeCenters, pmin, pmax, 0);
-   }
-
-   public void getUnknownLeafCenters(List<Point3d> nodeCenters, Point3d pmin, Point3d pmax, int depth)
-   {
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
-      if (depth == 0)
-         depth = treeDepth;
-
-      double[] pminArray = new double[3];
-      double[] pmaxArray = new double[3];
-      pmin.get(pminArray);
-      pmax.get(pmaxArray);
-
-      double[] diff = new double[3];
-      int[] steps = new int[3];
-      double stepSize = resolution * Math.pow(2, treeDepth - depth);
-      for (int i = 0; i < 3; ++i)
-      {
-         diff[i] = pmaxArray[i] - pminArray[i];
-         steps[i] = (int) Math.floor(diff[i] / stepSize);
-         //      std::cout << "bbx " << i << " size: " << diff[i] << " " << steps[i] << " steps\n";
-      }
-
-      Point3d p = new Point3d(pmin);
-      NODE res;
-      for (int x = 0; x < steps[0]; ++x)
-      {
-         p.setX(p.getX() + stepSize);
-         for (int y = 0; y < steps[1]; ++y)
-         {
-            p.setY(p.getY() + stepSize);
-            for (int z = 0; z < steps[2]; ++z)
-            {
-               //          std::cout << "querying p=" << p << std::endl;
-               p.setZ(p.getZ() + stepSize);
-               res = search(p, depth);
-               if (res == null)
-               {
-                  nodeCenters.add(p);
-               }
-            }
-            p.setZ(pmin.getZ());
-         }
-         p.setY(pmin.getY());
-      }
-   }
 
    @Override
    public Iterator<NODE> iterator()
@@ -674,30 +474,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    //
    // Key / coordinate conversion functions
    //
-
-   /** Converts from a single coordinate into a discrete key */
-   public int coordinateToKey(double coordinate)
-   {
-      return OcTreeKeyConversionTools.coordinateToKey(coordinate, resolution, treeDepth);
-   }
-
-   /** Converts from a single coordinate into a discrete key at a given depth */
-   public int coordinateToKey(double coordinate, int depth)
-   {
-      return OcTreeKeyConversionTools.coordinateToKey(coordinate, depth, coordinate, treeDepth);
-   }
-
-   /** Converts from a 3D coordinate into a 3D addressing key */
-   public OcTreeKey coordinateToKey(Point3f coord)
-   {
-      return OcTreeKeyConversionTools.coordinateToKey(coord, resolution, treeDepth);
-   }
-
-   /** Converts from a 3D coordinate into a 3D addressing key */
-   public boolean coordinateToKey(Point3f coord, OcTreeKey keyToPack)
-   {
-      return OcTreeKeyConversionTools.coordinateToKey(coord, resolution, treeDepth, keyToPack);
-   }
 
    /** Converts from a 3D coordinate into a 3D addressing key */
    public OcTreeKey coordinateToKey(Point3d coord)
@@ -764,88 +540,6 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       OcTreeKeyConversionTools.keyToCoordinate(key, depth, coordinateToPack, resolution, treeDepth);
    }
 
-   /// initialize non-trivial members, helper for constructors
-   protected void initialize()
-   {
-      setResolution(resolution);
-      for (int i = 0; i < 3; i++)
-      {
-         maxCoordinate[i] = Double.NEGATIVE_INFINITY;
-         minCoordinate[i] = Double.POSITIVE_INFINITY;
-      }
-      sizeChanged = true;
-   }
-
-   /** Recalculates min and max in x, y, z. Does nothing when tree size didn't change. Reset {@link #sizeChanged} */
-   protected void calculateMinMax()
-   {
-      if (!sizeChanged)
-         return;
-
-      // empty tree
-      if (root == null)
-      {
-         minCoordinate[0] = minCoordinate[1] = minCoordinate[2] = 0.0;
-         maxCoordinate[0] = maxCoordinate[1] = maxCoordinate[2] = 0.0;
-         sizeChanged = false;
-         return;
-      }
-
-      for (int i = 0; i < 3; i++)
-      {
-         maxCoordinate[i] = Double.NEGATIVE_INFINITY;
-         minCoordinate[i] = Double.POSITIVE_INFINITY;
-      }
-
-      for (NODE node : this)
-      {
-         double size = node.getSize();
-         double halfSize = size / 2.0;
-         double x = node.getX() - halfSize;
-         double y = node.getY() - halfSize;
-         double z = node.getZ() - halfSize;
-         if (x < minCoordinate[0])
-            minCoordinate[0] = x;
-         if (y < minCoordinate[1])
-            minCoordinate[1] = y;
-         if (z < minCoordinate[2])
-            minCoordinate[2] = z;
-
-         x += size;
-         y += size;
-         z += size;
-         if (x > maxCoordinate[0])
-            maxCoordinate[0] = x;
-         if (y > maxCoordinate[1])
-            maxCoordinate[1] = y;
-         if (z > maxCoordinate[2])
-            maxCoordinate[2] = z;
-      }
-
-      sizeChanged = false;
-   }
-
-   protected int calculateNumberOfNodesRecursively(NODE node, int currentNumberOfNodes)
-   {
-      if (node == null)
-         throw new RuntimeException("The given node is null");
-
-      if (node.hasAtLeastOneChild())
-      {
-         for (int i = 0; i < 8; i++)
-         {
-            NODE childNode = node.getChild(i);
-            if (childNode != null)
-            {
-               currentNumberOfNodes++;
-               currentNumberOfNodes = calculateNumberOfNodesRecursively(childNode, currentNumberOfNodes);
-            }
-         }
-      }
-
-      return currentNumberOfNodes;
-   }
-
    /// recursive delete of node and all children (deallocates memory)
    private void deleteNodeRecursively(NODE node)
    {
@@ -868,7 +562,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /// recursive call of deleteNode()
-   private boolean deleteNodeRecursively(NODE node, int depth, int maxDepth, OcTreeKeyReadOnly key, DeletionRule<NODE> deletionRule)
+   private boolean deleteNodeRecursively(NODE node, int depth, int maxDepth, OcTreeKeyReadOnly key)
    {
       if (depth >= maxDepth) // on last level: delete child when going up
          return true;
@@ -894,21 +588,19 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       }
 
       // follow down further, fix inner nodes on way back up
-      boolean deleteChild = deleteNodeRecursively(node.getChild(childIndex), depth + 1, maxDepth, key, deletionRule);
+      boolean deleteChild = deleteNodeRecursively(node.getChild(childIndex), depth + 1, maxDepth, key);
       if (deleteChild)
       {
          deleteNodeChild(node, childIndex);
 
          if (!node.hasAtLeastOneChild())
             return true;
-         else if (deletionRule != null)
-            deletionRule.updateInnerNodeAfterChildDeletion(node, childIndex);
       }
       // node did not lose a child, or still has other children
       return false;
    }
 
-   private NODE updateNodeRecurs(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, UpdateRule<NODE> updateRule, int depth)
+   private NODE updateNodeRecursively(NODE node, boolean nodeJustCreated, OcTreeKeyReadOnly key, UpdateRule<NODE> updateRule, int depth)
    {
       boolean createdNode = false;
 
@@ -940,13 +632,13 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
          NODE nodeChild = node.getChild(childIndex);
 
-         if (lazyUpdate)
+         if (updateRule.performLazyUpdate())
          {
-            return updateNodeRecurs(nodeChild, createdNode, key, updateRule, depth + 1);
+            return updateNodeRecursively(nodeChild, createdNode, key, updateRule, depth + 1);
          }
          else
          {
-            NODE leafToReturn = updateNodeRecurs(nodeChild, createdNode, key, updateRule, depth + 1);
+            NODE leafToReturn = updateNodeRecursively(nodeChild, createdNode, key, updateRule, depth + 1);
 
             // That's an inner node, apply the update rule
             updateRule.updateInnerNode(node);
