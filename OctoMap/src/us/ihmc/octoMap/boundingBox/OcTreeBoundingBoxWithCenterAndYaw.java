@@ -17,25 +17,19 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
    private final OcTreeSimpleBoundingBox simpleBoundingBox = new OcTreeSimpleBoundingBox();
    private double yaw = 0.0, sinYaw = 0.0, cosYaw = 1.0;
    private OcTreeKey offsetKey = new OcTreeKey();
-
-   private double resolution;
-   private int treeDepth;
    private int centerOffsetKey;
-
-   public OcTreeBoundingBoxWithCenterAndYaw(double resolution, int treeDepth)
-   {
-      update(resolution, treeDepth);
-   }
-
-   public OcTreeBoundingBoxWithCenterAndYaw(OcTreeSimpleBoundingBox simpleBoundingBox, double resolution, int treeDepth)
-   {
-      setLocalBoundingBox(simpleBoundingBox);
-      update(resolution, treeDepth);
-   }
+   
+   private boolean offsetMetricDirtyBit = true;
+   private boolean offsetKeyDirtyBit = true;
 
    public OcTreeBoundingBoxWithCenterAndYaw(OcTreeBoundingBoxWithCenterAndYaw other)
    {
       set(other);
+   }
+   
+   public OcTreeBoundingBoxWithCenterAndYaw(double resolution, int treeDepth)
+   {
+      update(resolution, treeDepth);
    }
 
    public OcTreeBoundingBoxWithCenterAndYaw(Point3d minCoordinate, Point3d maxCoordinate, double resolution, int treeDepth)
@@ -43,8 +37,20 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       setLocalMinMaxCoordinates(minCoordinate, maxCoordinate);
       update(resolution, treeDepth);
    }
+   
+   public OcTreeBoundingBoxWithCenterAndYaw(OcTreeKeyReadOnly minKey, OcTreeKeyReadOnly maxKey, double resolution, int treeDepth)
+   {
+	  setLocalMinMaxKeys(minKey, maxKey);
+      update(resolution, treeDepth);
+   }
 
-   public void setLocalBoundingBox(OcTreeSimpleBoundingBox simpleBoundingBox)
+   public OcTreeBoundingBoxWithCenterAndYaw(OcTreeSimpleBoundingBox simpleBoundingBox, double resolution, int treeDepth)
+   {
+      setLocalBoundingBox(simpleBoundingBox, resolution, treeDepth);
+      update(resolution, treeDepth);
+   }
+
+   public void setLocalBoundingBox(OcTreeSimpleBoundingBox simpleBoundingBox, double resolution, int treeDepth) //TODO if it's ok
    {
       simpleBoundingBox.update(resolution, treeDepth);
       this.simpleBoundingBox.set(simpleBoundingBox);
@@ -58,8 +64,8 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       yaw = other.yaw;
       sinYaw = other.sinYaw;
       cosYaw = other.cosYaw;
-      resolution = other.resolution;
-      treeDepth = other.treeDepth;
+      offsetMetricDirtyBit = other.offsetMetricDirtyBit;
+      offsetKeyDirtyBit = other.offsetKeyDirtyBit;
    }
 
    public void setLocalMinMaxCoordinates(Point3d minCoordinate, Point3d maxCoordinate)
@@ -77,14 +83,20 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       simpleBoundingBox.setMinMaxKeys(minKey, maxKey);
    }
 
-   public void setOffsetCoordinate(Point3d offset)
+   public void setOffset(Point3d offset, double resolution, int treeDepth)
    {
       offsetMetric.set(offset);
+      offsetMetricDirtyBit = false;
+      offsetKeyDirtyBit = true;
+      update(resolution, treeDepth);
    }
    
-   public void setOffsetKey(OcTreeKey offset)
+   public void setOffset(OcTreeKey offset, double resolution, int treeDepth)
    {
       offsetKey.set(offset);
+      offsetKeyDirtyBit = false;
+      offsetMetricDirtyBit = true;
+      update(resolution, treeDepth);
    }
 
    public void setHalfSize(Vector3d halfSize)
@@ -118,10 +130,22 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
 
    public void update(double resolution, int treeDepth)
    {
-      this.resolution = resolution;
-      this.treeDepth = treeDepth;
+      if (offsetKeyDirtyBit)
+      {
+         boolean success = OcTreeKeyConversionTools.coordinateToKey(offsetMetric, resolution, treeDepth, offsetKey);
+         if (!success)
+            System.err.println(getClass().getSimpleName() + " (in update): ERROR while generating offset key.");
+      } 
+      else if (offsetMetricDirtyBit)
+      {
+         OcTreeKeyConversionTools.keyToCoordinate(offsetKey, offsetMetric, resolution, treeDepth);
+      }
+      
+      offsetMetricDirtyBit = false;
+      offsetKeyDirtyBit = false;
+      
       this.centerOffsetKey = OcTreeKeyTools.computeCenterOffsetKey(treeDepth);
-      this.offsetKey = OcTreeKeyConversionTools.coordinateToKey(offsetMetric, resolution, treeDepth);
+      
       simpleBoundingBox.update(resolution, treeDepth);
    }
 

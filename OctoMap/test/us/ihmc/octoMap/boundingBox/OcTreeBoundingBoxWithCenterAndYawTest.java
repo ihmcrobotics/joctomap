@@ -26,7 +26,7 @@ public class OcTreeBoundingBoxWithCenterAndYawTest
 		Point3d pointA = new Point3d(-200.0, 200.0, 50.0);
 		OcTreeBoundingBoxWithCenterAndYaw boundingBox = new OcTreeBoundingBoxWithCenterAndYaw(minCoordinate, maxCoordinate, resolution, treeDepth);
 		boundingBox.setYaw(yaw);
-		boundingBox.setOffsetCoordinate(offset);
+		boundingBox.setOffset(offset, resolution, treeDepth);
 		
 		assertTrue(boundingBox.isInBoundingBox(pointA));
 	}
@@ -64,8 +64,7 @@ public class OcTreeBoundingBoxWithCenterAndYawTest
 		
 		OcTreeBoundingBoxWithCenterAndYaw boundingBox = new OcTreeBoundingBoxWithCenterAndYaw(simpleBoundingBox, resolution, treeDepth);
 		boundingBox.setYaw(Math.PI/4);
-		boundingBox.setOffsetCoordinate(offset);
-		boundingBox.update(resolution, treeDepth);
+		boundingBox.setOffset(offset, resolution, treeDepth);
 
 		assertTrue(boundingBox.isInBoundingBox(key));
 	}
