@@ -22,6 +22,10 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
    private boolean offsetMetricDirtyBit = true;
    private boolean offsetKeyDirtyBit = true;
 
+   public OcTreeBoundingBoxWithCenterAndYaw()
+   {
+   }
+
    public OcTreeBoundingBoxWithCenterAndYaw(OcTreeBoundingBoxWithCenterAndYaw other)
    {
       set(other);
@@ -45,9 +49,14 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       update(resolution, treeDepth);
    }
 
-   public void setLocalBoundingBox(OcTreeSimpleBoundingBox simpleBoundingBox, double resolution, int treeDepth) //TODO if it's ok
+   public void setLocalBoundingBox(OcTreeSimpleBoundingBox simpleBoundingBox, double resolution, int treeDepth)
    {
+      setLocalBoundingBox(simpleBoundingBox);
       simpleBoundingBox.update(resolution, treeDepth);
+   }
+
+   public void setLocalBoundingBox(OcTreeSimpleBoundingBox simpleBoundingBox)
+   {
       this.simpleBoundingBox.set(simpleBoundingBox);
    }
 
