@@ -70,7 +70,7 @@ public abstract class OcTreeSearchTools
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, OcTreeKeyReadOnly key, int depth, int treeDepth)
    {
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      JOctoMapTools.checkIfDepthValid(depth, treeDepth);
       if (rootNode == null)
          return null;
 

@@ -33,7 +33,7 @@ import us.ihmc.jOctoMap.rules.interfaces.RayActionRule;
 import us.ihmc.jOctoMap.tools.NormalEstimationTools;
 import us.ihmc.jOctoMap.tools.OcTreeRayTools;
 import us.ihmc.jOctoMap.tools.OccupancyTools;
-import us.ihmc.jOctoMap.tools.OctoMapTools;
+import us.ihmc.jOctoMap.tools.JOctoMapTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
@@ -86,7 +86,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       if (REPORT_TIME)
       {
-         System.out.println(name + ": ScanCollection integration took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (number of points: " + scanCollection.getNumberOfPoints() + ").");
+         System.out.println(name + ": ScanCollection integration took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (number of points: " + scanCollection.getNumberOfPoints() + ").");
       }
    }
 
@@ -108,7 +108,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       if (REPORT_TIME)
       {
-         System.out.println(name + ": Normal computation took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+         System.out.println(name + ": Normal computation took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
       }
    }
 

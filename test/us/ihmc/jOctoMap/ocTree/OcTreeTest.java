@@ -14,8 +14,8 @@ import us.ihmc.jOctoMap.node.OccupancyOcTreeNode;
 import us.ihmc.jOctoMap.ocTree.OccupancyOcTree;
 import us.ihmc.jOctoMap.pointCloud.PointCloud;
 import us.ihmc.jOctoMap.tools.OcTreeRayTools;
-import us.ihmc.jOctoMap.tools.OctoMapRandomTools;
-import us.ihmc.jOctoMap.tools.OctoMapTools;
+import us.ihmc.jOctoMap.tools.JOctoMapRandomTools;
+import us.ihmc.jOctoMap.tools.JOctoMapTools;
 
 public class OcTreeTest
 {
@@ -53,7 +53,7 @@ public class OcTreeTest
          long start = System.nanoTime();
          octree.insertPointCloud(pointcloud, origin);
          long endTime = System.nanoTime();
-         System.out.println(OctoMapTools.nanoSecondsToSeconds(endTime - start));
+         System.out.println(JOctoMapTools.nanoSecondsToSeconds(endTime - start));
       }
    }
 
@@ -65,14 +65,14 @@ public class OcTreeTest
 
       for (int i = 0; i < 10000000; i++)
       {
-         Point3d origin = OctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
-         Point3d end = OctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
+         Point3d origin = JOctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
+         Point3d end = JOctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
 
          OccupancyOcTree octree = new OccupancyOcTree(resolution);
          long start = System.nanoTime();
          OcTreeRayTools.computeRayKeys(origin, end, resolution, octree.getTreeDepth());
          long endTime = System.nanoTime();
-         System.out.println(OctoMapTools.nanoSecondsToSeconds(endTime - start));
+         System.out.println(JOctoMapTools.nanoSecondsToSeconds(endTime - start));
          
       }
    }
@@ -91,7 +91,7 @@ public class OcTreeTest
       {
          double resolution = 0.15 * random.nextDouble();
          OccupancyOcTree ocTree = new OccupancyOcTree(resolution);
-         Point3d coordinate = OctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
+         Point3d coordinate = JOctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
 
          OccupancyOcTreeNode node = null;
 

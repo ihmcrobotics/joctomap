@@ -33,7 +33,7 @@ public abstract class OcTreeKeyConversionTools
     */
    public static int coordinateToKey(double coordinate, int depth, double resolution, int treeDepth)
    {
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      JOctoMapTools.checkIfDepthValid(depth, treeDepth);
 
       int centerOffsetKey = computeCenterOffsetKey(treeDepth);
       // scale to resolution and shift center
@@ -157,7 +157,7 @@ public abstract class OcTreeKeyConversionTools
    /** converts from a discrete key at a given depth into a coordinate corresponding to the key's center */
    public static double keyToCoordinate(int key, int depth, double resolution, int treeDepth)
    {
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      JOctoMapTools.checkIfDepthValid(depth, treeDepth);
       checkKeyIsValid(key, treeDepth, treeDepth);
 
       // root is centered on 0 = 0.0
@@ -216,7 +216,7 @@ public abstract class OcTreeKeyConversionTools
 
    public static double computeNodeSize(int depth, double resolution, int treeDepth)
    {
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      JOctoMapTools.checkIfDepthValid(depth, treeDepth);
       return (1 << treeDepth - depth) * resolution;
    }
 }

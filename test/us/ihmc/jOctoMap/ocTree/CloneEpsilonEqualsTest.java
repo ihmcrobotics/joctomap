@@ -13,8 +13,8 @@ import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.ocTree.NormalOcTree;
 import us.ihmc.jOctoMap.pointCloud.ScanCollection;
 import us.ihmc.jOctoMap.testTools.TestOcTree;
-import us.ihmc.jOctoMap.tools.OctoMapRandomTools;
-import us.ihmc.jOctoMap.tools.OctoMapTools;
+import us.ihmc.jOctoMap.tools.JOctoMapRandomTools;
+import us.ihmc.jOctoMap.tools.JOctoMapTools;
 
 public class CloneEpsilonEqualsTest
 {
@@ -49,17 +49,17 @@ public class CloneEpsilonEqualsTest
       NormalOcTree octree2 = new NormalOcTree(resolution);
 
       // Create 2 identical octrees
-      Point3d sensorOrigin = OctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
+      Point3d sensorOrigin = JOctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
       for (int i = 0; i < 5; i++)
       {
-         ScanCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+         ScanCollection sweepCollection = JOctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
          octree1.update(sweepCollection);
          octree2.update(sweepCollection);
       }
       assertTrue(octree1.epsilonEquals(octree2, 1.0e-7));
 //
       // Make octree2 different from octree1
-      ScanCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+      ScanCollection sweepCollection = JOctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
       octree2.update(sweepCollection);
       assertFalse(octree1.epsilonEquals(octree2, 1.0e-7));
    }
@@ -76,7 +76,7 @@ public class CloneEpsilonEqualsTest
       StopWatch stopWatch = new StopWatch();
       stopWatch.start();
       TestOcTree octree2 = new TestOcTree(octree1);
-      System.out.println("Cloning took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()));
+      System.out.println("Cloning took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()));
       assertEquals(octree1.getNumberOfLeafNodes(), octree2.getNumberOfLeafNodes());
       assertTrue(octree1.epsilonEquals(octree2, 1.0e-7));
    }
@@ -88,17 +88,17 @@ public class CloneEpsilonEqualsTest
       double resolution = 0.02;
       NormalOcTree octree1 = new NormalOcTree(resolution);
 
-      Point3d sensorOrigin = OctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
+      Point3d sensorOrigin = JOctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
       for (int i = 0; i < 5; i++)
       {
-         ScanCollection sweepCollection = OctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+         ScanCollection sweepCollection = JOctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
          octree1.update(sweepCollection);
       }
 
       StopWatch stopWatch = new StopWatch();
       stopWatch.start();
       NormalOcTree octree2 = new NormalOcTree(octree1);
-      System.out.println("Cloning took: " + OctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + ", tree size: " + octree1.size());
+      System.out.println("Cloning took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + ", tree size: " + octree1.size());
       assertEquals(octree1.getNumberOfLeafNodes(), octree2.getNumberOfLeafNodes());
       assertTrue(octree1.epsilonEquals(octree2, 1.0e-7));
    }

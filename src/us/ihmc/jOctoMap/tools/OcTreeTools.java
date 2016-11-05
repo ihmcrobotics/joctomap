@@ -106,7 +106,7 @@ public abstract class OcTreeTools
    public static <NODE extends AbstractOcTreeNode<NODE>> List<Point3d> getUnknownLeafCenters(NODE root, Point3d pmin, Point3d pmax, int depth,
          double resolution, int treeDepth)
    {
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      JOctoMapTools.checkIfDepthValid(depth, treeDepth);
       if (depth == 0)
          depth = treeDepth;
 

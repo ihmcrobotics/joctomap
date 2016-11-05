@@ -15,7 +15,7 @@ import org.junit.Test;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.jOctoMap.tools.OcTreeKeyTools;
-import us.ihmc.jOctoMap.tools.OctoMapRandomTools;
+import us.ihmc.jOctoMap.tools.JOctoMapRandomTools;
 
 public class OcTreeKeyConversionToolsTest
 {
@@ -193,7 +193,7 @@ public class OcTreeKeyConversionToolsTest
 
       for (int i = 0; i < 100000; i++)
       {
-         Point3d randomPoint = OctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
+         Point3d randomPoint = JOctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
          OcTreeKey key = OcTreeKeyConversionTools.coordinateToKey(randomPoint, resolution, treeDepth);
          Point3d nodeCoordinate = keyToCoordinate(key, resolution, treeDepth);
          boolean xInside = Math.abs(randomPoint.getX() - nodeCoordinate.getX()) <= 0.5 * resolution;

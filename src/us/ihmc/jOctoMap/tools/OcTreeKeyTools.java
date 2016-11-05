@@ -1,6 +1,6 @@
 package us.ihmc.jOctoMap.tools;
 
-import static us.ihmc.jOctoMap.tools.OctoMapTools.*;
+import static us.ihmc.jOctoMap.tools.JOctoMapTools.*;
 
 import java.util.Random;
 
@@ -107,7 +107,7 @@ public abstract class OcTreeKeyTools
     */
    public static int computeChildIndex(int k0, int k1, int k2, int depth, int treeDepth)
    {
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      JOctoMapTools.checkIfDepthValid(depth, treeDepth);
 
       int childIndex = 0;
       int temp = computeMinimumKeyAtDepth(depth, treeDepth) % computeNumberOfNodesAtDepth(treeDepth);
@@ -162,7 +162,7 @@ public abstract class OcTreeKeyTools
       if (depth == treeDepth)
          return new OcTreeKey(key);
 
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      JOctoMapTools.checkIfDepthValid(depth, treeDepth);
 
       int k0 = adjustKeyAtDepth(key.getKey(0), depth, treeDepth);
       int k1 = adjustKeyAtDepth(key.getKey(1), depth, treeDepth);
@@ -254,7 +254,7 @@ public abstract class OcTreeKeyTools
     */
    public static int computeKeyIntervalAtDepth(int depth, int treeDepth)
    {
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      JOctoMapTools.checkIfDepthValid(depth, treeDepth);
       return 1 << treeDepth - depth;
    }
 
@@ -332,7 +332,7 @@ public abstract class OcTreeKeyTools
    public static void computeNeighborKeyOffsets(int depth, double resolution, int treeDepth, double searchRadius, OcTreeKeyList neighborKeyOffsetsToPack)
    {
       neighborKeyOffsetsToPack.clear();
-      OctoMapTools.checkIfDepthValid(depth, treeDepth);
+      JOctoMapTools.checkIfDepthValid(depth, treeDepth);
 
       if (depth == 0)
          depth = treeDepth;

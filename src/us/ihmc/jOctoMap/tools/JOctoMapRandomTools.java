@@ -12,7 +12,7 @@ import us.ihmc.jOctoMap.pointCloud.PointCloud;
 import us.ihmc.jOctoMap.pointCloud.ScanCollection;
 import us.ihmc.robotics.geometry.GeometryTools;
 
-public abstract class OctoMapRandomTools
+public abstract class JOctoMapRandomTools
 {
    public static double generateRandomDouble(Random random, double maxAbsolute)
    {
@@ -64,7 +64,7 @@ public abstract class OctoMapRandomTools
    {
       PointCloud pointCloud = new PointCloud();
       for (int i = 0; i < pointCloudSize; i++)
-         pointCloud.add(OctoMapRandomTools.generateRandomPoint3f(random, xRange, yRange, zRange));
+         pointCloud.add(JOctoMapRandomTools.generateRandomPoint3f(random, xRange, yRange, zRange));
       return pointCloud;
    }
 

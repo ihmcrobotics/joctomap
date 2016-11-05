@@ -1,6 +1,6 @@
 package us.ihmc.jOctoMap.occupancy;
 
-import static us.ihmc.jOctoMap.tools.OctoMapTools.*;
+import static us.ihmc.jOctoMap.tools.JOctoMapTools.*;
 
 public class OccupancyParameters implements OccupancyParametersReadOnly
 {

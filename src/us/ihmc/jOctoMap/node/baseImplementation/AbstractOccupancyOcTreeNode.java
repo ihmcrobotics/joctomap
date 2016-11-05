@@ -2,7 +2,7 @@ package us.ihmc.jOctoMap.node.baseImplementation;
 
 import java.util.Arrays;
 
-import us.ihmc.jOctoMap.tools.OctoMapTools;
+import us.ihmc.jOctoMap.tools.JOctoMapTools;
 
 public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcTreeNode<N>> extends AbstractOcTreeNode<N>
 {
@@ -28,7 +28,7 @@ public abstract class AbstractOccupancyOcTreeNode<N extends AbstractOccupancyOcT
     */
    public double getOccupancy()
    {
-      return OctoMapTools.probability(logOdds);
+      return JOctoMapTools.probability(logOdds);
    }
 
    /**
