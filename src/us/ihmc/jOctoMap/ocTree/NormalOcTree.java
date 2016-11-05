@@ -1,6 +1,6 @@
 package us.ihmc.jOctoMap.ocTree;
 
-import static us.ihmc.robotics.geometry.GeometryTools.*;
+import static us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,10 +30,10 @@ import us.ihmc.jOctoMap.pointCloud.ScanCollection;
 import us.ihmc.jOctoMap.rules.NormalOcTreeHitUpdateRule;
 import us.ihmc.jOctoMap.rules.NormalOcTreeMissUpdateRule;
 import us.ihmc.jOctoMap.rules.interfaces.RayActionRule;
+import us.ihmc.jOctoMap.tools.JOctoMapTools;
 import us.ihmc.jOctoMap.tools.NormalEstimationTools;
 import us.ihmc.jOctoMap.tools.OcTreeRayTools;
 import us.ihmc.jOctoMap.tools.OccupancyTools;
-import us.ihmc.jOctoMap.tools.JOctoMapTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {

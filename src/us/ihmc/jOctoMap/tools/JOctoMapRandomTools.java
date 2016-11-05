@@ -10,7 +10,6 @@ import javax.vecmath.Vector3d;
 
 import us.ihmc.jOctoMap.pointCloud.PointCloud;
 import us.ihmc.jOctoMap.pointCloud.ScanCollection;
-import us.ihmc.robotics.geometry.GeometryTools;
 
 public abstract class JOctoMapRandomTools
 {
@@ -84,7 +83,7 @@ public abstract class JOctoMapRandomTools
       normal.normalize();
    
       Matrix3d orientation = new Matrix3d();
-      orientation.set(GeometryTools.getRotationBasedOnNormal(normal));
+      orientation.set(JOctoMapGeometryTools.getRotationBasedOnNormal(normal));
    
       PointCloud pointCloud = new PointCloud();
    

@@ -3,6 +3,7 @@ package us.ihmc.jOctoMap.ocTree.baseImplementation;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
@@ -23,7 +24,6 @@ import us.ihmc.jOctoMap.rules.UpdateOccupancyRule;
 import us.ihmc.jOctoMap.rules.interfaces.CollidableRule;
 import us.ihmc.jOctoMap.tools.OcTreeRayTools;
 import us.ihmc.jOctoMap.tools.OccupancyTools;
-import us.ihmc.robotics.geometry.RigidBodyTransform;
 
 public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTreeNode<NODE>> extends AbstractOcTreeBase<NODE>
 {
@@ -216,7 +216,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    * @param sensorOrigin origin of sensor relative to frame origin
    * @param frameOrigin origin of reference frame, determines transform to be applied to cloud and sensor origin
    */
-   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, RigidBodyTransform frameOrigin)
+   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, Matrix4d frameOrigin)
    {
       // performs transformation to data and sensor origin first
       PointCloud transformedScan = new PointCloud(scan);

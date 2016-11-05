@@ -5,10 +5,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
+import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
-
-import us.ihmc.robotics.geometry.RigidBodyTransform;
 
 public class PointCloud implements Iterable<Point3f>
 {
@@ -102,7 +101,7 @@ public class PointCloud implements Iterable<Point3f>
    }
 
    /// Apply transform to each point
-   public void transform(RigidBodyTransform transform)
+   public void transform(Matrix4d transform)
    {
       parallelStream().forEach(point -> transform.transform(point));
    }
