@@ -1,7 +1,6 @@
 GRADLE_FILTERS=1.0-projectRelativePath-matches-false-false-OctoMap,1.0-projectRelativePath-matches-false-false-build,1.0-projectRelativePath-matches-false-false-.gradle
 connection.arguments=
 connection.gradle.distribution=GRADLE_DISTRIBUTION(WRAPPER)
-connection.gradle.user.home=null
 connection.java.home=null
 connection.jvm.arguments=
 connection.project.dir=..\\_Workspace1
