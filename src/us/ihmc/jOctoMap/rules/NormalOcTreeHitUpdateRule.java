@@ -13,7 +13,6 @@ import us.ihmc.jOctoMap.tools.OccupancyTools;
 
 public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
 {
-   private double alphaHitLocationUpdate;
    private final Point3d hitLocation = new Point3d();
    private final Point3d sensorLocation = new Point3d();
    private final Vector3d initialGuessNormal = new Vector3d();
@@ -30,11 +29,6 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
    public void setUpdateLogOdds(float updateLogOdds)
    {
       this.updateLogOdds = updateLogOdds;
-   }
-
-   public void setAlphaHitLocationUpdate(double alphaHitLocationUpdate)
-   {
-      this.alphaHitLocationUpdate = alphaHitLocationUpdate;
    }
 
    public void setHitLocation(Tuple3d sensorLocation, Tuple3d hitLocation)
@@ -54,7 +48,7 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
    {
       OccupancyTools.updateNodeLogOdds(parameters, leafToUpdate, updateLogOdds);
 
-      leafToUpdate.updateHitLocation(hitLocation, alphaHitLocationUpdate);
+      leafToUpdate.updateHitLocation(hitLocation);
 
       if (!leafToUpdate.isNormalSet())
       {

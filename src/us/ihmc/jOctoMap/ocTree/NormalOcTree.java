@@ -40,8 +40,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private static final boolean REPORT_TIME = true;
    private final StopWatch stopWatch = REPORT_TIME ? new StopWatch() : null;
 
-   public static final boolean UPDATE_NODE_HIT_WITH_AVERAGE = true;
-
    private final String name = getClass().getSimpleName();
 
    // occupancy parameters of tree, stored in logodds:
@@ -55,8 +53,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private final NormalOcTreeHitUpdateRule hitUpdateRule = new NormalOcTreeHitUpdateRule(occupancyParameters);
    private final NormalOcTreeMissUpdateRule missUpdateRule = new NormalOcTreeMissUpdateRule(occupancyParameters);
-
-   private double alphaCenterUpdate = 0.1;
 
    public NormalOcTree(double resolution)
    {
@@ -128,7 +124,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
       hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
-      hitUpdateRule.setAlphaHitLocationUpdate(alphaCenterUpdate);
       occupiedCells.clear();
 
       Vector3d direction = new Vector3d();

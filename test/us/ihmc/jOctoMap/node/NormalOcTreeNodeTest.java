@@ -29,7 +29,7 @@ public class NormalOcTreeNodeTest
       for (int i = 0; i < 1000; i++)
       {
          randomPoint.add(JOctoMapRandomTools.generateRandomPoint3d(random, 1.0, 1.0, 1.0));
-         node.updateHitLocation(randomPoint, 0);
+         node.updateHitLocation(randomPoint);
          xMean.increment(randomPoint.getX());
          yMean.increment(randomPoint.getY());
          zMean.increment(randomPoint.getZ());

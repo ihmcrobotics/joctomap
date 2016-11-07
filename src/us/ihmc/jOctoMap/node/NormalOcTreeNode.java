@@ -7,7 +7,6 @@ import javax.vecmath.Vector3d;
 import org.apache.commons.math3.util.Precision;
 
 import us.ihmc.jOctoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
-import us.ihmc.jOctoMap.ocTree.NormalOcTree;
 
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
 {
@@ -38,9 +37,7 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       hitLocationX = other.hitLocationX;
       hitLocationY = other.hitLocationY;
       hitLocationZ = other.hitLocationZ;
-
-      if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
-         numberOfHits = other.numberOfHits;
+      numberOfHits = other.numberOfHits;
    }
 
    @Override
@@ -71,9 +68,7 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       hitLocationX = Float.NaN;
       hitLocationY = Float.NaN;
       hitLocationZ = Float.NaN;
-
-      if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
-         numberOfHits = 0;
+      numberOfHits = 0;
    }
 
    public void updateNormalChildren()
@@ -164,54 +159,36 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       hitLocationToPack.set(hitLocationX, hitLocationY, hitLocationZ);
    }
 
-   public void updateHitLocation(Point3d centerUpdate, double alphaUpdate)
+   public void updateHitLocation(Point3d centerUpdate)
    {
       float xUpdate = (float) centerUpdate.getX();
       float yUpdate = (float) centerUpdate.getY();
       float zUpdate = (float) centerUpdate.getZ();
-      updateHitLocation(xUpdate, yUpdate, zUpdate, (float) alphaUpdate);
+      updateHitLocation(xUpdate, yUpdate, zUpdate);
    }
 
-   public void updateHitLocation(Point3f centerUpdate, double alphaUpdate)
+   public void updateHitLocation(Point3f centerUpdate)
    {
       float xUpdate = centerUpdate.getX();
       float yUpdate = centerUpdate.getY();
       float zUpdate = centerUpdate.getZ();
-      updateHitLocation(xUpdate, yUpdate, zUpdate, (float) alphaUpdate);
+      updateHitLocation(xUpdate, yUpdate, zUpdate);
    }
 
-   public void updateHitLocation(float xUpdate, float yUpdate, float zUpdate, float alphaUpdate)
+   public void updateHitLocation(float xUpdate, float yUpdate, float zUpdate)
    {
-      if (NormalOcTree.UPDATE_NODE_HIT_WITH_AVERAGE)
+      if (numberOfHits == 0)
       {
-         if (numberOfHits == 0)
-         {
-            hitLocationX = 0.0f;
-            hitLocationY = 0.0f;
-            hitLocationZ = 0.0f;
-         }
+         hitLocationX = 0.0f;
+         hitLocationY = 0.0f;
+         hitLocationZ = 0.0f;
+      }
 
-         numberOfHits++;
-         float nInv = 1.0f / numberOfHits;
-         hitLocationX += (xUpdate - hitLocationX) * nInv;
-         hitLocationY += (yUpdate - hitLocationY) * nInv;
-         hitLocationZ += (zUpdate - hitLocationZ) * nInv;
-      }
-      else
-      {
-         if (!isHitLocationSet())
-         {
-            hitLocationX = xUpdate;
-            hitLocationY = yUpdate;
-            hitLocationZ = zUpdate;
-         }
-         else
-         {
-            hitLocationX = alphaUpdate * xUpdate + (1.0f - alphaUpdate) * hitLocationX;
-            hitLocationY = alphaUpdate * yUpdate + (1.0f - alphaUpdate) * hitLocationY;
-            hitLocationZ = alphaUpdate * zUpdate + (1.0f - alphaUpdate) * hitLocationZ;
-         }
-      }
+      numberOfHits++;
+      float nInv = 1.0f / numberOfHits;
+      hitLocationX += (xUpdate - hitLocationX) * nInv;
+      hitLocationY += (yUpdate - hitLocationY) * nInv;
+      hitLocationZ += (zUpdate - hitLocationZ) * nInv;
    }
 
    public void updateHitLocationChildren()
