@@ -1,22 +1,118 @@
 buildscript {
-    repositories {
-        jcenter()
-        mavenCentral()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
-    dependencies {
-        classpath group: 'gradle.plugin.us.ihmc.gradle', name: 'ihmc-build', version: '0.0.16'
-    }
+   repositories {
+      mavenCentral();
+      jcenter();
+
+      maven {
+         url "http://artifactory.ihmc.us/artifactory/releases/"
+      }
+      maven {
+         url "http://artifactory.ihmc.us/artifactory/thirdparty/"
+      }
+      maven {
+         url "https://plugins.gradle.org/m2/"
+      }
+   }
+
+   dependencies {
+      classpath "us.ihmc.gradle:licenseChecker:1.1.1"
+      classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.4"
+      classpath group: 'gradle.plugin.us.ihmc.gradle', name: 'ihmc-build', version: '0.0.16'
+   }
 }
 
+apply plugin: "maven-publish"
+apply plugin: "com.jfrog.artifactory"
 apply plugin: "us.ihmc.gradle.ihmc-build"
+
 
 sourceCompatibility = 1.8
 version = '1.0'
 
 repositories ihmc.ihmcDefaultArtifactProxies()
+
+artifactory {
+   contextUrl = "http://10.7.4.48:8082/artifactory"   //The base Artifactory URL if not overridden by the publisher/resolver
+   publish {
+      //A closure defining publishing information
+      repository {
+         repoKey = "JOctoMap"   //The Artifactory repository key to publish to
+         username = artifactoryUsername   //The publisher user name
+         password = artifactoryPassword   //The publisher password
+      }
+      defaults {
+         //List of Gradle Publications (names or objects) from which to collect the list of artifacts to be deployed to Artifactory.
+         publications("mavenJava")
+         publishBuildInfo = false  //Publish build-info to Artifactory (true by default)
+         publishArtifacts = true   //Publish artifacts to Artifactory (true by default)
+         publishPom = true         //Publish generated POM files to Artifactory (true by default).
+         publishIvy = false        //Publish generated Ivy descriptor files to Artifactory (true by default).
+      }
+   }
+   resolve {
+      repository {
+         repoKey = "libs-releases"  //The Artifactory (preferably virtual) repository key to resolve from
+         maven = true              //Resolve Maven-style artifacts and descriptors (true by default)
+      }
+   }
+   // Redefine basic properties of the build info object
+   clientConfig.setIncludeEnvVars(true)
+   clientConfig.info.setBuildName("${project.name}")
+   clientConfig.info.setBuildNumber("$version")
+   clientConfig.timeout = 600 // Artifactory connection timeout (in seconds). The default timeout is 300 seconds.
+}
+
+task sourceJar(type: Jar) {
+	from sourceSets.main.allJava
+}
+
+jar {
+   manifest {
+      attributes(
+      "Created-By": "IHMC Gradle Build Script",
+      "Implementation-Title": project.name,
+      "Implementation-Version": project.version,
+      "Implementation-Vendor": "IHMC",
+
+      "Bundle-Name": project.name,
+      "Bundle-Version": project.version,
+      "Bundle-License": "http://www.apache.org/licenses/LICENSE-2.0.txt",
+      "Bundle-Vendor": "IHMC")
+   }
+}
+
+publishing {
+   publications {
+      mavenJava(MavenPublication) {
+         groupId "us.ihmc"
+
+         String projectShortName = "${project.name}";
+         projectShortName = projectShortName.split("_")[0];
+         artifactId projectShortName
+         version "$version"
+         println "POM version: " + version
+
+         from components.java
+
+      }
+   }
+   repositories {
+      maven {
+         url "http://10.7.4.48:8082/artifactory"
+      }
+   }
+}
+
+   afterEvaluate {
+      artifactoryPublish {
+         skip = false //Skip build info analysis and publishing (false by default)
+         contextUrl = "http://10.7.4.48:8082/artifactory"
+         publications("mavenJava")
+         clientConfig.publisher.repoKey = "JOctoMap"
+         clientConfig.publisher.username = artifactoryUsername
+         clientConfig.publisher.password = artifactoryPassword
+      }
+   }
 
 repositories {
     maven {
