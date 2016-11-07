@@ -108,7 +108,7 @@ afterEvaluate {
       skip = false //Skip build info analysis and publishing (false by default)
       contextUrl = "http://10.7.4.48:8082/artifactory"
       publications("mavenJava")
-      clientConfig.publisher.repoKey = "JOctoMap"
+      clientConfig.publisher.repoKey = "releases"
       clientConfig.publisher.username = artifactoryUsername
       clientConfig.publisher.password = artifactoryPassword
    }
