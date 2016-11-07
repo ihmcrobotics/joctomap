@@ -37,7 +37,7 @@ import us.ihmc.jOctoMap.tools.OccupancyTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
-   private static final boolean REPORT_TIME = true;
+   private static final boolean REPORT_TIME = false;
    private final StopWatch stopWatch = REPORT_TIME ? new StopWatch() : null;
 
    private final String name = getClass().getSimpleName();
