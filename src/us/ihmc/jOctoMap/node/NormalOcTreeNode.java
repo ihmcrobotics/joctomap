@@ -177,6 +177,16 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    public void updateHitLocation(float xUpdate, float yUpdate, float zUpdate)
    {
+      updateHitLocation(xUpdate, yUpdate, zUpdate, 1);
+   }
+
+   public void updateHitLocation(NormalOcTreeNode otherNode)
+   {
+      updateHitLocation(otherNode.hitLocationX, otherNode.hitLocationY, otherNode.hitLocationZ, otherNode.numberOfHits);
+   }
+
+   private void updateHitLocation(float xUpdate, float yUpdate, float zUpdate, long updateWeight)
+   {
       if (numberOfHits == 0)
       {
          hitLocationX = 0.0f;
@@ -184,8 +194,8 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
          hitLocationZ = 0.0f;
       }
 
-      numberOfHits++;
-      float nInv = 1.0f / numberOfHits;
+      numberOfHits += updateWeight;
+      float nInv = (float) updateWeight / (float) numberOfHits;
       hitLocationX += (xUpdate - hitLocationX) * nInv;
       hitLocationY += (yUpdate - hitLocationY) * nInv;
       hitLocationZ += (zUpdate - hitLocationZ) * nInv;

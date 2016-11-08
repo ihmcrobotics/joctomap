@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
@@ -29,6 +30,7 @@ import us.ihmc.jOctoMap.pointCloud.Scan;
 import us.ihmc.jOctoMap.pointCloud.ScanCollection;
 import us.ihmc.jOctoMap.rules.NormalOcTreeHitUpdateRule;
 import us.ihmc.jOctoMap.rules.NormalOcTreeMissUpdateRule;
+import us.ihmc.jOctoMap.rules.NormalOcTreeNodeIntegrateRule;
 import us.ihmc.jOctoMap.rules.interfaces.RayActionRule;
 import us.ihmc.jOctoMap.tools.JOctoMapTools;
 import us.ihmc.jOctoMap.tools.NormalEstimationTools;
@@ -52,6 +54,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private double maxInsertRange = -1.0;
 
    private final NormalOcTreeHitUpdateRule hitUpdateRule = new NormalOcTreeHitUpdateRule(occupancyParameters);
+   private final NormalOcTreeNodeIntegrateRule nodeIntegrateRule = new NormalOcTreeNodeIntegrateRule(occupancyParameters);
    private final NormalOcTreeMissUpdateRule missUpdateRule = new NormalOcTreeMissUpdateRule(occupancyParameters);
 
    public NormalOcTree(double resolution)
@@ -68,6 +71,46 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       insertScanCollection(scanCollection);
       updateNormals();
+   }
+
+   public void insertNormalOcTree(Point3d sensorOrigin, NormalOcTree otherOcTree)
+   {
+      insertNormalOcTree(sensorOrigin, otherOcTree, null);
+   }
+
+   public void insertNormalOcTree(Point3d sensorOrigin, NormalOcTree otherOcTree, Matrix4d otherOcTreeTransform)
+   {
+      missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
+      nodeIntegrateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
+      occupiedCells.clear();
+
+      Vector3d direction = new Vector3d();
+      Point3d point = new Point3d();
+
+      for (NormalOcTreeNode otherNode : otherOcTree)
+      {
+         otherNode.getHitLocation(point);
+         if (otherOcTreeTransform != null)
+            otherOcTreeTransform.transform(point);
+         
+         direction.sub(point, sensorOrigin);
+         double length = direction.length();
+
+         if ((maxInsertRange < 0.0 || length <= maxInsertRange) && (minInsertRange < 0.0 || length >= minInsertRange) && isInBoundingBox(point))
+         {
+            OcTreeKey occupiedKey = coordinateToKey(point);
+            if (occupiedKey == null)
+               continue;
+            nodeIntegrateRule.setHitLocation(sensorOrigin, otherNode);
+            updateNodeInternal(occupiedKey, nodeIntegrateRule, null);
+
+            if (occupiedCells.add(occupiedKey))
+               insertMissRay(sensorOrigin, point);
+         }
+      }
+
+      while (!freeKeysToUpdate.isEmpty())
+         updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);
    }
 
    public void insertScanCollection(ScanCollection scanCollection)
@@ -88,7 +131,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void updateNormals()
    {
-
       if (REPORT_TIME)
       {
          stopWatch.reset();
@@ -159,11 +201,13 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private void insertMissRay(Point3d sensorOrigin, Point3f scanPoint)
    {
-      Point3d point = new Point3d();
-      Vector3d direction = new Vector3d();
+      insertMissRay(sensorOrigin, new Point3d(scanPoint));
+   }
 
-      point.set(scanPoint);
-      direction.sub(point, sensorOrigin);
+   private void insertMissRay(Point3d sensorOrigin, Point3d scanPoint)
+   {
+      Vector3d direction = new Vector3d();
+      direction.sub(scanPoint, sensorOrigin);
       double length = direction.length();
 
       if (minInsertRange >= 0.0 && length < minInsertRange)
@@ -172,7 +216,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       Point3d rayEnd;
       if (maxInsertRange < 0.0 || length <= maxInsertRange)
       { // is not maxrange meas, free cells
-         rayEnd = point;
+         rayEnd = scanPoint;
       }
       else
       { // user set a maxrange and length is above
