@@ -8,6 +8,12 @@ import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;
 
+/**
+ * Class providing providing tools to perform radius and nearest neighbor searches.
+ * <p>
+ * The algorithms were adapted to OctoMap from: Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
+ * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+ */
 public abstract class OcTreeNearestNeighborTools
 {
    public static interface NeighborActionRule<NODE extends AbstractOcTreeNode<NODE>>
@@ -21,7 +27,15 @@ public abstract class OcTreeNearestNeighborTools
    }
 
    /**
-    * Radius neighbor queries where radius determines the maximal radius of reported indices of points in radiusNeighborKeysToPack.
+    * Search the nodes contained in the search sphere S(q, r).
+    * <p>
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
+    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * 
+    * @param rootNode root node of the tree to be searched.
+    * @param queryNode node to use as the center q of the search sphere.
+    * @param radius search sphere radius.
+    * @param actionRule action to perform when a node contained in S(q, r) is found.
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE rootNode, NODE queryNode, double radius,
          NeighborActionRule<NODE> actionRule)
@@ -31,7 +45,15 @@ public abstract class OcTreeNearestNeighborTools
    }
 
    /**
-    * Radius neighbor queries where radius determines the maximal radius of reported indices of points in radiusNeighborKeysToPack.
+    * Search the nodes contained in the search sphere S(q, r).
+    * <p>
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
+    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * 
+    * @param rootNode root node of the tree to be searched.
+    * @param query coordinates of the query q.
+    * @param radius search sphere radius.
+    * @param actionRule action to perform when a node contained in S(q, r) is found.
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE rootNode, Point3d query, double radius,
          NeighborActionRule<NODE> actionRule)
@@ -40,7 +62,17 @@ public abstract class OcTreeNearestNeighborTools
    }
 
    /**
-    * Radius neighbor queries where radius determines the maximal radius of reported indices of points in radiusNeighborKeysToPack.
+    * Search the nodes contained in the search sphere S(q, r).
+    * <p>
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
+    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * 
+    * @param rootNode root node of the tree to be searched.
+    * @param x x-coordinate of the query q.
+    * @param y y-coordinate of the query q.
+    * @param z z-coordinate of the query q.
+    * @param radius search sphere radius.
+    * @param actionRule action to perform when a node contained in S(q, r) is found.
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE rootNode, double x, double y, double z, double radius,
          NeighborActionRule<NODE> actionRule)
@@ -91,38 +123,91 @@ public abstract class OcTreeNearestNeighborTools
       }
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, OcTreeKey nearestNeighborKey,
-         double resolution, int treeDepth)
+   /**
+    * Find the nearest neighbor to the given query (x, y, z).
+    * <p>
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
+    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * 
+    * @param rootNode root node of the tree to be searched.
+    * @param query coordinates of the query.
+    * @param nearestNeighborKeyToPack result of the search.
+    * @return if the search succeeds: the distance between the query and the nearest neighbor, {@value Double#NaN} otherwise.
+    */
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, OcTreeKey nearestNeighborKeyToPack)
    {
-      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), -1.0, Double.POSITIVE_INFINITY, nearestNeighborKey, resolution, treeDepth);
+      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), -1.0, Double.POSITIVE_INFINITY, nearestNeighborKeyToPack);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance,
-         OcTreeKey nearestNeighborKey, double resolution, int treeDepth)
+   /**
+    * Find the nearest neighbor to the given query (x, y, z).
+    * <p>
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
+    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * 
+    * @param rootNode root node of the tree the nearest neighbor is to be searched.
+    * @param query coordinates of the query.
+    * @param minDistance filter out nodes that are closer  than the given distance.
+    * @param nearestNeighborKeyToPack result of the search.
+    * @return if the search succeeds: the distance between the query and the nearest neighbor, {@value Double#NaN} otherwise.
+    */
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance, OcTreeKey nearestNeighborKeyToPack)
    {
-      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, Double.POSITIVE_INFINITY, nearestNeighborKey, resolution,
-            treeDepth);
+      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, Double.POSITIVE_INFINITY, nearestNeighborKeyToPack);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance, double maxDistance,
-         OcTreeKey nearestNeighborKey, double resolution, int treeDepth)
+   /**
+    * Find the nearest neighbor to the given query (x, y, z).
+    * <p>
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
+    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * 
+    * @param rootNode root node of the tree to be searched.
+    * @param query coordinates of the query.
+    * @param minDistance filter out nodes that are closer  than the given distance.
+    * @param maxDistance filter out nodes that are farther than the given distance.
+    * @param nearestNeighborKeyToPack result of the search.
+    * @return if the search succeeds: the distance between the query and the nearest neighbor, {@value Double#NaN} otherwise.
+    */
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance, double maxDistance, OcTreeKey nearestNeighborKeyToPack)
    {
-      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, maxDistance, nearestNeighborKey, resolution, treeDepth);
+      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, maxDistance, nearestNeighborKeyToPack);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, double x, double y, double z, double minDistance,
-         double maxDistance, OcTreeKey nearestNeighborKey, double resolution, int treeDepth)
+   /**
+    * Find the nearest neighbor to the given query (x, y, z).
+    * <p>
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
+    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * 
+    * @param rootNode root node of the tree to be searched.
+    * @param x x-coordinate of the query.
+    * @param y y-coordinate of the query.
+    * @param z z-coordinate of the query.
+    * @param minDistance filter out nodes that are closer  than the given distance.
+    * @param maxDistance filter out nodes that are farther than the given distance.
+    * @param nearestNeighborKeyToPack result of the search.
+    * @return if the search succeeds: the distance between the query and the nearest neighbor, {@value Double#NaN} otherwise.
+    */
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, double x, double y, double z, double minDistance, double maxDistance, OcTreeKey nearestNeighborKeyToPack)
    {
       MutableDouble result = new MutableDouble(maxDistance);
 
-      if (findNearestNeighbor(rootNode, x, y, z, minDistance, result, nearestNeighborKey))
+      nearestNeighborKeyToPack.set(-1, -1, -1);
+      findNearestNeighbor(rootNode, x, y, z, minDistance, result, nearestNeighborKeyToPack);
+
+      if (nearestNeighborKeyToPack.getKey(0) != -1)
          return result.doubleValue();
       else
          return Double.NaN;
    }
 
-   /** \brief nearest neighbor queries. Using minDistance >= 0, we explicitly disallow self-matches.
-    * @return index of nearest neighbor n with Distance::compute(query, n) > minDistance and otherwise -1.
+   /**
+    * Nearest neighbor queries. Using minDistance >= 0, we explicitly disallow self-matches.
+    * <p>
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
+    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * @return true, if search finished, otherwise false. Does not specify whether the search succeeded or not.
     **/
    private static <NODE extends AbstractOcTreeNode<NODE>> boolean findNearestNeighbor(NODE node, double x, double y, double z, double minDistance,
          MutableDouble maxDistance, OcTreeKey nearestNeighborKey)

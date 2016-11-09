@@ -128,9 +128,9 @@ public class OcTreeNearestNeighborToolsTest
          OcTreeKey foundNearestNeighborKey = new OcTreeKey();
 
          double result = OcTreeNearestNeighborTools.findNearestNeighbor(ocTree.getRoot(), randomQuery, -1.0, Double.POSITIVE_INFINITY,
-               foundNearestNeighborKey, resolution, treeDepth);
+               foundNearestNeighborKey);
 
-         assertFalse(Double.isNaN(result));
+         assertFalse("iteration: " + i + ". ", Double.isNaN(result));
 
          OcTreeKeyReadOnly expectedNearestNeighborKey = null;
          double distanceFromQueryToNearestNeighbor = Double.POSITIVE_INFINITY;
@@ -150,6 +150,43 @@ public class OcTreeNearestNeighborToolsTest
          }
 
          assertEquals(expectedNearestNeighborKey, foundNearestNeighborKey);
+      }
+   }
+
+   @Test
+   public void testFindNearestNeighborWithMaximumDistance() throws Exception
+   {
+      double resolution = 0.01;
+      int treeDepth = 16;
+      TestOcTree ocTree = new TestOcTree(resolution, treeDepth);
+      Random random = new Random(345435L);
+      int numberOfLeavesToCreate = 10;
+
+      ocTree.fillRandomly(random, numberOfLeavesToCreate);
+
+      Point3d randomQuery = new Point3d();
+
+      for (int i = 0; i < 100000; i++)
+      {
+         randomQuery.setX(0.5 - random.nextDouble());
+         randomQuery.setY(0.5 - random.nextDouble());
+         randomQuery.setZ(0.5 - random.nextDouble());
+         randomQuery.scale(100.0);
+
+         double distanceFromQueryToNearestNeighbor = Double.POSITIVE_INFINITY;
+
+         for (TestOcTreeNode node : ocTree)
+         {
+            Point3d coordinate = new Point3d();
+            node.getCoordinate(coordinate);
+            double distance = coordinate.distance(randomQuery);
+            if (distance < distanceFromQueryToNearestNeighbor)
+               distanceFromQueryToNearestNeighbor = distance;
+         }
+
+         OcTreeKey foundNearestNeighborKey = new OcTreeKey();
+         double result = OcTreeNearestNeighborTools.findNearestNeighbor(ocTree.getRoot(), randomQuery, -1.0, 0.9 * distanceFromQueryToNearestNeighbor, foundNearestNeighborKey);
+         assertTrue("iteration: " + i + ". ", Double.isNaN(result));
       }
    }
 }
