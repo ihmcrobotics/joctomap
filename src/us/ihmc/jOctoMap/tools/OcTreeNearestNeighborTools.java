@@ -110,7 +110,10 @@ public abstract class OcTreeNearestNeighborTools
    {
       MutableDouble result = new MutableDouble(maxDistance);
 
-      if (findNearestNeighbor(rootNode, x, y, z, minDistance, result, nearestNeighborKeyToPack))
+      nearestNeighborKeyToPack.set(-1, -1, -1);
+      findNearestNeighbor(rootNode, x, y, z, minDistance, result, nearestNeighborKeyToPack);
+
+      if (nearestNeighborKeyToPack.getKey(0) != -1)
          return result.doubleValue();
       else
          return Double.NaN;
