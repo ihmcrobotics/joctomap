@@ -454,13 +454,19 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    /// Traverses the tree to calculate the total number of nodes
    public int getNumberOfNodes()
    {
-      return OcTreeNodeTools.computeNumberOfDescedants(root);
+      if (root == null)
+         return 0;
+      else
+         return OcTreeNodeTools.computeNumberOfDescedants(root);
    }
 
    /// Traverses the tree to calculate the total number of leaf nodes
    public int getNumberOfLeafNodes()
    {
-      return OcTreeNodeTools.computeNumberOfLeafDescendants(root);
+      if (root == null)
+         return 0;
+      else
+         return OcTreeNodeTools.computeNumberOfLeafDescendants(root);
    }
 
    // -- access tree nodes  ------------------
