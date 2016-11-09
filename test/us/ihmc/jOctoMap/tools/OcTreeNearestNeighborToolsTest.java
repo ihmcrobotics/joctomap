@@ -128,7 +128,7 @@ public class OcTreeNearestNeighborToolsTest
          OcTreeKey foundNearestNeighborKey = new OcTreeKey();
 
          double result = OcTreeNearestNeighborTools.findNearestNeighbor(ocTree.getRoot(), randomQuery, -1.0, Double.POSITIVE_INFINITY,
-               foundNearestNeighborKey, resolution, treeDepth);
+               foundNearestNeighborKey);
 
          assertFalse(Double.isNaN(result));
 

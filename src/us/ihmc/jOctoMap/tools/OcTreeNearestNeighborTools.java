@@ -91,31 +91,26 @@ public abstract class OcTreeNearestNeighborTools
       }
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, OcTreeKey nearestNeighborKey,
-         double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, OcTreeKey nearestNeighborKeyToPack)
    {
-      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), -1.0, Double.POSITIVE_INFINITY, nearestNeighborKey, resolution, treeDepth);
+      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), -1.0, Double.POSITIVE_INFINITY, nearestNeighborKeyToPack);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance,
-         OcTreeKey nearestNeighborKey, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance, OcTreeKey nearestNeighborKeyToPack)
    {
-      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, Double.POSITIVE_INFINITY, nearestNeighborKey, resolution,
-            treeDepth);
+      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, Double.POSITIVE_INFINITY, nearestNeighborKeyToPack);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance, double maxDistance,
-         OcTreeKey nearestNeighborKey, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance, double maxDistance, OcTreeKey nearestNeighborKeyToPack)
    {
-      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, maxDistance, nearestNeighborKey, resolution, treeDepth);
+      return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, maxDistance, nearestNeighborKeyToPack);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, double x, double y, double z, double minDistance,
-         double maxDistance, OcTreeKey nearestNeighborKey, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, double x, double y, double z, double minDistance, double maxDistance, OcTreeKey nearestNeighborKeyToPack)
    {
       MutableDouble result = new MutableDouble(maxDistance);
 
-      if (findNearestNeighbor(rootNode, x, y, z, minDistance, result, nearestNeighborKey))
+      if (findNearestNeighbor(rootNode, x, y, z, minDistance, result, nearestNeighborKeyToPack))
          return result.doubleValue();
       else
          return Double.NaN;
