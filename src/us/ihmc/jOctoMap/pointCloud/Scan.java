@@ -1,5 +1,6 @@
 package us.ihmc.jOctoMap.pointCloud;
 
+import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 
 public class Scan
@@ -11,6 +12,12 @@ public class Scan
    {
       this.sensorOrigin = sensorOrigin;
       this.pointCloud = pointCloud;
+   }
+
+   public void transform(Matrix4d transform)
+   {
+      transform.transform(sensorOrigin);
+      pointCloud.transform(transform);
    }
 
    public Point3d getSensorOrigin()

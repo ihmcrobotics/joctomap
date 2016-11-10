@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 
@@ -60,9 +61,22 @@ public class ScanCollection implements Iterable<Scan>
       scans.add(new Scan(new Point3d(origin), PointCloudTools.createRandomSample(pointsInWorld, subSampleSize)));
    }
 
+   public void transform(Matrix4d transform)
+   {
+      scans.stream().forEach(scan -> scan.transform(transform));
+   }
+
    public Scan getScan(int index)
    {
       return scans.get(index);
+   }
+
+   public Scan getLastScan()
+   {
+      if (scans.isEmpty())
+         return null;
+      else
+         return scans.get(scans.size() - 1);
    }
 
    public int getNumberOfScans()

@@ -324,7 +324,7 @@ public abstract class OcTreeRayTools
 
       while (true)
       {
-         double distanceFromNearestNeighbor = OcTreeNearestNeighborTools.findNearestNeighbor(root, currentPosition, currentKey, resolution, treeDepth);
+         double distanceFromNearestNeighbor = OcTreeNearestNeighborTools.findNearestNeighbor(root, currentPosition, currentKey);
 
          if (Double.isNaN(distanceFromNearestNeighbor))
             break;
@@ -335,7 +335,7 @@ public abstract class OcTreeRayTools
             
             Point3d nearestNodeCoordinate = keyToCoordinate(currentKey, resolution, treeDepth);
             double minDistance = 0.1 * resolution;
-            distanceFromNearestNeighbor = OcTreeNearestNeighborTools.findNearestNeighbor(root, nearestNodeCoordinate, minDistance, currentKey, resolution, treeDepth);
+            distanceFromNearestNeighbor = OcTreeNearestNeighborTools.findNearestNeighbor(root, nearestNodeCoordinate, minDistance, currentKey);
          }
 
          distanceFromNearestNeighbor = Math.max(distanceFromNearestNeighbor, 0.5 * resolution);

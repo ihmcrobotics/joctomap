@@ -78,8 +78,8 @@ public abstract class NormalEstimationTools
       else
          currentAverageDeviation /= currentConsensus;
 
-      boolean hasNormalBeenUpdatedAtLeastOnce = false;
-      do
+//      boolean hasNormalBeenUpdatedAtLeastOnce = false;
+//      do
       {
          int index = 0;
 
@@ -141,9 +141,9 @@ public abstract class NormalEstimationTools
             currentNode.setNormal(normalCandidate);
             currentNode.setNormalQuality(candidateAverageDeviation, candidateConsensus);
             currentAverageDeviation = candidateAverageDeviation;
-            hasNormalBeenUpdatedAtLeastOnce = true;
+//            hasNormalBeenUpdatedAtLeastOnce = true;
          }
       }
-      while (!hasNormalBeenUpdatedAtLeastOnce && currentAverageDeviation > 0.005); // TODO Check if necessary, maybe only one iteration when normal is pretty good already.
+//      while (!hasNormalBeenUpdatedAtLeastOnce && currentAverageDeviation > 0.005);// TODO Review the approach. It is pretty time consuming for large datasets.
    }
 }
