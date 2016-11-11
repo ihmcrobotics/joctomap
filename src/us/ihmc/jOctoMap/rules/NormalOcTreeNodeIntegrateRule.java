@@ -45,6 +45,7 @@ public class NormalOcTreeNodeIntegrateRule implements UpdateRule<NormalOcTreeNod
 
       leafToUpdate.updateHitLocation(nodeToIntegrate);
 
+      // FIXME incoherent with NormalOcTree.insertNormalOcTree because the transform ends up not being used.
       nodeToIntegrate.getHitLocation(hitLocation);
 
       if (!leafToUpdate.isNormalSet())
