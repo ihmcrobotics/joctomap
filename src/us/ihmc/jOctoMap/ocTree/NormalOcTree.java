@@ -38,8 +38,7 @@ import us.ihmc.jOctoMap.tools.OccupancyTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
-   private static final boolean REPORT_TIME = true;
-   private final StopWatch stopWatch = REPORT_TIME ? new StopWatch() : null;
+   private final StopWatch stopWatch = new StopWatch();
 
    private final String name = getClass().getSimpleName();
 
@@ -51,6 +50,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private double minInsertRange = -1.0;
    /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    private double maxInsertRange = -1.0;
+   private boolean reportTime = false;
 
    private final NormalOcTreeHitUpdateRule hitUpdateRule = new NormalOcTreeHitUpdateRule(occupancyParameters);
    private final NormalOcTreeMissUpdateRule missUpdateRule = new NormalOcTreeMissUpdateRule(occupancyParameters);
@@ -78,7 +78,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void insertNormalOcTree(Point3d sensorOrigin, NormalOcTree otherOcTree, Matrix4d otherOcTreeTransform)
    {
-      if (REPORT_TIME)
+      if (reportTime)
       {
          stopWatch.reset();
          stopWatch.start();
@@ -123,7 +123,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       while (!freeKeysToUpdate.isEmpty())
          updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);
 
-      if (REPORT_TIME)
+      if (reportTime)
       {
          System.out.println(name + ": Insert OcTree took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
       }
@@ -131,23 +131,23 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void insertScanCollection(ScanCollection scanCollection)
    {
-//      if (REPORT_TIME)
-//      {
-//         stopWatch.reset();
-//         stopWatch.start();
-//      }
+      if (reportTime)
+      {
+         stopWatch.reset();
+         stopWatch.start();
+      }
 
       scanCollection.forEach(this::insertScan);
 
-//      if (REPORT_TIME)
-//      {
-//         System.out.println(name + ": ScanCollection integration took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (number of points: " + scanCollection.getNumberOfPoints() + ").");
-//      }
+      if (reportTime)
+      {
+         System.out.println(name + ": ScanCollection integration took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (number of points: " + scanCollection.getNumberOfPoints() + ").");
+      }
    }
 
    public void updateNormals()
    {
-      if (REPORT_TIME)
+      if (reportTime)
       {
          stopWatch.reset();
          stopWatch.start();
@@ -160,7 +160,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       if (root != null)
          updateInnerNormalsRecursive(root, 0);
 
-      if (REPORT_TIME)
+      if (reportTime)
       {
          System.out.println(name + ": Normal computation took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
       }
@@ -285,6 +285,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public Iterator<NormalOcTreeNode> iterator()
    {
       return OcTreeIteratorFactory.createLeafBoundingBoxIteratable(root, boundingBox).iterator();
+   }
+
+   public void enableReportTime(boolean enable)
+   {
+      reportTime = enable;
    }
 
    public void disableBoundingBox()
