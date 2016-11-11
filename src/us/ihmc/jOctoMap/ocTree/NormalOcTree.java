@@ -113,6 +113,10 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             if (occupiedCells.add(occupiedKey))
                insertMissRay(sensorOrigin, point);
          }
+         else
+         {
+            insertMissRay(sensorOrigin, point);
+         }
       }
 
       while (!freeKeysToUpdate.isEmpty())
