@@ -30,7 +30,6 @@ import us.ihmc.jOctoMap.pointCloud.Scan;
 import us.ihmc.jOctoMap.pointCloud.ScanCollection;
 import us.ihmc.jOctoMap.rules.NormalOcTreeHitUpdateRule;
 import us.ihmc.jOctoMap.rules.NormalOcTreeMissUpdateRule;
-import us.ihmc.jOctoMap.rules.NormalOcTreeNodeIntegrateRule;
 import us.ihmc.jOctoMap.rules.interfaces.RayActionRule;
 import us.ihmc.jOctoMap.tools.JOctoMapTools;
 import us.ihmc.jOctoMap.tools.NormalEstimationTools;
@@ -39,7 +38,7 @@ import us.ihmc.jOctoMap.tools.OccupancyTools;
 
 public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 {
-   private static final boolean REPORT_TIME = false;
+   private static final boolean REPORT_TIME = true;
    private final StopWatch stopWatch = REPORT_TIME ? new StopWatch() : null;
 
    private final String name = getClass().getSimpleName();
@@ -54,7 +53,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private double maxInsertRange = -1.0;
 
    private final NormalOcTreeHitUpdateRule hitUpdateRule = new NormalOcTreeHitUpdateRule(occupancyParameters);
-   private final NormalOcTreeNodeIntegrateRule nodeIntegrateRule = new NormalOcTreeNodeIntegrateRule(occupancyParameters);
    private final NormalOcTreeMissUpdateRule missUpdateRule = new NormalOcTreeMissUpdateRule(occupancyParameters);
 
    public NormalOcTree(double resolution)
@@ -87,7 +85,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
 
       missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
-      nodeIntegrateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
+      hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
       occupiedCells.clear();
 
       Vector3d direction = new Vector3d();
@@ -107,8 +105,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             OcTreeKey occupiedKey = coordinateToKey(point);
             if (occupiedKey == null)
                continue;
-            nodeIntegrateRule.setHitLocation(sensorOrigin, otherNode);
-            updateNodeInternal(occupiedKey, nodeIntegrateRule, null);
+
+            hitUpdateRule.setHitLocation(sensorOrigin, point);
+            hitUpdateRule.setHitUpdateWeight(otherNode.getNumberOfHits());
+
+            updateNodeInternal(point, hitUpdateRule, null);
 
             if (occupiedCells.add(occupiedKey))
                insertMissRay(sensorOrigin, point);
@@ -130,18 +131,18 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void insertScanCollection(ScanCollection scanCollection)
    {
-      if (REPORT_TIME)
-      {
-         stopWatch.reset();
-         stopWatch.start();
-      }
+//      if (REPORT_TIME)
+//      {
+//         stopWatch.reset();
+//         stopWatch.start();
+//      }
 
       scanCollection.forEach(this::insertScan);
 
-      if (REPORT_TIME)
-      {
-         System.out.println(name + ": ScanCollection integration took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (number of points: " + scanCollection.getNumberOfPoints() + ").");
-      }
+//      if (REPORT_TIME)
+//      {
+//         System.out.println(name + ": ScanCollection integration took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (number of points: " + scanCollection.getNumberOfPoints() + ").");
+//      }
    }
 
    public void updateNormals()
@@ -154,7 +155,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       List<NormalOcTreeNode> leafNodes = new ArrayList<>();
       this.forEach(leafNodes::add);
-      leafNodes.parallelStream().forEach(node -> NormalEstimationTools.computeNodeNormalRansac(root, node, normalEstimationParameters));
+      leafNodes.stream().forEach(node -> NormalEstimationTools.computeNodeNormalRansac(root, node, normalEstimationParameters));
 
       if (root != null)
          updateInnerNormalsRecursive(root, 0);
@@ -169,7 +170,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       List<NormalOcTreeNode> leafNodes = new ArrayList<>();
       this.forEach(leafNodes::add);
-      leafNodes.parallelStream().forEach(NormalOcTreeNode::resetNormal);
+      leafNodes.stream().forEach(NormalOcTreeNode::resetNormal);
    }
 
    private final HashSet<OcTreeKey> occupiedCells = new HashSet<>();
@@ -208,7 +209,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          }
       }
 
-      pointCloud.parallelStream().forEach(scanPoint -> insertMissRay(sensorOrigin, scanPoint));
+      pointCloud.stream().forEach(scanPoint -> insertMissRay(sensorOrigin, scanPoint));
 
       while (!freeKeysToUpdate.isEmpty())
          updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);

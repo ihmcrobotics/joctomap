@@ -161,10 +161,15 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    public void updateHitLocation(Point3d centerUpdate)
    {
+      updateHitLocation(centerUpdate, 1L);
+   }
+
+   public void updateHitLocation(Point3d centerUpdate, long updateWeight)
+   {
       float xUpdate = (float) centerUpdate.getX();
       float yUpdate = (float) centerUpdate.getY();
       float zUpdate = (float) centerUpdate.getZ();
-      updateHitLocation(xUpdate, yUpdate, zUpdate);
+      updateHitLocation(xUpdate, yUpdate, zUpdate, updateWeight);
    }
 
    public void updateHitLocation(Point3f centerUpdate)
@@ -251,6 +256,11 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public double getHitLocationZ()
    {
       return hitLocationZ;
+   }
+
+   public long getNumberOfHits()
+   {
+      return numberOfHits;
    }
 
    public double getNormalX()
