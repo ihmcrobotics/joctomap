@@ -201,6 +201,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
       if (RECYCLE_NODES)
          unusedNodes.add(node.removeChild(childIndex));
+      else
+         node.removeChild(childIndex);
 
       treeSize--;
       sizeChanged = true;
@@ -333,6 +335,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          deleteNodeChild(node, childIndex);
       if (RECYCLE_NODES)
          unusedNodeArrays.add(node.removeChildren());
+      else
+         node.removeChildren();
 
       return true;
    }
@@ -564,6 +568,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
          if (RECYCLE_NODES)
             unusedNodeArrays.add(node.removeChildren());
+         else
+            node.removeChildren();
       } // else: node has no children
    }
 
