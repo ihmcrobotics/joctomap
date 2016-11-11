@@ -80,6 +80,12 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void insertNormalOcTree(Point3d sensorOrigin, NormalOcTree otherOcTree, Matrix4d otherOcTreeTransform)
    {
+      if (REPORT_TIME)
+      {
+         stopWatch.reset();
+         stopWatch.start();
+      }
+
       missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
       nodeIntegrateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
       occupiedCells.clear();
@@ -111,6 +117,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       while (!freeKeysToUpdate.isEmpty())
          updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);
+
+      if (REPORT_TIME)
+      {
+         System.out.println(name + ": Insert OcTree took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+      }
    }
 
    public void insertScanCollection(ScanCollection scanCollection)
