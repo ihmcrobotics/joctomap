@@ -67,7 +67,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void update(ScanCollection scanCollection)
    {
-      insertScanCollection(scanCollection);
+      insertScanCollection(scanCollection, true);
       updateNormals();
    }
 
@@ -131,13 +131,18 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void insertScanCollection(ScanCollection scanCollection)
    {
+      insertScanCollection(scanCollection, true);
+   }
+
+   public void insertScanCollection(ScanCollection scanCollection, boolean insertMiss)
+   {
       if (reportTime)
       {
          stopWatch.reset();
          stopWatch.start();
       }
 
-      scanCollection.forEach(this::insertScan);
+      scanCollection.forEach(scan -> insertScan(scan, insertMiss));
 
       if (reportTime)
       {
@@ -178,7 +183,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private final RayActionRule integrateMissActionRule = (rayOrigin, rayEnd, rayDirection, key) -> doRayActionOnFreeCell(rayOrigin, rayEnd, rayDirection, key);
 
-   private void insertScan(Scan scan)
+   private void insertScan(Scan scan, boolean insertMiss)
    {
       missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
       hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
@@ -204,15 +209,18 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             updateNodeInternal(occupiedKey, hitUpdateRule, null);
             // Add the key to the occupied set.
             // if it was already present, remove the point from the scan to speed up integration of miss.
-            if (!occupiedCells.add(occupiedKey))
+            if (!occupiedCells.add(occupiedKey) && insertMiss)
                pointCloud.removePoint(i);
          }
       }
 
-      pointCloud.stream().forEach(scanPoint -> insertMissRay(sensorOrigin, scanPoint));
-
-      while (!freeKeysToUpdate.isEmpty())
-         updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);
+      if (insertMiss)
+      {
+         pointCloud.stream().forEach(scanPoint -> insertMissRay(sensorOrigin, scanPoint));
+         
+         while (!freeKeysToUpdate.isEmpty())
+            updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);
+      }
    }
 
    private void insertMissRay(Point3d sensorOrigin, Point3f scanPoint)
