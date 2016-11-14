@@ -46,6 +46,13 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private double minInsertRange = -1.0;
    /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    private double maxInsertRange = -1.0;
+   /**
+    * Specifies the maximum number of hits for the nodes.
+    * This parameters changes how new hit updates are taken into account when updating nodes.
+    * A lower number implies a quicker updates of new hit locations.
+    */
+   private long nodeMaximumNumberOfHits = Long.MAX_VALUE;
+
    private boolean reportTime = false;
 
    private final NormalOcTreeHitUpdateRule hitUpdateRule = new NormalOcTreeHitUpdateRule(occupancyParameters);
@@ -83,6 +90,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
       hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
+      hitUpdateRule.setMaximumNumberOfHits(nodeMaximumNumberOfHits);
       occupiedCells.clear();
 
       Vector3d direction = new Vector3d();
@@ -181,6 +189,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
       hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
+      hitUpdateRule.setMaximumNumberOfHits(nodeMaximumNumberOfHits);
       occupiedCells.clear();
 
       Vector3d direction = new Vector3d();
@@ -297,6 +306,20 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public void enableReportTime(boolean enable)
    {
       reportTime = enable;
+   }
+
+   /**
+    * When updated with a hit location, each node is computing the average of where it has been hit over time.
+    * The average is computed by keeping track of how many times a node has been hit.
+    * By limiting the number of hits, the user has access on the weight that a new hit represents.
+    * A low value will correspond to maintaining quick updates over time, while a high value will reduce the update over time.
+    * @param maximumNumberOfHits
+    */
+   public void setNodeMaximumNumberOfHits(long maximumNumberOfHits)
+   {
+      if (maximumNumberOfHits <= 0)
+         throw new RuntimeException("Unexpected value for maximumNumberOfHits. Expected a value in [1, Long.MAX_VALUE], but was: " + maximumNumberOfHits);
+      this.nodeMaximumNumberOfHits = maximumNumberOfHits;
    }
 
    /**

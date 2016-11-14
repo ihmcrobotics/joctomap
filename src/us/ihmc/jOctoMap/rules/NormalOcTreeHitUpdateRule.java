@@ -15,6 +15,7 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
 {
    private final Point3d hitLocation = new Point3d();
    private long updateWeight = 1L;
+   private long maximumNumberOfHits = Long.MAX_VALUE;
    private final Point3d sensorLocation = new Point3d();
    private final Vector3d initialGuessNormal = new Vector3d();
    private final Vector3d nodeNormal = new Vector3d();
@@ -51,12 +52,17 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
       this.updateWeight = updateWeight;
    }
 
+   public void setMaximumNumberOfHits(long maximumNumberOfHits)
+   {
+      this.maximumNumberOfHits = maximumNumberOfHits;
+   }
+
    @Override
    public void updateLeaf(NormalOcTreeNode leafToUpdate, OcTreeKeyReadOnly leafKey, boolean nodeJustCreated)
    {
       OccupancyTools.updateNodeLogOdds(parameters, leafToUpdate, updateLogOdds);
 
-      leafToUpdate.updateHitLocation(hitLocation, updateWeight);
+      leafToUpdate.updateHitLocation(hitLocation, updateWeight, maximumNumberOfHits);
 
       if (!leafToUpdate.isNormalSet())
       {
