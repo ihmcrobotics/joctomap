@@ -1,12 +1,9 @@
 package us.ihmc.jOctoMap.ocTree;
 
-import static us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.*;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
@@ -14,7 +11,6 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
 import org.apache.commons.lang3.time.StopWatch;
-import org.apache.commons.math3.util.Precision;
 
 import us.ihmc.jOctoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.jOctoMap.iterators.OcTreeIteratorFactory;
@@ -54,6 +50,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    private final NormalOcTreeHitUpdateRule hitUpdateRule = new NormalOcTreeHitUpdateRule(occupancyParameters);
    private final NormalOcTreeMissUpdateRule missUpdateRule = new NormalOcTreeMissUpdateRule(occupancyParameters);
+   private RayMissProbabilityUpdater rayMissProbabilityUpdater = null;
 
    public NormalOcTree(double resolution)
    {
@@ -90,6 +87,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       Vector3d direction = new Vector3d();
       Point3d point = new Point3d();
+      PointCloud pointCloudForIntegratingMiss = new PointCloud();
 
       for (NormalOcTreeNode otherNode : otherOcTree)
       {
@@ -112,16 +110,15 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             updateNodeInternal(point, hitUpdateRule, null);
 
             if (occupiedCells.add(occupiedKey))
-               insertMissRay(sensorOrigin, point);
+               pointCloudForIntegratingMiss.add(point);
          }
          else
          {
-            insertMissRay(sensorOrigin, point);
+            pointCloudForIntegratingMiss.add(point);
          }
       }
 
-      while (!freeKeysToUpdate.isEmpty())
-         updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);
+      pointCloudForIntegratingMiss.stream().forEach(scanPoint -> insertMissRay(sensorOrigin, scanPoint));
 
       if (reportTime)
       {
@@ -179,9 +176,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    }
 
    private final HashSet<OcTreeKey> occupiedCells = new HashSet<>();
-   private final ConcurrentLinkedQueue<OcTreeKeyReadOnly> freeKeysToUpdate = new ConcurrentLinkedQueue<>();
-
-   private final RayActionRule integrateMissActionRule = (rayOrigin, rayEnd, rayDirection, key) -> doRayActionOnFreeCell(rayOrigin, rayEnd, rayDirection, key);
 
    private void insertScan(Scan scan, boolean insertMiss)
    {
@@ -217,9 +211,6 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       if (insertMiss)
       {
          pointCloud.stream().forEach(scanPoint -> insertMissRay(sensorOrigin, scanPoint));
-         
-         while (!freeKeysToUpdate.isEmpty())
-            updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);
       }
    }
 
@@ -248,26 +239,30 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          rayEnd.scaleAdd(maxInsertRange / length, direction, sensorOrigin);
       } // end if maxrange
 
+      RayActionRule integrateMissActionRule = (rayOrigin, rayEnd2, rayDirection, key) -> doRayActionOnFreeCell(rayOrigin, rayEnd2, rayDirection, key);
       OcTreeRayTools.doActionOnRayKeys(sensorOrigin, rayEnd, boundingBox, integrateMissActionRule, resolution, treeDepth);
    }
 
    private void doRayActionOnFreeCell(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, OcTreeKeyReadOnly key)
    {
-      NormalOcTreeNode node = search(key);
-      if (node != null && !occupiedCells.contains(key))
-      {
-         if (node.getNormalConsensusSize() > 10 && node.isHitLocationSet() && node.isNormalSet())
-         {
-            Point3d nodeHitLocation = new Point3d();
-            Vector3d nodeNormal = new Vector3d();
-            node.getHitLocation(nodeHitLocation);
-            node.getNormal(nodeNormal);
+      if (occupiedCells.contains(key))
+         return;
 
-            if (Precision.equals(Math.abs(nodeNormal.angle(rayDirection)) - Math.PI / 2.0, 0.0, Math.toRadians(30.0)) && distanceFromPointToLine(nodeHitLocation, rayOrigin, rayEnd) > 0.005)
-               return;
-         }
-         freeKeysToUpdate.offer(new OcTreeKey(key));
+      NormalOcTreeNode node = search(key);
+
+      if (node == null)
+         return;
+
+      float updateLogOdds = occupancyParameters.getMissProbabilityLogOdds();
+
+      if (rayMissProbabilityUpdater != null)
+      {
+         double updateProbability = rayMissProbabilityUpdater.computeRayMissProbability(rayOrigin, rayEnd, rayDirection, node, occupancyParameters);
+         updateLogOdds = JOctoMapTools.logodds(updateProbability);
       }
+
+      missUpdateRule.setUpdateLogOdds(updateLogOdds);
+      updateNodeInternal(key, missUpdateRule, null);
    }
 
    private void updateInnerNormalsRecursive(NormalOcTreeNode node, int depth)
@@ -302,6 +297,20 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public void enableReportTime(boolean enable)
    {
       reportTime = enable;
+   }
+
+   /**
+    * Set a custom updater to compute the probability of a miss when a node is traversed by a ray.
+    * @param rayMissProbabilityUpdater the custom update to use.
+    */
+   public void setCustomRayMissProbabilityUpdater(RayMissProbabilityUpdater rayMissProbabilityUpdater)
+   {
+      this.rayMissProbabilityUpdater = rayMissProbabilityUpdater;
+   }
+
+   public void disableCustomRayMissProbabilityUpdater()
+   {
+      this.rayMissProbabilityUpdater = null;
    }
 
    public void disableBoundingBox()
@@ -415,5 +424,29 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    protected Class<NormalOcTreeNode> getNodeClass()
    {
       return NormalOcTreeNode.class;
+   }
+
+   /**
+    * Provides a flexible API for computing a custom update for nodes traversed by rays.
+    * Useful to reduce "self-destruction" of the octree when scanning surfaces at a shallow angle.
+    * The normal contained in each node combined with the ray properties can be used to refine the probability of a miss.
+    */
+   public interface RayMissProbabilityUpdater
+   {
+      /**
+       * Compute a custom miss probability update when a ray goes through a node.
+       * The default implementation returns the miss probability from the occupancy parameters.
+       * 
+       * @param rayOrigin the origin of the ray.
+       * @param rayEnd the hit location of the ray.
+       * @param rayDirection the direction of the ray.
+       * @param node the current node the ray is going through.
+       * @param parameters the current occupancy parameters used by this octree.
+       * @return the custom miss probability update.
+       */
+      public default double computeRayMissProbability(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, NormalOcTreeNode node, OccupancyParameters parameters)
+      {
+         return parameters.getMissProbability();
+      }
    }
 }
