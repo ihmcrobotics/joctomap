@@ -295,6 +295,10 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       return OcTreeIteratorFactory.createLeafBoundingBoxIteratable(root, boundingBox).iterator();
    }
 
+   /**
+    * When set to true, the computation time for updating the octree is printed out in the console.
+    * @param enable whether to report computation time or not.
+    */
    public void enableReportTime(boolean enable)
    {
       reportTime = enable;
