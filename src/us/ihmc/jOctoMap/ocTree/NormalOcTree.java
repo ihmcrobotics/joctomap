@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
@@ -52,6 +53,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
     * A lower number implies a quicker updates of new hit locations.
     */
    private long nodeMaximumNumberOfHits = Long.MAX_VALUE;
+
+   private boolean computeNormalsInParallel = false;
 
    private boolean reportTime = false;
 
@@ -165,7 +168,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       List<NormalOcTreeNode> leafNodes = new ArrayList<>();
       this.forEach(leafNodes::add);
-      leafNodes.stream().forEach(node -> NormalEstimationTools.computeNodeNormalRansac(root, node, normalEstimationParameters));
+      Stream<NormalOcTreeNode> nodeStream = computeNormalsInParallel ? leafNodes.parallelStream() : leafNodes.stream();
+      nodeStream.forEach(node -> NormalEstimationTools.computeNodeNormalRansac(root, node, normalEstimationParameters));
 
       if (root != null)
          updateInnerNormalsRecursive(root, 0);
@@ -320,6 +324,16 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       if (maximumNumberOfHits <= 0)
          throw new RuntimeException("Unexpected value for maximumNumberOfHits. Expected a value in [1, Long.MAX_VALUE], but was: " + maximumNumberOfHits);
       this.nodeMaximumNumberOfHits = maximumNumberOfHits;
+   }
+
+   /**
+    * Changes how the normals for each occupied is evaluated, either in parallel or sequential.
+    * The parallel computation offers quicker updates at the cost of an increased CPU usage.
+    * @param enable whether to compute the normals in parallel or sequential.
+    */
+   public void enableParallelComputationForNormals(boolean enable)
+   {
+      computeNormalsInParallel = enable;
    }
 
    /**
