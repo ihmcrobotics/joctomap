@@ -97,7 +97,7 @@ public abstract class OcTreeSearchTools
          int childIndex = OcTreeKeyTools.computeChildIndex(k0, k1, k2, currentDepth, treeDepth);
          NODE childNode;
 
-         if (currentNode.hasArrayForChildren() && (childNode = currentNode.getChild(childIndex)) != null)
+         if ((childNode = currentNode.getChild(childIndex)) != null)
          {
             currentNode = childNode;
          }
