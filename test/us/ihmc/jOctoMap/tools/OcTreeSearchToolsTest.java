@@ -32,8 +32,7 @@ public class OcTreeSearchToolsTest
       for (OccupancyOcTreeNode node : ocTree)
       {
          int nodeDepth = node.getDepth();
-         OcTreeKey key = new OcTreeKey();
-         node.getKey(key);
+         OcTreeKey key = node.getKeyCopy();
          OccupancyOcTreeNode expectedNode = node;
 
          if (nodeDepth == treeDepth)
@@ -64,8 +63,7 @@ public class OcTreeSearchToolsTest
       for (OccupancyOcTreeNode node : ocTree)
       {
          int nodeDepth = node.getDepth();
-         OcTreeKey key = new OcTreeKey();
-         node.getKey(key);
+         OcTreeKey key = node.getKeyCopy();
          Point3d nodeCoordinate = OcTreeKeyConversionTools.keyToCoordinate(key, nodeDepth, resolution, treeDepth);
          OccupancyOcTreeNode expectedNode = node;
 

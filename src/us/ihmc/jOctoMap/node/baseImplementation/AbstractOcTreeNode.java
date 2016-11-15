@@ -68,6 +68,11 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       keyToPack.set(k0, k1, k2);
    }
 
+   public final OcTreeKey getKeyCopy()
+   {
+      return new OcTreeKey(k0, k1, k2);
+   }
+
    public final void getCoordinate(Point3d coordinateToPack)
    {
       coordinateToPack.set(x, y, z);
