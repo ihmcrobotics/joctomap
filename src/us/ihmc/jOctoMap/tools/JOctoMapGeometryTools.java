@@ -38,6 +38,11 @@ public class JOctoMapGeometryTools
       }
    }
 
+   /**
+    * Computes the smallest rotation from the given vector to the z-up vector (0, 0, 1).
+    * @param normalVector3d the vector to compute the rotation from.
+    * @return the resulting rotation.
+    */
    public static AxisAngle4d getRotationBasedOnNormal(Vector3d normalVector3d)
    {
       AxisAngle4d rotation = new AxisAngle4d();
@@ -45,26 +50,236 @@ public class JOctoMapGeometryTools
       return rotation;
    }
 
+   /**
+    * Computes the smallest rotation from the given vector to the z-up vector (0, 0, 1).
+    * @param rotationToPack the computed rotation.
+    * @param normalVector3d the vector to compute the rotation from.
+    */
    public static void getRotationBasedOnNormal(AxisAngle4d rotationToPack, Vector3d normalVector3d)
    {
       Vector3d referenceNormal = new Vector3d(0.0, 0.0, 1.0);
       getRotationBasedOnNormal(rotationToPack, normalVector3d, referenceNormal);
    }
 
+   /**
+    * Computes the smallest rotation from the reference normal to the rotated normal.
+    * @param rotationToPack the computed rotation.
+    * @param rotatedNormal the normal that is rotated.
+    * @param referenceNormal the reference normal. What should be rotated normal be when there is no rotation applied to it.
+    */
    public static void getRotationBasedOnNormal(AxisAngle4d rotationToPack, Vector3d rotatedNormal, Vector3d referenceNormal)
    {
-      Vector3d rotationAxis = new Vector3d(0.0, 0.0, 0.0);
+      Vector3d rotationAxis = new Vector3d();
+
+      double inverseLengths = 1.0 / (rotatedNormal.length() * referenceNormal.length());
 
       rotationAxis.cross(referenceNormal, rotatedNormal);
-      double rotationAngle = referenceNormal.angle(rotatedNormal);
+      double rotationAxisLength = rotationAxis.length();
 
-      boolean normalsAreParallel = rotationAxis.lengthSquared() < 1.0e-7;
+      double sin = rotationAxisLength * inverseLengths;
+      double cos = referenceNormal.dot(rotatedNormal) * inverseLengths;
+      double rotationAngle = Math.atan2(sin, cos);
+
+      boolean normalsAreParallel = rotationAxisLength < 1.0e-10;
       if (normalsAreParallel)
       {
          rotationAngle = rotatedNormal.getZ() > 0.0 ? 0.0 : Math.PI;
          rotationAxis.set(1.0, 0.0, 0.0);
       }
+      else
+      {
+         rotationAxis.scale(1.0 / rotationAxisLength);
+      }
 
       rotationToPack.set(rotationAxis, rotationAngle);
+   }
+
+
+   /**
+    * Finds the intersections of infinite-length ray with an axis-aligned box.
+    * 
+    * @param min the min 3D coordinates of the box.
+    * @param max the max 3D coordinates of the box.
+    * @param rayOrigin point from where the ray starts.
+    * @param rayDirection direction the ray is going the rayOrigin.
+    * @return the found intersection(s) or null if the ray does not intersect the box.
+    */
+   public static RayBoxIntersectionResult rayBoxIntersection(Point3d min, Point3d max, Point3d rayOrigin, Vector3d rayDirection)
+   {
+      return rayBoxIntersection(min, max, rayOrigin, rayDirection, Double.POSITIVE_INFINITY);
+   }
+
+   /**
+    * Finds the intersections of a finite-length ray with an axis-aligned box.
+    * 
+    * @param min the min 3D coordinates of the box.
+    * @param max the max 3D coordinates of the box.
+    * @param rayOrigin point from where the ray starts.
+    * @param rayDirection direction the ray is going the rayOrigin.
+    * @param maxRayLength intersections beyond the max ray length are ignored.
+    * @return the found intersection(s) or null if the ray does not intersect the box.
+    */
+   public static RayBoxIntersectionResult rayBoxIntersection(Point3d min, Point3d max, Point3d rayOrigin, Vector3d rayDirection, double maxRayLength)
+   {
+      double lengthSquared = rayDirection.lengthSquared();
+      if (lengthSquared < 1.0e-7)
+         return null;
+      else if (Math.abs(lengthSquared - 1.0) > 1.0e-3)
+         rayDirection.scale(1.0 / Math.sqrt(lengthSquared));
+
+      double epsilon = 1.0e-10;
+      double tmin = Double.NEGATIVE_INFINITY;
+      double tmax = Double.POSITIVE_INFINITY;
+      double tymin, tymax, tzmin, tzmax;
+
+      if (Math.abs(rayDirection.getX()) < epsilon)
+      {
+         if (rayOrigin.getX() > max.getX() - epsilon)
+            return null;
+         else if (rayOrigin.getX() < min.getX() + epsilon)
+            return null;
+      }
+      else if (rayDirection.getX() > 0.0)
+      {
+         tmin = (min.getX() - rayOrigin.getX()) / rayDirection.getX();
+         tmax = (max.getX() - rayOrigin.getX()) / rayDirection.getX();
+      }
+      else
+      {
+         tmin = (max.getX() - rayOrigin.getX()) / rayDirection.getX();
+         tmax = (min.getX() - rayOrigin.getX()) / rayDirection.getX();
+      }
+
+      if (Math.abs(rayDirection.getY()) < epsilon)
+      {
+         if (rayOrigin.getY() > max.getY() - epsilon)
+            return null;
+         else if (rayOrigin.getY() < min.getY() + epsilon)
+            return null;
+      }
+      else 
+      {
+         if (rayDirection.getY() > 0.0)
+         {
+            tymin = (min.getY() - rayOrigin.getY()) / rayDirection.getY();
+            tymax = (max.getY() - rayOrigin.getY()) / rayDirection.getY();
+         }
+         else
+         {
+            tymin = (max.getY() - rayOrigin.getY()) / rayDirection.getY();
+            tymax = (min.getY() - rayOrigin.getY()) / rayDirection.getY();
+         }
+
+         if ((tmin > tymax) || (tymin > tmax))
+            return null;
+
+         if (tymin > tmin)
+            tmin = tymin;
+         if (tymax < tmax)
+            tmax = tymax;
+      }
+
+      if (Math.abs(rayDirection.getZ()) < epsilon)
+      {
+         if (rayOrigin.getZ() > max.getZ() - epsilon)
+            return null;
+         else if (rayOrigin.getZ() < min.getZ() + epsilon)
+            return null;
+      }
+      else
+      {
+         if (rayDirection.getZ() >= 0.0)
+         {
+            tzmin = (min.getZ() - rayOrigin.getZ()) / rayDirection.getZ();
+            tzmax = (max.getZ() - rayOrigin.getZ()) / rayDirection.getZ();
+         }
+         else
+         {
+            tzmin = (max.getZ() - rayOrigin.getZ()) / rayDirection.getZ();
+            tzmax = (min.getZ() - rayOrigin.getZ()) / rayDirection.getZ();
+         }
+         
+         if ((tmin > tzmax) || (tzmin > tmax))
+            return null;
+         
+         if (tzmin > tmin)
+            tmin = tzmin;
+         if (tzmax < tmax)
+            tmax = tzmax;
+      }
+
+      if (tmax < 0.0 || tmin > maxRayLength)
+         return null;
+
+      Point3d enteringIntersection;
+
+      if (tmin < 0.0)
+      {
+         if (tmax > maxRayLength)
+            return null;
+         else
+            enteringIntersection = null;
+      }
+      else
+      {
+         enteringIntersection = new Point3d();
+         enteringIntersection.scaleAdd(tmin, rayDirection, rayOrigin);
+      }
+
+      Point3d exitingIntersection;
+
+      if (tmax > maxRayLength)
+      {
+         exitingIntersection = null;
+      }
+      else
+      {
+         exitingIntersection = new Point3d();         
+         exitingIntersection.scaleAdd(tmax, rayDirection, rayOrigin);
+      }
+
+      return new RayBoxIntersectionResult(tmin, enteringIntersection, tmax, exitingIntersection);
+   }
+
+   public static class RayBoxIntersectionResult
+   {
+      private final double entryDistanceFromOrigin;
+      private final Point3d enteringIntersection;
+      private final double exitDistanceFromOrigin;
+      private final Point3d exitingIntersection;
+
+      public RayBoxIntersectionResult(double entryDistanceFromOrigin, Point3d enteringIntersection, double exitDistanceFromOrigin, Point3d exitingIntersection)
+      {
+         this.entryDistanceFromOrigin = entryDistanceFromOrigin;
+         this.enteringIntersection = enteringIntersection;
+         this.exitDistanceFromOrigin = exitDistanceFromOrigin;
+         this.exitingIntersection = exitingIntersection;
+      }
+
+      public double getEntryDistanceFromOrigin()
+      {
+         return entryDistanceFromOrigin;
+      }
+
+      public Point3d getEnteringIntersection()
+      {
+         return enteringIntersection;
+      }
+
+      public double getExitDistanceFromOrigin()
+      {
+         return exitDistanceFromOrigin;
+      }
+
+      public Point3d getExitingIntersection()
+      {
+         return exitingIntersection;
+      }
+
+      @Override
+      public String toString()
+      {
+         return "Entry point: " + enteringIntersection + "\nExit point: " + exitingIntersection;
+      }
    }
 }
