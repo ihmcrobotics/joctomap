@@ -6,82 +6,14 @@ import java.util.HashSet;
 import java.util.Random;
 
 import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
 
 import org.junit.Test;
 
 import us.ihmc.jOctoMap.node.OccupancyOcTreeNode;
-import us.ihmc.jOctoMap.ocTree.OccupancyOcTree;
-import us.ihmc.jOctoMap.pointCloud.PointCloud;
-import us.ihmc.jOctoMap.tools.OcTreeRayTools;
 import us.ihmc.jOctoMap.tools.JOctoMapRandomTools;
-import us.ihmc.jOctoMap.tools.JOctoMapTools;
 
 public class OcTreeTest
 {
-
-   @Test
-   public void testInsertPointCloud() throws Exception
-   {
-      Random random = new Random(126451L);
-      double resolution = 0.05;
-
-      
-      Vector3d scanDirection = new Vector3d(random.nextDouble() - 0.5, random.nextDouble() - 0.5, 0.0);
-      scanDirection.normalize();
-
-      Point3d origin = new Point3d(0.01, 0.01, 1.02);
-      Point3d pointOnSurface = new Point3d(0.01, 0.01, 0.01);
-      
-      PointCloud pointcloud = new PointCloud();
-
-      double sweepLength = 50.0;
-      int nPoints = 20000;
-
-      for (int i = 0; i < nPoints; i++)
-      {
-         Point3d sweepPoint = new Point3d(pointOnSurface);
-         sweepPoint.scaleAdd( (i * sweepLength) / (double) nPoints, scanDirection, pointOnSurface);
-         pointcloud.add(sweepPoint);
-      }
-
-//      for (int i = 0; i < 10000; i++)
-      while(true)
-      {
-
-         OccupancyOcTree octree = new OccupancyOcTree(resolution);
-         long start = System.nanoTime();
-         octree.insertPointCloud(pointcloud, origin);
-         long endTime = System.nanoTime();
-         System.out.println(JOctoMapTools.nanoSecondsToSeconds(endTime - start));
-      }
-   }
-
-   @Test
-   public void testComputeRayKeys() throws Exception
-   {
-      Random random = new Random(126451L);
-      double resolution = 0.002;
-
-      for (int i = 0; i < 10000000; i++)
-      {
-         Point3d origin = JOctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
-         Point3d end = JOctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
-
-         OccupancyOcTree octree = new OccupancyOcTree(resolution);
-         long start = System.nanoTime();
-         OcTreeRayTools.computeRayKeys(origin, end, resolution, octree.getTreeDepth());
-         long endTime = System.nanoTime();
-         System.out.println(JOctoMapTools.nanoSecondsToSeconds(endTime - start));
-         
-      }
-   }
-
-   public static void main(String[] args) throws Exception
-   {
-      new OcTreeTest().testInsertPointCloud();
-   }
-
    @Test
    public void testUpdateNodePoint3dBoolean()
    {

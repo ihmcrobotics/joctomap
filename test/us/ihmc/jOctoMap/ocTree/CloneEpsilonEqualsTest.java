@@ -47,19 +47,23 @@ public class CloneEpsilonEqualsTest
       double resolution = 0.02;
       NormalOcTree octree1 = new NormalOcTree(resolution);
       NormalOcTree octree2 = new NormalOcTree(resolution);
+      octree1.enableParallelComputationForNormals(true);
+      octree1.enableParallelInsertionOfMisses(true);
+      octree2.enableParallelComputationForNormals(true);
+      octree2.enableParallelInsertionOfMisses(true);
 
       // Create 2 identical octrees
       Point3d sensorOrigin = JOctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
-      for (int i = 0; i < 5; i++)
+      for (int i = 0; i < 2; i++)
       {
-         ScanCollection sweepCollection = JOctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+         ScanCollection sweepCollection = JOctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 500);
          octree1.update(sweepCollection);
          octree2.update(sweepCollection);
       }
       assertTrue(octree1.epsilonEquals(octree2, 1.0e-7));
-//
+
       // Make octree2 different from octree1
-      ScanCollection sweepCollection = JOctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+      ScanCollection sweepCollection = JOctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 100);
       octree2.update(sweepCollection);
       assertFalse(octree1.epsilonEquals(octree2, 1.0e-7));
    }
@@ -72,7 +76,7 @@ public class CloneEpsilonEqualsTest
       int treeDepth = 16;
       TestOcTree octree1 = new TestOcTree(resolution, treeDepth);
 
-      octree1.fillRandomly(random, 10000);
+      octree1.fillRandomly(random, 5000);
       StopWatch stopWatch = new StopWatch();
       stopWatch.start();
       TestOcTree octree2 = new TestOcTree(octree1);
@@ -89,9 +93,9 @@ public class CloneEpsilonEqualsTest
       NormalOcTree octree1 = new NormalOcTree(resolution);
 
       Point3d sensorOrigin = JOctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
-      for (int i = 0; i < 5; i++)
+      for (int i = 0; i < 2; i++)
       {
-         ScanCollection sweepCollection = JOctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 1000);
+         ScanCollection sweepCollection = JOctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 500);
          octree1.update(sweepCollection);
       }
 
