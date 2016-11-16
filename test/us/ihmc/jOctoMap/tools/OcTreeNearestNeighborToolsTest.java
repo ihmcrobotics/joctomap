@@ -47,9 +47,7 @@ public class OcTreeNearestNeighborToolsTest
             public void doActionOnNeighbor(TestOcTreeNode node)
             {
                foundNeighbors.add(node);
-               OcTreeKey nodeKey = new OcTreeKey();
-               node.getKey(nodeKey);
-               foundNeighborKeys.add(nodeKey);
+               foundNeighborKeys.add(node.getKeyCopy());
             }
          };
          double randomRadius = random.nextDouble() * sphereRadius;
@@ -65,9 +63,7 @@ public class OcTreeNearestNeighborToolsTest
             node.getCoordinate(coordinate);
             if (coordinate.distance(randomQuery) < randomRadius)
             {
-               OcTreeKey nodeKey = new OcTreeKey();
-               node.getKey(nodeKey);
-               expectedNeighborKeys.add(nodeKey);
+               expectedNeighborKeys.add(node.getKeyCopy());
                expectedNeighbors.add(node);
             }
          }
@@ -142,10 +138,8 @@ public class OcTreeNearestNeighborToolsTest
             double distance = coordinate.distance(randomQuery);
             if (distance < distanceFromQueryToNearestNeighbor)
             {
-               OcTreeKey nodeKey = new OcTreeKey();
-               node.getKey(nodeKey);
                distanceFromQueryToNearestNeighbor = distance;
-               expectedNearestNeighborKey = nodeKey;
+               expectedNearestNeighborKey = node.getKeyCopy();
             }
          }
 

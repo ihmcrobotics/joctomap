@@ -166,10 +166,15 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    public void updateHitLocation(Point3d centerUpdate, long updateWeight)
    {
+      updateHitLocation(centerUpdate, updateWeight, Long.MAX_VALUE);
+   }
+
+   public void updateHitLocation(Point3d centerUpdate, long updateWeight, long maximumNumberOfHits)
+   {
       float xUpdate = (float) centerUpdate.getX();
       float yUpdate = (float) centerUpdate.getY();
       float zUpdate = (float) centerUpdate.getZ();
-      updateHitLocation(xUpdate, yUpdate, zUpdate, updateWeight);
+      updateHitLocation(xUpdate, yUpdate, zUpdate, updateWeight, maximumNumberOfHits);
    }
 
    public void updateHitLocation(Point3f centerUpdate)
@@ -192,6 +197,11 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    private void updateHitLocation(float xUpdate, float yUpdate, float zUpdate, long updateWeight)
    {
+      updateHitLocation(xUpdate, yUpdate, zUpdate, updateWeight, Long.MAX_VALUE);
+   }
+
+   private void updateHitLocation(float xUpdate, float yUpdate, float zUpdate, long updateWeight, long maximumNumberOfHits)
+   {
       if (numberOfHits == 0)
       {
          hitLocationX = 0.0f;
@@ -200,7 +210,8 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       }
 
       numberOfHits += updateWeight;
-      float nInv = (float) updateWeight / (float) numberOfHits;
+      numberOfHits = Math.min(numberOfHits, maximumNumberOfHits);
+      double nInv = (double) updateWeight / (double) numberOfHits;
       hitLocationX += (xUpdate - hitLocationX) * nInv;
       hitLocationY += (yUpdate - hitLocationY) * nInv;
       hitLocationZ += (zUpdate - hitLocationZ) * nInv;

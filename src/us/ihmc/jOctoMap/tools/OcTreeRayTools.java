@@ -14,6 +14,7 @@ import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;
 import us.ihmc.jOctoMap.pointCloud.PointCloud;
 import us.ihmc.jOctoMap.rules.interfaces.CollidableRule;
 import us.ihmc.jOctoMap.rules.interfaces.RayActionRule;
+import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 
 public abstract class OcTreeRayTools
 {
@@ -161,6 +162,32 @@ public abstract class OcTreeRayTools
    public static void doActionOnRayKeys(Point3d origin, Point3d end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule, double resolution,
          int treeDepth) 
    {
+      Vector3d direction = new Vector3d();
+      direction.sub(end, origin);
+      double length = direction.length();
+      direction.scale(1.0 / length);
+
+      if (boundingBox != null)
+      {
+         RayBoxIntersectionResult rayIntersection = boundingBox.rayIntersection(origin, direction, length);
+         if (rayIntersection != null)
+         {
+            Point3d exitingIntersection = rayIntersection.getExitingIntersection();
+            if (exitingIntersection != null)
+            {
+               end = exitingIntersection;
+               length = rayIntersection.getExitDistanceFromOrigin();
+            }
+
+            Point3d enteringIntersection = rayIntersection.getEnteringIntersection();
+            if (enteringIntersection != null)
+            {
+               origin = enteringIntersection;
+               length -= rayIntersection.getEntryDistanceFromOrigin();
+            }
+         }
+      }
+
       // see "A Faster Voxel Traversal Algorithm for Ray Tracing" by Amanatides & Woo
       // basically: DDA in 3D
       OcTreeKey keyOrigin = coordinateToKey(origin, resolution, treeDepth);
@@ -176,7 +203,6 @@ public abstract class OcTreeRayTools
       if (keyOrigin.equals(keyEnd))
          return; // same tree cell, we're done.
 
-      Vector3d direction = new Vector3d();
       double[] directionArray = new double[3];
       double[] originArray = new double[3];
       int[] step = new int[3];
@@ -185,10 +211,6 @@ public abstract class OcTreeRayTools
       OcTreeKey currentKey = new OcTreeKey();
 
       // Initialization phase -------------------------------------------------------
-      direction.sub(end, origin);
-      double length = direction.length();
-      direction.scale(1.0 / length);
-
       actionRule.doAction(origin, end, direction, keyOrigin);
 
       direction.get(directionArray);
@@ -251,7 +273,7 @@ public abstract class OcTreeRayTools
          tMax[dim] += tDelta[dim];
 
          // reached endpoint, key equv?
-         if (currentKey.equals(keyEnd) || (boundingBox != null && !boundingBox.isInBoundingBox(currentKey)))
+         if (currentKey.equals(keyEnd))
          {
             done = true;
             break;

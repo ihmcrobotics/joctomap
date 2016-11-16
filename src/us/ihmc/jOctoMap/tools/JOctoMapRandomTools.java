@@ -31,6 +31,15 @@ public abstract class JOctoMapRandomTools
       return new Point2d(x, y);
    }
 
+   public static Point3d generateRandomPoint3d(Random random, Point3d min, Point3d max)
+   {
+      double x = generateRandomDouble(random, min.getX(), max.getX());
+      double y = generateRandomDouble(random, min.getY(), max.getY());
+      double z = generateRandomDouble(random, min.getZ(), max.getZ());
+
+      return new Point3d(x, y, z);
+   }
+
    public static Point3d generateRandomPoint3d(Random random, double maxAbsoluteX, double maxAbsoluteY, double maxAbsoluteZ)
    {
       double x = generateRandomDouble(random, -maxAbsoluteX, maxAbsoluteX);
@@ -38,6 +47,40 @@ public abstract class JOctoMapRandomTools
       double z = generateRandomDouble(random, -maxAbsoluteZ, maxAbsoluteZ);
 
       return new Point3d(x, y, z);
+   }
+   
+   public static Vector3d generateRandomVector3d(Random random, double maxAbsoluteX, double maxAbsoluteY, double maxAbsoluteZ)
+   {
+      double x = generateRandomDouble(random, -maxAbsoluteX, maxAbsoluteX);
+      double y = generateRandomDouble(random, -maxAbsoluteY, maxAbsoluteY);
+      double z = generateRandomDouble(random, -maxAbsoluteZ, maxAbsoluteZ);
+      
+      return new Vector3d(x, y, z);
+   }
+
+   public static Vector3d generateRandomVector3d(Random random, double magnitude)
+   {
+      Vector3d ret = generateRandomVector3d(random, 1.0, 1.0, 1.0);
+      ret.normalize();
+      ret.scale(magnitude);
+      return ret;
+   }
+
+   public static Vector3d generateRandomOrthogonalVector3d(Random random, Vector3d vectorToBeOrthogonalTo, boolean normalize)
+   {
+      Vector3d v1 = new Vector3d(vectorToBeOrthogonalTo.getY(), - vectorToBeOrthogonalTo.getX(), 0.0);
+      Vector3d v2 = new Vector3d(- vectorToBeOrthogonalTo.getZ(), 0.0, vectorToBeOrthogonalTo.getX());
+
+      Vector3d randomPerpendicular = new Vector3d();
+      double a = JOctoMapRandomTools.generateRandomDouble(random, 1.0);
+      double b = JOctoMapRandomTools.generateRandomDouble(random, 1.0);
+      randomPerpendicular.scaleAdd(a, v1, randomPerpendicular);
+      randomPerpendicular.scaleAdd(b, v2, randomPerpendicular);
+
+      if (normalize)
+         randomPerpendicular.normalize();
+
+      return randomPerpendicular;
    }
 
    public static float generateRandomFloat(Random random, float maxAbsolute)

@@ -2,6 +2,7 @@ package us.ihmc.jOctoMap.boundingBox;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
+import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
 import org.apache.commons.math3.util.FastMath;
@@ -10,6 +11,7 @@ import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.jOctoMap.tools.OcTreeKeyTools;
+import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 
 public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInterface
 {
@@ -87,13 +89,13 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       simpleBoundingBox.setMinMaxKeys(minKey, maxKey);
    }
 
-   public void setOffset(Point3d offset, double resolution, int treeDepth)
+   public void setOffset(Tuple3d offset, double resolution, int treeDepth)
    {
       setOffset(offset);
       update(resolution, treeDepth);
    }
 
-   public void setOffset(Point3d offset)
+   public void setOffset(Tuple3d offset)
    {
       offsetMetric.set(offset);
       offsetMetricDirtyBit = false;
@@ -166,6 +168,9 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
    @Override
    public boolean isInBoundingBox(double x, double y, double z)
    {
+      if (offsetMetricDirtyBit)
+         throw new RuntimeException("The bounding box offset coordinate is not up to date.");
+
       double xLocal = (x - offsetMetric.getX()) * cosYaw + (y - offsetMetric.getY()) * sinYaw;
       double yLocal = -(x - offsetMetric.getX()) * sinYaw + (y - offsetMetric.getY()) * cosYaw;
       double zLocal = z - offsetMetric.getZ();
@@ -176,11 +181,58 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
    @Override
    public boolean isInBoundingBox(int k0, int k1, int k2)
    {
+      if (offsetKeyDirtyBit)
+         throw new RuntimeException("The bounding box offset key is not up to date.");
+
       int k0Local = (int) ((k0 - offsetKey.getKey(0)) * cosYaw + (k1 - offsetKey.getKey(1)) * sinYaw + centerOffsetKey);
       int k1Local = (int) (-(k0 - offsetKey.getKey(0)) * sinYaw + (k1 - offsetKey.getKey(1)) * cosYaw + centerOffsetKey);
       int k2Local = (int) (k2 - offsetKey.getKey(2) + centerOffsetKey);
 
       return simpleBoundingBox.isInBoundingBox(k0Local, k1Local, k2Local);
+   }
+
+   @Override
+   public RayBoxIntersectionResult rayIntersection(Point3d rayOrigin, Vector3d rayDirection, double maxRayLength)
+   {
+      if (offsetMetricDirtyBit)
+         throw new RuntimeException("The bounding box offset coordinate is not up to date.");
+
+      double xLocal = (rayOrigin.getX() - offsetMetric.getX()) * cosYaw + (rayOrigin.getY() - offsetMetric.getY()) * sinYaw;
+      double yLocal = -(rayOrigin.getX() - offsetMetric.getX()) * sinYaw + (rayOrigin.getY() - offsetMetric.getY()) * cosYaw;
+      double zLocal = rayOrigin.getZ() - offsetMetric.getZ();
+      Point3d rayOriginLocal = new Point3d(xLocal, yLocal, zLocal);
+
+      double vxLocal = rayDirection.getX() * cosYaw + rayDirection.getY() * sinYaw;
+      double vyLocal = -rayDirection.getX() * sinYaw + rayDirection.getY() * cosYaw;
+      double vzLocal = rayDirection.getZ();
+      Vector3d rayDirectionLocal = new Vector3d(vxLocal, vyLocal, vzLocal);
+
+      RayBoxIntersectionResult rayIntersection = simpleBoundingBox.rayIntersection(rayOriginLocal, rayDirectionLocal, maxRayLength);
+
+      if (rayIntersection == null)
+         return null;
+
+      Point3d entry = rayIntersection.getEnteringIntersection();
+      if (entry != null)
+      {
+         double xWorld = entry.getX() * cosYaw - entry.getY() * sinYaw + offsetMetric.getX();
+         double yWorld = entry.getX() * sinYaw + entry.getY() * cosYaw + offsetMetric.getY();
+         entry.setX(xWorld);
+         entry.setY(yWorld);
+         entry.setZ(entry.getZ() + offsetMetric.getZ());
+      }
+
+      Point3d exit = rayIntersection.getExitingIntersection();
+      if (exit != null)
+      {
+         double xWorld = exit.getX() * cosYaw - exit.getY() * sinYaw + offsetMetric.getX();
+         double yWorld = exit.getX() * sinYaw + exit.getY() * cosYaw + offsetMetric.getY();
+         exit.setX(xWorld);
+         exit.setY(yWorld);
+         exit.setZ(exit.getZ() + offsetMetric.getZ());
+      }
+
+      return rayIntersection;
    }
 
    @Override

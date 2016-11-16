@@ -1,12 +1,14 @@
 package us.ihmc.jOctoMap.ocTree;
 
-import static us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.*;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
@@ -14,7 +16,7 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
 import org.apache.commons.lang3.time.StopWatch;
-import org.apache.commons.math3.util.Precision;
+import org.apache.commons.math3.util.Pair;
 
 import us.ihmc.jOctoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.jOctoMap.iterators.OcTreeIteratorFactory;
@@ -50,10 +52,21 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private double minInsertRange = -1.0;
    /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
    private double maxInsertRange = -1.0;
+   /**
+    * Specifies the maximum number of hits for the nodes.
+    * This parameters changes how new hit updates are taken into account when updating nodes.
+    * A lower number implies a quicker updates of new hit locations.
+    */
+   private long nodeMaximumNumberOfHits = Long.MAX_VALUE;
+
+   private boolean computeNormalsInParallel = false;
+   private boolean insertMissesInParallel = false;
+
    private boolean reportTime = false;
 
    private final NormalOcTreeHitUpdateRule hitUpdateRule = new NormalOcTreeHitUpdateRule(occupancyParameters);
    private final NormalOcTreeMissUpdateRule missUpdateRule = new NormalOcTreeMissUpdateRule(occupancyParameters);
+   private RayMissProbabilityUpdater rayMissProbabilityUpdater = null;
 
    public NormalOcTree(double resolution)
    {
@@ -86,10 +99,12 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
       hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
-      occupiedCells.clear();
+      hitUpdateRule.setMaximumNumberOfHits(nodeMaximumNumberOfHits);
+      HashSet<OcTreeKey> occupiedCells = new HashSet<>();
 
       Vector3d direction = new Vector3d();
       Point3d point = new Point3d();
+      PointCloud pointCloudForIntegratingMiss = new PointCloud();
 
       for (NormalOcTreeNode otherNode : otherOcTree)
       {
@@ -112,16 +127,15 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             updateNodeInternal(point, hitUpdateRule, null);
 
             if (occupiedCells.add(occupiedKey))
-               insertMissRay(sensorOrigin, point);
+               pointCloudForIntegratingMiss.add(point);
          }
          else
          {
-            insertMissRay(sensorOrigin, point);
+            pointCloudForIntegratingMiss.add(point);
          }
       }
 
-      while (!freeKeysToUpdate.isEmpty())
-         updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);
+      insertMissRays(sensorOrigin, pointCloudForIntegratingMiss, occupiedCells);
 
       if (reportTime)
       {
@@ -160,7 +174,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       List<NormalOcTreeNode> leafNodes = new ArrayList<>();
       this.forEach(leafNodes::add);
-      leafNodes.stream().forEach(node -> NormalEstimationTools.computeNodeNormalRansac(root, node, normalEstimationParameters));
+      Stream<NormalOcTreeNode> nodeStream = computeNormalsInParallel ? leafNodes.parallelStream() : leafNodes.stream();
+      nodeStream.forEach(node -> NormalEstimationTools.computeNodeNormalRansac(root, node, normalEstimationParameters));
 
       if (root != null)
          updateInnerNormalsRecursive(root, 0);
@@ -178,16 +193,13 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       leafNodes.stream().forEach(NormalOcTreeNode::resetNormal);
    }
 
-   private final HashSet<OcTreeKey> occupiedCells = new HashSet<>();
-   private final ConcurrentLinkedQueue<OcTreeKeyReadOnly> freeKeysToUpdate = new ConcurrentLinkedQueue<>();
-
-   private final RayActionRule integrateMissActionRule = (rayOrigin, rayEnd, rayDirection, key) -> doRayActionOnFreeCell(rayOrigin, rayEnd, rayDirection, key);
-
    private void insertScan(Scan scan, boolean insertMiss)
    {
       missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
       hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
-      occupiedCells.clear();
+      hitUpdateRule.setMaximumNumberOfHits(nodeMaximumNumberOfHits);
+
+      HashSet<OcTreeKey> occupiedCells = new HashSet<>();
 
       Vector3d direction = new Vector3d();
       Point3d point = new Point3d();
@@ -216,26 +228,45 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       if (insertMiss)
       {
-         pointCloud.stream().forEach(scanPoint -> insertMissRay(sensorOrigin, scanPoint));
-         
-         while (!freeKeysToUpdate.isEmpty())
-            updateNodeInternal(freeKeysToUpdate.poll(), missUpdateRule, missUpdateRule);
+         insertMissRays(sensorOrigin, pointCloud, occupiedCells);
       }
    }
 
-   private void insertMissRay(Point3d sensorOrigin, Point3f scanPoint)
+   private void insertMissRays(Point3d sensorOrigin, PointCloud pointCloud, HashSet<OcTreeKey> occupiedCells)
    {
-      insertMissRay(sensorOrigin, new Point3d(scanPoint));
+      Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
+      this.forEach(node -> keyToNodeMap.put(node.getKeyCopy(), node));
+      Stream<Point3f> pointCloudStream = insertMissesInParallel ? pointCloud.parallelStream() : pointCloud.stream();
+
+      List<List<Pair<OcTreeKey, Float>>> keysAndMissUpdates;
+      keysAndMissUpdates = pointCloudStream.map(scanPoint -> insertMissRay(sensorOrigin, scanPoint, occupiedCells, keyToNodeMap))
+                                           .filter(list -> list != null)
+                                           .collect(Collectors.toList());
+
+      for (List<Pair<OcTreeKey, Float>> list : keysAndMissUpdates)
+      {
+         // This has to be sequential as the octree is modified
+         list.stream()
+               .forEach(keyAndMissUpdate -> {
+                  missUpdateRule.setUpdateLogOdds(keyAndMissUpdate.getValue());
+                  updateNodeInternal(keyAndMissUpdate.getKey(), missUpdateRule, missUpdateRule);
+               });
+      }
    }
 
-   private void insertMissRay(Point3d sensorOrigin, Point3d scanPoint)
+   private List<Pair<OcTreeKey, Float>> insertMissRay(Point3d sensorOrigin, Point3f scanPoint, Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
+   {
+      return insertMissRay(sensorOrigin, new Point3d(scanPoint), occupiedCells, keyToNodeMap);
+   }
+
+   private List<Pair<OcTreeKey, Float>> insertMissRay(Point3d sensorOrigin, Point3d scanPoint, Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
    {
       Vector3d direction = new Vector3d();
       direction.sub(scanPoint, sensorOrigin);
       double length = direction.length();
 
       if (minInsertRange >= 0.0 && length < minInsertRange)
-         return;
+         return null;
 
       Point3d rayEnd;
       if (maxInsertRange < 0.0 || length <= maxInsertRange)
@@ -248,26 +279,42 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
          rayEnd.scaleAdd(maxInsertRange / length, direction, sensorOrigin);
       } // end if maxrange
 
+      List<Pair<OcTreeKey, Float>> keysAndMissUpdates = new ArrayList<>();
+
+      RayActionRule integrateMissActionRule = new RayActionRule()
+      {
+         @Override
+         public void doAction(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, OcTreeKeyReadOnly key)
+         {
+            Pair<OcTreeKey, Float> keyAndMissUpdate = doRayActionOnFreeCell(rayOrigin, rayEnd, rayDirection, key, occupiedCells, keyToNodeMap);
+            if (keyAndMissUpdate != null)
+               keysAndMissUpdates.add(keyAndMissUpdate);
+         }
+      };
       OcTreeRayTools.doActionOnRayKeys(sensorOrigin, rayEnd, boundingBox, integrateMissActionRule, resolution, treeDepth);
+
+      return keysAndMissUpdates;
    }
 
-   private void doRayActionOnFreeCell(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, OcTreeKeyReadOnly key)
+   private Pair<OcTreeKey, Float> doRayActionOnFreeCell(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, OcTreeKeyReadOnly key, Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
    {
-      NormalOcTreeNode node = search(key);
-      if (node != null && !occupiedCells.contains(key))
-      {
-         if (node.getNormalConsensusSize() > 10 && node.isHitLocationSet() && node.isNormalSet())
-         {
-            Point3d nodeHitLocation = new Point3d();
-            Vector3d nodeNormal = new Vector3d();
-            node.getHitLocation(nodeHitLocation);
-            node.getNormal(nodeNormal);
+      if (occupiedCells.contains(key))
+         return null;
 
-            if (Precision.equals(Math.abs(nodeNormal.angle(rayDirection)) - Math.PI / 2.0, 0.0, Math.toRadians(30.0)) && distanceFromPointToLine(nodeHitLocation, rayOrigin, rayEnd) > 0.005)
-               return;
-         }
-         freeKeysToUpdate.offer(new OcTreeKey(key));
+      float updateLogOdds = occupancyParameters.getMissProbabilityLogOdds();
+
+      if (rayMissProbabilityUpdater != null)
+      {
+         NormalOcTreeNode node = keyToNodeMap.get(key);
+
+         if (node == null)
+            return null;
+
+         double updateProbability = rayMissProbabilityUpdater.computeRayMissProbability(rayOrigin, rayEnd, rayDirection, node, occupancyParameters);
+         updateLogOdds = JOctoMapTools.logodds(updateProbability);
       }
+
+      return new Pair<>(new OcTreeKey(key), updateLogOdds);
    }
 
    private void updateInnerNormalsRecursive(NormalOcTreeNode node, int depth)
@@ -295,9 +342,62 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       return OcTreeIteratorFactory.createLeafBoundingBoxIteratable(root, boundingBox).iterator();
    }
 
+   /**
+    * When set to true, the computation time for updating the octree is printed out in the console.
+    * @param enable whether to report computation time or not.
+    */
    public void enableReportTime(boolean enable)
    {
       reportTime = enable;
+   }
+
+   /**
+    * When updated with a hit location, each node is computing the average of where it has been hit over time.
+    * The average is computed by keeping track of how many times a node has been hit.
+    * By limiting the number of hits, the user has access on the weight that a new hit represents.
+    * A low value will correspond to maintaining quick updates over time, while a high value will reduce the update over time.
+    * @param maximumNumberOfHits
+    */
+   public void setNodeMaximumNumberOfHits(long maximumNumberOfHits)
+   {
+      if (maximumNumberOfHits <= 0)
+         throw new RuntimeException("Unexpected value for maximumNumberOfHits. Expected a value in [1, Long.MAX_VALUE], but was: " + maximumNumberOfHits);
+      this.nodeMaximumNumberOfHits = maximumNumberOfHits;
+   }
+
+   /**
+    * Changes how the normals for each occupied is evaluated, either in parallel or sequential.
+    * The parallel computation offers quicker updates at the cost of an increased CPU usage.
+    * @param enable whether to compute the normals in parallel or sequential.
+    */
+   public void enableParallelComputationForNormals(boolean enable)
+   {
+      computeNormalsInParallel = enable;
+   }
+
+   /**
+    * When updating the occupancy of the octree, most of the time is spent updating the misses.
+    * Even if expensive, miss updates are useful to make the octree to a changing environment.
+    * The parallel computation offers quicker updates at the cost of an increased CPU usage.
+    * @param enable whether to insert the misses in parallel or sequential.
+    */
+   public void enableParallelInsertionOfMisses(boolean enable)
+   {
+      insertMissesInParallel = enable;
+   }
+
+   /**
+    * Set a custom updater to compute the probability of a miss when a node is traversed by a ray.
+    * @param rayMissProbabilityUpdater the custom update to use.
+    */
+   public void setCustomRayMissProbabilityUpdater(RayMissProbabilityUpdater rayMissProbabilityUpdater)
+   {
+      this.rayMissProbabilityUpdater = rayMissProbabilityUpdater;
+   }
+
+   public void disableCustomRayMissProbabilityUpdater()
+   {
+      this.rayMissProbabilityUpdater = null;
    }
 
    public void disableBoundingBox()
@@ -411,5 +511,29 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    protected Class<NormalOcTreeNode> getNodeClass()
    {
       return NormalOcTreeNode.class;
+   }
+
+   /**
+    * Provides a flexible API for computing a custom update for nodes traversed by rays.
+    * Useful to reduce "self-destruction" of the octree when scanning surfaces at a shallow angle.
+    * The normal contained in each node combined with the ray properties can be used to refine the probability of a miss.
+    */
+   public interface RayMissProbabilityUpdater
+   {
+      /**
+       * Compute a custom miss probability update when a ray goes through a node.
+       * The default implementation returns the miss probability from the occupancy parameters.
+       * 
+       * @param rayOrigin the origin of the ray.
+       * @param rayEnd the hit location of the ray.
+       * @param rayDirection the direction of the ray.
+       * @param node the current node the ray is going through.
+       * @param parameters the current occupancy parameters used by this octree.
+       * @return the custom miss probability update.
+       */
+      public default double computeRayMissProbability(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, NormalOcTreeNode node, OccupancyParameters parameters)
+      {
+         return parameters.getMissProbability();
+      }
    }
 }
