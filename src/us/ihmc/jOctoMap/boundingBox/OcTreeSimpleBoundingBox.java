@@ -9,6 +9,8 @@ import javax.vecmath.Vector3d;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools;
+import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools;
+import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 
 public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
 {
@@ -211,6 +213,14 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
       if (k2 < minKey.getKey(2) || k2 > maxKey.getKey(2))
          return false;
       return true;
+   }
+
+   @Override
+   public RayBoxIntersectionResult rayIntersection(Point3d rayOrigin, Vector3d rayDirection, double maxRayLength)
+   {
+      if (minCoordinateDirtyBit || maxCoordinateDirtyBit)
+         throw new RuntimeException("The bounding box coordinates are not up to date.");
+      return JOctoMapGeometryTools.rayBoxIntersection(minCoordinate, maxCoordinate, rayOrigin, rayDirection, maxRayLength);
    }
 
    public OcTreeKeyReadOnly getMinKey()

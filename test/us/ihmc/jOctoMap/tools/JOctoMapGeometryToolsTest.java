@@ -445,7 +445,7 @@ public class JOctoMapGeometryToolsTest
       }
    }
 
-   private static PointsOnEachBoxFace generateRandomPointsOnEachBoxFace(Random random, Point3d min, Point3d max)
+   public static PointsOnEachBoxFace generateRandomPointsOnEachBoxFace(Random random, Point3d min, Point3d max)
    {
       Point3d pointAtXMin = new Point3d();
       Point3d pointAtXMax = new Point3d();
@@ -524,7 +524,7 @@ public class JOctoMapGeometryToolsTest
       return new BoxFaceCenters(centerAtXMin, centerAtXMax, centerAtYMin, centerAtYMax, centerAtZMin, centerAtZMax);
    }
 
-   private static class PointsOnEachBoxFace
+   public static class PointsOnEachBoxFace
    {
       private final Point3d pointAtXMin;
       private final Point3d pointAtXMax;
