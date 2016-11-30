@@ -14,6 +14,12 @@ public class Scan
       this.pointCloud = pointCloud;
    }
 
+   public Scan(Scan other)
+   {
+      sensorOrigin = new Point3d(other.sensorOrigin);
+      pointCloud = new PointCloud(other.pointCloud);
+   }
+
    public void transform(Matrix4d transform)
    {
       transform.transform(sensorOrigin);
