@@ -8,9 +8,9 @@ import javax.vecmath.Vector3d;
 
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
-import us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools;
 import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
+import us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools;
 
 public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
 {
@@ -67,16 +67,58 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
       maxKeyDirtyBit = other.maxKeyDirtyBit;
    }
 
+   public void setMinX(double xMin)
+   {
+      minCoordinate.setX(xMin);
+      minCoordinateDirtyBit = false;
+      minKeyDirtyBit = true;
+   }
+
+   public void setMinY(double yMin)
+   {
+      minCoordinate.setY(yMin);
+      minCoordinateDirtyBit = false;
+      minKeyDirtyBit = true;
+   }
+
+   public void setMinZ(double zMin)
+   {
+      minCoordinate.setZ(zMin);
+      minCoordinateDirtyBit = false;
+      minKeyDirtyBit = true;
+   }
+
+   public void setMaxX(double xMax)
+   {
+      maxCoordinate.setX(xMax);
+      maxCoordinateDirtyBit = false;
+      maxKeyDirtyBit = true;
+   }
+   
+   public void setMaxY(double yMax)
+   {
+      maxCoordinate.setY(yMax);
+      maxCoordinateDirtyBit = false;
+      maxKeyDirtyBit = true;
+   }
+   
+   public void setMaxZ(double zMax)
+   {
+      maxCoordinate.setZ(zMax);
+      maxCoordinateDirtyBit = false;
+      maxKeyDirtyBit = true;
+   }
+
    public void setMinCoordinate(double xMin, double yMin, double zMin)
    {
-      this.minCoordinate.set(xMin, yMin, zMin);
+      minCoordinate.set(xMin, yMin, zMin);
       minCoordinateDirtyBit = false;
       minKeyDirtyBit = true;
    }
 
    public void setMaxCoordinate(double xMax, double yMax, double zMax)
    {
-      this.maxCoordinate.set(xMax, yMax, zMax);
+      maxCoordinate.set(xMax, yMax, zMax);
       maxCoordinateDirtyBit = false;
       maxKeyDirtyBit = true;
    }
