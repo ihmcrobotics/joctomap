@@ -8,6 +8,10 @@ import java.util.concurrent.ThreadLocalRandom;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
+import org.apache.commons.lang3.mutable.MutableDouble;
+import org.apache.commons.lang3.mutable.MutableInt;
+import org.apache.commons.math3.stat.descriptive.moment.Variance;
+
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.NormalOcTreeNode;
 import us.ihmc.jOctoMap.normalEstimation.NormalEstimationParameters;
@@ -29,6 +33,62 @@ public abstract class NormalEstimationTools
          return;
       }
 
+      List<NormalOcTreeNode> neighbors = searchNeighbors(root, currentNode, parameters);
+
+      double maxDistanceFromPlane = parameters.getMaxDistanceFromPlane();
+
+      if (neighbors.size() < 2)
+         return;
+
+      Random random = ThreadLocalRandom.current();
+      Point3d[] randomDraw = {new Point3d(), new Point3d()};
+      Vector3d currentNormal = new Vector3d();
+      Point3d currentNodeHitLocation = new Point3d();
+
+      currentNode.getNormal(currentNormal);
+      currentNode.getHitLocation(currentNodeHitLocation);
+
+      // Need to be recomputed as the neighbors may have changed
+      MutableInt currentConsensus = new MutableInt();
+      MutableDouble currentVariance = new MutableDouble();
+      computeNormalConsensusAndVariance(currentNodeHitLocation, currentNormal, neighbors, maxDistanceFromPlane, currentVariance, currentConsensus);
+
+//      boolean hasNormalBeenUpdatedAtLeastOnce = false;
+//      do
+      {
+         int[] randomIndices = random.ints(0, neighbors.size()).distinct().limit(2).toArray();
+         neighbors.get(randomIndices[0]).getHitLocation(randomDraw[0]);
+         neighbors.get(randomIndices[1]).getHitLocation(randomDraw[1]);
+
+         Vector3d normalCandidate = JOctoMapGeometryTools.computeNormal(currentNodeHitLocation, randomDraw[0], randomDraw[1]);
+
+         MutableInt candidateConsensus = new MutableInt();
+         MutableDouble candidateVariance = new MutableDouble();
+         computeNormalConsensusAndVariance(currentNodeHitLocation, normalCandidate, neighbors, maxDistanceFromPlane, candidateVariance, candidateConsensus);
+
+         double minConsensusRatio = parameters.getMinConsensusRatio();
+         double maxAverageDeviationRatio = parameters.getMaxAverageDeviationRatio();
+
+         boolean isSimplyBetter = candidateConsensus.intValue() >= currentConsensus.intValue() && candidateVariance.doubleValue() <= currentVariance.doubleValue();
+         boolean hasSmallerConsensusButIsMuchBetter = candidateConsensus.intValue() >= (int) (minConsensusRatio * currentConsensus.intValue())
+               && candidateVariance.doubleValue() <= maxAverageDeviationRatio * currentVariance.doubleValue();
+
+         if (isSimplyBetter || hasSmallerConsensusButIsMuchBetter)
+         {
+            if (currentNormal.dot(normalCandidate) < 0.0)
+               normalCandidate.negate();
+
+            currentNode.setNormal(normalCandidate);
+            currentNode.setNormalQuality(candidateVariance.floatValue(), candidateConsensus.intValue());
+            currentVariance = candidateVariance;
+//            hasNormalBeenUpdatedAtLeastOnce = true;
+         }
+      }
+//      while (!hasNormalBeenUpdatedAtLeastOnce && currentAverageDeviation > 0.005);// TODO Review the approach. It is pretty time consuming for large datasets.
+   }
+
+   private static List<NormalOcTreeNode> searchNeighbors(NormalOcTreeNode root, NormalOcTreeNode currentNode, NormalEstimationParameters parameters)
+   {
       List<NormalOcTreeNode> neighbors = new ArrayList<>();
       NeighborActionRule<NormalOcTreeNode> collectNodeCentersRule = new NeighborActionRule<NormalOcTreeNode>()
       {
@@ -41,97 +101,33 @@ public abstract class NormalEstimationTools
       };
 
       double searchRadius = parameters.getSearchRadius();
-      double maxDistanceFromPlane = parameters.getMaxDistanceFromPlane();
 
       OcTreeNearestNeighborTools.findRadiusNeighbors(root, currentNode, searchRadius, collectNodeCentersRule);
+      return neighbors;
+   }
 
-      Random random = ThreadLocalRandom.current();
-      Point3d[] randomDraw = {new Point3d(), new Point3d()};
-      Vector3d currentNormal = new Vector3d();
-      Point3d currentNodeHitLocation = new Point3d();
-      Vector3d currentNodeToNeighbor = new Vector3d();
+   private static void computeNormalConsensusAndVariance(Point3d pointOnPlane, Vector3d planeNormal, Iterable<NormalOcTreeNode> neighbors, double maxDistanceFromPlane, MutableDouble varianceToPack, MutableInt consensusToPack)
+   {
+      Variance variance = new Variance();
+      consensusToPack.setValue(0);
 
-      currentNode.getNormal(currentNormal);
-      currentNode.getHitLocation(currentNodeHitLocation);
+      Vector3d toNeighborHitLocation = new Vector3d();
 
-      // Need to be recomputed as the neighbors may have changed
-      double currentAverageDeviation = 0.0;
-      int currentConsensus = 0;
-
-      for (int i = 0; i < neighbors.size(); i++)
+      for (NormalOcTreeNode neighbor : neighbors)
       {
-         NormalOcTreeNode neighbor = neighbors.get(i);
-
-         currentNodeToNeighbor.set(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
-         currentNodeToNeighbor.sub(currentNodeHitLocation);
-         double distanceFromPlane = Math.abs(currentNormal.dot(currentNodeToNeighbor));
+         toNeighborHitLocation.set(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
+         toNeighborHitLocation.sub(pointOnPlane);
+         double distanceFromPlane = Math.abs(planeNormal.dot(toNeighborHitLocation));
          if (distanceFromPlane <= maxDistanceFromPlane)
          {
-            currentAverageDeviation += distanceFromPlane;
-            currentConsensus++;
+            variance.increment(distanceFromPlane);
+            consensusToPack.increment();
          }
       }
 
-      if (currentConsensus == 0)
-         currentAverageDeviation = Double.POSITIVE_INFINITY;
+      if (consensusToPack.intValue() == 0)
+         varianceToPack.setValue(Double.POSITIVE_INFINITY);
       else
-         currentAverageDeviation /= currentConsensus;
-
-//      boolean hasNormalBeenUpdatedAtLeastOnce = false;
-//      do
-      {
-         int index = 0;
-
-         while (index < 2)
-         {
-            // Did not find two other points. Give up for now.
-            if (neighbors.isEmpty())
-               return;
-
-            int nextInt = random.nextInt(neighbors.size());
-            NormalOcTreeNode neighbor = neighbors.get(nextInt);
-            randomDraw[index++].set(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
-            neighbors.remove(nextInt);
-         }
-
-         Vector3d normalCandidate = JOctoMapGeometryTools.computeNormal(currentNodeHitLocation, randomDraw[0], randomDraw[1]);
-
-         float candidateAverageDeviation = 0.0f;
-         int candidateConsensus = 2; // The two points picked randomly are exactly on the plane
-
-         for (int i = 0; i < neighbors.size(); i++)
-         {
-            NormalOcTreeNode neighbor = neighbors.get(i);
-            currentNodeToNeighbor.set(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
-            currentNodeToNeighbor.sub(currentNodeHitLocation);
-            double distanceFromPlane = Math.abs(normalCandidate.dot(currentNodeToNeighbor));
-            if (distanceFromPlane < maxDistanceFromPlane)
-            {
-               candidateAverageDeviation += distanceFromPlane;
-               candidateConsensus++;
-            }
-         }
-
-         candidateAverageDeviation /= candidateConsensus;
-
-         double minConsensusRatio = parameters.getMinConsensusRatio();
-         double maxAverageDeviationRatio = parameters.getMaxAverageDeviationRatio();
-
-         boolean isSimplyBetter = candidateConsensus >= currentConsensus && candidateAverageDeviation <= currentAverageDeviation;
-         boolean hasSmallerConsensusButIsMuchBetter = candidateConsensus >= (int) (minConsensusRatio * currentConsensus)
-               && candidateAverageDeviation <= maxAverageDeviationRatio * currentAverageDeviation;
-
-         if (isSimplyBetter || hasSmallerConsensusButIsMuchBetter)
-         {
-            if (currentNormal.dot(normalCandidate) < 0.0)
-               normalCandidate.negate();
-
-            currentNode.setNormal(normalCandidate);
-            currentNode.setNormalQuality(candidateAverageDeviation, candidateConsensus);
-            currentAverageDeviation = candidateAverageDeviation;
-//            hasNormalBeenUpdatedAtLeastOnce = true;
-         }
-      }
-//      while (!hasNormalBeenUpdatedAtLeastOnce && currentAverageDeviation > 0.005);// TODO Review the approach. It is pretty time consuming for large datasets.
+         varianceToPack.setValue(variance.getResult());
    }
 }
