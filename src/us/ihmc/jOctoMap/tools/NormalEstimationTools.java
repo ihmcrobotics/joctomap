@@ -47,8 +47,7 @@ public abstract class NormalEstimationTools
       MutableDouble currentVariance = new MutableDouble();
       computeNormalConsensusAndVariance(currentNodeHitLocation, currentNormal, neighbors, maxDistanceFromPlane, currentVariance, currentConsensus);
 
-//      boolean hasNormalBeenUpdatedAtLeastOnce = false;
-//      do
+      for (int iteration = 0; iteration < parameters.getNumberOfIterations(); iteration++)
       {
          Vector3d candidateNormal = computeNormalFromTwoRandomNeighbors(neighbors, currentNodeHitLocation);
 
@@ -56,9 +55,8 @@ public abstract class NormalEstimationTools
          MutableDouble candidateVariance = new MutableDouble();
          computeNormalConsensusAndVariance(currentNodeHitLocation, candidateNormal, neighbors, maxDistanceFromPlane, candidateVariance, candidateConsensus);
 
-         /*hasNormalBeenUpdatedAtLeastOnce |= */ peekBestNormal(currentNode, currentNormal, currentVariance, currentConsensus, candidateNormal, candidateVariance, candidateConsensus, parameters);
+         peekBestNormal(currentNode, currentNormal, currentVariance, currentConsensus, candidateNormal, candidateVariance, candidateConsensus, parameters);
       }
-//      while (!hasNormalBeenUpdatedAtLeastOnce && currentAverageDeviation > 0.005);// TODO Review the approach. It is pretty time consuming for large datasets.
    }
 
    private static boolean peekBestNormal(NormalOcTreeNode node, Vector3d currentNormal, MutableDouble currentVariance, MutableInt currentConsensus,
@@ -78,7 +76,8 @@ public abstract class NormalEstimationTools
       return false;
    }
 
-   private static boolean isCandidateNormalBetter(MutableDouble currentVariance, MutableInt currentConsensus, MutableDouble candidateVariance, MutableInt candidateConsensus, NormalEstimationParameters parameters)
+   private static boolean isCandidateNormalBetter(MutableDouble currentVariance, MutableInt currentConsensus, MutableDouble candidateVariance,
+         MutableInt candidateConsensus, NormalEstimationParameters parameters)
    {
       double minConsensusRatio = parameters.getMinConsensusRatio();
       double maxAverageDeviationRatio = parameters.getMaxAverageDeviationRatio();
@@ -96,12 +95,12 @@ public abstract class NormalEstimationTools
    {
       Random random = ThreadLocalRandom.current();
       Point3d[] randomHitLocations = random.ints(0, neighbors.size())
-                                        .distinct()
-                                        .limit(2)
-                                        .mapToObj(neighbors::get)
-                                        .map(NormalOcTreeNode::getHitLocationCopy)
-                                        .toArray(value -> new Point3d[value]);
-      
+                                           .distinct()
+                                           .limit(2)
+                                           .mapToObj(neighbors::get)
+                                           .map(NormalOcTreeNode::getHitLocationCopy)
+                                           .toArray(value -> new Point3d[value]);
+
       Vector3d normalCandidate = JOctoMapGeometryTools.computeNormal(currentNodeHitLocation, randomHitLocations[0], randomHitLocations[1]);
       return normalCandidate;
    }
@@ -125,7 +124,8 @@ public abstract class NormalEstimationTools
       return neighbors;
    }
 
-   private static void computeNormalConsensusAndVariance(Point3d pointOnPlane, Vector3d planeNormal, Iterable<NormalOcTreeNode> neighbors, double maxDistanceFromPlane, MutableDouble varianceToPack, MutableInt consensusToPack)
+   private static void computeNormalConsensusAndVariance(Point3d pointOnPlane, Vector3d planeNormal, Iterable<NormalOcTreeNode> neighbors,
+         double maxDistanceFromPlane, MutableDouble varianceToPack, MutableInt consensusToPack)
    {
       Variance variance = new Variance();
       consensusToPack.setValue(0);
