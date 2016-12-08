@@ -40,13 +40,8 @@ public abstract class NormalEstimationTools
       if (neighbors.size() < 2)
          return;
 
-      Random random = ThreadLocalRandom.current();
-      Point3d[] randomDraw = {new Point3d(), new Point3d()};
-      Vector3d currentNormal = new Vector3d();
-      Point3d currentNodeHitLocation = new Point3d();
-
-      currentNode.getNormal(currentNormal);
-      currentNode.getHitLocation(currentNodeHitLocation);
+      Vector3d currentNormal = currentNode.getNormalCopy();
+      Point3d currentNodeHitLocation = currentNode.getHitLocationCopy();
 
       // Need to be recomputed as the neighbors may have changed
       MutableInt currentConsensus = new MutableInt();
@@ -56,11 +51,7 @@ public abstract class NormalEstimationTools
 //      boolean hasNormalBeenUpdatedAtLeastOnce = false;
 //      do
       {
-         int[] randomIndices = random.ints(0, neighbors.size()).distinct().limit(2).toArray();
-         neighbors.get(randomIndices[0]).getHitLocation(randomDraw[0]);
-         neighbors.get(randomIndices[1]).getHitLocation(randomDraw[1]);
-
-         Vector3d normalCandidate = JOctoMapGeometryTools.computeNormal(currentNodeHitLocation, randomDraw[0], randomDraw[1]);
+         Vector3d normalCandidate = computeNormalFromTwoRandomNeighbors(neighbors, currentNodeHitLocation);
 
          MutableInt candidateConsensus = new MutableInt();
          MutableDouble candidateVariance = new MutableDouble();
@@ -80,17 +71,32 @@ public abstract class NormalEstimationTools
 
             currentNode.setNormal(normalCandidate);
             currentNode.setNormalQuality(candidateVariance.floatValue(), candidateConsensus.intValue());
-            currentVariance = candidateVariance;
+            currentConsensus.setValue(candidateConsensus);
+            currentVariance.setValue(candidateVariance);
 //            hasNormalBeenUpdatedAtLeastOnce = true;
          }
       }
 //      while (!hasNormalBeenUpdatedAtLeastOnce && currentAverageDeviation > 0.005);// TODO Review the approach. It is pretty time consuming for large datasets.
    }
 
+   private static Vector3d computeNormalFromTwoRandomNeighbors(List<NormalOcTreeNode> neighbors, Point3d currentNodeHitLocation)
+   {
+      Random random = ThreadLocalRandom.current();
+      Point3d[] randomHitLocations = random.ints(0, neighbors.size())
+                                        .distinct()
+                                        .limit(2)
+                                        .mapToObj(neighbors::get)
+                                        .map(NormalOcTreeNode::getHitLocationCopy)
+                                        .toArray(value -> new Point3d[value]);
+      
+      Vector3d normalCandidate = JOctoMapGeometryTools.computeNormal(currentNodeHitLocation, randomHitLocations[0], randomHitLocations[1]);
+      return normalCandidate;
+   }
+
    private static List<NormalOcTreeNode> searchNeighbors(NormalOcTreeNode root, NormalOcTreeNode currentNode, NormalEstimationParameters parameters)
    {
       List<NormalOcTreeNode> neighbors = new ArrayList<>();
-      NeighborActionRule<NormalOcTreeNode> collectNodeCentersRule = new NeighborActionRule<NormalOcTreeNode>()
+      NeighborActionRule<NormalOcTreeNode> collectNeighborsRule = new NeighborActionRule<NormalOcTreeNode>()
       {
          @Override
          public void doActionOnNeighbor(NormalOcTreeNode node)
@@ -102,7 +108,7 @@ public abstract class NormalEstimationTools
 
       double searchRadius = parameters.getSearchRadius();
 
-      OcTreeNearestNeighborTools.findRadiusNeighbors(root, currentNode, searchRadius, collectNodeCentersRule);
+      OcTreeNearestNeighborTools.findRadiusNeighbors(root, currentNode, searchRadius, collectNeighborsRule);
       return neighbors;
    }
 
