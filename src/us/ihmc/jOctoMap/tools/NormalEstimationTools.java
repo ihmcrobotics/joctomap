@@ -45,7 +45,6 @@ public abstract class NormalEstimationTools
 
       OcTreeNearestNeighborTools.findRadiusNeighbors(root, currentNode, searchRadius, collectNodeCentersRule);
 
-      Vector3d normalCandidate = new Vector3d();
       Random random = ThreadLocalRandom.current();
       Point3d[] randomDraw = {new Point3d(), new Point3d()};
       Vector3d currentNormal = new Vector3d();
@@ -95,18 +94,7 @@ public abstract class NormalEstimationTools
             neighbors.remove(nextInt);
          }
 
-         double v1_x = randomDraw[0].getX() - currentNodeHitLocation.getX();
-         double v1_y = randomDraw[0].getY() - currentNodeHitLocation.getY();
-         double v1_z = randomDraw[0].getZ() - currentNodeHitLocation.getZ();
-
-         double v2_x = randomDraw[1].getX() - currentNodeHitLocation.getX();
-         double v2_y = randomDraw[1].getY() - currentNodeHitLocation.getY();
-         double v2_z = randomDraw[1].getZ() - currentNodeHitLocation.getZ();
-
-         normalCandidate.setX(v1_y * v2_z - v1_z * v2_y);
-         normalCandidate.setY(v2_x * v1_z - v2_z * v1_x);
-         normalCandidate.setZ(v1_x * v2_y - v1_y * v2_x);
-         normalCandidate.normalize();
+         Vector3d normalCandidate = JOctoMapGeometryTools.computeNormal(currentNodeHitLocation, randomDraw[0], randomDraw[1]);
 
          float candidateAverageDeviation = 0.0f;
          int candidateConsensus = 2; // The two points picked randomly are exactly on the plane
