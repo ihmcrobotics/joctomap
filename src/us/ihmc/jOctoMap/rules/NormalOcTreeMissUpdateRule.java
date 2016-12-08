@@ -1,5 +1,8 @@
 package us.ihmc.jOctoMap.rules;
 
+import java.util.Set;
+
+import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.NormalOcTreeNode;
 import us.ihmc.jOctoMap.occupancy.OccupancyParametersReadOnly;
@@ -11,6 +14,7 @@ public class NormalOcTreeMissUpdateRule implements UpdateRule<NormalOcTreeNode>,
 {
    private float updateLogOdds = Float.NaN;
    private final OccupancyParametersReadOnly parameters;
+   private Set<OcTreeKey> deletedLeaves = null;
 
    public NormalOcTreeMissUpdateRule(OccupancyParametersReadOnly occupancyParameters)
    {
@@ -20,6 +24,11 @@ public class NormalOcTreeMissUpdateRule implements UpdateRule<NormalOcTreeNode>,
    public void setUpdateLogOdds(float updateLogOdds)
    {
       this.updateLogOdds = updateLogOdds;
+   }
+
+   public void setDeletedLeavesToUpdate(Set<OcTreeKey> deletedLeavesToUpdate)
+   {
+      deletedLeaves = deletedLeavesToUpdate;
    }
 
    @Override
@@ -32,6 +41,8 @@ public class NormalOcTreeMissUpdateRule implements UpdateRule<NormalOcTreeNode>,
    public void updateLeaf(NormalOcTreeNode leafToUpdate, OcTreeKeyReadOnly leafKey, boolean nodeJustCreated)
    {
       OccupancyTools.updateNodeLogOdds(parameters, leafToUpdate, updateLogOdds);
+      if (deletedLeaves != null && deleteUpdatedNode(leafToUpdate))
+         deletedLeaves.add(leafToUpdate.getKeyCopy());
    }
 
    @Override

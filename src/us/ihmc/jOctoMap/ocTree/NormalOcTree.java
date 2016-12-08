@@ -1,6 +1,7 @@
 package us.ihmc.jOctoMap.ocTree;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -10,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
@@ -84,79 +84,30 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       updateNormals();
    }
 
-   public void insertNormalOcTree(Point3d sensorOrigin, NormalOcTree otherOcTree)
-   {
-      insertNormalOcTree(sensorOrigin, otherOcTree, null);
-   }
-
-   public void insertNormalOcTree(Point3d sensorOrigin, NormalOcTree otherOcTree, Matrix4d otherOcTreeTransform)
-   {
-      if (reportTime)
-      {
-         stopWatch.reset();
-         stopWatch.start();
-      }
-
-      missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
-      hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
-      hitUpdateRule.setMaximumNumberOfHits(nodeMaximumNumberOfHits);
-      HashSet<OcTreeKey> occupiedCells = new HashSet<>();
-
-      Vector3d direction = new Vector3d();
-      Point3d point = new Point3d();
-      PointCloud pointCloudForIntegratingMiss = new PointCloud();
-
-      for (NormalOcTreeNode otherNode : otherOcTree)
-      {
-         otherNode.getHitLocation(point);
-         if (otherOcTreeTransform != null)
-            otherOcTreeTransform.transform(point);
-         
-         direction.sub(point, sensorOrigin);
-         double length = direction.length();
-
-         if ((maxInsertRange < 0.0 || length <= maxInsertRange) && (minInsertRange < 0.0 || length >= minInsertRange) && isInBoundingBox(point))
-         {
-            OcTreeKey occupiedKey = coordinateToKey(point);
-            if (occupiedKey == null)
-               continue;
-
-            hitUpdateRule.setHitLocation(sensorOrigin, point);
-            hitUpdateRule.setHitUpdateWeight(otherNode.getNumberOfHits());
-
-            updateNodeInternal(point, hitUpdateRule, null);
-
-            if (occupiedCells.add(occupiedKey))
-               pointCloudForIntegratingMiss.add(point);
-         }
-         else
-         {
-            pointCloudForIntegratingMiss.add(point);
-         }
-      }
-
-      insertMissRays(sensorOrigin, pointCloudForIntegratingMiss, occupiedCells);
-
-      if (reportTime)
-      {
-         System.out.println(name + ": Insert OcTree took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
-      }
-   }
-
    public void insertScanCollection(ScanCollection scanCollection)
    {
-      insertScanCollection(scanCollection, true);
+      insertScanCollection(scanCollection, null, null);
+   }
+
+   public void insertScanCollection(ScanCollection scanCollection, Set<NormalOcTreeNode> updatedLeavesToPack, Set<OcTreeKey> deletedLeavesToPack)
+   {
+      insertScanCollection(scanCollection, true, updatedLeavesToPack, deletedLeavesToPack);
    }
 
    public void insertScanCollection(ScanCollection scanCollection, boolean insertMiss)
    {
+      insertScanCollection(scanCollection, insertMiss, null, null);
+   }
+
+   public void insertScanCollection(ScanCollection scanCollection, boolean insertMiss, Set<NormalOcTreeNode> updatedLeavesToPack, Set<OcTreeKey> deletedLeavesToPack)
+   {
       if (reportTime)
       {
          stopWatch.reset();
          stopWatch.start();
       }
 
-      scanCollection.forEach(scan -> insertScan(scan, insertMiss));
+      scanCollection.forEach(scan -> insertScan(scan, insertMiss, updatedLeavesToPack, deletedLeavesToPack));
 
       if (reportTime)
       {
@@ -164,36 +115,22 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   public void updateNormals()
+   public void insertScan(Scan scan)
    {
-      if (reportTime)
-      {
-         stopWatch.reset();
-         stopWatch.start();
-      }
-
-      List<NormalOcTreeNode> leafNodes = new ArrayList<>();
-      this.forEach(leafNodes::add);
-      Stream<NormalOcTreeNode> nodeStream = computeNormalsInParallel ? leafNodes.parallelStream() : leafNodes.stream();
-      nodeStream.forEach(node -> NormalEstimationTools.computeNodeNormalRansac(root, node, normalEstimationParameters));
-
-      if (root != null)
-         updateInnerNormalsRecursive(root, 0);
-
-      if (reportTime)
-      {
-         System.out.println(name + ": Normal computation took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
-      }
+      insertScan(scan, true, null, null);
    }
 
-   public void clearNormals()
+   public void insertScan(Scan scan, boolean insertMiss)
    {
-      List<NormalOcTreeNode> leafNodes = new ArrayList<>();
-      this.forEach(leafNodes::add);
-      leafNodes.stream().forEach(NormalOcTreeNode::resetNormal);
+      insertScan(scan, insertMiss, null, null);
    }
 
-   private void insertScan(Scan scan, boolean insertMiss)
+   public void insertScan(Scan scan, Set<NormalOcTreeNode> updatedLeavesToPack, Set<OcTreeKey> deletedLeavesToPack)
+   {
+      insertScan(scan, true, updatedLeavesToPack, deletedLeavesToPack);
+   }
+
+   public void insertScan(Scan scan, boolean insertMiss, Set<NormalOcTreeNode> updatedLeavesToPack, Set<OcTreeKey> deletedLeavesToPack)
    {
       missUpdateRule.setUpdateLogOdds(occupancyParameters.getMissProbabilityLogOdds());
       hitUpdateRule.setUpdateLogOdds(occupancyParameters.getHitProbabilityLogOdds());
@@ -218,7 +155,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
             if (occupiedKey == null)
                continue;
             hitUpdateRule.setHitLocation(sensorOrigin, point);
-            updateNodeInternal(occupiedKey, hitUpdateRule, null);
+            NormalOcTreeNode updatedLeaf = updateNodeInternal(occupiedKey, hitUpdateRule, null);
+            if (updatedLeavesToPack != null)
+               updatedLeavesToPack.add(updatedLeaf);
             // Add the key to the occupied set.
             // if it was already present, remove the point from the scan to speed up integration of miss.
             if (!occupiedCells.add(occupiedKey) && insertMiss)
@@ -228,12 +167,14 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       if (insertMiss)
       {
-         insertMissRays(sensorOrigin, pointCloud, occupiedCells);
+         insertMissRays(sensorOrigin, pointCloud, occupiedCells, deletedLeavesToPack);
       }
    }
 
-   private void insertMissRays(Point3d sensorOrigin, PointCloud pointCloud, HashSet<OcTreeKey> occupiedCells)
+   private void insertMissRays(Point3d sensorOrigin, PointCloud pointCloud, Set<OcTreeKey> occupiedCells, Set<OcTreeKey> deletedLeavesToPack)
    {
+      missUpdateRule.setDeletedLeavesToUpdate(deletedLeavesToPack);
+
       Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
       this.forEach(node -> keyToNodeMap.put(node.getKeyCopy(), node));
       Stream<Point3f> pointCloudStream = insertMissesInParallel ? pointCloud.parallelStream() : pointCloud.stream();
@@ -247,35 +188,26 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       {
          // This has to be sequential as the octree is modified
          list.stream()
-               .forEach(keyAndMissUpdate -> {
-                  missUpdateRule.setUpdateLogOdds(keyAndMissUpdate.getValue());
-                  updateNodeInternal(keyAndMissUpdate.getKey(), missUpdateRule, missUpdateRule);
-               });
+             .forEach(keyAndMissUpdate ->
+             {
+                missUpdateRule.setUpdateLogOdds(keyAndMissUpdate.getValue());
+                updateNodeInternal(keyAndMissUpdate.getKey(), missUpdateRule, missUpdateRule);
+             });
       }
    }
 
    private List<Pair<OcTreeKey, Float>> insertMissRay(Point3d sensorOrigin, Point3f scanPoint, Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
    {
-      return insertMissRay(sensorOrigin, new Point3d(scanPoint), occupiedCells, keyToNodeMap);
-   }
-
-   private List<Pair<OcTreeKey, Float>> insertMissRay(Point3d sensorOrigin, Point3d scanPoint, Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
-   {
-      Vector3d direction = new Vector3d();
-      direction.sub(scanPoint, sensorOrigin);
+      Vector3d direction = new Vector3d(scanPoint);
+      direction.sub(sensorOrigin);
       double length = direction.length();
 
       if (minInsertRange >= 0.0 && length < minInsertRange)
          return null;
 
-      Point3d rayEnd;
-      if (maxInsertRange < 0.0 || length <= maxInsertRange)
-      { // is not maxrange meas, free cells
-         rayEnd = scanPoint;
-      }
-      else
+      Point3d rayEnd = new Point3d(scanPoint);
+      if (maxInsertRange > 0.0 && length > maxInsertRange)
       { // user set a maxrange and length is above
-         rayEnd = new Point3d();
          rayEnd.scaleAdd(maxInsertRange / length, direction, sensorOrigin);
       } // end if maxrange
 
@@ -315,6 +247,50 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
 
       return new Pair<>(new OcTreeKey(key), updateLogOdds);
+   }
+
+   public void updateNormals()
+   {
+      updateNormals(normalEstimationParameters);
+   }
+
+   public void updateNormals(NormalEstimationParameters normalEstimationParameters)
+   {
+      List<NormalOcTreeNode> leafNodes = new ArrayList<>();
+      this.forEach(leafNodes::add);
+      updateNodesNormals(leafNodes, normalEstimationParameters);
+   }
+
+   public void updateNodesNormals(Collection<NormalOcTreeNode> nodesToUpdate)
+   {
+      updateNodesNormals(nodesToUpdate, normalEstimationParameters);
+   }
+
+   public void updateNodesNormals(Collection<NormalOcTreeNode> nodesToUpdate, NormalEstimationParameters normalEstimationParameters)
+   {
+      if (reportTime)
+      {
+         stopWatch.reset();
+         stopWatch.start();
+      }
+
+      Stream<NormalOcTreeNode> nodeStream = computeNormalsInParallel ? nodesToUpdate.parallelStream() : nodesToUpdate.stream();
+      nodeStream.forEach(node -> NormalEstimationTools.computeNodeNormalRansac(root, node, normalEstimationParameters));
+
+      if (root != null)
+         updateInnerNormalsRecursive(root, 0);
+
+      if (reportTime)
+      {
+         System.out.println(name + ": Normal computation took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec.");
+      }
+   }
+
+   public void clearNormals()
+   {
+      List<NormalOcTreeNode> leafNodes = new ArrayList<>();
+      this.forEach(leafNodes::add);
+      leafNodes.stream().forEach(NormalOcTreeNode::resetNormal);
    }
 
    private void updateInnerNormalsRecursive(NormalOcTreeNode node, int depth)
