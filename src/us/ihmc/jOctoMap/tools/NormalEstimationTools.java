@@ -35,11 +35,10 @@ public abstract class NormalEstimationTools
 
       List<NormalOcTreeNode> neighbors = searchNeighbors(root, currentNode, parameters);
 
-      double maxDistanceFromPlane = parameters.getMaxDistanceFromPlane();
-
       if (neighbors.size() < 2)
          return;
 
+      double maxDistanceFromPlane = parameters.getMaxDistanceFromPlane();
       Vector3d currentNormal = currentNode.getNormalCopy();
       Point3d currentNodeHitLocation = currentNode.getHitLocationCopy();
 
@@ -51,32 +50,46 @@ public abstract class NormalEstimationTools
 //      boolean hasNormalBeenUpdatedAtLeastOnce = false;
 //      do
       {
-         Vector3d normalCandidate = computeNormalFromTwoRandomNeighbors(neighbors, currentNodeHitLocation);
+         Vector3d candidateNormal = computeNormalFromTwoRandomNeighbors(neighbors, currentNodeHitLocation);
 
          MutableInt candidateConsensus = new MutableInt();
          MutableDouble candidateVariance = new MutableDouble();
-         computeNormalConsensusAndVariance(currentNodeHitLocation, normalCandidate, neighbors, maxDistanceFromPlane, candidateVariance, candidateConsensus);
+         computeNormalConsensusAndVariance(currentNodeHitLocation, candidateNormal, neighbors, maxDistanceFromPlane, candidateVariance, candidateConsensus);
 
-         double minConsensusRatio = parameters.getMinConsensusRatio();
-         double maxAverageDeviationRatio = parameters.getMaxAverageDeviationRatio();
-
-         boolean isSimplyBetter = candidateConsensus.intValue() >= currentConsensus.intValue() && candidateVariance.doubleValue() <= currentVariance.doubleValue();
-         boolean hasSmallerConsensusButIsMuchBetter = candidateConsensus.intValue() >= (int) (minConsensusRatio * currentConsensus.intValue())
-               && candidateVariance.doubleValue() <= maxAverageDeviationRatio * currentVariance.doubleValue();
-
-         if (isSimplyBetter || hasSmallerConsensusButIsMuchBetter)
-         {
-            if (currentNormal.dot(normalCandidate) < 0.0)
-               normalCandidate.negate();
-
-            currentNode.setNormal(normalCandidate);
-            currentNode.setNormalQuality(candidateVariance.floatValue(), candidateConsensus.intValue());
-            currentConsensus.setValue(candidateConsensus);
-            currentVariance.setValue(candidateVariance);
-//            hasNormalBeenUpdatedAtLeastOnce = true;
-         }
+         /*hasNormalBeenUpdatedAtLeastOnce |= */ peekBestNormal(currentNode, currentNormal, currentVariance, currentConsensus, candidateNormal, candidateVariance, candidateConsensus, parameters);
       }
 //      while (!hasNormalBeenUpdatedAtLeastOnce && currentAverageDeviation > 0.005);// TODO Review the approach. It is pretty time consuming for large datasets.
+   }
+
+   private static boolean peekBestNormal(NormalOcTreeNode node, Vector3d currentNormal, MutableDouble currentVariance, MutableInt currentConsensus,
+         Vector3d candidateNormal, MutableDouble candidateVariance, MutableInt candidateConsensus, NormalEstimationParameters parameters)
+   {
+      if (isCandidateNormalBetter(currentVariance, currentConsensus, candidateVariance, candidateConsensus, parameters))
+      {
+         if (currentNormal.dot(candidateNormal) < 0.0)
+            candidateNormal.negate();
+
+         node.setNormal(candidateNormal);
+         node.setNormalQuality(candidateVariance.floatValue(), candidateConsensus.intValue());
+         currentConsensus.setValue(candidateConsensus);
+         currentVariance.setValue(candidateVariance);
+         return true;
+      }
+      return false;
+   }
+
+   private static boolean isCandidateNormalBetter(MutableDouble currentVariance, MutableInt currentConsensus, MutableDouble candidateVariance, MutableInt candidateConsensus, NormalEstimationParameters parameters)
+   {
+      double minConsensusRatio = parameters.getMinConsensusRatio();
+      double maxAverageDeviationRatio = parameters.getMaxAverageDeviationRatio();
+
+      boolean isBetter = candidateConsensus.intValue() >= currentConsensus.intValue() && candidateVariance.doubleValue() <= currentVariance.doubleValue();
+      if (isBetter)
+         return true;
+
+      boolean hasSmallerConsensusButIsMuchBetter = candidateConsensus.intValue() >= (int) (minConsensusRatio * currentConsensus.intValue())
+            && candidateVariance.doubleValue() <= maxAverageDeviationRatio * currentVariance.doubleValue();
+      return hasSmallerConsensusButIsMuchBetter;
    }
 
    private static Vector3d computeNormalFromTwoRandomNeighbors(List<NormalOcTreeNode> neighbors, Point3d currentNodeHitLocation)
