@@ -2,6 +2,8 @@ package us.ihmc.jOctoMap.normalEstimation;
 
 import java.util.Scanner;
 
+import us.ihmc.jOctoMap.tools.ScannerTools;
+
 public class NormalEstimationParameters
 {
    public static final double DEFAULT_SEARCH_RADIUS = 0.08;
@@ -51,6 +53,16 @@ public class NormalEstimationParameters
       this.maxDistanceFromPlane = maxDistanceFromPlane;
    }
 
+   public void setMinConsensusRatio(double minConsensusRatio)
+   {
+      this.minConsensusRatio = minConsensusRatio;
+   }
+
+   public void setMaxAverageDeviationRatio(double maxAverageDeviationRatio)
+   {
+      this.maxAverageDeviationRatio = maxAverageDeviationRatio;
+   }
+
    public double getSearchRadius()
    {
       return searchRadius;
@@ -71,16 +83,6 @@ public class NormalEstimationParameters
       return maxAverageDeviationRatio;
    }
 
-   public void setMinConsensusRatio(double minConsensusRatio)
-   {
-      this.minConsensusRatio = minConsensusRatio;
-   }
-
-   public void setMaxAverageDeviationRatio(double maxAverageDeviationRatio)
-   {
-      this.maxAverageDeviationRatio = maxAverageDeviationRatio;
-   }
-
    @Override
    public String toString()
    {
@@ -91,24 +93,12 @@ public class NormalEstimationParameters
    {
       parametersAsString = parametersAsString.replace(",", "");
       Scanner scanner = new Scanner(parametersAsString);
-      while (!scanner.hasNextDouble())
-         scanner.next();
-      double searchRadius = scanner.nextDouble();
-      while (!scanner.hasNextDouble())
-         scanner.next();
-      double maxDistanceFromPlane = scanner.nextDouble();
-      while (!scanner.hasNextDouble())
-         scanner.next();
-      double minConsensusRatio = scanner.nextDouble();
-      while (!scanner.hasNextDouble())
-         scanner.next();
-      double maxAverageDeviationRatio = scanner.nextDouble();
-      scanner.close();
       NormalEstimationParameters parameters = new NormalEstimationParameters();
-      parameters.setSearchRadius(searchRadius);
-      parameters.setMaxDistanceFromPlane(maxDistanceFromPlane);
-      parameters.setMinConsensusRatio(minConsensusRatio);
-      parameters.setMaxAverageDeviationRatio(maxAverageDeviationRatio);
+      parameters.setSearchRadius(ScannerTools.readNextDouble(scanner, parameters.getSearchRadius()));
+      parameters.setMaxDistanceFromPlane(ScannerTools.readNextDouble(scanner, parameters.getMaxDistanceFromPlane()));
+      parameters.setMinConsensusRatio(ScannerTools.readNextDouble(scanner, parameters.getMinConsensusRatio()));
+      parameters.setMaxAverageDeviationRatio(ScannerTools.readNextDouble(scanner, parameters.getMaxAverageDeviationRatio()));
+      scanner.close();
       return parameters;
    }
 }
