@@ -77,6 +77,11 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
    {
       coordinateToPack.set(x, y, z);
    }
+   
+   public final Point3d getCoordinateCopy()
+   {
+      return new Point3d(x, y, z);
+   }
 
    @SuppressWarnings("unchecked")
    public void allocateChildren()

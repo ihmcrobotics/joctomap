@@ -282,4 +282,29 @@ public class JOctoMapGeometryTools
          return "Entry point: " + enteringIntersection + "\nExit point: " + exitingIntersection;
       }
    }
+
+   /**
+    * Computes the normal of the plane P defined by the three points (p0, p1, p2).
+    * @param p0 a point on the plane P.
+    * @param p1 a point on the plane P.
+    * @param p2 a point on the plane P.
+    * @return the plane normal.
+    */
+   public static Vector3d computeNormal(Point3d p0, Point3d p1, Point3d p2)
+   {
+      double v1_x = p1.getX() - p0.getX();
+      double v1_y = p1.getY() - p0.getY();
+      double v1_z = p1.getZ() - p0.getZ();
+   
+      double v2_x = p2.getX() - p0.getX();
+      double v2_y = p2.getY() - p0.getY();
+      double v2_z = p2.getZ() - p0.getZ();
+   
+      Vector3d normal = new Vector3d();
+      normal.setX(v1_y * v2_z - v1_z * v2_y);
+      normal.setY(v2_x * v1_z - v2_z * v1_x);
+      normal.setZ(v1_x * v2_y - v1_y * v2_x);
+      normal.normalize();
+      return normal;
+   }
 }
