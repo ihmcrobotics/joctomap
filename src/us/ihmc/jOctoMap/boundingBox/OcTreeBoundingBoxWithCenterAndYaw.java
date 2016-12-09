@@ -74,6 +74,36 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       offsetKeyDirtyBit = other.offsetKeyDirtyBit;
    }
 
+   public void setLocalMinX(double xMin)
+   {
+      simpleBoundingBox.setMinX(xMin);
+   }
+
+   public void setLocalMinY(double yMin)
+   {
+      simpleBoundingBox.setMinY(yMin);
+   }
+
+   public void setLocalMinZ(double zMin)
+   {
+      simpleBoundingBox.setMinZ(zMin);
+   }
+
+   public void setLocalMaxX(double xMax)
+   {
+      simpleBoundingBox.setMaxX(xMax);
+   }
+   
+   public void setLocalMaxY(double yMax)
+   {
+      simpleBoundingBox.setMaxY(yMax);
+   }
+   
+   public void setLocalMaxZ(double zMax)
+   {
+      simpleBoundingBox.setMaxZ(zMax);
+   }
+
    public void setLocalMinMaxCoordinates(Point3d minCoordinate, Point3d maxCoordinate)
    {
       simpleBoundingBox.setMinMaxCoordinates(minCoordinate, maxCoordinate);
@@ -160,7 +190,7 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       offsetMetricDirtyBit = false;
       offsetKeyDirtyBit = false;
 
-      this.centerOffsetKey = OcTreeKeyTools.computeCenterOffsetKey(treeDepth);
+      centerOffsetKey = OcTreeKeyTools.computeCenterOffsetKey(treeDepth);
 
       simpleBoundingBox.update(resolution, treeDepth);
    }
@@ -186,7 +216,7 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
 
       int k0Local = (int) ((k0 - offsetKey.getKey(0)) * cosYaw + (k1 - offsetKey.getKey(1)) * sinYaw + centerOffsetKey);
       int k1Local = (int) (-(k0 - offsetKey.getKey(0)) * sinYaw + (k1 - offsetKey.getKey(1)) * cosYaw + centerOffsetKey);
-      int k2Local = (int) (k2 - offsetKey.getKey(2) + centerOffsetKey);
+      int k2Local = k2 - offsetKey.getKey(2) + centerOffsetKey;
 
       return simpleBoundingBox.isInBoundingBox(k0Local, k1Local, k2Local);
    }

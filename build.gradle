@@ -17,7 +17,7 @@ buildscript {
    dependencies {
       classpath "us.ihmc.gradle:licenseChecker:1.1.1"
       classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.4"
-      classpath group: 'gradle.plugin.us.ihmc.gradle', name: 'ihmc-build', version: '0.0.16'
+      classpath group: 'gradle.plugin.us.ihmc.gradle', name: 'ihmc-build', version: '0.0.19'
    }
 }
 
@@ -26,7 +26,7 @@ apply plugin: "com.jfrog.artifactory"
 apply plugin: "us.ihmc.gradle.ihmc-build"
 
 sourceCompatibility = 1.8
-version = '1.4.0'
+version = '1.5.0'
 
 repositories ihmc.ihmcDefaultArtifactProxies()
 
@@ -50,7 +50,7 @@ artifactory {
    }
    resolve {
       repository {
-         repoKey = "libs-releases"        //The Artifactory (preferably virtual) repository key to resolve from
+         repoKey = "releases"        //The Artifactory (preferably virtual) repository key to resolve from
          username = artifactoryUsername   //The publisher user name
          password = artifactoryPassword   //The publisher password
          maven = true                     //Resolve Maven-style artifacts and descriptors (true by default)
@@ -160,4 +160,5 @@ dependencies {
    compile group: 'javax.vecmath', name: 'vecmath', version: '1.5.2'
    compile group: 'org.apache.commons', name: 'commons-math3', version: '3.3'
    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3'
+   compile group: 'org.ejml', name: 'dense64', version: '0.28'
 }

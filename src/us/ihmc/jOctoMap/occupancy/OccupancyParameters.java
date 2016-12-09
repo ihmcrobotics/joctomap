@@ -2,6 +2,10 @@ package us.ihmc.jOctoMap.occupancy;
 
 import static us.ihmc.jOctoMap.tools.JOctoMapTools.*;
 
+import java.util.Scanner;
+
+import us.ihmc.jOctoMap.tools.ScannerTools;
+
 public class OccupancyParameters implements OccupancyParametersReadOnly
 {
    public static final double DEFAULT_OCCUPANCY_THRESHOLD = 0.5;  // = 0.0 in logodds
@@ -170,5 +174,27 @@ public class OccupancyParameters implements OccupancyParametersReadOnly
    public float getUpdateLogOdds(boolean hit)
    {
       return hit ? hitUpdateLogOdds : minOccupancyLogOdds;
+   }
+
+   @Override
+   public String toString()
+   {
+      return "min occupancy probability: " + getMinProbability() + ", max occupancy probability: " + getMaxProbability()
+            + ", hit update probability: " + getHitProbability() + ", miss update probability: " + getMissProbability()
+            + ", occupancy threshold probability: " + getOccupancyThreshold();
+   }
+
+   public static OccupancyParameters parse(String parametersAsString)
+   {
+      parametersAsString = parametersAsString.replace(",", "");
+      Scanner scanner = new Scanner(parametersAsString);
+      OccupancyParameters parameters = new OccupancyParameters();
+      parameters.setMinProbability(ScannerTools.readNextDouble(scanner, parameters.getMinProbability()));
+      parameters.setMaxProbability(ScannerTools.readNextDouble(scanner, parameters.getMaxProbability()));
+      parameters.setHitProbabilityUpdate(ScannerTools.readNextDouble(scanner, parameters.getHitProbability()));
+      parameters.setMissProbabilityUpdate(ScannerTools.readNextDouble(scanner, parameters.getMissProbability()));
+      parameters.setOccupancyThreshold(ScannerTools.readNextDouble(scanner, parameters.getOccupancyThreshold()));
+      scanner.close();
+      return parameters;
    }
 }

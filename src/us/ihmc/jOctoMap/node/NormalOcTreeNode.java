@@ -114,6 +114,11 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       normalToPack.set(normalX, normalY, normalZ);
    }
 
+   public Vector3d getNormalCopy()
+   {
+      return new Vector3d(normalX, normalY, normalZ);
+   }
+
    public void setNormal(Vector3d normal)
    {
       normalX = (float) normal.getX();
@@ -151,12 +156,17 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    public boolean isHitLocationSet()
    {
-      return !Float.isNaN(hitLocationX) && !Float.isNaN(hitLocationY) && !Float.isNaN(hitLocationY);
+      return !Float.isNaN(hitLocationX) && !Float.isNaN(hitLocationY) && !Float.isNaN(hitLocationZ);
    }
 
    public void getHitLocation(Point3d hitLocationToPack)
    {
       hitLocationToPack.set(hitLocationX, hitLocationY, hitLocationZ);
+   }
+
+   public Point3d getHitLocationCopy()
+   {
+      return new Point3d(hitLocationX, hitLocationY, hitLocationZ);
    }
 
    public void updateHitLocation(Point3d centerUpdate)
