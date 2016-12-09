@@ -17,7 +17,7 @@ buildscript {
    dependencies {
       classpath "us.ihmc.gradle:licenseChecker:1.1.1"
       classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.4"
-      classpath group: 'gradle.plugin.us.ihmc.gradle', name: 'ihmc-build', version: '0.0.16'
+      classpath group: 'gradle.plugin.us.ihmc.gradle', name: 'ihmc-build', version: '0.0.19'
    }
 }
 
@@ -50,7 +50,7 @@ artifactory {
    }
    resolve {
       repository {
-         repoKey = "libs-releases"        //The Artifactory (preferably virtual) repository key to resolve from
+         repoKey = "releases"        //The Artifactory (preferably virtual) repository key to resolve from
          username = artifactoryUsername   //The publisher user name
          password = artifactoryPassword   //The publisher password
          maven = true                     //Resolve Maven-style artifacts and descriptors (true by default)
