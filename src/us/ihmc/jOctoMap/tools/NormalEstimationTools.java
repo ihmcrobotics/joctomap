@@ -11,6 +11,10 @@ import javax.vecmath.Vector3d;
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
+import org.ejml.alg.dense.decomposition.svd.SvdImplicitQrDecompose_D64;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.interfaces.decomposition.SingularValueDecomposition;
+import org.ejml.ops.SingularOps;
 
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.NormalOcTreeNode;
@@ -50,6 +54,8 @@ public abstract class NormalEstimationTools
       for (int iteration = 0; iteration < parameters.getNumberOfIterations(); iteration++)
       {
          Vector3d candidateNormal = computeNormalFromTwoRandomNeighbors(neighbors, currentNodeHitLocation);
+         if (parameters.isLeastSquaresEstimationEnabled())
+            candidateNormal = refineNormalWithLeastSquares(currentNodeHitLocation, candidateNormal, maxDistanceFromPlane, neighbors);
 
          MutableInt candidateConsensus = new MutableInt();
          MutableDouble candidateVariance = new MutableDouble();
@@ -103,6 +109,31 @@ public abstract class NormalEstimationTools
 
       Vector3d normalCandidate = JOctoMapGeometryTools.computeNormal(currentNodeHitLocation, randomHitLocations[0], randomHitLocations[1]);
       return normalCandidate;
+   }
+
+   private static Vector3d refineNormalWithLeastSquares(Point3d pointOnPlane, Vector3d ransacNormal, double maxDistanceFromPlane, List<NormalOcTreeNode> neighbors)
+   {
+      IncrementalCovariance3D covarianceCalulator = new IncrementalCovariance3D();
+
+      Vector3d toNeighborHitLocation = new Vector3d();
+
+      for (NormalOcTreeNode neighbor : neighbors)
+      {
+         toNeighborHitLocation.set(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
+         toNeighborHitLocation.sub(pointOnPlane);
+         double distanceFromPlane = Math.abs(ransacNormal.dot(toNeighborHitLocation));
+         if (distanceFromPlane <= maxDistanceFromPlane)
+            covarianceCalulator.addDataPoint(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
+      }
+
+      SingularValueDecomposition<DenseMatrix64F> svd = new SvdImplicitQrDecompose_D64(true, false, true, false);
+      svd.decompose(covarianceCalulator.getCovariance());
+      DenseMatrix64F v = svd.getV(null, false);
+      SingularOps.descendingOrder(null, false, svd.getW(null), v, false);
+      
+      Vector3d refinedNormal = new Vector3d(v.get(0, 2), v.get(1, 2), v.get(2, 2));
+      refinedNormal.normalize();
+      return refinedNormal;
    }
 
    private static List<NormalOcTreeNode> searchNeighbors(NormalOcTreeNode root, NormalOcTreeNode currentNode, NormalEstimationParameters parameters)
