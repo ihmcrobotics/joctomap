@@ -38,6 +38,7 @@ public class JOctoMapGeometryTools
       }
    }
 
+   // FIXME update to match GeometryTools
    /**
     * Computes the smallest rotation from the given vector to the z-up vector (0, 0, 1).
     * @param normalVector3d the vector to compute the rotation from.
