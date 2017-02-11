@@ -16,32 +16,6 @@ import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 public class JOctoMapGeometryToolsTest
 {
    @Test
-   public void testDistancceFromPointToLine()
-   {
-      Random random = new Random(6546354L);
-
-      for (int i = 0; i < 10000; i++)
-      {
-         Point3d lineStart = JOctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
-         Point3d lineEnd = JOctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
-         Vector3d lineDirection = new Vector3d();
-         lineDirection.sub(lineEnd, lineStart);
-         lineDirection.normalize();
-
-         Vector3d randomPerpendicular = JOctoMapRandomTools.generateRandomOrthogonalVector3d(random, lineDirection, true);
-         assertEquals(0.0, lineDirection.dot(randomPerpendicular), 1.0e-10);
-
-         double expectedDistance = JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0);
-         Point3d pointAtExpectedDistanceFromLine = new Point3d();
-         pointAtExpectedDistanceFromLine.scaleAdd(expectedDistance, randomPerpendicular, lineStart);
-
-         double actualDistance = JOctoMapGeometryTools.distanceFromPointToLine(pointAtExpectedDistanceFromLine, lineStart, lineEnd);
-
-         assertEquals(expectedDistance, actualDistance, 1.0e-10);
-      }
-   }
-
-   @Test
    public void testGetRotationBasedOnNormalGivenReference() throws Exception
    {
       Random random = new Random(3453L);

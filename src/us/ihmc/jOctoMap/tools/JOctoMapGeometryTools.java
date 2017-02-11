@@ -6,38 +6,6 @@ import javax.vecmath.Vector3d;
 
 public class JOctoMapGeometryTools
 {
-   /**
-    * Compute the orthogonal distance from a point to a line (defined by two 3D points).
-    * From http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
-    * ^^Modified to return distance if line is defined by same point^^
-    *          returns
-    * @param point query
-    * @param lineStart start point of the line.
-    * @param lineEnd end point of the line.
-    * @return double distance between the point and the line.
-    */
-   public static double distanceFromPointToLine(Point3d point, Point3d lineStart, Point3d lineEnd)
-   {
-      if (lineStart.equals(lineEnd))
-      {
-         double dx = lineStart.getX() - point.getX();
-         double dy = lineStart.getY() - point.getY();
-         double dz = lineStart.getZ() - point.getZ();
-         return Math.sqrt(dx * dx + dy * dy + dz * dz);
-      }
-      else
-      {
-         Vector3d startToEnd = new Vector3d(lineEnd);
-         startToEnd.sub(lineStart);
-
-         Vector3d crossProduct = new Vector3d(lineStart);
-         crossProduct.sub(point);
-         crossProduct.cross(startToEnd, crossProduct);
-
-         return crossProduct.length() / startToEnd.length();
-      }
-   }
-
    // FIXME update to match GeometryTools
    /**
     * Computes the smallest rotation from the given vector to the z-up vector (0, 0, 1).
