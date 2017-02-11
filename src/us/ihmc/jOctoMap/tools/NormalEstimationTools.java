@@ -105,7 +105,7 @@ public abstract class NormalEstimationTools
                                            .limit(2)
                                            .mapToObj(neighbors::get)
                                            .map(NormalOcTreeNode::getHitLocationCopy)
-                                           .toArray(value -> new Point3d[value]);
+                                           .toArray(Point3d[]::new);
 
       Vector3d normalCandidate = JOctoMapGeometryTools.computeNormal(currentNodeHitLocation, randomHitLocations[0], randomHitLocations[1]);
       return normalCandidate;
