@@ -1,6 +1,9 @@
 package us.ihmc.jOctoMap.tools;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
@@ -16,83 +19,223 @@ import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 public class JOctoMapGeometryToolsTest
 {
    @Test
-   public void testGetRotationBasedOnNormalGivenReference() throws Exception
+   public void testGetAxisAngleFromFirstToSecondVector() throws Exception
    {
-      Random random = new Random(3453L);
-
-      for (int i = 0; i < 10000; i++)
+      Random random = new Random(1176L);
+      for (int i = 0; i < 1000; i++)
       {
-         Vector3d referenceNormal = JOctoMapRandomTools.generateRandomVector3d(random, 1.0);
-         Vector3d rotatedNormal = new Vector3d();
-         Vector3d expectedRotationAxis = JOctoMapRandomTools.generateRandomOrthogonalVector3d(random, referenceNormal, true);
-         assertEquals(0.0, referenceNormal.dot(expectedRotationAxis), 1.0e-10);
-
-         double expectedRotationAngle = JOctoMapRandomTools.generateRandomDouble(random, 0.0, Math.PI);
-
-         AxisAngle4d expectedRotation = new AxisAngle4d(expectedRotationAxis, expectedRotationAngle);
+         Vector3d firstVector = JOctoMapRandomTools.generateRandomVector3d(random, JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         double expectedAngle = JOctoMapRandomTools.generateRandomDouble(random, 0.0, Math.PI);
+         Vector3d expectedAxis = JOctoMapRandomTools.generateRandomOrthogonalVector3d(random, firstVector, true);
+         AxisAngle4d expectedAxisAngle = new AxisAngle4d(expectedAxis, expectedAngle);
          Matrix3d rotationMatrix = new Matrix3d();
-         rotationMatrix.set(expectedRotation);
-         rotationMatrix.transform(referenceNormal, rotatedNormal);
+         rotationMatrix.set(expectedAxisAngle);
 
-         AxisAngle4d actualRotation = new AxisAngle4d();
-         JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal, referenceNormal);
+         Vector3d secondVector = new Vector3d();
+         rotationMatrix.transform(firstVector, secondVector);
+         secondVector.scale(JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
 
-         assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
+         AxisAngle4d actualAxisAngle = new AxisAngle4d();
+         JOctoMapGeometryTools.getAxisAngleFromFirstToSecondVector(firstVector, secondVector, actualAxisAngle);
+
+         Vector3d actualAxis = new Vector3d(actualAxisAngle.getX(), actualAxisAngle.getY(), actualAxisAngle.getZ());
+
+         assertEquals(1.0, actualAxis.length(), 1.0e-12);
+         assertEquals(0.0, actualAxis.dot(firstVector), 1.0e-12);
+         assertEquals(0.0, actualAxis.dot(secondVector), 1.0e-12);
+
+         assertEquals(0.0, expectedAxis.dot(firstVector), 1.0e-12);
+         assertEquals(0.0, expectedAxis.dot(secondVector), 1.0e-12);
+
+         if (actualAxisAngle.getAngle() * expectedAxisAngle.getAngle() < 0.0)
+         {
+            expectedAxis.negate();
+            expectedAngle = -expectedAngle;
+            expectedAxisAngle.set(expectedAxis, expectedAngle);
+         }
+
+         try
+         {
+            assertTrue(expectedAxisAngle.epsilonEquals(actualAxisAngle, 1.0e-12));
+         }
+         catch (AssertionError e)
+         {
+            throw new AssertionError("expected:\n<" + expectedAxisAngle + ">\n but was:\n<" + actualAxisAngle + ">");
+         }
       }
 
-      Vector3d referenceNormal = JOctoMapRandomTools.generateRandomVector3d(random, 1.0);
-      Vector3d rotatedNormal = new Vector3d(referenceNormal);
-      AxisAngle4d expectedRotation = new AxisAngle4d(1.0, 0.0, 0.0, 0.0);
-      AxisAngle4d actualRotation = new AxisAngle4d();
-      JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal, referenceNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
-
-      rotatedNormal.negate();
-      expectedRotation.setAngle(Math.PI);
-      JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal, referenceNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
-   }
-
-   @Test
-   public void testGetRotationBasedOnNormalWithDefaultReference() throws Exception
-   {
-      Random random = new Random(3453L);
-      Vector3d referenceNormal = new Vector3d(0.0, 0.0, 1.0);
-
-      for (int i = 0; i < 10000; i++)
+      // Test close to 0.0
+      for (int i = 0; i < 1000; i++)
       {
-         Vector3d rotatedNormal = new Vector3d();
-         Vector3d expectedRotationAxis = JOctoMapRandomTools.generateRandomOrthogonalVector3d(random, referenceNormal, true);
-         assertEquals(0.0, referenceNormal.dot(expectedRotationAxis), 1.0e-10);
-
-         double expectedRotationAngle = JOctoMapRandomTools.generateRandomDouble(random, 0.0, Math.PI);
-
-         AxisAngle4d expectedRotation = new AxisAngle4d(expectedRotationAxis, expectedRotationAngle);
+         Vector3d firstVector = JOctoMapRandomTools.generateRandomVector3d(random, JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         double expectedAngle = JOctoMapRandomTools.generateRandomDouble(random, 0.0001, 0.001);
+         if (random.nextBoolean())
+            expectedAngle = -expectedAngle;
+         Vector3d expectedAxis = JOctoMapRandomTools.generateRandomOrthogonalVector3d(random, firstVector, true);
+         AxisAngle4d expectedAxisAngle = new AxisAngle4d(expectedAxis, expectedAngle);
          Matrix3d rotationMatrix = new Matrix3d();
-         rotationMatrix.set(expectedRotation);
-         rotationMatrix.transform(referenceNormal, rotatedNormal);
+         rotationMatrix.set(expectedAxisAngle);
 
-         AxisAngle4d actualRotation = new AxisAngle4d();
-         JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal);
-         assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
-         actualRotation = JOctoMapGeometryTools.getRotationBasedOnNormal(rotatedNormal);
-         assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
+         Vector3d secondVector = new Vector3d();
+         rotationMatrix.transform(firstVector, secondVector);
+         secondVector.scale(JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+
+         AxisAngle4d actualAxisAngle = new AxisAngle4d();
+         JOctoMapGeometryTools.getAxisAngleFromFirstToSecondVector(firstVector, secondVector, actualAxisAngle);
+
+         Vector3d actualAxis = new Vector3d(actualAxisAngle.getX(), actualAxisAngle.getY(), actualAxisAngle.getZ());
+
+         assertEquals(1.0, actualAxis.length(), 1.0e-12);
+         // Can not be as accurate as we get closer to 0.0
+         assertEquals(0.0, actualAxis.dot(firstVector), 1.0e-9);
+         assertEquals(0.0, actualAxis.dot(secondVector), 1.0e-9);
+
+         assertEquals(0.0, expectedAxis.dot(firstVector), 1.0e-12);
+         assertEquals(0.0, expectedAxis.dot(secondVector), 1.0e-12);
+
+         if (actualAxisAngle.getAngle() * expectedAxisAngle.getAngle() < 0.0)
+         {
+            expectedAxis.negate();
+            expectedAngle = -expectedAngle;
+            expectedAxisAngle.set(expectedAxis, expectedAngle);
+         }
+
+         try
+         {
+            // Can not be as accurate as we get closer to 0.0
+            assertTrue(expectedAxisAngle.epsilonEquals(actualAxisAngle, 1.0e-9));
+         }
+         catch (AssertionError e)
+         {
+            throw new AssertionError("expected:\n<" + expectedAxisAngle + ">\n but was:\n<" + actualAxisAngle + ">");
+         }
       }
 
-      Vector3d rotatedNormal = new Vector3d(referenceNormal);
-      AxisAngle4d expectedRotation = new AxisAngle4d(1.0, 0.0, 0.0, 0.0);
-      AxisAngle4d actualRotation = new AxisAngle4d();
-      JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal, referenceNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
-      actualRotation = JOctoMapGeometryTools.getRotationBasedOnNormal(rotatedNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
+      // Test close to Math.PI
+      for (int i = 0; i < 1000; i++)
+      {
+         Vector3d referenceNormal = JOctoMapRandomTools.generateRandomVector3d(random, JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         double expectedAngle = JOctoMapRandomTools.generateRandomDouble(random, 0.00001, 0.001);
+         if (random.nextBoolean())
+            expectedAngle = -expectedAngle;
+         expectedAngle += Math.PI;
+         Vector3d expectedAxis = JOctoMapRandomTools.generateRandomOrthogonalVector3d(random, referenceNormal, true);
+         AxisAngle4d expectedAxisAngle = new AxisAngle4d(expectedAxis, expectedAngle);
+         Matrix3d rotationMatrix = new Matrix3d();
+         rotationMatrix.set(expectedAxisAngle);
 
-      rotatedNormal.negate();
-      expectedRotation.setAngle(Math.PI);
-      JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal, referenceNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
-      actualRotation = JOctoMapGeometryTools.getRotationBasedOnNormal(rotatedNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
+         Vector3d rotatedNormal = new Vector3d();
+         rotationMatrix.transform(referenceNormal, rotatedNormal);
+         rotatedNormal.scale(JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+
+         AxisAngle4d actualAxisAngle = new AxisAngle4d();
+         JOctoMapGeometryTools.getAxisAngleFromFirstToSecondVector(referenceNormal, rotatedNormal, actualAxisAngle);
+
+         Vector3d actualAxis = new Vector3d(actualAxisAngle.getX(), actualAxisAngle.getY(), actualAxisAngle.getZ());
+
+         assertEquals(1.0, actualAxis.length(), 1.0e-12);
+         // Can not be as accurate as we get closer to Math.PI
+         assertEquals(0.0, actualAxis.dot(referenceNormal), 1.0e-9);
+         assertEquals(0.0, actualAxis.dot(rotatedNormal), 1.0e-9);
+
+         assertEquals(0.0, expectedAxis.dot(referenceNormal), 1.0e-12);
+         assertEquals(0.0, expectedAxis.dot(rotatedNormal), 1.0e-12);
+         if (actualAxisAngle.getAngle() * expectedAxisAngle.getAngle() < 0.0)
+         {
+            expectedAxis.negate();
+            expectedAngle = -expectedAngle;
+            expectedAxisAngle.set(expectedAxis, expectedAngle);
+         }
+
+         if (Math.abs(expectedAxisAngle.getAngle() + actualAxisAngle.getAngle()) > 2.0 * Math.PI - 0.1)
+         {
+            // Here the sign of the axis does not matter.
+            if (expectedAxis.dot(actualAxis) < 0.0)
+               expectedAxis.negate();
+            // Can not be as accurate as we get closer to Math.PI
+            assertTrue(expectedAxis.epsilonEquals(actualAxis, 1.0e-9));
+         }
+         else
+         {
+            try
+            {
+               assertTrue(expectedAxisAngle.epsilonEquals(actualAxisAngle, 1.0e-12));
+            }
+            catch (AssertionError e)
+            {
+               throw new AssertionError("expected:\n<" + expectedAxisAngle + ">\n but was:\n<" + actualAxisAngle + ">");
+            }
+         }
+      }
+
+      // Test exactly at 0.0
+      for (int i = 0; i < 1000; i++)
+      {
+         Vector3d referenceNormal = JOctoMapRandomTools.generateRandomVector3d(random, JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         Vector3d rotatedNormal = new Vector3d(referenceNormal);
+         rotatedNormal.scale(JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         double expectedAngle = 0.0;
+         Vector3d expectedAxis = new Vector3d(1.0, 0.0, 0.0);
+         AxisAngle4d expectedAxisAngle = new AxisAngle4d(expectedAxis, expectedAngle);
+
+         AxisAngle4d actualAxisAngle = new AxisAngle4d();
+         JOctoMapGeometryTools.getAxisAngleFromFirstToSecondVector(referenceNormal, rotatedNormal, actualAxisAngle);
+
+         Vector3d actualAxis = new Vector3d(actualAxisAngle.getX(), actualAxisAngle.getY(), actualAxisAngle.getZ());
+
+         assertEquals(1.0, actualAxis.length(), 1.0e-12);
+
+         if (actualAxisAngle.getAngle() * expectedAxisAngle.getAngle() < 0.0)
+         {
+            expectedAxis.negate();
+            expectedAngle = -expectedAngle;
+            expectedAxisAngle.set(expectedAxis, expectedAngle);
+         }
+
+         try
+         {
+            assertTrue(expectedAxisAngle.epsilonEquals(actualAxisAngle, 1.0e-12));
+         }
+         catch (AssertionError e)
+         {
+            throw new AssertionError("expected:\n<" + expectedAxisAngle + ">\n but was:\n<" + actualAxisAngle + ">");
+         }
+      }
+
+      // Test exactly at Math.PI
+      for (int i = 0; i < 1000; i++)
+      {
+         Vector3d referenceNormal = JOctoMapRandomTools.generateRandomVector3d(random, JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         Vector3d rotatedNormal = new Vector3d();
+         rotatedNormal.negate(referenceNormal);
+         rotatedNormal.scale(JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         double expectedAngle = Math.PI;
+         Vector3d expectedAxis = new Vector3d(1.0, 0.0, 0.0);
+         AxisAngle4d expectedAxisAngle = new AxisAngle4d(expectedAxis, expectedAngle);
+
+         AxisAngle4d actualAxisAngle = new AxisAngle4d();
+         JOctoMapGeometryTools.getAxisAngleFromFirstToSecondVector(referenceNormal, rotatedNormal, actualAxisAngle);
+
+         Vector3d actualAxis = new Vector3d(actualAxisAngle.getX(), actualAxisAngle.getY(), actualAxisAngle.getZ());
+
+         assertEquals(1.0, actualAxis.length(), 1.0e-12);
+
+         if (actualAxisAngle.getAngle() * expectedAxisAngle.getAngle() < 0.0)
+         {
+            expectedAxis.negate();
+            expectedAngle = -expectedAngle;
+            expectedAxisAngle.set(expectedAxis, expectedAngle);
+         }
+
+         try
+         {
+            assertTrue(expectedAxisAngle.epsilonEquals(actualAxisAngle, 1.0e-12));
+         }
+         catch (AssertionError e)
+         {
+            throw new AssertionError("expected:\n<" + expectedAxisAngle + ">\n but was:\n<" + actualAxisAngle + ">");
+         }
+      }
    }
 
    @Test

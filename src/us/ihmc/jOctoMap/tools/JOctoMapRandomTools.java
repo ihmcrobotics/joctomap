@@ -126,7 +126,7 @@ public abstract class JOctoMapRandomTools
       normal.normalize();
    
       Matrix3d orientation = new Matrix3d();
-      orientation.set(JOctoMapGeometryTools.getRotationBasedOnNormal(normal));
+      orientation.set(JOctoMapGeometryTools.getAxisAngleFromZUpToVector(normal));
    
       PointCloud pointCloud = new PointCloud();
    
