@@ -15,26 +15,26 @@ public class OcTreeIteratorFactory
       return ocTreeIterable;
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createLeafIteratable(NODE root)
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createLeafIterable(NODE root)
    {
       OcTreeIterable<NODE> ocTreeIterable = new OcTreeIterable<>(root);
       ocTreeIterable.setRule(leavesOnly());
       return ocTreeIterable;
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createLeafIteratable(NODE root, int maxDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createLeafIterable(NODE root, int maxDepth)
    {
-      OcTreeIterable<NODE> ocTreeIterable = createLeafIteratable(root);
+      OcTreeIterable<NODE> ocTreeIterable = createLeafIterable(root);
       ocTreeIterable.setMaxDepth(maxDepth);
       return ocTreeIterable;
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createIteratable(NODE root)
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createIterable(NODE root)
    {
       return new OcTreeIterable<>(root);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createIteratable(NODE root, int maxDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createIterable(NODE root, int maxDepth)
    {
       OcTreeIterable<NODE> ocTreeIterable = new OcTreeIterable<NODE>(root);
       ocTreeIterable.setMaxDepth(maxDepth);

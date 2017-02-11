@@ -115,8 +115,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
          return false;
 
       // traverse all nodes, check if structure the same
-      Iterator<NODE> thisIterator = OcTreeIteratorFactory.createIteratable(root).iterator();
-      Iterator<NODE> otherIterator = OcTreeIteratorFactory.createIteratable(other.root).iterator();
+      Iterator<NODE> thisIterator = OcTreeIteratorFactory.createIterable(root).iterator();
+      Iterator<NODE> otherIterator = OcTreeIteratorFactory.createIterable(other.root).iterator();
 
       for (NODE thisNode = thisIterator.next(), otherNode = otherIterator.next(); thisIterator.hasNext(); thisNode = thisIterator.next(), otherNode = otherIterator.next())
       {
@@ -478,7 +478,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    @Override
    public Iterator<NODE> iterator()
    {
-      return OcTreeIteratorFactory.createLeafIteratable(root).iterator();
+      return OcTreeIteratorFactory.createLeafIterable(root).iterator();
    }
 
    //

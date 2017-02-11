@@ -23,7 +23,7 @@ public abstract class OcTreeTools
       minToPack.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
       maxToPack.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 
-      for (NODE node : OcTreeIteratorFactory.createLeafIteratable(root))
+      for (NODE node : OcTreeIteratorFactory.createLeafIterable(root))
       {
          double size = node.getSize();
          double halfSize = size / 2.0;
@@ -53,7 +53,7 @@ public abstract class OcTreeTools
 
       Point3d max = new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 
-      for (NODE node : OcTreeIteratorFactory.createLeafIteratable(root))
+      for (NODE node : OcTreeIteratorFactory.createLeafIterable(root))
       {
          double size = node.getSize();
          double halfSize = size / 2.0;
@@ -76,7 +76,7 @@ public abstract class OcTreeTools
 
       Point3d min = new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 
-      for (NODE node : OcTreeIteratorFactory.createLeafIteratable(root))
+      for (NODE node : OcTreeIteratorFactory.createLeafIterable(root))
       {
          double size = node.getSize();
          double halfSize = size / 2.0;
