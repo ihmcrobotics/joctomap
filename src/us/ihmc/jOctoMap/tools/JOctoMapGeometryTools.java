@@ -1,14 +1,17 @@
 package us.ihmc.jOctoMap.tools;
 
-import javax.vecmath.AxisAngle4d;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
+import us.ihmc.geometry.axisAngle.AxisAngle;
+import us.ihmc.geometry.axisAngle.interfaces.AxisAngleBasics;
+import us.ihmc.geometry.tuple3D.Point3D;
+import us.ihmc.geometry.tuple3D.Vector3D;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.geometry.tuple3D.interfaces.Vector3DReadOnly;
 
 public class JOctoMapGeometryTools
 {
    /**
     * Computes the complete minimum rotation from {@code zUp = (0, 0, 1)} to the given
-    * {@code vector} and packs it into an {@link AxisAngle4d}. The rotation axis if perpendicular to
+    * {@code vector} and packs it into an {@link AxisAngle}. The rotation axis if perpendicular to
     * both vectors. The rotation angle is computed as the angle from the {@code zUp} to the
     * {@code vector}: <br>
     * {@code rotationAngle = zUp.angle(vector)}. </br>
@@ -34,16 +37,16 @@ public class JOctoMapGeometryTools
     * @param vector the 3D vector that is rotated with respect to {@code zUp}. Not modified.
     * @return the minimum rotation from {@code zUp} to the given {@code vector}.
     */
-   public static AxisAngle4d getAxisAngleFromZUpToVector(Vector3d vector)
+   public static AxisAngle getAxisAngleFromZUpToVector(Vector3DReadOnly vector)
    {
-      AxisAngle4d axisAngle = new AxisAngle4d();
+      AxisAngle axisAngle = new AxisAngle();
       getAxisAngleFromZUpToVector(vector, axisAngle);
       return axisAngle;
    }
 
    /**
     * Computes the complete minimum rotation from {@code zUp = (0, 0, 1)} to the given
-    * {@code vector} and packs it into an {@link AxisAngle4d}. The rotation axis if perpendicular to
+    * {@code vector} and packs it into an {@link AxisAngleBasics}. The rotation axis if perpendicular to
     * both vectors. The rotation angle is computed as the angle from the {@code zUp} to the
     * {@code vector}: <br>
     * {@code rotationAngle = zUp.angle(vector)}. </br>
@@ -67,14 +70,14 @@ public class JOctoMapGeometryTools
     * @param rotationToPack the minimum rotation from {@code zUp} to the given {@code vector}.
     *           Modified.
     */
-   public static void getAxisAngleFromZUpToVector(Vector3d vector, AxisAngle4d rotationToPack)
+   public static void getAxisAngleFromZUpToVector(Vector3DReadOnly vector, AxisAngleBasics rotationToPack)
    {
       getAxisAngleFromFirstToSecondVector(0.0, 0.0, 1.0, vector.getX(), vector.getY(), vector.getZ(), rotationToPack);
    }
 
    /**
     * Computes the complete minimum rotation from {@code firstVector} to the {@code secondVector}
-    * and packs it into an {@link AxisAngle4d}. The rotation axis if perpendicular to both vectors.
+    * and packs it into an {@link AxisAngleBasics}. The rotation axis if perpendicular to both vectors.
     * The rotation angle is computed as the angle from the {@code firstVector} to the
     * {@code secondVector}: <br>
     * {@code rotationAngle = firstVector.angle(secondVector)}. </br>
@@ -100,7 +103,7 @@ public class JOctoMapGeometryTools
     * @param rotationToPack the minimum rotation from {@code firstVector} to the
     *           {@code secondVector}. Modified.
     */
-   public static void getAxisAngleFromFirstToSecondVector(Vector3d firstVector, Vector3d secondVector, AxisAngle4d rotationToPack)
+   public static void getAxisAngleFromFirstToSecondVector(Vector3DReadOnly firstVector, Vector3DReadOnly secondVector, AxisAngleBasics rotationToPack)
    {
       getAxisAngleFromFirstToSecondVector(firstVector.getX(), firstVector.getY(), firstVector.getZ(), secondVector.getX(), secondVector.getY(),
                                           secondVector.getZ(), rotationToPack);
@@ -108,7 +111,7 @@ public class JOctoMapGeometryTools
 
    /**
     * Computes the complete minimum rotation from {@code firstVector} to the {@code secondVector}
-    * and packs it into an {@link AxisAngle4d}. The rotation axis if perpendicular to both vectors.
+    * and packs it into an {@link AxisAngleBasics}. The rotation axis if perpendicular to both vectors.
     * The rotation angle is computed as the angle from the {@code firstVector} to the
     * {@code secondVector}: <br>
     * {@code rotationAngle = firstVector.angle(secondVector)}. </br>
@@ -141,7 +144,7 @@ public class JOctoMapGeometryTools
     *           {@code secondVector}. Modified.
     */
    public static void getAxisAngleFromFirstToSecondVector(double firstVectorX, double firstVectorY, double firstVectorZ, double secondVectorX,
-                                                          double secondVectorY, double secondVectorZ, AxisAngle4d rotationToPack)
+                                                          double secondVectorY, double secondVectorZ, AxisAngleBasics rotationToPack)
    {
       double rotationAxisX = firstVectorY * secondVectorZ - firstVectorZ * secondVectorY;
       double rotationAxisY = firstVectorZ * secondVectorX - firstVectorX * secondVectorZ;
@@ -222,7 +225,7 @@ public class JOctoMapGeometryTools
     * @param rayDirection direction the ray is going the rayOrigin.
     * @return the found intersection(s) or null if the ray does not intersect the box.
     */
-   public static RayBoxIntersectionResult rayBoxIntersection(Point3d min, Point3d max, Point3d rayOrigin, Vector3d rayDirection)
+   public static RayBoxIntersectionResult rayBoxIntersection(Point3DReadOnly min, Point3DReadOnly max, Point3DReadOnly rayOrigin, Vector3DReadOnly rayDirection)
    {
       return rayBoxIntersection(min, max, rayOrigin, rayDirection, Double.POSITIVE_INFINITY);
    }
@@ -237,13 +240,17 @@ public class JOctoMapGeometryTools
     * @param maxRayLength intersections beyond the max ray length are ignored.
     * @return the found intersection(s) or null if the ray does not intersect the box.
     */
-   public static RayBoxIntersectionResult rayBoxIntersection(Point3d min, Point3d max, Point3d rayOrigin, Vector3d rayDirection, double maxRayLength)
+   public static RayBoxIntersectionResult rayBoxIntersection(Point3DReadOnly min, Point3DReadOnly max, Point3DReadOnly rayOrigin, Vector3DReadOnly rayDirection, double maxRayLength)
    {
       double lengthSquared = rayDirection.lengthSquared();
       if (lengthSquared < 1.0e-7)
          return null;
       else if (Math.abs(lengthSquared - 1.0) > 1.0e-3)
-         rayDirection.scale(1.0 / Math.sqrt(lengthSquared));
+      {
+         Vector3D vector3d = new Vector3D(rayDirection);
+         vector3d.scale(1.0 / Math.sqrt(lengthSquared));
+         rayDirection = vector3d;
+      }
 
       double epsilon = 1.0e-10;
       double tmin = Double.NEGATIVE_INFINITY;
@@ -329,7 +336,7 @@ public class JOctoMapGeometryTools
       if (tmax < 0.0 || tmin > maxRayLength)
          return null;
 
-      Point3d enteringIntersection;
+      Point3D enteringIntersection;
 
       if (tmin < 0.0)
       {
@@ -340,11 +347,11 @@ public class JOctoMapGeometryTools
       }
       else
       {
-         enteringIntersection = new Point3d();
+         enteringIntersection = new Point3D();
          enteringIntersection.scaleAdd(tmin, rayDirection, rayOrigin);
       }
 
-      Point3d exitingIntersection;
+      Point3D exitingIntersection;
 
       if (tmax > maxRayLength)
       {
@@ -352,7 +359,7 @@ public class JOctoMapGeometryTools
       }
       else
       {
-         exitingIntersection = new Point3d();
+         exitingIntersection = new Point3D();
          exitingIntersection.scaleAdd(tmax, rayDirection, rayOrigin);
       }
 
@@ -362,11 +369,11 @@ public class JOctoMapGeometryTools
    public static class RayBoxIntersectionResult
    {
       private final double entryDistanceFromOrigin;
-      private final Point3d enteringIntersection;
+      private final Point3D enteringIntersection;
       private final double exitDistanceFromOrigin;
-      private final Point3d exitingIntersection;
+      private final Point3D exitingIntersection;
 
-      public RayBoxIntersectionResult(double entryDistanceFromOrigin, Point3d enteringIntersection, double exitDistanceFromOrigin, Point3d exitingIntersection)
+      public RayBoxIntersectionResult(double entryDistanceFromOrigin, Point3D enteringIntersection, double exitDistanceFromOrigin, Point3D exitingIntersection)
       {
          this.entryDistanceFromOrigin = entryDistanceFromOrigin;
          this.enteringIntersection = enteringIntersection;
@@ -379,7 +386,7 @@ public class JOctoMapGeometryTools
          return entryDistanceFromOrigin;
       }
 
-      public Point3d getEnteringIntersection()
+      public Point3D getEnteringIntersection()
       {
          return enteringIntersection;
       }
@@ -389,7 +396,7 @@ public class JOctoMapGeometryTools
          return exitDistanceFromOrigin;
       }
 
-      public Point3d getExitingIntersection()
+      public Point3D getExitingIntersection()
       {
          return exitingIntersection;
       }
@@ -409,7 +416,7 @@ public class JOctoMapGeometryTools
     * @param p2 a point on the plane P.
     * @return the plane normal.
     */
-   public static Vector3d computeNormal(Point3d p0, Point3d p1, Point3d p2)
+   public static Vector3D computeNormal(Point3DReadOnly p0, Point3DReadOnly p1, Point3DReadOnly p2)
    {
       double v1_x = p1.getX() - p0.getX();
       double v1_y = p1.getY() - p0.getY();
@@ -419,7 +426,7 @@ public class JOctoMapGeometryTools
       double v2_y = p2.getY() - p0.getY();
       double v2_z = p2.getZ() - p0.getZ();
 
-      Vector3d normal = new Vector3d();
+      Vector3D normal = new Vector3D();
       normal.setX(v1_y * v2_z - v1_z * v2_y);
       normal.setY(v2_x * v1_z - v2_z * v1_x);
       normal.setZ(v1_x * v2_y - v1_y * v2_x);

@@ -5,9 +5,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
-
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
@@ -16,6 +13,11 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 import org.ejml.ops.SingularOps;
 
+import us.ihmc.geometry.tuple3D.Point3D;
+import us.ihmc.geometry.tuple3D.Vector3D;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.geometry.tuple3D.interfaces.Vector3DBasics;
+import us.ihmc.geometry.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.NormalOcTreeNode;
 import us.ihmc.jOctoMap.normalEstimation.NormalEstimationParameters;
@@ -43,8 +45,8 @@ public abstract class NormalEstimationTools
          return;
 
       double maxDistanceFromPlane = parameters.getMaxDistanceFromPlane();
-      Vector3d currentNormal = currentNode.getNormalCopy();
-      Point3d currentNodeHitLocation = currentNode.getHitLocationCopy();
+      Vector3D currentNormal = currentNode.getNormalCopy();
+      Point3D currentNodeHitLocation = currentNode.getHitLocationCopy();
 
       // Need to be recomputed as the neighbors may have changed
       MutableInt currentConsensus = new MutableInt();
@@ -53,7 +55,7 @@ public abstract class NormalEstimationTools
 
       for (int iteration = 0; iteration < parameters.getNumberOfIterations(); iteration++)
       {
-         Vector3d candidateNormal = computeNormalFromTwoRandomNeighbors(neighbors, currentNodeHitLocation);
+         Vector3D candidateNormal = computeNormalFromTwoRandomNeighbors(neighbors, currentNodeHitLocation);
          if (parameters.isLeastSquaresEstimationEnabled())
             candidateNormal = refineNormalWithLeastSquares(currentNodeHitLocation, candidateNormal, maxDistanceFromPlane, neighbors);
 
@@ -65,8 +67,8 @@ public abstract class NormalEstimationTools
       }
    }
 
-   private static boolean peekBestNormal(NormalOcTreeNode node, Vector3d currentNormal, MutableDouble currentVariance, MutableInt currentConsensus,
-         Vector3d candidateNormal, MutableDouble candidateVariance, MutableInt candidateConsensus, NormalEstimationParameters parameters)
+   private static boolean peekBestNormal(NormalOcTreeNode node, Vector3DReadOnly currentNormal, MutableDouble currentVariance, MutableInt currentConsensus,
+         Vector3DBasics candidateNormal, MutableDouble candidateVariance, MutableInt candidateConsensus, NormalEstimationParameters parameters)
    {
       if (isCandidateNormalBetter(currentVariance, currentConsensus, candidateVariance, candidateConsensus, parameters))
       {
@@ -97,25 +99,25 @@ public abstract class NormalEstimationTools
       return hasSmallerConsensusButIsMuchBetter;
    }
 
-   private static Vector3d computeNormalFromTwoRandomNeighbors(List<NormalOcTreeNode> neighbors, Point3d currentNodeHitLocation)
+   private static Vector3D computeNormalFromTwoRandomNeighbors(List<NormalOcTreeNode> neighbors, Point3DReadOnly currentNodeHitLocation)
    {
       Random random = ThreadLocalRandom.current();
-      Point3d[] randomHitLocations = random.ints(0, neighbors.size())
+      Point3D[] randomHitLocations = random.ints(0, neighbors.size())
                                            .distinct()
                                            .limit(2)
                                            .mapToObj(neighbors::get)
                                            .map(NormalOcTreeNode::getHitLocationCopy)
-                                           .toArray(Point3d[]::new);
+                                           .toArray(Point3D[]::new);
 
-      Vector3d normalCandidate = JOctoMapGeometryTools.computeNormal(currentNodeHitLocation, randomHitLocations[0], randomHitLocations[1]);
+      Vector3D normalCandidate = JOctoMapGeometryTools.computeNormal(currentNodeHitLocation, randomHitLocations[0], randomHitLocations[1]);
       return normalCandidate;
    }
 
-   private static Vector3d refineNormalWithLeastSquares(Point3d pointOnPlane, Vector3d ransacNormal, double maxDistanceFromPlane, List<NormalOcTreeNode> neighbors)
+   private static Vector3D refineNormalWithLeastSquares(Point3DReadOnly pointOnPlane, Vector3DReadOnly ransacNormal, double maxDistanceFromPlane, List<NormalOcTreeNode> neighbors)
    {
       IncrementalCovariance3D covarianceCalulator = new IncrementalCovariance3D();
 
-      Vector3d toNeighborHitLocation = new Vector3d();
+      Vector3D toNeighborHitLocation = new Vector3D();
 
       for (NormalOcTreeNode neighbor : neighbors)
       {
@@ -131,7 +133,7 @@ public abstract class NormalEstimationTools
       DenseMatrix64F v = svd.getV(null, false);
       SingularOps.descendingOrder(null, false, svd.getW(null), v, false);
       
-      Vector3d refinedNormal = new Vector3d(v.get(0, 2), v.get(1, 2), v.get(2, 2));
+      Vector3D refinedNormal = new Vector3D(v.get(0, 2), v.get(1, 2), v.get(2, 2));
       refinedNormal.normalize();
       return refinedNormal;
    }
@@ -155,13 +157,13 @@ public abstract class NormalEstimationTools
       return neighbors;
    }
 
-   private static void computeNormalConsensusAndVariance(Point3d pointOnPlane, Vector3d planeNormal, Iterable<NormalOcTreeNode> neighbors,
+   private static void computeNormalConsensusAndVariance(Point3DReadOnly pointOnPlane, Vector3DReadOnly planeNormal, Iterable<NormalOcTreeNode> neighbors,
          double maxDistanceFromPlane, MutableDouble varianceToPack, MutableInt consensusToPack)
    {
       Variance variance = new Variance();
       consensusToPack.setValue(0);
 
-      Vector3d toNeighborHitLocation = new Vector3d();
+      Vector3D toNeighborHitLocation = new Vector3D();
 
       for (NormalOcTreeNode neighbor : neighbors)
       {

@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-
+import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.jOctoMap.pointCloud.PointCloud;
 
 public abstract class PointCloudTools
@@ -43,30 +41,34 @@ public abstract class PointCloudTools
    /**
     * Create a new PointCloud cropped to given bounding box
     */
-   public static PointCloud crop(PointCloud input, Point3d lowerBound, Point3d upperBound)
+   public static PointCloud crop(PointCloud input, Point3DReadOnly lowerBound, Point3DReadOnly upperBound)
    {
       if (input.isEmpty())
          return new PointCloud(input);
 
-      List<Point3f> pointsInside = input.parallelStream().collect(Collectors.groupingBy(point -> isInsideBounds(point, lowerBound, upperBound))).get(true);
+      List<? extends Point3DReadOnly> pointsInside = input.parallelStream()
+                                                          .collect(Collectors.groupingBy(point -> isInsideBounds(point, lowerBound, upperBound)))
+                                                          .get(true);
       return new PointCloud(pointsInside);
    }
 
    /**
     * Removes all the points present in the given sphere.
     */
-   public static PointCloud removePointsInsideSphere(PointCloud input, float sphereRadius, Point3f sphereCenter)
+   public static PointCloud removePointsInsideSphere(PointCloud input, float sphereRadius, Point3DReadOnly sphereCenter)
    {
       if (input.isEmpty())
          return new PointCloud(input);
 
       float minimumDistanceSquared = sphereRadius * sphereRadius;
       
-      List<Point3f> pointsOutsideSphere = input.parallelStream().collect(Collectors.groupingBy(point -> point.distanceSquared(sphereCenter) > minimumDistanceSquared)).get(true);
+      List<? extends Point3DReadOnly> pointsOutsideSphere = input.parallelStream()
+                                                                 .collect(Collectors.groupingBy(point -> point.distanceSquared(sphereCenter) > minimumDistanceSquared))
+                                                                 .get(true);
       return new PointCloud(pointsOutsideSphere);
    }
 
-   private static boolean isInsideBounds(Point3f point, Point3d lowerBound, Point3d upperBound)
+   private static boolean isInsideBounds(Point3DReadOnly point, Point3DReadOnly lowerBound, Point3DReadOnly upperBound)
    {
       if (point.getX() < lowerBound.getX() || point.getX() > upperBound.getX())
          return false;

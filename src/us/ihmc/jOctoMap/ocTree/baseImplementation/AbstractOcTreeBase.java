@@ -1,16 +1,17 @@
 package us.ihmc.jOctoMap.ocTree.baseImplementation;
 
-import static us.ihmc.jOctoMap.tools.OcTreeNodeTools.*;
+import static us.ihmc.jOctoMap.tools.OcTreeNodeTools.checkChildIndex;
+import static us.ihmc.jOctoMap.tools.OcTreeNodeTools.nodeChildExists;
 
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Queue;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-
 import org.apache.commons.lang3.mutable.MutableInt;
 
+import us.ihmc.geometry.tuple3D.Point3D;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DBasics;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.jOctoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
@@ -218,22 +219,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
     * @return the updated NODE
     */
-   protected NODE updateNodeInternal(Point3f coordinate, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
-   {
-      return updateNodeInternal(coordinate.getX(), coordinate.getY(), coordinate.getZ(), updateRule, earlyAbortRule);
-   }
-
-   /**
-    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
-    * <p>
-    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
-    * This only works if key is at the lowest octree level.
-    * @param coordinate 3d coordinate of the NODE that is to be updated
-    * @param updateRule Specifies how the NODE and its parents should be updated.
-    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
-    * @return the updated NODE
-    */
-   protected NODE updateNodeInternal(Point3d coordinate, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
+   protected NODE updateNodeInternal(Point3DReadOnly coordinate, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
    {
       return updateNodeInternal(coordinate.getX(), coordinate.getY(), coordinate.getZ(), updateRule, earlyAbortRule);
    }
@@ -358,12 +344,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public NODE search(Point3d coord)
+   public NODE search(Point3DReadOnly coord)
    {
       return OcTreeSearchTools.search(root, coord, resolution, treeDepth);
    }
 
-   public NODE search(Point3d coord, int depth)
+   public NODE search(Point3DReadOnly coord, int depth)
    {
       return OcTreeSearchTools.search(root, coord, depth, resolution, treeDepth);
    }
@@ -486,7 +472,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    //
 
    /** Converts from a 3D coordinate into a 3D addressing key */
-   public OcTreeKey coordinateToKey(Point3d coord)
+   public OcTreeKey coordinateToKey(Point3DReadOnly coord)
    {
       return OcTreeKeyConversionTools.coordinateToKey(coord, resolution, treeDepth);
    }
@@ -498,7 +484,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /** Converts from a 3D coordinate into a 3D addressing key at a given depth */
-   public OcTreeKey coordinateToKey(Point3d coord, int depth)
+   public OcTreeKey coordinateToKey(Point3DReadOnly coord, int depth)
    {
       return OcTreeKeyConversionTools.coordinateToKey(coord, depth, resolution, treeDepth);
    }
@@ -509,7 +495,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return OcTreeKeyConversionTools.coordinateToKey(x, y, z, depth, resolution, treeDepth);
    }
 
-   public boolean coordinateToKey(Point3d coord, OcTreeKey keyToPack)
+   public boolean coordinateToKey(Point3DReadOnly coord, OcTreeKey keyToPack)
    {
       return OcTreeKeyConversionTools.coordinateToKey(coord, resolution, treeDepth, keyToPack);
    }
@@ -527,25 +513,25 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
-   public Point3d keyToCoordinate(OcTreeKeyReadOnly key)
+   public Point3D keyToCoordinate(OcTreeKeyReadOnly key)
    {
       return OcTreeKeyConversionTools.keyToCoordinate(key, resolution, treeDepth);
    }
 
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
-   public Point3d keyToCoordinate(OcTreeKeyReadOnly key, int depth)
+   public Point3D keyToCoordinate(OcTreeKeyReadOnly key, int depth)
    {
       return OcTreeKeyConversionTools.keyToCoordinate(key, depth, resolution, treeDepth);
    }
 
    /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
-   public void keyToCoordinate(OcTreeKeyReadOnly key, Point3d coordinateToPack)
+   public void keyToCoordinate(OcTreeKeyReadOnly key, Point3DBasics coordinateToPack)
    {
       OcTreeKeyConversionTools.keyToCoordinate(key, coordinateToPack, resolution, treeDepth);
    }
 
    /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
-   public void keyToCoordinate(OcTreeKeyReadOnly key, Point3d coordinateToPack, int depth)
+   public void keyToCoordinate(OcTreeKeyReadOnly key, Point3DBasics coordinateToPack, int depth)
    {
       OcTreeKeyConversionTools.keyToCoordinate(key, depth, coordinateToPack, resolution, treeDepth);
    }

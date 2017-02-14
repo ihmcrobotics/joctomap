@@ -1,15 +1,15 @@
 package us.ihmc.jOctoMap.node.baseImplementation;
 
-import static us.ihmc.jOctoMap.tools.OcTreeNodeTools.*;
+import static us.ihmc.jOctoMap.tools.OcTreeNodeTools.checkChildIndex;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
-import javax.vecmath.Point3d;
-
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.math3.util.Precision;
 
+import us.ihmc.geometry.tuple3D.Point3D;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DBasics;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.NodeBuilder;
@@ -73,14 +73,14 @@ public abstract class AbstractOcTreeNode<N extends AbstractOcTreeNode<N>>
       return new OcTreeKey(k0, k1, k2);
    }
 
-   public final void getCoordinate(Point3d coordinateToPack)
+   public final void getCoordinate(Point3DBasics coordinateToPack)
    {
       coordinateToPack.set(x, y, z);
    }
    
-   public final Point3d getCoordinateCopy()
+   public final Point3D getCoordinateCopy()
    {
-      return new Point3d(x, y, z);
+      return new Point3D(x, y, z);
    }
 
    @SuppressWarnings("unchecked")

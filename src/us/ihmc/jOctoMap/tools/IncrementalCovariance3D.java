@@ -1,10 +1,10 @@
 package us.ihmc.jOctoMap.tools;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Tuple3d;
-
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
+
+import us.ihmc.geometry.tuple3D.Point3D;
+import us.ihmc.geometry.tuple3D.interfaces.Tuple3DBasics;
 
 /**
  * This class provides a storeless computation for a 3D covariance matrix.
@@ -33,7 +33,7 @@ import org.ejml.ops.CommonOps;
 public class IncrementalCovariance3D
 {
    private int sampleSize = 0;
-   private final Point3d mean = new Point3d();
+   private final Point3D mean = new Point3D();
    private final DenseMatrix64F secondMoment = new DenseMatrix64F(3, 3);
 
    public IncrementalCovariance3D()
@@ -92,7 +92,7 @@ public class IncrementalCovariance3D
     * Get the the average of the current dataset.
     * @param meanToPack
     */
-   public void getMean(Tuple3d meanToPack)
+   public void getMean(Tuple3DBasics meanToPack)
    {
       meanToPack.set(mean);
    }

@@ -4,11 +4,10 @@ import static org.junit.Assert.*;
 
 import java.util.Random;
 
-import javax.vecmath.Point3d;
-
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.junit.Test;
 
+import us.ihmc.geometry.tuple3D.Point3D;
 import us.ihmc.jOctoMap.node.NormalOcTreeNode;
 import us.ihmc.jOctoMap.tools.JOctoMapRandomTools;
 
@@ -24,11 +23,11 @@ public class NormalOcTreeNodeTest
       Mean yMean = new Mean();
       Mean zMean = new Mean();
 
-      Point3d randomPoint = new Point3d();
+      Point3D randomPoint = new Point3D();
 
       for (int i = 0; i < 1000; i++)
       {
-         randomPoint.add(JOctoMapRandomTools.generateRandomPoint3d(random, 1.0, 1.0, 1.0));
+         randomPoint.add(JOctoMapRandomTools.generateRandomPoint3D(random, 1.0, 1.0, 1.0));
          node.updateHitLocation(randomPoint);
          xMean.increment(randomPoint.getX());
          yMean.increment(randomPoint.getY());

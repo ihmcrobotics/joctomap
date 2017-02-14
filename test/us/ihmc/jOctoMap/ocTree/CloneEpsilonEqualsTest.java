@@ -1,16 +1,16 @@
 package us.ihmc.jOctoMap.ocTree;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
-
-import javax.vecmath.Point3d;
 
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.Test;
 
+import us.ihmc.geometry.tuple3D.Point3D;
 import us.ihmc.jOctoMap.key.OcTreeKey;
-import us.ihmc.jOctoMap.ocTree.NormalOcTree;
 import us.ihmc.jOctoMap.pointCloud.ScanCollection;
 import us.ihmc.jOctoMap.testTools.TestOcTree;
 import us.ihmc.jOctoMap.tools.JOctoMapRandomTools;
@@ -53,7 +53,7 @@ public class CloneEpsilonEqualsTest
       octree2.enableParallelInsertionOfMisses(true);
 
       // Create 2 identical octrees
-      Point3d sensorOrigin = JOctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
+      Point3D sensorOrigin = JOctoMapRandomTools.generateRandomPoint3D(random, 5.0, 5.0, 5.0);
       for (int i = 0; i < 2; i++)
       {
          ScanCollection sweepCollection = JOctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 500);
@@ -92,7 +92,7 @@ public class CloneEpsilonEqualsTest
       double resolution = 0.02;
       NormalOcTree octree1 = new NormalOcTree(resolution);
 
-      Point3d sensorOrigin = JOctoMapRandomTools.generateRandomPoint3d(random, 5.0, 5.0, 5.0);
+      Point3D sensorOrigin = JOctoMapRandomTools.generateRandomPoint3D(random, 5.0, 5.0, 5.0);
       for (int i = 0; i < 2; i++)
       {
          ScanCollection sweepCollection = JOctoMapRandomTools.generateRandomSweepCollection(random, 50.0f, 50.0f, 50.0f, sensorOrigin, 10, 500);

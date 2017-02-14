@@ -3,11 +3,12 @@ package us.ihmc.jOctoMap.ocTree.baseImplementation;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.vecmath.Matrix4d;
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-import javax.vecmath.Vector3d;
-
+import us.ihmc.geometry.transform.interfaces.Transform;
+import us.ihmc.geometry.tuple3D.Point3D;
+import us.ihmc.geometry.tuple3D.Vector3D;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DBasics;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.geometry.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.jOctoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.jOctoMap.key.KeyRayReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKey;
@@ -157,7 +158,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       {
          Scan scan = scanCollection.getScan(i);
          PointCloud pointCloud = scan.getPointCloud();
-         Point3d sensorOrigin = scan.getSensorOrigin();
+         Point3DReadOnly sensorOrigin = scan.getSensorOrigin();
 
          if (discretizePointCloud)
             OcTreeRayTools.computeDiscreteUpdate(sensorOrigin, pointCloud, freeCells, occupiedCells, boundingBox, minInsertRange, maxInsertRange, resolution, treeDepth);
@@ -185,7 +186,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * @param scan Pointcloud (measurement endpoints), in global reference frame
     * @param sensorOrigin measurement origin in global reference frame
     */
-   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin)
+   public void insertPointCloud(PointCloud scan, Point3DReadOnly sensorOrigin)
    {
       freeCells.clear();
       occupiedCells.clear();
@@ -216,12 +217,12 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    * @param sensorOrigin origin of sensor relative to frame origin
    * @param frameOrigin origin of reference frame, determines transform to be applied to cloud and sensor origin
    */
-   public void insertPointCloud(PointCloud scan, Point3d sensorOrigin, Matrix4d frameOrigin)
+   public void insertPointCloud(PointCloud scan, Point3DReadOnly sensorOrigin, Transform frameOrigin)
    {
       // performs transformation to data and sensor origin first
       PointCloud transformedScan = new PointCloud(scan);
       transformedScan.transform(frameOrigin);
-      Point3d transformedSensorOrigin = new Point3d(sensorOrigin);
+      Point3D transformedSensorOrigin = new Point3D(sensorOrigin);
       frameOrigin.transform(transformedSensorOrigin);
       insertPointCloud(transformedScan, transformedSensorOrigin);
    }
@@ -235,16 +236,16 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * @param scan Pointcloud (measurement endpoints), in global reference frame
     * @param sensorOrigin measurement origin in global reference frame
     */
-   public void insertPointCloudRays(PointCloud scan, Point3d sensorOrigin)
+   public void insertPointCloudRays(PointCloud scan, Point3DReadOnly sensorOrigin)
    {
       if (scan.getNumberOfPoints() < 1)
          return;
 
-      Vector3d direction = new Vector3d();
+      Vector3D direction = new Vector3D();
 
       for (int i = 0; i < scan.getNumberOfPoints(); i++)
       {
-         Point3d point = new Point3d(scan.getPoint(i));
+         Point3D point = new Point3D(scan.getPoint(i));
          direction.sub(point, sensorOrigin);
          double length = direction.length();
          if (minInsertRange > 0.0 && length < minInsertRange)
@@ -296,7 +297,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * @param logOddsValue value to be set as the log_odds value of the node
     * @return pointer to the updated NODE
     */
-   public NODE setNodeValue(Point3d coordinate, float logOddsValue)
+   public NODE setNodeValue(Point3DReadOnly coordinate, float logOddsValue)
    {
       return setNodeValue(coordinate.getX(), coordinate.getY(), coordinate.getZ(), logOddsValue);
    }
@@ -340,7 +341,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * @param logOddsUpdate value to be added (+) to log_odds value of node
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(Point3d coordinate, float logOddsUpdate)
+   public NODE updateNode(Point3DReadOnly coordinate, float logOddsUpdate)
    {
       updateOccupancyRule.setUpdateLogOdds(logOddsUpdate);
       return updateNodeInternal(coordinate, updateOccupancyRule, updateOccupancyRule);
@@ -382,7 +383,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * @param occupied true if the node was measured occupied, else false
     * @return pointer to the updated NODE
     */
-   public NODE updateNode(Point3d coordinate, boolean occupied)
+   public NODE updateNode(Point3DReadOnly coordinate, boolean occupied)
    {
       return updateNode(coordinate.getX(), coordinate.getY(), coordinate.getZ(), occupied);
    }
@@ -437,9 +438,9 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     *   This speeds up the insertion, but you need to call updateInnerOccupancy() when done.
     * @return success of operation
     */
-   public boolean insertRay(Point3d origin, Point3d end)
+   public boolean insertRay(Point3DReadOnly origin, Point3DReadOnly end)
    {
-      Vector3d direction = new Vector3d();
+      Vector3D direction = new Vector3D();
       direction.sub(end, origin);
       double length = direction.length();
 
@@ -450,7 +451,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       if (maxInsertRange > 0 && length > maxInsertRange)
       {
          direction.scale(1.0 / length);
-         Point3d newEnd = new Point3d();
+         Point3D newEnd = new Point3D();
          newEnd.scaleAdd(maxInsertRange, direction, origin);
          return integrateMissOnRay(origin, newEnd);
       }
@@ -464,14 +465,14 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
       }
    }
 
-   public boolean castRay(Point3d origin, Vector3d direction, Point3d end)
+   public boolean castRay(Point3DReadOnly origin, Vector3DReadOnly direction, Point3DBasics endToPack)
    {
-      return castRay(origin, direction, end, false);
+      return castRay(origin, direction, endToPack, false);
    }
 
-   public boolean castRay(Point3d origin, Vector3d direction, Point3d end, boolean ignoreUnknownCells)
+   public boolean castRay(Point3DReadOnly origin, Vector3DReadOnly direction, Point3DBasics endToPack, boolean ignoreUnknownCells)
    {
-      return castRay(origin, direction, end, ignoreUnknownCells, -1.0);
+      return castRay(origin, direction, endToPack, ignoreUnknownCells, -1.0);
    }
 
    /**
@@ -492,12 +493,12 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * @param[in] maxRange Maximum range after which the raycast is aborted (<= 0: no limit, default)
     * @return true if an occupied cell was hit, false if the maximum range or octree bounds are reached, or if an unknown node was hit.
     */
-   public boolean castRay(Point3d origin, Vector3d direction, Point3d endToPack, boolean ignoreUnknownCells, double maxRange)
+   public boolean castRay(Point3DReadOnly origin, Vector3DReadOnly direction, Point3DBasics endToPack, boolean ignoreUnknownCells, double maxRange)
    {
       return OcTreeRayTools.castRay(root, origin, direction, endToPack, ignoreUnknownCells, maxRange, collidableRule, resolution, treeDepth);
    }
 
-   public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersection)
+   public boolean getRayIntersection(Point3DReadOnly origin, Vector3DReadOnly direction, Point3DReadOnly center, Point3DBasics intersection)
    {
       return getRayIntersection(origin, direction, center, intersection, 0.0);
    }
@@ -513,7 +514,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * @param[in] delta A small increment to avoid ambiguity of being exactly on a voxel surface. A positive value will get the point out of the hit voxel, while a negative value will get it inside.
     * @return Whether or not an intesection point has been found. Either, the ray never cross the voxel or the ray is exactly parallel to the only surface it intersect.
     */
-   public boolean getRayIntersection(Point3d origin, Vector3d direction, Point3d center, Point3d intersectionToPack, double delta)
+   public boolean getRayIntersection(Point3DReadOnly origin, Vector3DReadOnly direction, Point3DReadOnly center, Point3DBasics intersectionToPack, double delta)
    {
       return OcTreeRayTools.getRayIntersection(origin, direction, center, intersectionToPack, delta, resolution);
    }
@@ -541,15 +542,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
    /**
     * @return true if point is in the currently set bounding box or if there is no bounding box.
     */
-   public boolean isInBoundingBox(Point3d candidate)
-   {
-      return boundingBox == null || boundingBox.isInBoundingBox(candidate);
-   }
-
-   /**
-    * @return true if point is in the currently set bounding box or if there is no bounding box.
-    */
-   public boolean isInBoundingBox(Point3f candidate)
+   public boolean isInBoundingBox(Point3DReadOnly candidate)
    {
       return boundingBox == null || boundingBox.isInBoundingBox(candidate);
    }
@@ -634,7 +627,7 @@ public abstract class AbstractOccupancyOcTree<NODE extends AbstractOccupancyOcTr
     * Traces a ray from origin to end and updates all voxels on the
     *  way as free.  The volume containing "end" is not updated.
     */
-   protected boolean integrateMissOnRay(Point3d origin, Point3d end)
+   protected boolean integrateMissOnRay(Point3DReadOnly origin, Point3DReadOnly end)
    {
       KeyRayReadOnly ray = OcTreeRayTools.computeRayKeys(origin, end, resolution, treeDepth);
 

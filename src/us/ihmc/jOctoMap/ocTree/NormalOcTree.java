@@ -11,13 +11,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-import javax.vecmath.Vector3d;
-
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.math3.util.Pair;
 
+import us.ihmc.geometry.tuple3D.Point3D;
+import us.ihmc.geometry.tuple3D.Vector3D;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.geometry.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.jOctoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.jOctoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.jOctoMap.key.OcTreeKey;
@@ -138,9 +138,9 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       HashSet<OcTreeKey> occupiedCells = new HashSet<>();
 
-      Vector3d direction = new Vector3d();
-      Point3d point = new Point3d();
-      Point3d sensorOrigin = scan.getSensorOrigin();
+      Vector3D direction = new Vector3D();
+      Point3D point = new Point3D();
+      Point3DReadOnly sensorOrigin = scan.getSensorOrigin();
       PointCloud pointCloud = scan.getPointCloud();
 
       for (int i = pointCloud.getNumberOfPoints() - 1; i >= 0; i--)
@@ -171,13 +171,13 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   private void insertMissRays(Point3d sensorOrigin, PointCloud pointCloud, Set<OcTreeKey> occupiedCells, Set<OcTreeKey> deletedLeavesToPack)
+   private void insertMissRays(Point3DReadOnly sensorOrigin, PointCloud pointCloud, Set<OcTreeKey> occupiedCells, Set<OcTreeKey> deletedLeavesToPack)
    {
       missUpdateRule.setDeletedLeavesToUpdate(deletedLeavesToPack);
 
       Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
       this.forEach(node -> keyToNodeMap.put(node.getKeyCopy(), node));
-      Stream<Point3f> pointCloudStream = insertMissesInParallel ? pointCloud.parallelStream() : pointCloud.stream();
+      Stream<? extends Point3DReadOnly> pointCloudStream = insertMissesInParallel ? pointCloud.parallelStream() : pointCloud.stream();
 
       List<List<Pair<OcTreeKey, Float>>> keysAndMissUpdates;
       keysAndMissUpdates = pointCloudStream.map(scanPoint -> insertMissRay(sensorOrigin, scanPoint, occupiedCells, keyToNodeMap))
@@ -196,16 +196,16 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       }
    }
 
-   private List<Pair<OcTreeKey, Float>> insertMissRay(Point3d sensorOrigin, Point3f scanPoint, Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
+   private List<Pair<OcTreeKey, Float>> insertMissRay(Point3DReadOnly sensorOrigin, Point3DReadOnly scanPoint, Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
    {
-      Vector3d direction = new Vector3d(scanPoint);
+      Vector3D direction = new Vector3D(scanPoint);
       direction.sub(sensorOrigin);
       double length = direction.length();
 
       if (minInsertRange >= 0.0 && length < minInsertRange)
          return null;
 
-      Point3d rayEnd = new Point3d(scanPoint);
+      Point3D rayEnd = new Point3D(scanPoint);
       if (maxInsertRange > 0.0 && length > maxInsertRange)
       { // user set a maxrange and length is above
          rayEnd.scaleAdd(maxInsertRange / length, direction, sensorOrigin);
@@ -216,7 +216,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       RayActionRule integrateMissActionRule = new RayActionRule()
       {
          @Override
-         public void doAction(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, OcTreeKeyReadOnly key)
+         public void doAction(Point3DReadOnly rayOrigin, Point3DReadOnly rayEnd, Vector3DReadOnly rayDirection, OcTreeKeyReadOnly key)
          {
             Pair<OcTreeKey, Float> keyAndMissUpdate = doRayActionOnFreeCell(rayOrigin, rayEnd, rayDirection, key, occupiedCells, keyToNodeMap);
             if (keyAndMissUpdate != null)
@@ -228,7 +228,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       return keysAndMissUpdates;
    }
 
-   private Pair<OcTreeKey, Float> doRayActionOnFreeCell(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, OcTreeKeyReadOnly key, Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
+   private Pair<OcTreeKey, Float> doRayActionOnFreeCell(Point3DReadOnly rayOrigin, Point3DReadOnly rayEnd, Vector3DReadOnly rayDirection, OcTreeKeyReadOnly key, Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
    {
       if (occupiedCells.contains(key))
          return null;
@@ -399,15 +399,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    /**
     * @return true if point is in the currently set bounding box or if there is no bounding box.
     */
-   public boolean isInBoundingBox(Point3d candidate)
-   {
-      return boundingBox == null || boundingBox.isInBoundingBox(candidate);
-   }
-
-   /**
-    * @return true if point is in the currently set bounding box or if there is no bounding box.
-    */
-   public boolean isInBoundingBox(Point3f candidate)
+   public boolean isInBoundingBox(Point3DReadOnly candidate)
    {
       return boundingBox == null || boundingBox.isInBoundingBox(candidate);
    }
@@ -507,7 +499,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
        * @param parameters the current occupancy parameters used by this octree.
        * @return the custom miss probability update.
        */
-      public default double computeRayMissProbability(Point3d rayOrigin, Point3d rayEnd, Vector3d rayDirection, NormalOcTreeNode node, OccupancyParameters parameters)
+      public default double computeRayMissProbability(Point3DReadOnly rayOrigin, Point3DReadOnly rayEnd, Vector3DReadOnly rayDirection, NormalOcTreeNode node, OccupancyParameters parameters)
       {
          return parameters.getMissProbability();
       }

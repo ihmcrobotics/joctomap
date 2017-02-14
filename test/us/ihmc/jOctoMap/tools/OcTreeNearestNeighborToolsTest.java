@@ -1,21 +1,22 @@
 package us.ihmc.jOctoMap.tools;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import javax.vecmath.Point3d;
-
 import org.junit.Test;
 
+import us.ihmc.geometry.tuple3D.Point3D;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyList;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.testTools.TestOcTree;
 import us.ihmc.jOctoMap.testTools.TestOcTreeNode;
-import us.ihmc.jOctoMap.tools.OcTreeNearestNeighborTools;
 import us.ihmc.jOctoMap.tools.OcTreeNearestNeighborTools.NeighborActionRule;
 
 public class OcTreeNearestNeighborToolsTest
@@ -29,7 +30,7 @@ public class OcTreeNearestNeighborToolsTest
       Random random = new Random(345435L);
       int numberOfLeavesToCreate = 10000;
 
-      Point3d randomQuery = new Point3d();
+      Point3D randomQuery = new Point3D();
       randomQuery.setX(25.0 - 50.0 * random.nextDouble());
       randomQuery.setY(25.0 - 50.0 * random.nextDouble());
       randomQuery.setZ(25.0 - 50.0 * random.nextDouble());
@@ -59,7 +60,7 @@ public class OcTreeNearestNeighborToolsTest
 
          for (TestOcTreeNode node : ocTree)
          {
-            Point3d coordinate = new Point3d();
+            Point3D coordinate = new Point3D();
             node.getCoordinate(coordinate);
             if (coordinate.distance(randomQuery) < randomRadius)
             {
@@ -112,7 +113,7 @@ public class OcTreeNearestNeighborToolsTest
 
       ocTree.fillRandomly(random, numberOfLeavesToCreate);
 
-      Point3d randomQuery = new Point3d();
+      Point3D randomQuery = new Point3D();
 
       for (int i = 0; i < 100000; i++)
       {
@@ -133,7 +134,7 @@ public class OcTreeNearestNeighborToolsTest
 
          for (TestOcTreeNode node : ocTree)
          {
-            Point3d coordinate = new Point3d();
+            Point3D coordinate = new Point3D();
             node.getCoordinate(coordinate);
             double distance = coordinate.distance(randomQuery);
             if (distance < distanceFromQueryToNearestNeighbor)
@@ -158,7 +159,7 @@ public class OcTreeNearestNeighborToolsTest
 
       ocTree.fillRandomly(random, numberOfLeavesToCreate);
 
-      Point3d randomQuery = new Point3d();
+      Point3D randomQuery = new Point3D();
 
       for (int i = 0; i < 100000; i++)
       {
@@ -171,7 +172,7 @@ public class OcTreeNearestNeighborToolsTest
 
          for (TestOcTreeNode node : ocTree)
          {
-            Point3d coordinate = new Point3d();
+            Point3D coordinate = new Point3D();
             node.getCoordinate(coordinate);
             double distance = coordinate.distance(randomQuery);
             if (distance < distanceFromQueryToNearestNeighbor)

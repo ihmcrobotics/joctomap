@@ -1,21 +1,22 @@
 package us.ihmc.jOctoMap.boundingBox;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Quat4d;
-import javax.vecmath.Tuple3d;
-import javax.vecmath.Vector3d;
-
-import org.apache.commons.math3.util.FastMath;
-
+import us.ihmc.geometry.tuple3D.Point3D;
+import us.ihmc.geometry.tuple3D.Vector3D;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DBasics;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.geometry.tuple3D.interfaces.Tuple3DReadOnly;
+import us.ihmc.geometry.tuple3D.interfaces.Vector3DBasics;
+import us.ihmc.geometry.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.geometry.tuple4D.Quaternion;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
+import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 import us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools;
 import us.ihmc.jOctoMap.tools.OcTreeKeyTools;
-import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 
 public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInterface
 {
-   private final Vector3d offsetMetric = new Vector3d();
+   private final Vector3D offsetMetric = new Vector3D();
    private final OcTreeSimpleBoundingBox simpleBoundingBox = new OcTreeSimpleBoundingBox();
    private double yaw = 0.0, sinYaw = 0.0, cosYaw = 1.0;
    private OcTreeKey offsetKey = new OcTreeKey();
@@ -33,7 +34,7 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       set(other);
    }
 
-   public OcTreeBoundingBoxWithCenterAndYaw(Point3d minCoordinate, Point3d maxCoordinate, double resolution, int treeDepth)
+   public OcTreeBoundingBoxWithCenterAndYaw(Point3DReadOnly minCoordinate, Point3DReadOnly maxCoordinate, double resolution, int treeDepth)
    {
       setLocalMinMaxCoordinates(minCoordinate, maxCoordinate);
       update(resolution, treeDepth);
@@ -104,7 +105,7 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       simpleBoundingBox.setMaxZ(zMax);
    }
 
-   public void setLocalMinMaxCoordinates(Point3d minCoordinate, Point3d maxCoordinate)
+   public void setLocalMinMaxCoordinates(Point3DReadOnly minCoordinate, Point3DReadOnly maxCoordinate)
    {
       simpleBoundingBox.setMinMaxCoordinates(minCoordinate, maxCoordinate);
    }
@@ -119,13 +120,13 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       simpleBoundingBox.setMinMaxKeys(minKey, maxKey);
    }
 
-   public void setOffset(Tuple3d offset, double resolution, int treeDepth)
+   public void setOffset(Tuple3DReadOnly offset, double resolution, int treeDepth)
    {
       setOffset(offset);
       update(resolution, treeDepth);
    }
 
-   public void setOffset(Tuple3d offset)
+   public void setOffset(Tuple3DReadOnly offset)
    {
       offsetMetric.set(offset);
       offsetMetricDirtyBit = false;
@@ -145,7 +146,7 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       offsetMetricDirtyBit = true;
    }
 
-   public void setHalfSize(Vector3d halfSize)
+   public void setHalfSize(Vector3DReadOnly halfSize)
    {
       simpleBoundingBox.setMinCoordinate(-halfSize.getX(), -halfSize.getY(), -halfSize.getZ());
       simpleBoundingBox.setMaxCoordinate(halfSize.getX(), halfSize.getY(), halfSize.getZ());
@@ -164,14 +165,9 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       cosYaw = Math.cos(yaw);
    }
 
-   public void setYawFromQuaternion(Quat4d quaternion)
+   public void setYawFromQuaternion(Quaternion quaternion)
    {
-      double qx = quaternion.getX();
-      double qy = quaternion.getY();
-      double qz = quaternion.getZ();
-      double qs = quaternion.getW();
-      double yaw = FastMath.atan2(2.0 * (qx * qy + qz * qs), 1.0 - 2.0 * (qy * qy + qz * qz));
-      setYaw(yaw);
+      setYaw(quaternion.getYaw());
    }
 
    public void update(double resolution, int treeDepth)
@@ -222,7 +218,7 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
    }
 
    @Override
-   public RayBoxIntersectionResult rayIntersection(Point3d rayOrigin, Vector3d rayDirection, double maxRayLength)
+   public RayBoxIntersectionResult rayIntersection(Point3DReadOnly rayOrigin, Vector3DReadOnly rayDirection, double maxRayLength)
    {
       if (offsetMetricDirtyBit)
          throw new RuntimeException("The bounding box offset coordinate is not up to date.");
@@ -230,19 +226,19 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       double xLocal = (rayOrigin.getX() - offsetMetric.getX()) * cosYaw + (rayOrigin.getY() - offsetMetric.getY()) * sinYaw;
       double yLocal = -(rayOrigin.getX() - offsetMetric.getX()) * sinYaw + (rayOrigin.getY() - offsetMetric.getY()) * cosYaw;
       double zLocal = rayOrigin.getZ() - offsetMetric.getZ();
-      Point3d rayOriginLocal = new Point3d(xLocal, yLocal, zLocal);
+      Point3D rayOriginLocal = new Point3D(xLocal, yLocal, zLocal);
 
       double vxLocal = rayDirection.getX() * cosYaw + rayDirection.getY() * sinYaw;
       double vyLocal = -rayDirection.getX() * sinYaw + rayDirection.getY() * cosYaw;
       double vzLocal = rayDirection.getZ();
-      Vector3d rayDirectionLocal = new Vector3d(vxLocal, vyLocal, vzLocal);
+      Vector3D rayDirectionLocal = new Vector3D(vxLocal, vyLocal, vzLocal);
 
       RayBoxIntersectionResult rayIntersection = simpleBoundingBox.rayIntersection(rayOriginLocal, rayDirectionLocal, maxRayLength);
 
       if (rayIntersection == null)
          return null;
 
-      Point3d entry = rayIntersection.getEnteringIntersection();
+      Point3D entry = rayIntersection.getEnteringIntersection();
       if (entry != null)
       {
          double xWorld = entry.getX() * cosYaw - entry.getY() * sinYaw + offsetMetric.getX();
@@ -252,7 +248,7 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
          entry.setZ(entry.getZ() + offsetMetric.getZ());
       }
 
-      Point3d exit = rayIntersection.getExitingIntersection();
+      Point3D exit = rayIntersection.getExitingIntersection();
       if (exit != null)
       {
          double xWorld = exit.getX() * cosYaw - exit.getY() * sinYaw + offsetMetric.getX();
@@ -281,12 +277,12 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       return simpleBoundingBox.getMaxKey();
    }
 
-   public void getLocalMinCoordinate(Point3d minCoordinateToPack)
+   public void getLocalMinCoordinate(Point3DBasics minCoordinateToPack)
    {
       simpleBoundingBox.getMinCoordinate(minCoordinateToPack);
    }
 
-   public void getLocalMaxCoordinate(Point3d maxCoordinateToPack)
+   public void getLocalMaxCoordinate(Point3DBasics maxCoordinateToPack)
    {
       simpleBoundingBox.getMaxCoordinate(maxCoordinateToPack);
    }
@@ -301,12 +297,12 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       simpleBoundingBox.getMaxCoordinate(maxCoordinateToPack);
    }
 
-   public void getLocalSize(Vector3d size)
+   public void getLocalSize(Vector3DBasics size)
    {
       simpleBoundingBox.getSize(size);
    }
 
-   public void getCenterCoordinate(Point3d centerToPack)
+   public void getCenterCoordinate(Point3DBasics centerToPack)
    {
       simpleBoundingBox.getCenterCoordinate(centerToPack);
       double xWorld = centerToPack.getX() * cosYaw - centerToPack.getY() * sinYaw;
@@ -316,7 +312,7 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
       centerToPack.add(offsetMetric);
    }
 
-   public void getLocalCenterCoordinate(Point3d centerToPack)
+   public void getLocalCenterCoordinate(Point3DBasics centerToPack)
    {
       simpleBoundingBox.getCenterCoordinate(centerToPack);
       double xLocal = offsetMetric.getX() * cosYaw + offsetMetric.getY() * sinYaw;

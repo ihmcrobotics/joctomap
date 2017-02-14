@@ -1,11 +1,13 @@
 package us.ihmc.jOctoMap.node;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-import javax.vecmath.Vector3d;
-
 import org.apache.commons.math3.util.Precision;
 
+import us.ihmc.geometry.tuple3D.Point3D;
+import us.ihmc.geometry.tuple3D.Vector3D;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DBasics;
+import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.geometry.tuple3D.interfaces.Vector3DBasics;
+import us.ihmc.geometry.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.jOctoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
 
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
@@ -109,17 +111,17 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       normalZ *= invNorm;
    }
 
-   public void getNormal(Vector3d normalToPack)
+   public void getNormal(Vector3DBasics normalToPack)
    {
       normalToPack.set(normalX, normalY, normalZ);
    }
 
-   public Vector3d getNormalCopy()
+   public Vector3D getNormalCopy()
    {
-      return new Vector3d(normalX, normalY, normalZ);
+      return new Vector3D(normalX, normalY, normalZ);
    }
 
-   public void setNormal(Vector3d normal)
+   public void setNormal(Vector3DReadOnly normal)
    {
       normalX = (float) normal.getX();
       normalY = (float) normal.getY();
@@ -159,40 +161,32 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       return !Float.isNaN(hitLocationX) && !Float.isNaN(hitLocationY) && !Float.isNaN(hitLocationZ);
    }
 
-   public void getHitLocation(Point3d hitLocationToPack)
+   public void getHitLocation(Point3DBasics hitLocationToPack)
    {
       hitLocationToPack.set(hitLocationX, hitLocationY, hitLocationZ);
    }
 
-   public Point3d getHitLocationCopy()
+   public Point3D getHitLocationCopy()
    {
-      return new Point3d(hitLocationX, hitLocationY, hitLocationZ);
+      return new Point3D(hitLocationX, hitLocationY, hitLocationZ);
    }
 
-   public void updateHitLocation(Point3d centerUpdate)
+   public void updateHitLocation(Point3DReadOnly centerUpdate)
    {
       updateHitLocation(centerUpdate, 1L);
    }
 
-   public void updateHitLocation(Point3d centerUpdate, long updateWeight)
+   public void updateHitLocation(Point3DReadOnly centerUpdate, long updateWeight)
    {
       updateHitLocation(centerUpdate, updateWeight, Long.MAX_VALUE);
    }
 
-   public void updateHitLocation(Point3d centerUpdate, long updateWeight, long maximumNumberOfHits)
+   public void updateHitLocation(Point3DReadOnly centerUpdate, long updateWeight, long maximumNumberOfHits)
    {
       float xUpdate = (float) centerUpdate.getX();
       float yUpdate = (float) centerUpdate.getY();
       float zUpdate = (float) centerUpdate.getZ();
       updateHitLocation(xUpdate, yUpdate, zUpdate, updateWeight, maximumNumberOfHits);
-   }
-
-   public void updateHitLocation(Point3f centerUpdate)
-   {
-      float xUpdate = centerUpdate.getX();
-      float yUpdate = centerUpdate.getY();
-      float zUpdate = centerUpdate.getZ();
-      updateHitLocation(xUpdate, yUpdate, zUpdate);
    }
 
    public void updateHitLocation(float xUpdate, float yUpdate, float zUpdate)
