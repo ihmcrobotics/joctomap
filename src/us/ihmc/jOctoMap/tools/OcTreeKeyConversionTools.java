@@ -4,9 +4,9 @@ import static us.ihmc.jOctoMap.tools.OcTreeKeyTools.adjustKeyAtDepth;
 import static us.ihmc.jOctoMap.tools.OcTreeKeyTools.checkKeyIsValid;
 import static us.ihmc.jOctoMap.tools.OcTreeKeyTools.computeCenterOffsetKey;
 
-import us.ihmc.geometry.tuple3D.Point3D;
-import us.ihmc.geometry.tuple3D.interfaces.Tuple3DBasics;
-import us.ihmc.geometry.tuple3D.interfaces.Tuple3DReadOnly;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Tuple3DBasics;
+import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 

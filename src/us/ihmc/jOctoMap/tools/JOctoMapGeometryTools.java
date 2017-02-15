@@ -1,11 +1,11 @@
 package us.ihmc.jOctoMap.tools;
 
-import us.ihmc.geometry.axisAngle.AxisAngle;
-import us.ihmc.geometry.axisAngle.interfaces.AxisAngleBasics;
-import us.ihmc.geometry.tuple3D.Point3D;
-import us.ihmc.geometry.tuple3D.Vector3D;
-import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
-import us.ihmc.geometry.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.euclid.axisAngle.AxisAngle;
+import us.ihmc.euclid.axisAngle.interfaces.AxisAngleBasics;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 
 public class JOctoMapGeometryTools
 {

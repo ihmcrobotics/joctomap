@@ -9,7 +9,7 @@ import java.util.Random;
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.Test;
 
-import us.ihmc.geometry.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.pointCloud.ScanCollection;
 import us.ihmc.jOctoMap.testTools.TestOcTree;

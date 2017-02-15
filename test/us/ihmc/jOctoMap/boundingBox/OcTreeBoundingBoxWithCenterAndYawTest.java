@@ -8,10 +8,10 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import us.ihmc.geometry.testingTools.GeometryBasicsRandomTools;
-import us.ihmc.geometry.transform.RigidBodyTransform;
-import us.ihmc.geometry.tuple3D.Point3D;
-import us.ihmc.geometry.tuple3D.Vector3D;
+import us.ihmc.euclid.tools.EuclidCoreRandomTools;
+import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 import us.ihmc.jOctoMap.tools.JOctoMapGeometryToolsTest;
@@ -87,14 +87,14 @@ public class OcTreeBoundingBoxWithCenterAndYawTest
       // Test with ray originating from inside the box
       for (int i = 0; i < 10000; i++)
       {
-         Vector3D size = GeometryBasicsRandomTools.generateRandomVector3D(random, -10.0, 10.0);
+         Vector3D size = EuclidCoreRandomTools.generateRandomVector3D(random, -10.0, 10.0);
          size.absolute();
          Point3D min = JOctoMapRandomTools.generateRandomPoint3D(random, 10.0, 10.0, 10.0);
          Point3D max = new Point3D();
          max.add(min, size);
 
-         Vector3D offset = GeometryBasicsRandomTools.generateRandomVector3DWithFixedLength(random, 10.0);
-         double yaw = GeometryBasicsRandomTools.generateRandomDouble(random, Math.PI);
+         Vector3D offset = EuclidCoreRandomTools.generateRandomVector3DWithFixedLength(random, 10.0);
+         double yaw = EuclidCoreRandomTools.generateRandomDouble(random, Math.PI);
          RigidBodyTransform transform = new RigidBodyTransform();
          transform.setRotationYaw(yaw);
          transform.setTranslation(offset);

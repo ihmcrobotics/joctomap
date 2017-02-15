@@ -9,10 +9,10 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import us.ihmc.geometry.axisAngle.AxisAngle;
-import us.ihmc.geometry.matrix.RotationMatrix;
-import us.ihmc.geometry.tuple3D.Point3D;
-import us.ihmc.geometry.tuple3D.Vector3D;
+import us.ihmc.euclid.axisAngle.AxisAngle;
+import us.ihmc.euclid.matrix.RotationMatrix;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 
 public class JOctoMapGeometryToolsTest

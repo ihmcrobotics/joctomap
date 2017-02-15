@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import us.ihmc.geometry.transform.interfaces.Transform;
-import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.transform.interfaces.Transform;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.jOctoMap.tools.PointCloudTools;
 
 public class ScanCollection implements Iterable<Scan>

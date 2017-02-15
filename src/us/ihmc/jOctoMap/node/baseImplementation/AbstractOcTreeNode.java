@@ -8,8 +8,8 @@ import java.util.Arrays;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.math3.util.Precision;
 
-import us.ihmc.geometry.tuple3D.Point3D;
-import us.ihmc.geometry.tuple3D.interfaces.Point3DBasics;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.NodeBuilder;

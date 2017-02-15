@@ -1,7 +1,7 @@
 package us.ihmc.jOctoMap.rules.interfaces;
 
-import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
-import us.ihmc.geometry.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 
 public interface RayActionRule

@@ -3,12 +3,12 @@ package us.ihmc.jOctoMap.ocTree.baseImplementation;
 import java.util.HashMap;
 import java.util.Map;
 
-import us.ihmc.geometry.transform.interfaces.Transform;
-import us.ihmc.geometry.tuple3D.Point3D;
-import us.ihmc.geometry.tuple3D.Vector3D;
-import us.ihmc.geometry.tuple3D.interfaces.Point3DBasics;
-import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
-import us.ihmc.geometry.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.euclid.transform.interfaces.Transform;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.jOctoMap.boundingBox.OcTreeBoundingBoxInterface;
 import us.ihmc.jOctoMap.key.KeyRayReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKey;

@@ -1,7 +1,7 @@
 package us.ihmc.jOctoMap.boundingBox;
 
-import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
-import us.ihmc.geometry.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 

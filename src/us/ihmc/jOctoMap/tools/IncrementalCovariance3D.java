@@ -3,8 +3,8 @@ package us.ihmc.jOctoMap.tools;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import us.ihmc.geometry.tuple3D.Point3D;
-import us.ihmc.geometry.tuple3D.interfaces.Tuple3DBasics;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Tuple3DBasics;
 
 /**
  * This class provides a storeless computation for a 3D covariance matrix.

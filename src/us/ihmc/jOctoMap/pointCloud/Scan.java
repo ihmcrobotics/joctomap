@@ -1,8 +1,8 @@
 package us.ihmc.jOctoMap.pointCloud;
 
-import us.ihmc.geometry.transform.interfaces.Transform;
-import us.ihmc.geometry.tuple3D.Point3D;
-import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.transform.interfaces.Transform;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 
 public class Scan
 {

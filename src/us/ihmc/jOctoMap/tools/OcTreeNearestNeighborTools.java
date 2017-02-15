@@ -2,7 +2,7 @@ package us.ihmc.jOctoMap.tools;
 
 import org.apache.commons.lang3.mutable.MutableDouble;
 
-import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;

@@ -12,8 +12,8 @@ import org.ejml.ops.MatrixFeatures;
 import org.junit.Assert;
 import org.junit.Test;
 
-import us.ihmc.geometry.tuple3D.Point3D;
-import us.ihmc.geometry.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
 
 
 public class IncrementalCovariance3DTest

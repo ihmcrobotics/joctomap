@@ -5,10 +5,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
-import us.ihmc.geometry.transform.interfaces.Transform;
-import us.ihmc.geometry.tuple3D.Point3D32;
-import us.ihmc.geometry.tuple3D.interfaces.Point3DBasics;
-import us.ihmc.geometry.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.transform.interfaces.Transform;
+import us.ihmc.euclid.tuple3D.Point3D32;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 
 public class PointCloud implements Iterable<Point3D32>
 {
