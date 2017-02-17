@@ -1,99 +1,220 @@
 package us.ihmc.jOctoMap.tools;
 
-import javax.vecmath.AxisAngle4d;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
+import us.ihmc.euclid.axisAngle.AxisAngle;
+import us.ihmc.euclid.axisAngle.interfaces.AxisAngleBasics;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 
 public class JOctoMapGeometryTools
 {
    /**
-    * Compute the orthogonal distance from a point to a line (defined by two 3D points).
-    * From http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
-    * ^^Modified to return distance if line is defined by same point^^
-    *          returns
-    * @param point query
-    * @param lineStart start point of the line.
-    * @param lineEnd end point of the line.
-    * @return double distance between the point and the line.
+    * Computes the complete minimum rotation from {@code zUp = (0, 0, 1)} to the given
+    * {@code vector} and packs it into an {@link AxisAngle}. The rotation axis if perpendicular to
+    * both vectors. The rotation angle is computed as the angle from the {@code zUp} to the
+    * {@code vector}: <br>
+    * {@code rotationAngle = zUp.angle(vector)}. </br>
+    * Note: the vector does not need to be unit length.
+    * <p>
+    * Edge cases:
+    * <ul>
+    * <li>the vector is aligned with {@code zUp}: the rotation angle is equal to {@code 0.0} and the
+    * rotation axis is set to: (1, 0, 0).
+    * <li>the vector is collinear pointing opposite direction of {@code zUp}: the rotation angle is
+    * equal to {@code Math.PI} and the rotation axis is set to: (1, 0, 0).
+    * <li>if the length of the given normal is below {@code 1.0E-7}: the rotation angle is equal to
+    * {@code 0.0} and the rotation axis is set to: (1, 0, 0).
+    * </ul>
+    * </p>
+    * <p>
+    * Note: The calculation becomes less accurate as the two vectors are more collinear.
+    * </p>
+    * <p>
+    * WARNING: This method generates garbage.
+    * </p>
+    * 
+    * @param vector the 3D vector that is rotated with respect to {@code zUp}. Not modified.
+    * @return the minimum rotation from {@code zUp} to the given {@code vector}.
     */
-   public static double distanceFromPointToLine(Point3d point, Point3d lineStart, Point3d lineEnd)
+   public static AxisAngle getAxisAngleFromZUpToVector(Vector3DReadOnly vector)
    {
-      if (lineStart.equals(lineEnd))
-      {
-         double dx = lineStart.getX() - point.getX();
-         double dy = lineStart.getY() - point.getY();
-         double dz = lineStart.getZ() - point.getZ();
-         return Math.sqrt(dx * dx + dy * dy + dz * dz);
-      }
-      else
-      {
-         Vector3d startToEnd = new Vector3d(lineEnd);
-         startToEnd.sub(lineStart);
-
-         Vector3d crossProduct = new Vector3d(lineStart);
-         crossProduct.sub(point);
-         crossProduct.cross(startToEnd, crossProduct);
-
-         return crossProduct.length() / startToEnd.length();
-      }
+      AxisAngle axisAngle = new AxisAngle();
+      getAxisAngleFromZUpToVector(vector, axisAngle);
+      return axisAngle;
    }
 
    /**
-    * Computes the smallest rotation from the given vector to the z-up vector (0, 0, 1).
-    * @param normalVector3d the vector to compute the rotation from.
-    * @return the resulting rotation.
+    * Computes the complete minimum rotation from {@code zUp = (0, 0, 1)} to the given
+    * {@code vector} and packs it into an {@link AxisAngleBasics}. The rotation axis if perpendicular to
+    * both vectors. The rotation angle is computed as the angle from the {@code zUp} to the
+    * {@code vector}: <br>
+    * {@code rotationAngle = zUp.angle(vector)}. </br>
+    * Note: the vector does not need to be unit length.
+    * <p>
+    * Edge cases:
+    * <ul>
+    * <li>the vector is aligned with {@code zUp}: the rotation angle is equal to {@code 0.0} and the
+    * rotation axis is set to: (1, 0, 0).
+    * <li>the vector is collinear pointing opposite direction of {@code zUp}: the rotation angle is
+    * equal to {@code Math.PI} and the rotation axis is set to: (1, 0, 0).
+    * <li>if the length of the given normal is below {@code 1.0E-7}: the rotation angle is equal to
+    * {@code 0.0} and the rotation axis is set to: (1, 0, 0).
+    * </ul>
+    * </p>
+    * <p>
+    * Note: The calculation becomes less accurate as the two vectors are more collinear.
+    * </p>
+    * 
+    * @param vector the vector that is rotated with respect to {@code zUp}. Not modified.
+    * @param rotationToPack the minimum rotation from {@code zUp} to the given {@code vector}.
+    *           Modified.
     */
-   public static AxisAngle4d getRotationBasedOnNormal(Vector3d normalVector3d)
+   public static void getAxisAngleFromZUpToVector(Vector3DReadOnly vector, AxisAngleBasics rotationToPack)
    {
-      AxisAngle4d rotation = new AxisAngle4d();
-      getRotationBasedOnNormal(rotation, normalVector3d);
-      return rotation;
+      getAxisAngleFromFirstToSecondVector(0.0, 0.0, 1.0, vector.getX(), vector.getY(), vector.getZ(), rotationToPack);
    }
 
    /**
-    * Computes the smallest rotation from the given vector to the z-up vector (0, 0, 1).
-    * @param rotationToPack the computed rotation.
-    * @param normalVector3d the vector to compute the rotation from.
+    * Computes the complete minimum rotation from {@code firstVector} to the {@code secondVector}
+    * and packs it into an {@link AxisAngleBasics}. The rotation axis if perpendicular to both vectors.
+    * The rotation angle is computed as the angle from the {@code firstVector} to the
+    * {@code secondVector}: <br>
+    * {@code rotationAngle = firstVector.angle(secondVector)}. </br>
+    * Note: the vectors do not need to be unit length.
+    * <p>
+    * Edge cases:
+    * <ul>
+    * <li>the vectors are the same: the rotation angle is equal to {@code 0.0} and the rotation axis
+    * is set to: (1, 0, 0).
+    * <li>the vectors are collinear pointing opposite directions: the rotation angle is equal to
+    * {@code Math.PI} and the rotation axis is set to: (1, 0, 0).
+    * <li>if the length of either normal is below {@code 1.0E-7}: the rotation angle is equal to
+    * {@code 0.0} and the rotation axis is set to: (1, 0, 0).
+    * </ul>
+    * </p>
+    * <p>
+    * Note: The calculation becomes less accurate as the two vectors are more collinear.
+    * </p>
+    * 
+    * @param firstVector the first vector. Not modified.
+    * @param secondVector the second vector that is rotated with respect to the first vector. Not
+    *           modified.
+    * @param rotationToPack the minimum rotation from {@code firstVector} to the
+    *           {@code secondVector}. Modified.
     */
-   public static void getRotationBasedOnNormal(AxisAngle4d rotationToPack, Vector3d normalVector3d)
+   public static void getAxisAngleFromFirstToSecondVector(Vector3DReadOnly firstVector, Vector3DReadOnly secondVector, AxisAngleBasics rotationToPack)
    {
-      Vector3d referenceNormal = new Vector3d(0.0, 0.0, 1.0);
-      getRotationBasedOnNormal(rotationToPack, normalVector3d, referenceNormal);
+      getAxisAngleFromFirstToSecondVector(firstVector.getX(), firstVector.getY(), firstVector.getZ(), secondVector.getX(), secondVector.getY(),
+                                          secondVector.getZ(), rotationToPack);
    }
 
    /**
-    * Computes the smallest rotation from the reference normal to the rotated normal.
-    * @param rotationToPack the computed rotation.
-    * @param rotatedNormal the normal that is rotated.
-    * @param referenceNormal the reference normal. What should be rotated normal be when there is no rotation applied to it.
+    * Computes the complete minimum rotation from {@code firstVector} to the {@code secondVector}
+    * and packs it into an {@link AxisAngleBasics}. The rotation axis if perpendicular to both vectors.
+    * The rotation angle is computed as the angle from the {@code firstVector} to the
+    * {@code secondVector}: <br>
+    * {@code rotationAngle = firstVector.angle(secondVector)}. </br>
+    * Note: the vectors do not need to be unit length.
+    * <p>
+    * Edge cases:
+    * <ul>
+    * <li>the vectors are the same: the rotation angle is equal to {@code 0.0} and the rotation axis
+    * is set to: (1, 0, 0).
+    * <li>the vectors are collinear pointing opposite directions: the rotation angle is equal to
+    * {@code Math.PI} and the rotation axis is set to: (1, 0, 0).
+    * <li>if the length of either normal is below {@code 1.0E-7}: the rotation angle is equal to
+    * {@code 0.0} and the rotation axis is set to: (1, 0, 0).
+    * </ul>
+    * </p>
+    * <p>
+    * Note: The calculation becomes less accurate as the two vectors are more collinear.
+    * </p>
+    * 
+    * @param firstVectorX x-component of the first vector.
+    * @param firstVectorY y-component of the first vector.
+    * @param firstVectorZ z-component of the first vector.
+    * @param secondVectorX x-component of the second vector that is rotated with respect to the
+    *           first vector.
+    * @param secondVectorY y-component of the second vector that is rotated with respect to the
+    *           first vector.
+    * @param secondVectorZ z-component of the second vector that is rotated with respect to the
+    *           first vector.
+    * @param rotationToPack the minimum rotation from {@code firstVector} to the
+    *           {@code secondVector}. Modified.
     */
-   public static void getRotationBasedOnNormal(AxisAngle4d rotationToPack, Vector3d rotatedNormal, Vector3d referenceNormal)
+   public static void getAxisAngleFromFirstToSecondVector(double firstVectorX, double firstVectorY, double firstVectorZ, double secondVectorX,
+                                                          double secondVectorY, double secondVectorZ, AxisAngleBasics rotationToPack)
    {
-      Vector3d rotationAxis = new Vector3d();
+      double rotationAxisX = firstVectorY * secondVectorZ - firstVectorZ * secondVectorY;
+      double rotationAxisY = firstVectorZ * secondVectorX - firstVectorX * secondVectorZ;
+      double rotationAxisZ = firstVectorX * secondVectorY - firstVectorY * secondVectorX;
+      double rotationAxisLength = Math.sqrt(rotationAxisX * rotationAxisX + rotationAxisY * rotationAxisY + rotationAxisZ * rotationAxisZ);
 
-      double inverseLengths = 1.0 / (rotatedNormal.length() * referenceNormal.length());
+      boolean normalsAreParallel = rotationAxisLength < 1e-7;
 
-      rotationAxis.cross(referenceNormal, rotatedNormal);
-      double rotationAxisLength = rotationAxis.length();
+      double dot;
+      dot = secondVectorX * firstVectorX;
+      dot += secondVectorY * firstVectorY;
+      dot += secondVectorZ * firstVectorZ;
 
-      double sin = rotationAxisLength * inverseLengths;
-      double cos = referenceNormal.dot(rotatedNormal) * inverseLengths;
-      double rotationAngle = Math.atan2(sin, cos);
-
-      boolean normalsAreParallel = rotationAxisLength < 1.0e-10;
       if (normalsAreParallel)
       {
-         rotationAngle = rotatedNormal.getZ() > 0.0 ? 0.0 : Math.PI;
-         rotationAxis.set(1.0, 0.0, 0.0);
-      }
-      else
-      {
-         rotationAxis.scale(1.0 / rotationAxisLength);
+         double rotationAngle = dot > 0.0 ? 0.0 : Math.PI;
+         rotationToPack.set(1.0, 0.0, 0.0, rotationAngle);
+         return;
       }
 
-      rotationToPack.set(rotationAxis, rotationAngle);
+      double rotationAngle = getAngleFromFirstToSecondVector(firstVectorX, firstVectorY, firstVectorZ, secondVectorX, secondVectorY, secondVectorZ);
+
+      rotationAxisX /= rotationAxisLength;
+      rotationAxisY /= rotationAxisLength;
+      rotationAxisZ /= rotationAxisLength;
+      rotationToPack.set(rotationAxisX, rotationAxisY, rotationAxisZ, rotationAngle);
    }
 
+   /**
+    * Computes the angle in radians from the first 3D vector to the second 3D vector. The computed
+    * angle is in the range [0; <i>pi</i>].
+    * <p>
+    * Edge cases:
+    * <ul>
+    * <li>if the length of either vector is below {@code 1.0E-7}, this method fails and returns an
+    * angle of {@code 0.0} radian.
+    * </ul>
+    * </p>
+    * 
+    * @param firstVectorX x-component of first the vector.
+    * @param firstVectorY y-component of first the vector.
+    * @param firstVectorZ z-component of first the vector.
+    * @param secondVectorX x-component of second the vector.
+    * @param secondVectorY y-component of second the vector.
+    * @param secondVectorZ z-component of second the vector.
+    * @return the angle in radians from the first vector to the second vector.
+    */
+   public static double getAngleFromFirstToSecondVector(double firstVectorX, double firstVectorY, double firstVectorZ, double secondVectorX,
+                                                        double secondVectorY, double secondVectorZ)
+   {
+      double firstVectorLength = Math.sqrt(firstVectorX * firstVectorX + firstVectorY * firstVectorY + firstVectorZ * firstVectorZ);
+
+      if (firstVectorLength < 1e-7)
+         return 0.0;
+
+      double secondVectorLength = Math.sqrt(secondVectorX * secondVectorX + secondVectorY * secondVectorY + secondVectorZ * secondVectorZ);
+
+      if (secondVectorLength < 1e-7)
+         return 0.0;
+
+      double dotProduct = firstVectorX * secondVectorX + firstVectorY * secondVectorY + firstVectorZ * secondVectorZ;
+      dotProduct /= firstVectorLength * secondVectorLength;
+
+      if (dotProduct < -1.0)
+         dotProduct = -1.0;
+      else if (dotProduct > 1.0)
+         dotProduct = 1.0;
+
+      return Math.acos(dotProduct);
+   }
 
    /**
     * Finds the intersections of infinite-length ray with an axis-aligned box.
@@ -104,7 +225,7 @@ public class JOctoMapGeometryTools
     * @param rayDirection direction the ray is going the rayOrigin.
     * @return the found intersection(s) or null if the ray does not intersect the box.
     */
-   public static RayBoxIntersectionResult rayBoxIntersection(Point3d min, Point3d max, Point3d rayOrigin, Vector3d rayDirection)
+   public static RayBoxIntersectionResult rayBoxIntersection(Point3DReadOnly min, Point3DReadOnly max, Point3DReadOnly rayOrigin, Vector3DReadOnly rayDirection)
    {
       return rayBoxIntersection(min, max, rayOrigin, rayDirection, Double.POSITIVE_INFINITY);
    }
@@ -119,13 +240,17 @@ public class JOctoMapGeometryTools
     * @param maxRayLength intersections beyond the max ray length are ignored.
     * @return the found intersection(s) or null if the ray does not intersect the box.
     */
-   public static RayBoxIntersectionResult rayBoxIntersection(Point3d min, Point3d max, Point3d rayOrigin, Vector3d rayDirection, double maxRayLength)
+   public static RayBoxIntersectionResult rayBoxIntersection(Point3DReadOnly min, Point3DReadOnly max, Point3DReadOnly rayOrigin, Vector3DReadOnly rayDirection, double maxRayLength)
    {
       double lengthSquared = rayDirection.lengthSquared();
       if (lengthSquared < 1.0e-7)
          return null;
       else if (Math.abs(lengthSquared - 1.0) > 1.0e-3)
-         rayDirection.scale(1.0 / Math.sqrt(lengthSquared));
+      {
+         Vector3D vector3d = new Vector3D(rayDirection);
+         vector3d.scale(1.0 / Math.sqrt(lengthSquared));
+         rayDirection = vector3d;
+      }
 
       double epsilon = 1.0e-10;
       double tmin = Double.NEGATIVE_INFINITY;
@@ -157,7 +282,7 @@ public class JOctoMapGeometryTools
          else if (rayOrigin.getY() < min.getY() + epsilon)
             return null;
       }
-      else 
+      else
       {
          if (rayDirection.getY() > 0.0)
          {
@@ -198,10 +323,10 @@ public class JOctoMapGeometryTools
             tzmin = (max.getZ() - rayOrigin.getZ()) / rayDirection.getZ();
             tzmax = (min.getZ() - rayOrigin.getZ()) / rayDirection.getZ();
          }
-         
+
          if ((tmin > tzmax) || (tzmin > tmax))
             return null;
-         
+
          if (tzmin > tmin)
             tmin = tzmin;
          if (tzmax < tmax)
@@ -211,7 +336,7 @@ public class JOctoMapGeometryTools
       if (tmax < 0.0 || tmin > maxRayLength)
          return null;
 
-      Point3d enteringIntersection;
+      Point3D enteringIntersection;
 
       if (tmin < 0.0)
       {
@@ -222,11 +347,11 @@ public class JOctoMapGeometryTools
       }
       else
       {
-         enteringIntersection = new Point3d();
+         enteringIntersection = new Point3D();
          enteringIntersection.scaleAdd(tmin, rayDirection, rayOrigin);
       }
 
-      Point3d exitingIntersection;
+      Point3D exitingIntersection;
 
       if (tmax > maxRayLength)
       {
@@ -234,7 +359,7 @@ public class JOctoMapGeometryTools
       }
       else
       {
-         exitingIntersection = new Point3d();         
+         exitingIntersection = new Point3D();
          exitingIntersection.scaleAdd(tmax, rayDirection, rayOrigin);
       }
 
@@ -244,11 +369,11 @@ public class JOctoMapGeometryTools
    public static class RayBoxIntersectionResult
    {
       private final double entryDistanceFromOrigin;
-      private final Point3d enteringIntersection;
+      private final Point3D enteringIntersection;
       private final double exitDistanceFromOrigin;
-      private final Point3d exitingIntersection;
+      private final Point3D exitingIntersection;
 
-      public RayBoxIntersectionResult(double entryDistanceFromOrigin, Point3d enteringIntersection, double exitDistanceFromOrigin, Point3d exitingIntersection)
+      public RayBoxIntersectionResult(double entryDistanceFromOrigin, Point3D enteringIntersection, double exitDistanceFromOrigin, Point3D exitingIntersection)
       {
          this.entryDistanceFromOrigin = entryDistanceFromOrigin;
          this.enteringIntersection = enteringIntersection;
@@ -261,7 +386,7 @@ public class JOctoMapGeometryTools
          return entryDistanceFromOrigin;
       }
 
-      public Point3d getEnteringIntersection()
+      public Point3D getEnteringIntersection()
       {
          return enteringIntersection;
       }
@@ -271,7 +396,7 @@ public class JOctoMapGeometryTools
          return exitDistanceFromOrigin;
       }
 
-      public Point3d getExitingIntersection()
+      public Point3D getExitingIntersection()
       {
          return exitingIntersection;
       }
@@ -285,22 +410,23 @@ public class JOctoMapGeometryTools
 
    /**
     * Computes the normal of the plane P defined by the three points (p0, p1, p2).
+    * 
     * @param p0 a point on the plane P.
     * @param p1 a point on the plane P.
     * @param p2 a point on the plane P.
     * @return the plane normal.
     */
-   public static Vector3d computeNormal(Point3d p0, Point3d p1, Point3d p2)
+   public static Vector3D computeNormal(Point3DReadOnly p0, Point3DReadOnly p1, Point3DReadOnly p2)
    {
       double v1_x = p1.getX() - p0.getX();
       double v1_y = p1.getY() - p0.getY();
       double v1_z = p1.getZ() - p0.getZ();
-   
+
       double v2_x = p2.getX() - p0.getX();
       double v2_y = p2.getY() - p0.getY();
       double v2_z = p2.getZ() - p0.getZ();
-   
-      Vector3d normal = new Vector3d();
+
+      Vector3D normal = new Vector3D();
       normal.setX(v1_y * v2_z - v1_z * v2_y);
       normal.setY(v2_x * v1_z - v2_z * v1_x);
       normal.setZ(v1_x * v2_y - v1_y * v2_x);

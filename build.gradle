@@ -23,10 +23,11 @@ buildscript {
 
 apply plugin: "maven-publish"
 apply plugin: "com.jfrog.artifactory"
+apply plugin: 'com.jfrog.bintray'
 apply plugin: "us.ihmc.gradle.ihmc-build"
 
 sourceCompatibility = 1.8
-version = '1.5.0'
+version = '1.6-alpha'
 
 repositories ihmc.ihmcDefaultArtifactProxies()
 
@@ -157,8 +158,8 @@ repositories {
 
 dependencies {
    testCompile group: 'junit', name: 'junit', version: '4.11'
-   compile group: 'javax.vecmath', name: 'vecmath', version: '1.5.2'
+   compile group: 'us.ihmc', name: 'euclid-core', version: '0.3-alpha'
    compile group: 'org.apache.commons', name: 'commons-math3', version: '3.3'
    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3'
-   compile group: 'org.ejml', name: 'dense64', version: '0.28'
+   compile group: 'org.ejml', name: 'dense64', version: '0.30'
 }

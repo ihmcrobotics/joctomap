@@ -1,9 +1,8 @@
 package us.ihmc.jOctoMap.tools;
 
-import javax.vecmath.Point3d;
-
 import org.apache.commons.lang3.mutable.MutableDouble;
 
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;
@@ -55,7 +54,7 @@ public abstract class OcTreeNearestNeighborTools
     * @param radius search sphere radius.
     * @param actionRule action to perform when a node contained in S(q, r) is found.
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE rootNode, Point3d query, double radius,
+   public static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE rootNode, Point3DReadOnly query, double radius,
          NeighborActionRule<NODE> actionRule)
    {
       findRadiusNeighbors(rootNode, query.getX(), query.getY(), query.getZ(), radius, actionRule);
@@ -134,7 +133,7 @@ public abstract class OcTreeNearestNeighborTools
     * @param nearestNeighborKeyToPack result of the search.
     * @return if the search succeeds: the distance between the query and the nearest neighbor, {@value Double#NaN} otherwise.
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, OcTreeKey nearestNeighborKeyToPack)
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3DReadOnly query, OcTreeKey nearestNeighborKeyToPack)
    {
       return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), -1.0, Double.POSITIVE_INFINITY, nearestNeighborKeyToPack);
    }
@@ -151,7 +150,7 @@ public abstract class OcTreeNearestNeighborTools
     * @param nearestNeighborKeyToPack result of the search.
     * @return if the search succeeds: the distance between the query and the nearest neighbor, {@value Double#NaN} otherwise.
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance, OcTreeKey nearestNeighborKeyToPack)
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3DReadOnly query, double minDistance, OcTreeKey nearestNeighborKeyToPack)
    {
       return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, Double.POSITIVE_INFINITY, nearestNeighborKeyToPack);
    }
@@ -169,7 +168,7 @@ public abstract class OcTreeNearestNeighborTools
     * @param nearestNeighborKeyToPack result of the search.
     * @return if the search succeeds: the distance between the query and the nearest neighbor, {@value Double#NaN} otherwise.
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3d query, double minDistance, double maxDistance, OcTreeKey nearestNeighborKeyToPack)
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3DReadOnly query, double minDistance, double maxDistance, OcTreeKey nearestNeighborKeyToPack)
    {
       return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, maxDistance, nearestNeighborKeyToPack);
    }

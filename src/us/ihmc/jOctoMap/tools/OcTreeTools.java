@@ -3,14 +3,15 @@ package us.ihmc.jOctoMap.tools;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.vecmath.Point3d;
-
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.jOctoMap.iterators.OcTreeIteratorFactory;
 import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;
 
 public abstract class OcTreeTools
 {
-   public static <NODE extends AbstractOcTreeNode<NODE>> void computeMinMaxCoordinates(NODE root, Point3d minToPack, Point3d maxToPack, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeMinMaxCoordinates(NODE root, Point3DBasics minToPack, Point3DBasics maxToPack, double resolution, int treeDepth)
    {
       // empty tree
       if (root == null)
@@ -23,7 +24,7 @@ public abstract class OcTreeTools
       minToPack.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
       maxToPack.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 
-      for (NODE node : OcTreeIteratorFactory.createLeafIteratable(root))
+      for (NODE node : OcTreeIteratorFactory.createLeafIterable(root))
       {
          double size = node.getSize();
          double halfSize = size / 2.0;
@@ -45,15 +46,15 @@ public abstract class OcTreeTools
       }
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> Point3d computeMaxCoordinate(NODE root, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> Point3D computeMaxCoordinate(NODE root, double resolution, int treeDepth)
    {
       // empty tree
       if (root == null)
-         return new Point3d();
+         return new Point3D();
 
-      Point3d max = new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+      Point3D max = new Point3D(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 
-      for (NODE node : OcTreeIteratorFactory.createLeafIteratable(root))
+      for (NODE node : OcTreeIteratorFactory.createLeafIterable(root))
       {
          double size = node.getSize();
          double halfSize = size / 2.0;
@@ -68,15 +69,15 @@ public abstract class OcTreeTools
       return max;
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> Point3d computeMinCoordinate(NODE root, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> Point3D computeMinCoordinate(NODE root, double resolution, int treeDepth)
    {
       // empty tree
       if (root == null)
-         return new Point3d();
+         return new Point3D();
 
-      Point3d min = new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+      Point3D min = new Point3D(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 
-      for (NODE node : OcTreeIteratorFactory.createLeafIteratable(root))
+      for (NODE node : OcTreeIteratorFactory.createLeafIterable(root))
       {
          double size = node.getSize();
          double halfSize = size / 2.0;
@@ -94,7 +95,7 @@ public abstract class OcTreeTools
    /**
     * Return centers of leafs that do NOT exist (but could) in a given bounding box
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> List<Point3d> getUnknownLeafCenters(NODE root, Point3d pmin, Point3d pmax, double resolution,
+   public static <NODE extends AbstractOcTreeNode<NODE>> List<Point3D> getUnknownLeafCenters(NODE root, Point3DReadOnly pmin, Point3DReadOnly pmax, double resolution,
          int treeDepth)
    {
       return getUnknownLeafCenters(root, pmin, pmax, 0, resolution, treeDepth);
@@ -103,14 +104,14 @@ public abstract class OcTreeTools
    /**
     * Return centers of leafs that do NOT exist (but could) in a given bounding box
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> List<Point3d> getUnknownLeafCenters(NODE root, Point3d pmin, Point3d pmax, int depth,
+   public static <NODE extends AbstractOcTreeNode<NODE>> List<Point3D> getUnknownLeafCenters(NODE root, Point3DReadOnly pmin, Point3DReadOnly pmax, int depth,
          double resolution, int treeDepth)
    {
       JOctoMapTools.checkIfDepthValid(depth, treeDepth);
       if (depth == 0)
          depth = treeDepth;
 
-      List<Point3d> nodeCenters = new ArrayList<>();
+      List<Point3D> nodeCenters = new ArrayList<>();
 
       double[] pminArray = new double[3];
       double[] pmaxArray = new double[3];
@@ -127,7 +128,7 @@ public abstract class OcTreeTools
          //      std::cout << "bbx " << i << " size: " << diff[i] << " " << steps[i] << " steps\n";
       }
 
-      Point3d p = new Point3d(pmin);
+      Point3D p = new Point3D(pmin);
       NODE res;
       for (int x = 0; x < steps[0]; ++x)
       {

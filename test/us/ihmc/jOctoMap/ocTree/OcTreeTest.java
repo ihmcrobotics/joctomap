@@ -1,21 +1,22 @@
 package us.ihmc.jOctoMap.ocTree;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.Random;
 
-import javax.vecmath.Point3d;
-
 import org.junit.Test;
 
+import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.jOctoMap.node.OccupancyOcTreeNode;
 import us.ihmc.jOctoMap.tools.JOctoMapRandomTools;
 
 public class OcTreeTest
 {
    @Test
-   public void testUpdateNodePoint3dBoolean()
+   public void testUpdateNodePoint3DBoolean()
    {
       Random random = new Random(126451L);
 
@@ -23,7 +24,7 @@ public class OcTreeTest
       {
          double resolution = 0.15 * random.nextDouble();
          OccupancyOcTree ocTree = new OccupancyOcTree(resolution);
-         Point3d coordinate = JOctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
+         Point3D coordinate = JOctoMapRandomTools.generateRandomPoint3D(random, 10.0, 10.0, 10.0);
 
          OccupancyOcTreeNode node = null;
 

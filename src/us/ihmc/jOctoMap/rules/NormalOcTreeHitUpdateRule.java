@@ -1,10 +1,8 @@
 package us.ihmc.jOctoMap.rules;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Tuple3d;
-import javax.vecmath.Tuple3f;
-import javax.vecmath.Vector3d;
-
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.NormalOcTreeNode;
 import us.ihmc.jOctoMap.occupancy.OccupancyParametersReadOnly;
@@ -13,12 +11,12 @@ import us.ihmc.jOctoMap.tools.OccupancyTools;
 
 public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
 {
-   private final Point3d hitLocation = new Point3d();
+   private final Point3D hitLocation = new Point3D();
    private long updateWeight = 1L;
    private long maximumNumberOfHits = Long.MAX_VALUE;
-   private final Point3d sensorLocation = new Point3d();
-   private final Vector3d initialGuessNormal = new Vector3d();
-   private final Vector3d nodeNormal = new Vector3d();
+   private final Point3D sensorLocation = new Point3D();
+   private final Vector3D initialGuessNormal = new Vector3D();
+   private final Vector3D nodeNormal = new Vector3D();
 
    private float updateLogOdds = Float.NaN;
    private final OccupancyParametersReadOnly parameters;
@@ -33,14 +31,7 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
       this.updateLogOdds = updateLogOdds;
    }
 
-   public void setHitLocation(Tuple3d sensorLocation, Tuple3d hitLocation)
-   {
-      this.sensorLocation.set(sensorLocation);
-      this.hitLocation.set(hitLocation);
-      setHitUpdateWeight(1L);
-   }
-
-   public void setHitLocation(Tuple3f sensorLocation, Tuple3f hitLocation)
+   public void setHitLocation(Tuple3DReadOnly sensorLocation, Tuple3DReadOnly hitLocation)
    {
       this.sensorLocation.set(sensorLocation);
       this.hitLocation.set(hitLocation);

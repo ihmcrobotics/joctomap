@@ -19,6 +19,20 @@ public class ScannerTools
       }
    }
 
+   public static float readNextFloat(Scanner scanner, float defaultValue)
+   {
+      try
+      {
+         while (!scanner.hasNextFloat())
+            scanner.next();
+         return scanner.nextFloat();
+      }
+      catch (NoSuchElementException e)
+      {
+         return defaultValue;
+      }
+   }
+
    public static int readNextInt(Scanner scanner, int defaultValue)
    {
       try

@@ -1,7 +1,9 @@
 package us.ihmc.jOctoMap.iterators;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;
 import us.ihmc.jOctoMap.rules.interfaces.IteratorSelectionRule;
@@ -37,6 +39,13 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
    public Iterator<NODE> iterator()
    {
       return new OcTreeIterator<>(root, maxDepth, rule);
+   }
+
+   public List<NODE> toList()
+   {
+      List<NODE> nodes = new ArrayList<>();
+      forEach(nodes::add);
+      return nodes;
    }
 
    public static class OcTreeIterator<NODE extends AbstractOcTreeNode<NODE>> implements Iterator<NODE>

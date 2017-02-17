@@ -2,9 +2,9 @@ package us.ihmc.jOctoMap.testTools;
 
 import java.util.Random;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
-
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.ocTree.baseImplementation.AbstractOcTreeBase;
@@ -40,7 +40,7 @@ public class TestOcTree extends AbstractOcTreeBase<TestOcTreeNode>
       updateNodeInternal(key, doNothingRule, null);
    }
 
-   public void insertNode(Point3d coordinate)
+   public void insertNode(Point3DReadOnly coordinate)
    {
       updateNodeInternal(coordinate, doNothingRule, null);
    }
@@ -54,13 +54,13 @@ public class TestOcTree extends AbstractOcTreeBase<TestOcTreeNode>
       }
    }
 
-   public void fillRandomlyWithinSphere(Random random, int numberOfLeavesToCreate, Point3d sphereCenter, double sphereRadius)
+   public void fillRandomlyWithinSphere(Random random, int numberOfLeavesToCreate, Point3DReadOnly sphereCenter, double sphereRadius)
    {
       while (getNumberOfLeafNodes() < numberOfLeavesToCreate)
       {
-         Vector3d randomTranslation = new Vector3d(random.nextDouble() - 0.5, random.nextDouble() - 0.5, random.nextDouble() - 0.5);
+         Vector3D randomTranslation = new Vector3D(random.nextDouble() - 0.5, random.nextDouble() - 0.5, random.nextDouble() - 0.5);
          randomTranslation.scale(sphereRadius * random.nextDouble() / randomTranslation.length());
-         Point3d randomCoordinateInSphere = new Point3d();
+         Point3D randomCoordinateInSphere = new Point3D();
          randomCoordinateInSphere.add(sphereCenter, randomTranslation);
          insertNode(randomCoordinateInSphere);
       }

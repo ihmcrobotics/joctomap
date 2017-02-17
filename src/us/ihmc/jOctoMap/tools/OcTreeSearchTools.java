@@ -1,9 +1,8 @@
 package us.ihmc.jOctoMap.tools;
 
-import static us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools.*;
+import static us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools.coordinateToKey;
 
-import javax.vecmath.Point3d;
-
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;
@@ -39,12 +38,12 @@ public abstract class OcTreeSearchTools
     *  You need to check if the returned node is NULL, since it can be in unknown space.
     *  @return pointer to node if found, NULL otherwise
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, Point3d coord, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, Point3DReadOnly coord, double resolution, int treeDepth)
    {
       return search(rootNode, coord, 0, resolution, treeDepth);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, Point3d coord, int depth, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, Point3DReadOnly coord, int depth, double resolution, int treeDepth)
    {
       OcTreeKey key = coordinateToKey(coord, resolution, treeDepth);
       if (key == null)

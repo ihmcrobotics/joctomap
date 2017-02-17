@@ -1,32 +1,33 @@
 package us.ihmc.jOctoMap.pointCloud;
 
-import javax.vecmath.Matrix4d;
-import javax.vecmath.Point3d;
+import us.ihmc.euclid.transform.interfaces.Transform;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 
 public class Scan
 {
-   private final Point3d sensorOrigin;
+   private final Point3D sensorOrigin;
    private final PointCloud pointCloud;
 
-   public Scan(Point3d sensorOrigin, PointCloud pointCloud)
+   public Scan(Point3DReadOnly sensorOrigin, PointCloud pointCloud)
    {
-      this.sensorOrigin = sensorOrigin;
+      this.sensorOrigin = new Point3D(sensorOrigin);
       this.pointCloud = pointCloud;
    }
 
    public Scan(Scan other)
    {
-      sensorOrigin = new Point3d(other.sensorOrigin);
+      sensorOrigin = new Point3D(other.sensorOrigin);
       pointCloud = new PointCloud(other.pointCloud);
    }
 
-   public void transform(Matrix4d transform)
+   public void transform(Transform transform)
    {
       transform.transform(sensorOrigin);
       pointCloud.transform(transform);
    }
 
-   public Point3d getSensorOrigin()
+   public Point3DReadOnly getSensorOrigin()
    {
       return sensorOrigin;
    }

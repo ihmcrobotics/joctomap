@@ -4,10 +4,9 @@ import static org.junit.Assert.*;
 
 import java.util.Random;
 
-import javax.vecmath.Point3d;
-
 import org.junit.Test;
 
+import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.node.OccupancyOcTreeNode;
 import us.ihmc.jOctoMap.ocTree.OccupancyOcTree;
@@ -64,7 +63,7 @@ public class OcTreeSearchToolsTest
       {
          int nodeDepth = node.getDepth();
          OcTreeKey key = node.getKeyCopy();
-         Point3d nodeCoordinate = OcTreeKeyConversionTools.keyToCoordinate(key, nodeDepth, resolution, treeDepth);
+         Point3D nodeCoordinate = OcTreeKeyConversionTools.keyToCoordinate(key, nodeDepth, resolution, treeDepth);
          OccupancyOcTreeNode expectedNode = node;
 
          if (nodeDepth == treeDepth)

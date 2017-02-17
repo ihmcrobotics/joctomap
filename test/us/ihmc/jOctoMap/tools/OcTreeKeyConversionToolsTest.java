@@ -1,21 +1,19 @@
 package us.ihmc.jOctoMap.tools;
 
-import static org.junit.Assert.*;
-import static us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools.*;
-import static us.ihmc.jOctoMap.tools.OcTreeKeyTools.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools.coordinateToKey;
+import static us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools.keyToCoordinate;
+import static us.ihmc.jOctoMap.tools.OcTreeKeyTools.adjustKeyAtDepth;
 
 import java.util.ArrayList;
 import java.util.Random;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
-
 import org.junit.Test;
 
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.jOctoMap.key.OcTreeKey;
-import us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools;
-import us.ihmc.jOctoMap.tools.OcTreeKeyTools;
-import us.ihmc.jOctoMap.tools.JOctoMapRandomTools;
 
 public class OcTreeKeyConversionToolsTest
 {
@@ -41,7 +39,7 @@ public class OcTreeKeyConversionToolsTest
       for (int i = 0; i < 10000; i++)
       {
          OcTreeKey expectedKey = new OcTreeKey(random, treeDepth);
-         Point3d coordinate = keyToCoordinate(expectedKey, resolution, treeDepth);
+         Point3D coordinate = keyToCoordinate(expectedKey, resolution, treeDepth);
          OcTreeKey actualKey = coordinateToKey(coordinate, resolution, treeDepth);
          assertEquals(expectedKey, actualKey);
       }
@@ -78,7 +76,7 @@ public class OcTreeKeyConversionToolsTest
          int depth = random.nextInt(treeDepth);
          OcTreeKey inputKey = new OcTreeKey(random, treeDepth);
          OcTreeKey expectedKey = adjustKeyAtDepth(inputKey, depth, treeDepth);
-         Point3d coordinate = keyToCoordinate(inputKey, depth, resolution, treeDepth);
+         Point3D coordinate = keyToCoordinate(inputKey, depth, resolution, treeDepth);
          OcTreeKey actualKey = coordinateToKey(coordinate, depth, resolution, treeDepth);
          assertEquals(expectedKey, actualKey);
       }
@@ -142,12 +140,12 @@ public class OcTreeKeyConversionToolsTest
       Random random = new Random(21651L);
       int treeDepth = 16;
       double resolution = 0.02;
-      Point3d rootCoordinate = new Point3d();
+      Point3D rootCoordinate = new Point3D();
       OcTreeKey rootKey = OcTreeKeyTools.getRootKey(treeDepth);
       testKeyToCoordRecursive(rootKey, rootCoordinate, 0, resolution, treeDepth, random, 3);
    }
 
-   private void testKeyToCoordRecursive(OcTreeKey parentKey, Point3d parentCoordinate, int parentDepth, double resolution, int treeDepth, Random random, int numberOfChildrenToTest)
+   private void testKeyToCoordRecursive(OcTreeKey parentKey, Point3D parentCoordinate, int parentDepth, double resolution, int treeDepth, Random random, int numberOfChildrenToTest)
    {
       if (parentDepth == treeDepth)
          return;
@@ -162,8 +160,8 @@ public class OcTreeKeyConversionToolsTest
          int childIndex = childIndices.remove(random.nextInt(childIndices.size()));
          int childDepth = parentDepth + 1;
          OcTreeKey childKey = OcTreeKeyTools.computeChildKey(childIndex, parentKey, childDepth, treeDepth);
-         Point3d actualChildCoordinate = OcTreeKeyConversionTools.keyToCoordinate(childKey, childDepth, resolution, treeDepth);
-         Point3d expectedChildCoordinate = new Point3d(parentCoordinate);
+         Point3D actualChildCoordinate = OcTreeKeyConversionTools.keyToCoordinate(childKey, childDepth, resolution, treeDepth);
+         Point3D expectedChildCoordinate = new Point3D(parentCoordinate);
          expectedChildCoordinate.add(computeCoordinateOffset(childIndex, childDepth, resolution, treeDepth));
 
          assertTrue(expectedChildCoordinate.epsilonEquals(actualChildCoordinate, 1.0e-7));
@@ -172,9 +170,9 @@ public class OcTreeKeyConversionToolsTest
       }
    }
 
-   private Vector3d computeCoordinateOffset(int childIndex, int depth, double resolution, int treeDepth)
+   private Vector3D computeCoordinateOffset(int childIndex, int depth, double resolution, int treeDepth)
    {
-      Vector3d offsetVector = new Vector3d();
+      Vector3D offsetVector = new Vector3D();
       double computeNodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
       double offset = computeNodeSize / 2.0;
       
@@ -193,9 +191,9 @@ public class OcTreeKeyConversionToolsTest
 
       for (int i = 0; i < 100000; i++)
       {
-         Point3d randomPoint = JOctoMapRandomTools.generateRandomPoint3d(random, 50.0, 50.0, 50.0);
+         Point3D randomPoint = JOctoMapRandomTools.generateRandomPoint3D(random, 50.0, 50.0, 50.0);
          OcTreeKey key = OcTreeKeyConversionTools.coordinateToKey(randomPoint, resolution, treeDepth);
-         Point3d nodeCoordinate = keyToCoordinate(key, resolution, treeDepth);
+         Point3D nodeCoordinate = keyToCoordinate(key, resolution, treeDepth);
          boolean xInside = Math.abs(randomPoint.getX() - nodeCoordinate.getX()) <= 0.5 * resolution;
          boolean yInside = Math.abs(randomPoint.getY() - nodeCoordinate.getY()) <= 0.5 * resolution;
          boolean zInside = Math.abs(randomPoint.getZ() - nodeCoordinate.getZ()) <= 0.5 * resolution;

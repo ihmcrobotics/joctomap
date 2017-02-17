@@ -1,124 +1,239 @@
 package us.ihmc.jOctoMap.tools;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import javax.vecmath.AxisAngle4d;
-import javax.vecmath.Matrix3d;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
-
 import org.junit.Test;
 
+import us.ihmc.euclid.axisAngle.AxisAngle;
+import us.ihmc.euclid.matrix.RotationMatrix;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 
 public class JOctoMapGeometryToolsTest
 {
    @Test
-   public void testDistancceFromPointToLine()
+   public void testGetAxisAngleFromFirstToSecondVector() throws Exception
    {
-      Random random = new Random(6546354L);
-
-      for (int i = 0; i < 10000; i++)
+      Random random = new Random(1176L);
+      for (int i = 0; i < 1000; i++)
       {
-         Point3d lineStart = JOctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
-         Point3d lineEnd = JOctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
-         Vector3d lineDirection = new Vector3d();
-         lineDirection.sub(lineEnd, lineStart);
-         lineDirection.normalize();
+         Vector3D firstVector = JOctoMapRandomTools.generateRandomVector3D(random, JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         double expectedAngle = JOctoMapRandomTools.generateRandomDouble(random, 0.0, Math.PI);
+         Vector3D expectedAxis = JOctoMapRandomTools.generateRandomOrthogonalVector3D(random, firstVector, true);
+         AxisAngle expectedAxisAngle = new AxisAngle(expectedAxis, expectedAngle);
+         RotationMatrix rotationMatrix = new RotationMatrix(expectedAxisAngle);
 
-         Vector3d randomPerpendicular = JOctoMapRandomTools.generateRandomOrthogonalVector3d(random, lineDirection, true);
-         assertEquals(0.0, lineDirection.dot(randomPerpendicular), 1.0e-10);
+         Vector3D secondVector = new Vector3D();
+         rotationMatrix.transform(firstVector, secondVector);
+         secondVector.scale(JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
 
-         double expectedDistance = JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0);
-         Point3d pointAtExpectedDistanceFromLine = new Point3d();
-         pointAtExpectedDistanceFromLine.scaleAdd(expectedDistance, randomPerpendicular, lineStart);
+         AxisAngle actualAxisAngle = new AxisAngle();
+         JOctoMapGeometryTools.getAxisAngleFromFirstToSecondVector(firstVector, secondVector, actualAxisAngle);
 
-         double actualDistance = JOctoMapGeometryTools.distanceFromPointToLine(pointAtExpectedDistanceFromLine, lineStart, lineEnd);
+         Vector3D actualAxis = new Vector3D(actualAxisAngle.getX(), actualAxisAngle.getY(), actualAxisAngle.getZ());
 
-         assertEquals(expectedDistance, actualDistance, 1.0e-10);
+         assertEquals(1.0, actualAxis.length(), 1.0e-12);
+         assertEquals(0.0, actualAxis.dot(firstVector), 1.0e-12);
+         assertEquals(0.0, actualAxis.dot(secondVector), 1.0e-12);
+
+         assertEquals(0.0, expectedAxis.dot(firstVector), 1.0e-12);
+         assertEquals(0.0, expectedAxis.dot(secondVector), 1.0e-12);
+
+         if (actualAxisAngle.getAngle() * expectedAxisAngle.getAngle() < 0.0)
+         {
+            expectedAxis.negate();
+            expectedAngle = -expectedAngle;
+            expectedAxisAngle.set(expectedAxis, expectedAngle);
+         }
+
+         try
+         {
+            assertTrue(expectedAxisAngle.epsilonEquals(actualAxisAngle, 1.0e-12));
+         }
+         catch (AssertionError e)
+         {
+            throw new AssertionError("expected:\n<" + expectedAxisAngle + ">\n but was:\n<" + actualAxisAngle + ">");
+         }
       }
-   }
 
-   @Test
-   public void testGetRotationBasedOnNormalGivenReference() throws Exception
-   {
-      Random random = new Random(3453L);
-
-      for (int i = 0; i < 10000; i++)
+      // Test close to 0.0
+      for (int i = 0; i < 1000; i++)
       {
-         Vector3d referenceNormal = JOctoMapRandomTools.generateRandomVector3d(random, 1.0);
-         Vector3d rotatedNormal = new Vector3d();
-         Vector3d expectedRotationAxis = JOctoMapRandomTools.generateRandomOrthogonalVector3d(random, referenceNormal, true);
-         assertEquals(0.0, referenceNormal.dot(expectedRotationAxis), 1.0e-10);
+         Vector3D firstVector = JOctoMapRandomTools.generateRandomVector3D(random, JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         double expectedAngle = JOctoMapRandomTools.generateRandomDouble(random, 0.0001, 0.001);
+         if (random.nextBoolean())
+            expectedAngle = -expectedAngle;
+         Vector3D expectedAxis = JOctoMapRandomTools.generateRandomOrthogonalVector3D(random, firstVector, true);
+         AxisAngle expectedAxisAngle = new AxisAngle(expectedAxis, expectedAngle);
+         RotationMatrix rotationMatrix = new RotationMatrix();
+         rotationMatrix.set(expectedAxisAngle);
 
-         double expectedRotationAngle = JOctoMapRandomTools.generateRandomDouble(random, 0.0, Math.PI);
+         Vector3D secondVector = new Vector3D();
+         rotationMatrix.transform(firstVector, secondVector);
+         secondVector.scale(JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
 
-         AxisAngle4d expectedRotation = new AxisAngle4d(expectedRotationAxis, expectedRotationAngle);
-         Matrix3d rotationMatrix = new Matrix3d();
-         rotationMatrix.set(expectedRotation);
+         AxisAngle actualAxisAngle = new AxisAngle();
+         JOctoMapGeometryTools.getAxisAngleFromFirstToSecondVector(firstVector, secondVector, actualAxisAngle);
+
+         Vector3D actualAxis = new Vector3D(actualAxisAngle.getX(), actualAxisAngle.getY(), actualAxisAngle.getZ());
+
+         assertEquals(1.0, actualAxis.length(), 1.0e-12);
+         // Can not be as accurate as we get closer to 0.0
+         assertEquals(0.0, actualAxis.dot(firstVector), 1.0e-9);
+         assertEquals(0.0, actualAxis.dot(secondVector), 1.0e-9);
+
+         assertEquals(0.0, expectedAxis.dot(firstVector), 1.0e-12);
+         assertEquals(0.0, expectedAxis.dot(secondVector), 1.0e-12);
+
+         if (actualAxisAngle.getAngle() * expectedAxisAngle.getAngle() < 0.0)
+         {
+            expectedAxis.negate();
+            expectedAngle = -expectedAngle;
+            expectedAxisAngle.set(expectedAxis, expectedAngle);
+         }
+
+         try
+         {
+            // Can not be as accurate as we get closer to 0.0
+            assertTrue(expectedAxisAngle.epsilonEquals(actualAxisAngle, 1.0e-9));
+         }
+         catch (AssertionError e)
+         {
+            throw new AssertionError("expected:\n<" + expectedAxisAngle + ">\n but was:\n<" + actualAxisAngle + ">");
+         }
+      }
+
+      // Test close to Math.PI
+      for (int i = 0; i < 1000; i++)
+      {
+         Vector3D referenceNormal = JOctoMapRandomTools.generateRandomVector3D(random, JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         double expectedAngle = JOctoMapRandomTools.generateRandomDouble(random, 0.00001, 0.001);
+         if (random.nextBoolean())
+            expectedAngle = -expectedAngle;
+         expectedAngle += Math.PI;
+         Vector3D expectedAxis = JOctoMapRandomTools.generateRandomOrthogonalVector3D(random, referenceNormal, true);
+         AxisAngle expectedAxisAngle = new AxisAngle(expectedAxis, expectedAngle);
+         RotationMatrix rotationMatrix = new RotationMatrix();
+         rotationMatrix.set(expectedAxisAngle);
+
+         Vector3D rotatedNormal = new Vector3D();
          rotationMatrix.transform(referenceNormal, rotatedNormal);
+         rotatedNormal.scale(JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
 
-         AxisAngle4d actualRotation = new AxisAngle4d();
-         JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal, referenceNormal);
+         AxisAngle actualAxisAngle = new AxisAngle();
+         JOctoMapGeometryTools.getAxisAngleFromFirstToSecondVector(referenceNormal, rotatedNormal, actualAxisAngle);
 
-         assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
+         Vector3D actualAxis = new Vector3D(actualAxisAngle.getX(), actualAxisAngle.getY(), actualAxisAngle.getZ());
+
+         assertEquals(1.0, actualAxis.length(), 1.0e-12);
+         // Can not be as accurate as we get closer to Math.PI
+         assertEquals(0.0, actualAxis.dot(referenceNormal), 1.0e-9);
+         assertEquals(0.0, actualAxis.dot(rotatedNormal), 1.0e-9);
+
+         assertEquals(0.0, expectedAxis.dot(referenceNormal), 1.0e-12);
+         assertEquals(0.0, expectedAxis.dot(rotatedNormal), 1.0e-12);
+         if (actualAxisAngle.getAngle() * expectedAxisAngle.getAngle() < 0.0)
+         {
+            expectedAxis.negate();
+            expectedAngle = -expectedAngle;
+            expectedAxisAngle.set(expectedAxis, expectedAngle);
+         }
+
+         if (Math.abs(expectedAxisAngle.getAngle() + actualAxisAngle.getAngle()) > 2.0 * Math.PI - 0.1)
+         {
+            // Here the sign of the axis does not matter.
+            if (expectedAxis.dot(actualAxis) < 0.0)
+               expectedAxis.negate();
+            // Can not be as accurate as we get closer to Math.PI
+            assertTrue(expectedAxis.epsilonEquals(actualAxis, 1.0e-9));
+         }
+         else
+         {
+            try
+            {
+               assertTrue(expectedAxisAngle.epsilonEquals(actualAxisAngle, 1.0e-12));
+            }
+            catch (AssertionError e)
+            {
+               throw new AssertionError("expected:\n<" + expectedAxisAngle + ">\n but was:\n<" + actualAxisAngle + ">");
+            }
+         }
       }
 
-      Vector3d referenceNormal = JOctoMapRandomTools.generateRandomVector3d(random, 1.0);
-      Vector3d rotatedNormal = new Vector3d(referenceNormal);
-      AxisAngle4d expectedRotation = new AxisAngle4d(1.0, 0.0, 0.0, 0.0);
-      AxisAngle4d actualRotation = new AxisAngle4d();
-      JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal, referenceNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
-
-      rotatedNormal.negate();
-      expectedRotation.setAngle(Math.PI);
-      JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal, referenceNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
-   }
-
-   @Test
-   public void testGetRotationBasedOnNormalWithDefaultReference() throws Exception
-   {
-      Random random = new Random(3453L);
-      Vector3d referenceNormal = new Vector3d(0.0, 0.0, 1.0);
-
-      for (int i = 0; i < 10000; i++)
+      // Test exactly at 0.0
+      for (int i = 0; i < 1000; i++)
       {
-         Vector3d rotatedNormal = new Vector3d();
-         Vector3d expectedRotationAxis = JOctoMapRandomTools.generateRandomOrthogonalVector3d(random, referenceNormal, true);
-         assertEquals(0.0, referenceNormal.dot(expectedRotationAxis), 1.0e-10);
+         Vector3D referenceNormal = JOctoMapRandomTools.generateRandomVector3D(random, JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         Vector3D rotatedNormal = new Vector3D(referenceNormal);
+         rotatedNormal.scale(JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         double expectedAngle = 0.0;
+         Vector3D expectedAxis = new Vector3D(1.0, 0.0, 0.0);
+         AxisAngle expectedAxisAngle = new AxisAngle(expectedAxis, expectedAngle);
 
-         double expectedRotationAngle = JOctoMapRandomTools.generateRandomDouble(random, 0.0, Math.PI);
+         AxisAngle actualAxisAngle = new AxisAngle();
+         JOctoMapGeometryTools.getAxisAngleFromFirstToSecondVector(referenceNormal, rotatedNormal, actualAxisAngle);
 
-         AxisAngle4d expectedRotation = new AxisAngle4d(expectedRotationAxis, expectedRotationAngle);
-         Matrix3d rotationMatrix = new Matrix3d();
-         rotationMatrix.set(expectedRotation);
-         rotationMatrix.transform(referenceNormal, rotatedNormal);
+         Vector3D actualAxis = new Vector3D(actualAxisAngle.getX(), actualAxisAngle.getY(), actualAxisAngle.getZ());
 
-         AxisAngle4d actualRotation = new AxisAngle4d();
-         JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal);
-         assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
-         actualRotation = JOctoMapGeometryTools.getRotationBasedOnNormal(rotatedNormal);
-         assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
+         assertEquals(1.0, actualAxis.length(), 1.0e-12);
+
+         if (actualAxisAngle.getAngle() * expectedAxisAngle.getAngle() < 0.0)
+         {
+            expectedAxis.negate();
+            expectedAngle = -expectedAngle;
+            expectedAxisAngle.set(expectedAxis, expectedAngle);
+         }
+
+         try
+         {
+            assertTrue(expectedAxisAngle.epsilonEquals(actualAxisAngle, 1.0e-12));
+         }
+         catch (AssertionError e)
+         {
+            throw new AssertionError("expected:\n<" + expectedAxisAngle + ">\n but was:\n<" + actualAxisAngle + ">");
+         }
       }
 
-      Vector3d rotatedNormal = new Vector3d(referenceNormal);
-      AxisAngle4d expectedRotation = new AxisAngle4d(1.0, 0.0, 0.0, 0.0);
-      AxisAngle4d actualRotation = new AxisAngle4d();
-      JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal, referenceNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
-      actualRotation = JOctoMapGeometryTools.getRotationBasedOnNormal(rotatedNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
+      // Test exactly at Math.PI
+      for (int i = 0; i < 1000; i++)
+      {
+         Vector3D referenceNormal = JOctoMapRandomTools.generateRandomVector3D(random, JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         Vector3D rotatedNormal = new Vector3D();
+         rotatedNormal.setAndNegate(referenceNormal);
+         rotatedNormal.scale(JOctoMapRandomTools.generateRandomDouble(random, 0.0, 10.0));
+         double expectedAngle = Math.PI;
+         Vector3D expectedAxis = new Vector3D(1.0, 0.0, 0.0);
+         AxisAngle expectedAxisAngle = new AxisAngle(expectedAxis, expectedAngle);
 
-      rotatedNormal.negate();
-      expectedRotation.setAngle(Math.PI);
-      JOctoMapGeometryTools.getRotationBasedOnNormal(actualRotation, rotatedNormal, referenceNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
-      actualRotation = JOctoMapGeometryTools.getRotationBasedOnNormal(rotatedNormal);
-      assertTrue("Expected: " + expectedRotation + ", actual: " + actualRotation, expectedRotation.epsilonEquals(actualRotation, 1.0e-10));
+         AxisAngle actualAxisAngle = new AxisAngle();
+         JOctoMapGeometryTools.getAxisAngleFromFirstToSecondVector(referenceNormal, rotatedNormal, actualAxisAngle);
+
+         Vector3D actualAxis = new Vector3D(actualAxisAngle.getX(), actualAxisAngle.getY(), actualAxisAngle.getZ());
+
+         assertEquals(1.0, actualAxis.length(), 1.0e-12);
+
+         if (actualAxisAngle.getAngle() * expectedAxisAngle.getAngle() < 0.0)
+         {
+            expectedAxis.negate();
+            expectedAngle = -expectedAngle;
+            expectedAxisAngle.set(expectedAxis, expectedAngle);
+         }
+
+         try
+         {
+            assertTrue(expectedAxisAngle.epsilonEquals(actualAxisAngle, 1.0e-12));
+         }
+         catch (AssertionError e)
+         {
+            throw new AssertionError("expected:\n<" + expectedAxisAngle + ">\n but was:\n<" + actualAxisAngle + ">");
+         }
+      }
    }
 
    @Test
@@ -129,23 +244,23 @@ public class JOctoMapGeometryToolsTest
       // Test with ray originating from inside the box
       for (int i = 0; i < 10000; i++)
       {
-         Vector3d size = JOctoMapRandomTools.generateRandomVector3d(random, 10.0, 10.0, 10.0);
+         Vector3D size = JOctoMapRandomTools.generateRandomVector3D(random, 10.0, 10.0, 10.0);
          size.absolute();
-         Point3d min = JOctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
-         Point3d max = new Point3d();
+         Point3D min = JOctoMapRandomTools.generateRandomPoint3D(random, 10.0, 10.0, 10.0);
+         Point3D max = new Point3D();
          max.add(min, size);
 
-         Point3d rayOrigin = JOctoMapRandomTools.generateRandomPoint3d(random, min, max);
+         Point3D rayOrigin = JOctoMapRandomTools.generateRandomPoint3D(random, min, max);
 
          if (i == 0)
             rayOrigin.interpolate(min, max, 0.5);
 
-         Vector3d rayDirection = new Vector3d();
+         Vector3D rayDirection = new Vector3D();
 
          PointsOnEachBoxFace randomPointsOnEachBoxFace = generateRandomPointsOnEachBoxFace(random, min, max);
          RayBoxIntersectionResult intersectionResult;
 
-         for (Point3d expectedExitingIntersection : randomPointsOnEachBoxFace.toArray())
+         for (Point3D expectedExitingIntersection : randomPointsOnEachBoxFace.toArray())
          {
             rayDirection.sub(expectedExitingIntersection, rayOrigin);
             rayDirection.normalize();
@@ -158,7 +273,7 @@ public class JOctoMapGeometryToolsTest
 
          BoxCorners boxCorners = extractBoxCorners(min, max);
 
-         for (Point3d expectedExitingIntersection : boxCorners.toArray())
+         for (Point3D expectedExitingIntersection : boxCorners.toArray())
          {
             rayDirection.sub(expectedExitingIntersection, rayOrigin);
             rayDirection.normalize();
@@ -171,7 +286,7 @@ public class JOctoMapGeometryToolsTest
 
          BoxFaceCenters boxFaceCenters = extractFaceCenters(min, max);
 
-         for (Point3d expectedExitingIntersection : boxFaceCenters.toArray())
+         for (Point3D expectedExitingIntersection : boxFaceCenters.toArray())
          {
             rayDirection.sub(expectedExitingIntersection, rayOrigin);
             rayDirection.normalize();
@@ -182,7 +297,7 @@ public class JOctoMapGeometryToolsTest
             assertTrue(expectedExitingIntersection.epsilonEquals(intersectionResult.getExitingIntersection(), 1.0e-10));
          }
 
-         Point3d expectedExitingIntersection = new Point3d();
+         Point3D expectedExitingIntersection = new Point3D();
 
          // Test simple cases
          expectedExitingIntersection.set(rayOrigin);
@@ -243,23 +358,23 @@ public class JOctoMapGeometryToolsTest
       // Test with ray originating from inside the box
       for (int i = 0; i < 10000; i++)
       {
-         Vector3d size = JOctoMapRandomTools.generateRandomVector3d(random, 10.0, 10.0, 10.0);
+         Vector3D size = JOctoMapRandomTools.generateRandomVector3D(random, 10.0, 10.0, 10.0);
          size.absolute();
-         Point3d min = JOctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
-         Point3d max = new Point3d();
+         Point3D min = JOctoMapRandomTools.generateRandomPoint3D(random, 10.0, 10.0, 10.0);
+         Point3D max = new Point3D();
          max.add(min, size);
 
-         Point3d rayOrigin = new Point3d();
-         Vector3d rayDirection = new Vector3d();
+         Point3D rayOrigin = new Point3D();
+         Vector3D rayDirection = new Vector3D();
 
          PointsOnEachBoxFace randomPointsOnEachBoxFace = generateRandomPointsOnEachBoxFace(random, min, max);
          BoxCorners boxCorners = extractBoxCorners(min, max);
          RayBoxIntersectionResult intersectionResult;
-         Vector3d error = new Vector3d();
+         Vector3D error = new Vector3D();
 
-         for (Point3d expectedEnteringIntersection : randomPointsOnEachBoxFace.toArray())
+         for (Point3D expectedEnteringIntersection : randomPointsOnEachBoxFace.toArray())
          {
-            for (Point3d expectedExitingIntersection : randomPointsOnEachBoxFace.toArray())
+            for (Point3D expectedExitingIntersection : randomPointsOnEachBoxFace.toArray())
             {
                if (expectedEnteringIntersection.equals(expectedExitingIntersection))
                   continue;
@@ -278,7 +393,7 @@ public class JOctoMapGeometryToolsTest
                assertTrue("Error: " + error, expectedExitingIntersection.epsilonEquals(intersectionResult.getExitingIntersection(), 1.0e-8));
             }
 
-            for (Point3d expectedExitingIntersection : boxCorners.toArray())
+            for (Point3D expectedExitingIntersection : boxCorners.toArray())
             {
                if (expectedEnteringIntersection.equals(expectedExitingIntersection))
                   continue;
@@ -321,9 +436,9 @@ public class JOctoMapGeometryToolsTest
             }
          }
 
-         for (Point3d expectedEnteringIntersection : boxCorners.toArray())
+         for (Point3D expectedEnteringIntersection : boxCorners.toArray())
          {
-            for (Point3d expectedExitingIntersection : boxCorners.toArray())
+            for (Point3D expectedExitingIntersection : boxCorners.toArray())
             {
                if (expectedEnteringIntersection.equals(expectedExitingIntersection))
                   continue;
@@ -376,22 +491,22 @@ public class JOctoMapGeometryToolsTest
       // Test with ray originating from inside the box
       for (int i = 0; i < 10000; i++)
       {
-         Vector3d size = JOctoMapRandomTools.generateRandomVector3d(random, 10.0, 10.0, 10.0);
+         Vector3D size = JOctoMapRandomTools.generateRandomVector3D(random, 10.0, 10.0, 10.0);
          size.absolute();
-         Point3d min = JOctoMapRandomTools.generateRandomPoint3d(random, 10.0, 10.0, 10.0);
-         Point3d max = new Point3d();
+         Point3D min = JOctoMapRandomTools.generateRandomPoint3D(random, 10.0, 10.0, 10.0);
+         Point3D max = new Point3D();
          max.add(min, size);
 
-         Point3d rayOrigin = new Point3d();
-         Vector3d rayDirection = new Vector3d();
+         Point3D rayOrigin = new Point3D();
+         Vector3D rayDirection = new Vector3D();
 
          PointsOnEachBoxFace randomPointsOnEachBoxFace = generateRandomPointsOnEachBoxFace(random, min, max);
          BoxCorners boxCorners = extractBoxCorners(min, max);
          RayBoxIntersectionResult intersectionResult;
 
-         for (Point3d expectedEnteringIntersection : randomPointsOnEachBoxFace.toArray())
+         for (Point3D expectedEnteringIntersection : randomPointsOnEachBoxFace.toArray())
          {
-            for (Point3d expectedExitingIntersection : randomPointsOnEachBoxFace.toArray())
+            for (Point3D expectedExitingIntersection : randomPointsOnEachBoxFace.toArray())
             {
                if (expectedEnteringIntersection.equals(expectedExitingIntersection))
                   continue;
@@ -407,7 +522,7 @@ public class JOctoMapGeometryToolsTest
                assertNull(intersectionResult);
             }
 
-            for (Point3d expectedExitingIntersection : boxCorners.toArray())
+            for (Point3D expectedExitingIntersection : boxCorners.toArray())
             {
                if (expectedEnteringIntersection.equals(expectedExitingIntersection))
                   continue;
@@ -424,9 +539,9 @@ public class JOctoMapGeometryToolsTest
             }
          }
 
-         for (Point3d expectedEnteringIntersection : boxCorners.toArray())
+         for (Point3D expectedEnteringIntersection : boxCorners.toArray())
          {
-            for (Point3d expectedExitingIntersection : boxCorners.toArray())
+            for (Point3D expectedExitingIntersection : boxCorners.toArray())
             {
                if (expectedEnteringIntersection.equals(expectedExitingIntersection))
                   continue;
@@ -445,14 +560,14 @@ public class JOctoMapGeometryToolsTest
       }
    }
 
-   public static PointsOnEachBoxFace generateRandomPointsOnEachBoxFace(Random random, Point3d min, Point3d max)
+   public static PointsOnEachBoxFace generateRandomPointsOnEachBoxFace(Random random, Point3D min, Point3D max)
    {
-      Point3d pointAtXMin = new Point3d();
-      Point3d pointAtXMax = new Point3d();
-      Point3d pointAtYMin = new Point3d();
-      Point3d pointAtYMax = new Point3d();
-      Point3d pointAtZMin = new Point3d();
-      Point3d pointAtZMax = new Point3d();
+      Point3D pointAtXMin = new Point3D();
+      Point3D pointAtXMax = new Point3D();
+      Point3D pointAtYMin = new Point3D();
+      Point3D pointAtYMax = new Point3D();
+      Point3D pointAtZMin = new Point3D();
+      Point3D pointAtZMax = new Point3D();
 
       double xAlpha = JOctoMapRandomTools.generateRandomDouble(random, 0.0, 1.0);
       double yAlpha = JOctoMapRandomTools.generateRandomDouble(random, 0.0, 1.0);
@@ -491,49 +606,49 @@ public class JOctoMapGeometryToolsTest
       return new PointsOnEachBoxFace(pointAtXMin, pointAtXMax, pointAtYMin, pointAtYMax, pointAtZMin, pointAtZMax);
    }
 
-   private static BoxCorners extractBoxCorners(Point3d min, Point3d max)
+   private static BoxCorners extractBoxCorners(Point3D min, Point3D max)
    {
-      Point3d maxXYZ = new Point3d(max.getX(), max.getY(), max.getZ());
-      Point3d maxXYminZ = new Point3d(max.getX(), max.getY(), min.getZ());
-      Point3d maxXminYZ = new Point3d(max.getX(), min.getY(), min.getZ());
-      Point3d maxXZminY = new Point3d(max.getX(), min.getY(), max.getZ());
-      Point3d maxYZminX = new Point3d(min.getX(), max.getY(), max.getZ());
-      Point3d maxYminXZ = new Point3d(min.getX(), max.getY(), min.getZ());
-      Point3d minXYZ = new Point3d(min.getX(), min.getY(), min.getZ());
-      Point3d maxZminXY = new Point3d(min.getX(), min.getY(), max.getZ());
+      Point3D maxXYZ = new Point3D(max.getX(), max.getY(), max.getZ());
+      Point3D maxXYminZ = new Point3D(max.getX(), max.getY(), min.getZ());
+      Point3D maxXminYZ = new Point3D(max.getX(), min.getY(), min.getZ());
+      Point3D maxXZminY = new Point3D(max.getX(), min.getY(), max.getZ());
+      Point3D maxYZminX = new Point3D(min.getX(), max.getY(), max.getZ());
+      Point3D maxYminXZ = new Point3D(min.getX(), max.getY(), min.getZ());
+      Point3D minXYZ = new Point3D(min.getX(), min.getY(), min.getZ());
+      Point3D maxZminXY = new Point3D(min.getX(), min.getY(), max.getZ());
       return new BoxCorners(maxXYZ, maxXYminZ, maxXminYZ, maxXZminY, maxYZminX, maxYminXZ, minXYZ, maxZminXY);
    }
 
-   private static BoxFaceCenters extractFaceCenters(Point3d min, Point3d max)
+   private static BoxFaceCenters extractFaceCenters(Point3D min, Point3D max)
    {
-      Point3d boxCenter = new Point3d();
+      Point3D boxCenter = new Point3D();
       boxCenter.interpolate(min, max, 0.5);
 
-      Point3d centerAtXMin = new Point3d(boxCenter);
+      Point3D centerAtXMin = new Point3D(boxCenter);
       centerAtXMin.setX(min.getX());
-      Point3d centerAtXMax = new Point3d(boxCenter);
+      Point3D centerAtXMax = new Point3D(boxCenter);
       centerAtXMax.setX(max.getX());
-      Point3d centerAtYMin = new Point3d(boxCenter);
+      Point3D centerAtYMin = new Point3D(boxCenter);
       centerAtYMin.setY(min.getY());
-      Point3d centerAtYMax = new Point3d(boxCenter);
+      Point3D centerAtYMax = new Point3D(boxCenter);
       centerAtYMax.setY(max.getY());
-      Point3d centerAtZMin = new Point3d(boxCenter);
+      Point3D centerAtZMin = new Point3D(boxCenter);
       centerAtZMin.setZ(min.getZ());
-      Point3d centerAtZMax = new Point3d(boxCenter);
+      Point3D centerAtZMax = new Point3D(boxCenter);
       centerAtZMax.setZ(max.getZ());
       return new BoxFaceCenters(centerAtXMin, centerAtXMax, centerAtYMin, centerAtYMax, centerAtZMin, centerAtZMax);
    }
 
    public static class PointsOnEachBoxFace
    {
-      private final Point3d pointAtXMin;
-      private final Point3d pointAtXMax;
-      private final Point3d pointAtYMin;
-      private final Point3d pointAtYMax;
-      private final Point3d pointAtZMin;
-      private final Point3d pointAtZMax;
+      private final Point3D pointAtXMin;
+      private final Point3D pointAtXMax;
+      private final Point3D pointAtYMin;
+      private final Point3D pointAtYMax;
+      private final Point3D pointAtZMin;
+      private final Point3D pointAtZMax;
 
-      public PointsOnEachBoxFace(Point3d pointAtXMin, Point3d pointAtXMax, Point3d pointAtYMin, Point3d pointAtYMax, Point3d pointAtZMin, Point3d pointAtZMax)
+      public PointsOnEachBoxFace(Point3D pointAtXMin, Point3D pointAtXMax, Point3D pointAtYMin, Point3D pointAtYMax, Point3D pointAtZMin, Point3D pointAtZMax)
       {
          this.pointAtXMin = pointAtXMin;
          this.pointAtXMax = pointAtXMax;
@@ -543,25 +658,25 @@ public class JOctoMapGeometryToolsTest
          this.pointAtZMax = pointAtZMax;
       }
 
-      public Point3d[] toArray()
+      public Point3D[] toArray()
       {
-         return new Point3d[] {pointAtXMin, pointAtXMax, pointAtYMin, pointAtYMax, pointAtZMin, pointAtZMax};
+         return new Point3D[] {pointAtXMin, pointAtXMax, pointAtYMin, pointAtYMax, pointAtZMin, pointAtZMax};
       }
    }
 
    private static class BoxCorners
    {
-      private final Point3d maxXYZ;
-      private final Point3d maxXYminZ;
-      private final Point3d maxXminYZ;
-      private final Point3d maxXZminY;
-      private final Point3d maxYZminX;
-      private final Point3d maxYminXZ;
-      private final Point3d minXYZ;
-      private final Point3d maxZminXY;
+      private final Point3D maxXYZ;
+      private final Point3D maxXYminZ;
+      private final Point3D maxXminYZ;
+      private final Point3D maxXZminY;
+      private final Point3D maxYZminX;
+      private final Point3D maxYminXZ;
+      private final Point3D minXYZ;
+      private final Point3D maxZminXY;
 
-      public BoxCorners(Point3d maxXYZ, Point3d maxXYminZ, Point3d maxXminYZ, Point3d maxXZminY, Point3d maxYZminX, Point3d maxYminXZ, Point3d minXYZ,
-            Point3d maxZminXY)
+      public BoxCorners(Point3D maxXYZ, Point3D maxXYminZ, Point3D maxXminYZ, Point3D maxXZminY, Point3D maxYZminX, Point3D maxYminXZ, Point3D minXYZ,
+            Point3D maxZminXY)
       {
          this.maxXYZ = maxXYZ;
          this.maxXYminZ = maxXYminZ;
@@ -573,22 +688,22 @@ public class JOctoMapGeometryToolsTest
          this.maxZminXY = maxZminXY;
       }
 
-      public Point3d[] toArray()
+      public Point3D[] toArray()
       {
-         return new Point3d[] {maxXYZ, maxXYminZ, maxXminYZ, maxXZminY, maxYZminX, maxYminXZ, minXYZ, maxZminXY};
+         return new Point3D[] {maxXYZ, maxXYminZ, maxXminYZ, maxXZminY, maxYZminX, maxYminXZ, minXYZ, maxZminXY};
       }
    }
 
    private static class BoxFaceCenters
    {
-      private final Point3d centerAtXMin;
-      private final Point3d centerAtXMax;
-      private final Point3d centerAtYMin;
-      private final Point3d centerAtYMax;
-      private final Point3d centerAtZMin;
-      private final Point3d centerAtZMax;
+      private final Point3D centerAtXMin;
+      private final Point3D centerAtXMax;
+      private final Point3D centerAtYMin;
+      private final Point3D centerAtYMax;
+      private final Point3D centerAtZMin;
+      private final Point3D centerAtZMax;
 
-      public BoxFaceCenters(Point3d centerAtXMin, Point3d centerAtXMax, Point3d centerAtYMin, Point3d centerAtYMax, Point3d centerAtZMin, Point3d centerAtZMax)
+      public BoxFaceCenters(Point3D centerAtXMin, Point3D centerAtXMax, Point3D centerAtYMin, Point3D centerAtYMax, Point3D centerAtZMin, Point3D centerAtZMax)
       {
          this.centerAtXMin = centerAtXMin;
          this.centerAtXMax = centerAtXMax;
@@ -598,9 +713,9 @@ public class JOctoMapGeometryToolsTest
          this.centerAtZMax = centerAtZMax;
       }
 
-      public Point3d[] toArray()
+      public Point3D[] toArray()
       {
-         return new Point3d[] {centerAtXMin, centerAtXMax, centerAtYMin, centerAtYMax, centerAtZMin, centerAtZMax};
+         return new Point3D[] {centerAtXMin, centerAtXMax, centerAtYMin, centerAtYMax, centerAtZMin, centerAtZMax};
       }
    }
 }

@@ -5,13 +5,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
-import javax.vecmath.Matrix4d;
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
+import us.ihmc.euclid.transform.interfaces.Transform;
+import us.ihmc.euclid.tuple3D.Point3D32;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 
-public class PointCloud implements Iterable<Point3f>
+public class PointCloud implements Iterable<Point3D32>
 {
-   protected final List<Point3f> points = new ArrayList<>();
+   protected final List<Point3D32> points = new ArrayList<>();
 
    /**
     * A collection of 3D coordinates (point3d), which are regarded as endpoints of a
@@ -26,12 +27,12 @@ public class PointCloud implements Iterable<Point3f>
       addAll(other);
    }
 
-   public PointCloud(Point3f[] points)
+   public PointCloud(Point3DReadOnly[] points)
    {
       addAll(points);
    }
 
-   public PointCloud(List<Point3f> points)
+   public PointCloud(List<? extends Point3DReadOnly> points)
    {
       addAll(points);
    }
@@ -62,28 +63,23 @@ public class PointCloud implements Iterable<Point3f>
 
    public void add(float x, float y, float z)
    {
-      points.add(new Point3f(x, y, z));
+      points.add(new Point3D32(x, y, z));
    }
 
-   public void add(Point3d point)
+   public void add(Point3DReadOnly point)
    {
-      points.add(new Point3f(point));
+      points.add(new Point3D32(point));
    }
 
-   public void add(Point3f point)
+   public void addAll(Iterable<? extends Point3DReadOnly> points)
    {
-      points.add(point);
+      for (Point3DReadOnly point : points)
+         add(new Point3D32(point));
    }
 
-   public void addAll(Iterable<Point3f> points)
+   public void addAll(Point3DReadOnly[] points)
    {
-      for (Point3f point : points)
-         add(new Point3f(point));
-   }
-
-   public void addAll(Point3f[] points)
-   {
-      for (Point3f point : points)
+      for (Point3DReadOnly point : points)
          add(point);
    }
 
@@ -101,20 +97,20 @@ public class PointCloud implements Iterable<Point3f>
    }
 
    /// Apply transform to each point
-   public void transform(Matrix4d transform)
+   public void transform(Transform transform)
    {
-      parallelStream().forEach(point -> transform.transform(point));
+      points.parallelStream().forEach(point -> transform.transform(point));
    }
 
    /**
     * Calculate bounding box of Pointcloud
     */
-   public void calculateBoundingBox(Point3d lowerBoundToPack, Point3d upperBoundToPack)
+   public void calculateBoundingBox(Point3DBasics lowerBoundToPack, Point3DBasics upperBoundToPack)
    {
       lowerBoundToPack.set(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
       lowerBoundToPack.set(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 
-      for (Point3f point : this)
+      for (Point3DReadOnly point : this)
       {
          double x = point.getX();
          double y = point.getY();
@@ -137,35 +133,35 @@ public class PointCloud implements Iterable<Point3f>
       }
    }
 
-   public Point3f getLast()
+   public Point3DReadOnly getLast()
    {
       return points.get(points.size() - 1);
    }
 
    /// Returns a copy of the ith point in point cloud.
    /// Use operator[] for direct access to point reference.
-   public Point3f getPoint(int i) // may return NULL
+   public Point3DReadOnly getPoint(int i) // may return NULL
    {
       return points.get(i);
    }
 
-   public Point3f removePoint(int i)
+   public Point3D32 removePoint(int i)
    {
       return points.remove(i);
    }
 
-   public Stream<Point3f> stream()
+   public Stream<? extends Point3DReadOnly> stream()
    {
       return points.stream();
    }
 
-   public Stream<Point3f> parallelStream()
+   public Stream<? extends Point3DReadOnly> parallelStream()
    {
       return points.parallelStream();
    }
 
    @Override
-   public Iterator<Point3f> iterator()
+   public Iterator<Point3D32> iterator()
    {
       return points.iterator();
    }

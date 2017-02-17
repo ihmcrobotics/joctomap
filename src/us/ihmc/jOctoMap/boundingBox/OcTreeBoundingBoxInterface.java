@@ -1,9 +1,7 @@
 package us.ihmc.jOctoMap.boundingBox;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-import javax.vecmath.Vector3d;
-
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.tools.JOctoMapGeometryTools.RayBoxIntersectionResult;
 
@@ -11,12 +9,7 @@ public interface OcTreeBoundingBoxInterface
 {
    boolean isInBoundingBox(double x, double y, double z);
 
-   default boolean isInBoundingBox(Point3d candidate)
-   {
-      return isInBoundingBox(candidate.getX(), candidate.getY(), candidate.getZ());
-   }
-
-   default boolean isInBoundingBox(Point3f candidate)
+   default boolean isInBoundingBox(Point3DReadOnly candidate)
    {
       return isInBoundingBox(candidate.getX(), candidate.getY(), candidate.getZ());
    }
@@ -28,12 +21,12 @@ public interface OcTreeBoundingBoxInterface
 
    boolean isInBoundingBox(int k0, int k1, int k2);
 
-   default RayBoxIntersectionResult rayIntersection(Point3d rayOrigin, Vector3d rayDirection)
+   default RayBoxIntersectionResult rayIntersection(Point3DReadOnly rayOrigin, Vector3DReadOnly rayDirection)
    {
       return rayIntersection(rayOrigin, rayDirection, Double.POSITIVE_INFINITY);
    }
 
-   RayBoxIntersectionResult rayIntersection(Point3d rayOrigin, Vector3d rayDirection, double maxRayLength);
+   RayBoxIntersectionResult rayIntersection(Point3DReadOnly rayOrigin, Vector3DReadOnly rayDirection, double maxRayLength);
 
    OcTreeBoundingBoxInterface getCopy();
 }

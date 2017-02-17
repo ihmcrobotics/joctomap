@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.vecmath.Matrix4d;
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-
+import us.ihmc.euclid.transform.interfaces.Transform;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.jOctoMap.tools.PointCloudTools;
 
 public class ScanCollection implements Iterable<Scan>
@@ -20,7 +18,7 @@ public class ScanCollection implements Iterable<Scan>
    {
    }
 
-   public ScanCollection(PointCloud pointCloud, Point3d origin)
+   public ScanCollection(PointCloud pointCloud, Point3DReadOnly origin)
    {
       addScan(pointCloud, origin);
    }
@@ -46,22 +44,17 @@ public class ScanCollection implements Iterable<Scan>
       scans.add(scan);
    }
 
-   public void addScan(PointCloud pointCloud, Point3d origin)
+   public void addScan(PointCloud pointCloud, Point3DReadOnly origin)
    {
       scans.add(new Scan(origin, pointCloud));
    }
 
-   public void addScan(float[] pointsInWorld, Point3d origin)
+   public void addScan(float[] pointsInWorld, Point3DReadOnly origin)
    {
       scans.add(new Scan(origin, PointCloudTools.createRandomSample(pointsInWorld, subSampleSize)));
    }
 
-   public void addScan(float[] pointsInWorld, Point3f origin)
-   {
-      scans.add(new Scan(new Point3d(origin), PointCloudTools.createRandomSample(pointsInWorld, subSampleSize)));
-   }
-
-   public void transform(Matrix4d transform)
+   public void transform(Transform transform)
    {
       scans.stream().forEach(scan -> scan.transform(transform));
    }
