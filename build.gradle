@@ -31,14 +31,18 @@ version = '1.6.2'
 
 repositories ihmc.ihmcDefaultArtifactProxies()
 
+def artifactoryURLString = project.hasProperty("artifactoryURL") ? artifactoryURL : "unknown"
+def artifactoryUsernameString = project.hasProperty("artifactoryUsername") ? artifactoryUsername : "unknown"
+def artifactoryPasswordString = project.hasProperty("artifactoryPassword") ? artifactoryPassword : "unknown"
+
 artifactory {
-   contextUrl = artifactoryURL   //The base Artifactory URL if not overridden by the publisher/resolver
+   contextUrl = artifactoryURLString   //The base Artifactory URL if not overridden by the publisher/resolver
    publish {
       //A closure defining publishing information
       repository {
          repoKey = "releases"   //The Artifactory repository key to publish to
-         username = artifactoryUsername   //The publisher user name
-         password = artifactoryPassword   //The publisher password
+         username = artifactoryUsernameString   //The publisher user name
+         password = artifactoryPasswordString   //The publisher password
       }
       defaults {
          //List of Gradle Publications (names or objects) from which to collect the list of artifacts to be deployed to Artifactory.
@@ -52,8 +56,8 @@ artifactory {
    resolve {
       repository {
          repoKey = "releases"        //The Artifactory (preferably virtual) repository key to resolve from
-         username = artifactoryUsername   //The publisher user name
-         password = artifactoryPassword   //The publisher password
+         username = artifactoryUsernameString   //The publisher user name
+         password = artifactoryPasswordString   //The publisher password
          maven = true                     //Resolve Maven-style artifacts and descriptors (true by default)
       }
    }
@@ -126,7 +130,7 @@ publishing {
    }
    repositories {
       maven {
-         url artifactoryURL
+         url artifactoryURLString
       }
    }
 }
@@ -139,8 +143,8 @@ afterEvaluate {
       contextUrl = artifactoryURL
       publications("mavenJava")
       clientConfig.publisher.repoKey = "releases"
-      clientConfig.publisher.username = artifactoryUsername
-      clientConfig.publisher.password = artifactoryPassword
+      clientConfig.publisher.username = artifactoryUsernameString
+      clientConfig.publisher.password = artifactoryPasswordString
    }
 }
 
