@@ -78,5 +78,6 @@
 **/Network Trash Folder
 **/Temporary Items
 **/.apdisk
+**/generatedTestSuites/*TestSuite.java
 
 !**/gradle-wrapper.jar
