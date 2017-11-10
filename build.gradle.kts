@@ -6,7 +6,7 @@ ihmc {
    group = "us.ihmc"
    version = "1.6.6"
    openSource = true
-   //maintainter = "Sylvain Bertrand"
+   maintainer = "Sylvain Bertrand"
    
    configureDependencyResolution()
    configurePublications()
