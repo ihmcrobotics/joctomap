@@ -13,6 +13,7 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 import org.ejml.ops.SingularOps;
 
+import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
@@ -56,6 +57,10 @@ public abstract class NormalEstimationTools
       for (int iteration = 0; iteration < parameters.getNumberOfIterations(); iteration++)
       {
          Vector3D candidateNormal = computeNormalFromTwoRandomNeighbors(neighbors, currentNodeHitLocation);
+
+         if (candidateNormal == null)
+            continue;
+
          if (parameters.isLeastSquaresEstimationEnabled())
             candidateNormal = refineNormalWithLeastSquares(currentNodeHitLocation, candidateNormal, maxDistanceFromPlane, neighbors);
 
@@ -102,14 +107,23 @@ public abstract class NormalEstimationTools
    private static Vector3D computeNormalFromTwoRandomNeighbors(List<NormalOcTreeNode> neighbors, Point3DReadOnly currentNodeHitLocation)
    {
       Random random = ThreadLocalRandom.current();
-      Point3D[] randomHitLocations = random.ints(0, neighbors.size())
-                                           .distinct()
-                                           .limit(2)
-                                           .mapToObj(neighbors::get)
-                                           .map(NormalOcTreeNode::getHitLocationCopy)
-                                           .toArray(Point3D[]::new);
 
-      Vector3D normalCandidate = JOctoMapGeometryTools.computeNormal(currentNodeHitLocation, randomHitLocations[0], randomHitLocations[1]);
+      int maxNumberOfAttempts = 5;
+
+      int iteration = 0;
+      Vector3D normalCandidate = null;
+
+      while (normalCandidate == null && iteration++ < maxNumberOfAttempts)
+      {
+         Point3D[] randomHitLocations = random.ints(0, neighbors.size())
+               .distinct()
+               .limit(2)
+               .mapToObj(neighbors::get)
+               .map(NormalOcTreeNode::getHitLocationCopy)
+               .toArray(Point3D[]::new);
+
+         normalCandidate = EuclidGeometryTools.normal3DFromThreePoint3Ds(currentNodeHitLocation, randomHitLocations[0], randomHitLocations[1]);
+      }
       return normalCandidate;
    }
 

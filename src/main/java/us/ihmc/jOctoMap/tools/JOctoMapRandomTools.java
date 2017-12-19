@@ -2,6 +2,7 @@ package us.ihmc.jOctoMap.tools;
 
 import java.util.Random;
 
+import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
 import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -128,7 +129,7 @@ public abstract class JOctoMapRandomTools
       ScanCollection sweepCollection = new ScanCollection();
       normal.normalize();
    
-      RotationMatrix orientation = new RotationMatrix(JOctoMapGeometryTools.getAxisAngleFromZUpToVector(normal));
+      RotationMatrix orientation = new RotationMatrix(EuclidGeometryTools.axisAngleFromZUpToVector3D(normal));
    
       PointCloud pointCloud = new PointCloud();
    
