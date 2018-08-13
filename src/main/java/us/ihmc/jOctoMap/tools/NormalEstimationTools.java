@@ -11,6 +11,7 @@ import org.apache.commons.math3.stat.descriptive.moment.Variance;
 import org.ejml.alg.dense.decomposition.svd.SvdImplicitQrDecompose_D64;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
+import org.ejml.ops.MatrixFeatures;
 import org.ejml.ops.SingularOps;
 
 import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
@@ -64,6 +65,9 @@ public abstract class NormalEstimationTools
          if (parameters.isLeastSquaresEstimationEnabled())
             candidateNormal = refineNormalWithLeastSquares(currentNodeHitLocation, candidateNormal, maxDistanceFromPlane, neighbors);
 
+         if (candidateNormal == null)
+            continue;
+
          MutableInt candidateConsensus = new MutableInt();
          MutableDouble candidateVariance = new MutableDouble();
          computeNormalConsensusAndVariance(currentNodeHitLocation, candidateNormal, neighbors, maxDistanceFromPlane, candidateVariance, candidateConsensus);
@@ -73,7 +77,8 @@ public abstract class NormalEstimationTools
    }
 
    private static boolean peekBestNormal(NormalOcTreeNode node, Vector3DReadOnly currentNormal, MutableDouble currentVariance, MutableInt currentConsensus,
-         Vector3DBasics candidateNormal, MutableDouble candidateVariance, MutableInt candidateConsensus, NormalEstimationParameters parameters)
+                                         Vector3DBasics candidateNormal, MutableDouble candidateVariance, MutableInt candidateConsensus,
+                                         NormalEstimationParameters parameters)
    {
       if (isCandidateNormalBetter(currentVariance, currentConsensus, candidateVariance, candidateConsensus, parameters))
       {
@@ -90,7 +95,7 @@ public abstract class NormalEstimationTools
    }
 
    private static boolean isCandidateNormalBetter(MutableDouble currentVariance, MutableInt currentConsensus, MutableDouble candidateVariance,
-         MutableInt candidateConsensus, NormalEstimationParameters parameters)
+                                                  MutableInt candidateConsensus, NormalEstimationParameters parameters)
    {
       double minConsensusRatio = parameters.getMinConsensusRatio();
       double maxAverageDeviationRatio = parameters.getMaxAverageDeviationRatio();
@@ -127,7 +132,8 @@ public abstract class NormalEstimationTools
       return normalCandidate;
    }
 
-   private static Vector3D refineNormalWithLeastSquares(Point3DReadOnly pointOnPlane, Vector3DReadOnly ransacNormal, double maxDistanceFromPlane, List<NormalOcTreeNode> neighbors)
+   private static Vector3D refineNormalWithLeastSquares(Point3DReadOnly pointOnPlane, Vector3DReadOnly ransacNormal, double maxDistanceFromPlane,
+                                                        List<NormalOcTreeNode> neighbors)
    {
       IncrementalCovariance3D covarianceCalulator = new IncrementalCovariance3D();
 
@@ -142,11 +148,16 @@ public abstract class NormalEstimationTools
             covarianceCalulator.addDataPoint(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
       }
 
+      if (covarianceCalulator.getSampleSize() <= 2)
+         return null;
+
       SingularValueDecomposition<DenseMatrix64F> svd = new SvdImplicitQrDecompose_D64(true, false, true, false);
       svd.decompose(covarianceCalulator.getCovariance());
       DenseMatrix64F v = svd.getV(null, false);
+      if (MatrixFeatures.hasNaN(v))
+         return null;
       SingularOps.descendingOrder(null, false, svd.getW(null), v, false);
-      
+
       Vector3D refinedNormal = new Vector3D(v.get(0, 2), v.get(1, 2), v.get(2, 2));
       refinedNormal.normalize();
       return refinedNormal;
@@ -172,7 +183,7 @@ public abstract class NormalEstimationTools
    }
 
    private static void computeNormalConsensusAndVariance(Point3DReadOnly pointOnPlane, Vector3DReadOnly planeNormal, Iterable<NormalOcTreeNode> neighbors,
-         double maxDistanceFromPlane, MutableDouble varianceToPack, MutableInt consensusToPack)
+                                                         double maxDistanceFromPlane, MutableDouble varianceToPack, MutableInt consensusToPack)
    {
       Variance variance = new Variance();
       consensusToPack.setValue(0);
