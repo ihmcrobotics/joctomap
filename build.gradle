@@ -12,7 +12,7 @@ apply plugin: "us.ihmc.ihmc-build"
 
 ihmc {
    group = "us.ihmc"
-   version = "1.6.8"
+   version = "1.6.9"
    openSource = true
    maintainer = "Sylvain Bertrand"
    
