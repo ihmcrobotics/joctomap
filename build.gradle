@@ -14,10 +14,10 @@ ihmc {
 }
 
 mainDependencies {
-   compile("us.ihmc:euclid:0.10.0")
-   compile("org.apache.commons:commons-math3:3.3")
-   compile("org.apache.commons:commons-lang3:3.3")
-   compile("org.ejml:dense64:0.30")
+   compile group: "us.ihmc", name: "euclid", version: "0.10.0"
+   compile group: "org.apache.commons", name: "commons-math3", version: "3.3"
+   compile group: "org.apache.commons", name: "commons-lang3", version: "3.3"
+   compile group: "org.ejml", name: "dense64", version: "0.30"
 }
 
 testDependencies {
