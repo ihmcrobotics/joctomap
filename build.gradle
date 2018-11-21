@@ -1,11 +1,11 @@
 plugins {
-   id("us.ihmc.ihmc-build") version "0.15.1"
+   id("us.ihmc.ihmc-build") version "0.15.3"
    id("us.ihmc.ihmc-ci") version "1.1.6"
 }
 
 ihmc {
    group = "us.ihmc"
-   version = "1.6.10"
+   version = "1.6.11"
    openSource = true
    maintainer = "Sylvain Bertrand"
    
@@ -14,7 +14,7 @@ ihmc {
 }
 
 mainDependencies {
-   compile group: "us.ihmc", name: "euclid", version: "0.10.0"
+   compile group: "us.ihmc", name: "euclid-geometry", version: "0.11.0"
    compile group: "org.apache.commons", name: "commons-math3", version: "3.3"
    compile group: "org.apache.commons", name: "commons-lang3", version: "3.3"
    compile group: "org.ejml", name: "dense64", version: "0.30"
