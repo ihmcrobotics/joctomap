@@ -1,6 +1,6 @@
 package us.ihmc.jOctoMap.tools;
 
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,8 +9,8 @@ import java.util.Random;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.MatrixFeatures;
-import org.junit.Assert;
-import org.junit.Test;
+import us.ihmc.robotics.Assert;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;

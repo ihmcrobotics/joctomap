@@ -1,11 +1,12 @@
 plugins {
-   id("us.ihmc.ihmc-build") version "0.15.3"
-   id("us.ihmc.ihmc-ci") version "1.1.6"
+   id("us.ihmc.ihmc-build") version "0.15.7"
+   id("us.ihmc.ihmc-ci") version "4.25"
+   id("us.ihmc.ihmc-cd") version "0.1"
 }
 
 ihmc {
    group = "us.ihmc"
-   version = "1.6.11"
+   version = "1.6.12"
    openSource = true
    maintainer = "Sylvain Bertrand"
    
@@ -14,12 +15,11 @@ ihmc {
 }
 
 mainDependencies {
-   compile group: "us.ihmc", name: "euclid-geometry", version: "0.11.0"
+   compile group: "us.ihmc", name: "euclid-geometry", version: "0.12.0"
    compile group: "org.apache.commons", name: "commons-math3", version: "3.3"
-   compile group: "org.apache.commons", name: "commons-lang3", version: "3.3"
+   compile group: "org.apache.commons", name: "commons-lang3", version: "3.8.1"
    compile group: "org.ejml", name: "dense64", version: "0.30"
 }
 
 testDependencies {
-   compile group: "junit", name: "junit", version: "4.12"
 }

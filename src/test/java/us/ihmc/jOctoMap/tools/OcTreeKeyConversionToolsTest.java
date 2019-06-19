@@ -1,7 +1,7 @@
 package us.ihmc.jOctoMap.tools;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
+
 import static us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools.coordinateToKey;
 import static us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools.keyToCoordinate;
 import static us.ihmc.jOctoMap.tools.OcTreeKeyTools.adjustKeyAtDepth;
@@ -9,7 +9,7 @@ import static us.ihmc.jOctoMap.tools.OcTreeKeyTools.adjustKeyAtDepth;
 import java.util.ArrayList;
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
