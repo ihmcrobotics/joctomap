@@ -72,6 +72,19 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       super(resolution);
    }
+   
+   public NormalOcTree(double resolution, int depth)
+   {
+      super(resolution, depth);
+   }
+   
+   public NormalOcTree(double resolution, int depth, boolean enableParallelComputationForNormals, boolean enableParallelInsertionOfMisses, RayMissProbabilityUpdater rayMissProbabilityUpdater)
+   {
+      super(resolution, depth);
+      computeNormalsInParallel = enableParallelComputationForNormals;
+      insertMissesInParallel = enableParallelInsertionOfMisses;
+      this.rayMissProbabilityUpdater = rayMissProbabilityUpdater;
+   }
 
    public NormalOcTree(NormalOcTree other)
    {
