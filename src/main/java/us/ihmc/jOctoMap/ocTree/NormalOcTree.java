@@ -72,6 +72,11 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       super(resolution);
    }
+   
+   public NormalOcTree(double resolution, int depth)
+   {
+      super(resolution, depth);
+   }
 
    public NormalOcTree(NormalOcTree other)
    {
