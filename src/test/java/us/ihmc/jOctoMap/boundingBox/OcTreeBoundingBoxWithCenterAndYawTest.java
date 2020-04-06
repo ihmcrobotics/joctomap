@@ -94,8 +94,8 @@ public class OcTreeBoundingBoxWithCenterAndYawTest
          Vector3D offset = EuclidCoreRandomTools.nextVector3DWithFixedLength(random, 10.0);
          double yaw = EuclidCoreRandomTools.nextDouble(random, Math.PI);
          RigidBodyTransform transform = new RigidBodyTransform();
-         transform.setRotationYaw(yaw);
-         transform.setTranslation(offset);
+         transform.getRotation().setToYawOrientation(yaw);
+         transform.getTranslation().set(offset);
 
          OcTreeBoundingBoxWithCenterAndYaw bbx = new OcTreeBoundingBoxWithCenterAndYaw();
          bbx.setLocalMinMaxCoordinates(min, max);
