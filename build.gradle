@@ -19,7 +19,7 @@ mainDependencies {
    api("org.apache.commons:commons-lang3:3.9")
    api("org.ejml:dense64:0.30")
 
-   api("us.ihmc:euclid-geometry:0.13.0")
+   api("us.ihmc:euclid-geometry:0.13.1")
 }
 
 testDependencies {
