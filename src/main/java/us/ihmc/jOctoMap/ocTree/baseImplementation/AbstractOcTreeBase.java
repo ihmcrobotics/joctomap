@@ -26,20 +26,21 @@ import us.ihmc.jOctoMap.tools.OcTreeSearchTools;
 
 /**
  * OcTree base class, to be used with with any kind of OcTreeDataNode.
- *
- * This tree implementation currently has a maximum depth of 16
- * nodes. For this reason, coordinates values have to be, e.g.,
- * below +/- 327.68 meters (2^15) at a maximum resolution of 0.01m.
- *
- * This limitation enables the use of an efficient key generation
- * method which uses the binary representation of the data point
- * coordinates.
- *
- * \note You should probably not use this class directly, but
- * OcTreeBase or OccupancyOcTreeBase instead
- *
- * \tparam NODE Node class to be used in tree (usually derived from
- *    OcTreeDataNode)
+ * <p>
+ * This tree implementation currently has a maximum depth of 16 nodes. For this reason, coordinates
+ * values have to be, e.g., below +/- 327.68 meters (2^15) at a maximum resolution of 0.01m.
+ * </p>
+ * <p>
+ * This limitation enables the use of an efficient key generation method which uses the binary
+ * representation of the data point coordinates.
+ * </p>
+ * <p>
+ * \note You should probably not use this class directly, but OcTreeBase or OccupancyOcTreeBase
+ * instead
+ * </p>
+ * <p>
+ * \tparam NODE Node class to be used in tree (usually derived from OcTreeDataNode)
+ * </p>
  */
 public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> implements Iterable<NODE>
 {
@@ -92,10 +93,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /**
-    * Swap contents of two octrees, i.e., only the underlying
-    * pointer / tree structure. You have to ensure yourself that the
-    * metadata (resolution etc) matches. No memory is cleared
-    * in this function
+    * Swap contents of two octrees, i.e., only the underlying pointer / tree structure. You have to
+    * ensure yourself that the metadata (resolution etc) matches. No memory is cleared in this function
     */
    public void swapContent(AbstractOcTreeBase<NODE> other)
    {
@@ -210,13 +209,18 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /**
-    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
+    * Generic method to search down a node to update using the
+    * {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
     * <p>
-    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
-    * This only works if key is at the lowest octree level.
-    * @param coordinate 3d coordinate of the NODE that is to be updated
-    * @param updateRule Specifies how the NODE and its parents should be updated.
-    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
+    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be
+    * updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}. This only works if key is
+    * at the lowest octree level.
+    *
+    * @param coordinate     3d coordinate of the NODE that is to be updated
+    * @param updateRule     Specifies how the NODE and its parents should be updated.
+    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update
+    *                       the NODE chain down to the lowest level. (for instance, the update would
+    *                       not change anything.)
     * @return the updated NODE
     */
    protected NODE updateNodeInternal(Point3DReadOnly coordinate, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
@@ -225,15 +229,20 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /**
-    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
+    * Generic method to search down a node to update using the
+    * {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
     * <p>
-    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
-    * This only works if key is at the lowest octree level.
-    * @param x coordinate of the NODE that is to be updated
-    * @param y coordinate of the NODE that is to be updated
-    * @param z coordinate of the NODE that is to be updated
-    * @param updateRule Specifies how the NODE and its parents should be updated.
-    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
+    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be
+    * updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}. This only works if key is
+    * at the lowest octree level.
+    *
+    * @param x              coordinate of the NODE that is to be updated
+    * @param y              coordinate of the NODE that is to be updated
+    * @param z              coordinate of the NODE that is to be updated
+    * @param updateRule     Specifies how the NODE and its parents should be updated.
+    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update
+    *                       the NODE chain down to the lowest level. (for instance, the update would
+    *                       not change anything.)
     * @return the updated NODE
     */
    protected NODE updateNodeInternal(double x, double y, double z, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
@@ -246,13 +255,18 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /**
-    * Generic method to search down a node to update using the {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
+    * Generic method to search down a node to update using the
+    * {@link UpdateRule#updateLeaf(AbstractOcTreeNode)}.
     * <p>
-    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}.
-    * This only works if key is at the lowest octree level.
-    * @param key OcTreeKey of the NODE that is to be updated
-    * @param updateRule Specifies how the NODE and its parents should be updated.
-    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update the NODE chain down to the lowest level. (for instance, the update would not change anything.)
+    * If {@link UpdateRule#doLazyEvaluation()} returns false, the parents of the updated node will be
+    * updated using {@link UpdateRule#updateInnerNode(AbstractOcTreeNode)}. This only works if key is
+    * at the lowest octree level.
+    *
+    * @param key            OcTreeKey of the NODE that is to be updated
+    * @param updateRule     Specifies how the NODE and its parents should be updated.
+    * @param earlyAbortRule (can be null) specifies edge cases for which, it is not necessary to update
+    *                       the NODE chain down to the lowest level. (for instance, the update would
+    *                       not change anything.)
     * @return the updated NODE
     */
    protected NODE updateNodeInternal(OcTreeKeyReadOnly key, UpdateRule<NODE> updateRule, EarlyAbortRule<NODE> earlyAbortRule)
@@ -279,13 +293,11 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /**
-    * Expands a node (reverse of pruning): All children are created and
-    * their occupancy probability is set to the node's value.
+    * Expands a node (reverse of pruning): All children are created and their occupancy probability is
+    * set to the node's value. You need to verify that this is indeed a pruned node (i.e. not a leaf at
+    * the lowest level)
     *
-    * You need to verify that this is indeed a pruned node (i.e. not a
-    * leaf at the lowest level)
-    * @param depth 
-    *
+    * @param depth
     */
    public void expandNode(NODE node, int depth)
    {
@@ -301,6 +313,7 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
 
    /**
     * Prunes a node when it is collapsible
+    *
     * @return true if pruning was successful
     */
    public boolean pruneNode(NODE node)
@@ -330,9 +343,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    // --------
 
    /**
-    * \return Pointer to the root node of the tree. This pointer
-    * should not be modified or deleted externally, the OcTree
-    * manages its memory itself. In an empty tree, root is NULL.
+    * \return Pointer to the root node of the tree. This pointer should not be modified or deleted
+    * externally, the OcTree manages its memory itself. In an empty tree, root is NULL.
     */
    public NODE getRoot()
    {
@@ -340,9 +352,10 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /**
-    *  Search node at specified depth given a 3d point (depth=0: search full tree depth)
-    *  You need to check if the returned node is NULL, since it can be in unknown space.
-    *  @return pointer to node if found, NULL otherwise
+    * Search node at specified depth given a 3d point (depth=0: search full tree depth) You need to
+    * check if the returned node is NULL, since it can be in unknown space.
+    *
+    * @return pointer to node if found, NULL otherwise
     */
    public NODE search(Point3DReadOnly coord)
    {
@@ -355,9 +368,10 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /**
-    *  Search a node at specified depth given an addressing key (depth=0: search full tree depth)
-    *  You need to check if the returned node is NULL, since it can be in unknown space.
-    *  @return pointer to node if found, NULL otherwise
+    * Search a node at specified depth given an addressing key (depth=0: search full tree depth) You
+    * need to check if the returned node is NULL, since it can be in unknown space.
+    *
+    * @return pointer to node if found, NULL otherwise
     */
    public NODE search(OcTreeKeyReadOnly key)
    {
@@ -369,11 +383,12 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return OcTreeSearchTools.search(root, key, depth, treeDepth);
    }
 
-   /** 
-    *  Delete a node (if exists) given an addressing key. Will always
-    *  delete at the lowest level unless depth !=0, and expand pruned inner nodes as needed.
-    *  Pruned nodes at level "depth" will directly be deleted as a whole.
-    * @param deletionRule 
+   /**
+    * Delete a node (if exists) given an addressing key. Will always delete at the lowest level unless
+    * depth !=0, and expand pruned inner nodes as needed. Pruned nodes at level "depth" will directly
+    * be deleted as a whole.
+    *
+    * @param deletionRule
     */
    public boolean deleteNode(OcTreeKeyReadOnly key)
    {
@@ -405,10 +420,9 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /**
-    * Lossless compression of the octree: A node will replace all of its eight
-    * children if they have identical values. You usually don't have to call
-    * prune() after a regular occupancy update, updateNode() incrementally
-    * prunes all affected nodes.
+    * Lossless compression of the octree: A node will replace all of its eight children if they have
+    * identical values. You usually don't have to call prune() after a regular occupancy update,
+    * updateNode() incrementally prunes all affected nodes.
     */
    public void prune()
    {
@@ -424,8 +438,8 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
    }
 
    /**
-    *  Expands all pruned nodes (reverse of prune())
-    *  NOTE This is an expensive operation, especially when the tree is nearly empty!
+    * Expands all pruned nodes (reverse of prune()) NOTE This is an expensive operation, especially
+    * when the tree is nearly empty!
     */
    public void expand()
    {
@@ -500,37 +514,54 @@ public abstract class AbstractOcTreeBase<NODE extends AbstractOcTreeNode<NODE>> 
       return OcTreeKeyConversionTools.coordinateToKey(coord, resolution, treeDepth, keyToPack);
    }
 
-   /** converts from a discrete key at a given depth into a coordinate corresponding to the key's center */
+   /**
+    * converts from a discrete key at a given depth into a coordinate corresponding to the key's center
+    */
    public double keyToCoordinate(int key, int depth)
    {
       return OcTreeKeyConversionTools.keyToCoordinate(key, depth, resolution, treeDepth);
    }
 
-   /** converts from a discrete key at the lowest tree level into a coordinate corresponding to the key's center */
+   /**
+    * converts from a discrete key at the lowest tree level into a coordinate corresponding to the
+    * key's center
+    */
    public double keyToCoordinate(int key)
    {
       return OcTreeKeyConversionTools.keyToCoordinate(key, resolution, treeDepth);
    }
 
-   /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
+   /**
+    * converts from an addressing key at the lowest tree level into a coordinate corresponding to the
+    * key's center
+    */
    public Point3D keyToCoordinate(OcTreeKeyReadOnly key)
    {
       return OcTreeKeyConversionTools.keyToCoordinate(key, resolution, treeDepth);
    }
 
-   /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
+   /**
+    * converts from an addressing key at a given depth into a coordinate corresponding to the key's
+    * center
+    */
    public Point3D keyToCoordinate(OcTreeKeyReadOnly key, int depth)
    {
       return OcTreeKeyConversionTools.keyToCoordinate(key, depth, resolution, treeDepth);
    }
 
-   /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
+   /**
+    * converts from an addressing key at the lowest tree level into a coordinate corresponding to the
+    * key's center
+    */
    public void keyToCoordinate(OcTreeKeyReadOnly key, Point3DBasics coordinateToPack)
    {
       OcTreeKeyConversionTools.keyToCoordinate(key, coordinateToPack, resolution, treeDepth);
    }
 
-   /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
+   /**
+    * converts from an addressing key at a given depth into a coordinate corresponding to the key's
+    * center
+    */
    public void keyToCoordinate(OcTreeKeyReadOnly key, Point3DBasics coordinateToPack, int depth)
    {
       OcTreeKeyConversionTools.keyToCoordinate(key, depth, coordinateToPack, resolution, treeDepth);

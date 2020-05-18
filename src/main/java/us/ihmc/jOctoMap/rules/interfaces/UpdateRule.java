@@ -20,9 +20,10 @@ public interface UpdateRule<NODE extends AbstractOcTreeNode<NODE>>
    public void updateInnerNode(NODE innerNodeToUpdate);
 
    /**
-    * Affect the methods using {@link #updateNodeInternal(OcTreeKeyReadOnly, UpdateRule, EarlyAbortRule)}.
-    * Whether update of inner nodes is omitted after the update (default: false).
-    * This speeds up the insertion, but you need to manually update the inner nodes.
+    * Affect the methods using
+    * {@link #updateNodeInternal(OcTreeKeyReadOnly, UpdateRule, EarlyAbortRule)}. Whether update of
+    * inner nodes is omitted after the update (default: false). This speeds up the insertion, but you
+    * need to manually update the inner nodes.
     */
    public default boolean performLazyUpdate()
    {

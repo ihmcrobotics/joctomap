@@ -16,7 +16,7 @@ public abstract class OcTreeKeyConversionTools
     * Converts a single coordinate into a discrete addressing key, with boundary checking.
     *
     * @param coordinate 3d coordinate of a point
-    * @param key discrete 16 bit addressing key, result
+    * @param key        discrete 16 bit addressing key, result
     * @return key if coordinate is within the octree bounds (valid), -1 otherwise
     */
    public static int coordinateToKey(double coordinate, double resolution, int treeDepth)
@@ -28,8 +28,8 @@ public abstract class OcTreeKeyConversionTools
     * Converts a single coordinate into a discrete addressing key, with boundary checking.
     *
     * @param coordinate 3d coordinate of a point
-    * @param depth level of the key from the top
-    * @param key discrete 16 bit addressing key, result
+    * @param depth      level of the key from the top
+    * @param key        discrete 16 bit addressing key, result
     * @return key if coordinate is within the octree bounds (valid), -1 otherwise
     */
    public static int coordinateToKey(double coordinate, int depth, double resolution, int treeDepth)
@@ -66,7 +66,7 @@ public abstract class OcTreeKeyConversionTools
    {
       return coordinateToKey(coord.getX(), coord.getY(), coord.getZ(), treeDepth, resolution, treeDepth, keyToPack);
    }
-   
+
    /**
     * Converts a 3D coordinate into a 3D OcTreeKey, with boundary checking.
     *
@@ -100,9 +100,9 @@ public abstract class OcTreeKeyConversionTools
    /**
     * Converts a 3D coordinate into a 3D OcTreeKey, with boundary checking.
     *
-    * @param x 3d coordinate of a point
-    * @param y 3d coordinate of a point
-    * @param z 3d coordinate of a point
+    * @param x     3d coordinate of a point
+    * @param y     3d coordinate of a point
+    * @param z     3d coordinate of a point
     * @param depth level of the key from the top
     * @return key if point is within the octree (valid), null otherwise
     */
@@ -131,7 +131,9 @@ public abstract class OcTreeKeyConversionTools
          return null;
    }
 
-   /** converts from a discrete key at a given depth into a coordinate corresponding to the key's center */
+   /**
+    * converts from a discrete key at a given depth into a coordinate corresponding to the key's center
+    */
    public static double keyToCoordinate(int key, int depth, double resolution, int treeDepth)
    {
       JOctoMapTools.checkIfDepthValid(depth, treeDepth);
@@ -155,7 +157,10 @@ public abstract class OcTreeKeyConversionTools
       }
    }
 
-   /** converts from a discrete key at the lowest tree level into a coordinate corresponding to the key's center */
+   /**
+    * converts from a discrete key at the lowest tree level into a coordinate corresponding to the
+    * key's center
+    */
    public static double keyToCoordinate(int key, double resolution, int treeDepth)
    {
       int centerOffsetKey = computeCenterOffsetKey(treeDepth);
@@ -163,13 +168,19 @@ public abstract class OcTreeKeyConversionTools
       return (key - centerOffsetKey + 0.5) * resolution;
    }
 
-   /** converts from an addressing key at the lowest tree level into a coordinate corresponding to the key's center */
+   /**
+    * converts from an addressing key at the lowest tree level into a coordinate corresponding to the
+    * key's center
+    */
    public static Point3D keyToCoordinate(OcTreeKeyReadOnly key, double resolution, int treeDepth)
    {
       return keyToCoordinate(key, treeDepth, resolution, treeDepth);
    }
 
-   /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
+   /**
+    * converts from an addressing key at a given depth into a coordinate corresponding to the key's
+    * center
+    */
    public static Point3D keyToCoordinate(OcTreeKeyReadOnly key, int depth, double resolution, int treeDepth)
    {
       double x = keyToCoordinate(key.getKey(0), depth, resolution, treeDepth);
@@ -183,7 +194,10 @@ public abstract class OcTreeKeyConversionTools
       keyToCoordinate(key, treeDepth, coordinateToPack, resolution, treeDepth);
    }
 
-   /** converts from an addressing key at a given depth into a coordinate corresponding to the key's center */
+   /**
+    * converts from an addressing key at a given depth into a coordinate corresponding to the key's
+    * center
+    */
    public static void keyToCoordinate(OcTreeKeyReadOnly key, int depth, Tuple3DBasics coordinateToPack, double resolution, int treeDepth)
    {
       coordinateToPack.setX(keyToCoordinate(key.getKey(0), depth, resolution, treeDepth));

@@ -11,7 +11,8 @@ import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;
 
 public abstract class OcTreeTools
 {
-   public static <NODE extends AbstractOcTreeNode<NODE>> void computeMinMaxCoordinates(NODE root, Point3DBasics minToPack, Point3DBasics maxToPack, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeMinMaxCoordinates(NODE root, Point3DBasics minToPack, Point3DBasics maxToPack,
+                                                                                       double resolution, int treeDepth)
    {
       // empty tree
       if (root == null)
@@ -95,8 +96,8 @@ public abstract class OcTreeTools
    /**
     * Return centers of leafs that do NOT exist (but could) in a given bounding box
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> List<Point3D> getUnknownLeafCenters(NODE root, Point3DReadOnly pmin, Point3DReadOnly pmax, double resolution,
-         int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> List<Point3D> getUnknownLeafCenters(NODE root, Point3DReadOnly pmin, Point3DReadOnly pmax,
+                                                                                             double resolution, int treeDepth)
    {
       return getUnknownLeafCenters(root, pmin, pmax, 0, resolution, treeDepth);
    }
@@ -105,7 +106,7 @@ public abstract class OcTreeTools
     * Return centers of leafs that do NOT exist (but could) in a given bounding box
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> List<Point3D> getUnknownLeafCenters(NODE root, Point3DReadOnly pmin, Point3DReadOnly pmax, int depth,
-         double resolution, int treeDepth)
+                                                                                             double resolution, int treeDepth)
    {
       JOctoMapTools.checkIfDepthValid(depth, treeDepth);
       if (depth == 0)

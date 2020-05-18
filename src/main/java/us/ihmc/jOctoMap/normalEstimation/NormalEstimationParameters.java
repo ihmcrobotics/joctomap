@@ -115,9 +115,9 @@ public class NormalEstimationParameters
    @Override
    public String toString()
    {
-      return "search radius: " + searchRadius + ", max distance from plane: " + maxDistanceFromPlane
-            + ", min consensus ratio: " + minConsensusRatio + ", max average deviation ratio: " + maxAverageDeviationRatio
-            + ", number of iterations: " + numberOfIterations + ", least squares estimation: " + enableLeastSquaresEstimation;
+      return "search radius: " + searchRadius + ", max distance from plane: " + maxDistanceFromPlane + ", min consensus ratio: " + minConsensusRatio
+            + ", max average deviation ratio: " + maxAverageDeviationRatio + ", number of iterations: " + numberOfIterations + ", least squares estimation: "
+            + enableLeastSquaresEstimation;
    }
 
    public static NormalEstimationParameters parse(String parametersAsString)

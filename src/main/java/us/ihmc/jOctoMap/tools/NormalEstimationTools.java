@@ -120,12 +120,8 @@ public abstract class NormalEstimationTools
 
       while (normalCandidate == null && iteration++ < maxNumberOfAttempts)
       {
-         Point3D[] randomHitLocations = random.ints(0, neighbors.size())
-               .distinct()
-               .limit(2)
-               .mapToObj(neighbors::get)
-               .map(NormalOcTreeNode::getHitLocationCopy)
-               .toArray(Point3D[]::new);
+         Point3D[] randomHitLocations = random.ints(0, neighbors.size()).distinct().limit(2).mapToObj(neighbors::get).map(NormalOcTreeNode::getHitLocationCopy)
+                                              .toArray(Point3D[]::new);
 
          normalCandidate = EuclidGeometryTools.normal3DFromThreePoint3Ds(currentNodeHitLocation, randomHitLocations[0], randomHitLocations[1]);
       }

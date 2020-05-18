@@ -23,7 +23,7 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
 
    public NormalOcTreeHitUpdateRule(OccupancyParametersReadOnly occupancyParameters)
    {
-      this.parameters = occupancyParameters;
+      parameters = occupancyParameters;
    }
 
    public void setUpdateLogOdds(float updateLogOdds)

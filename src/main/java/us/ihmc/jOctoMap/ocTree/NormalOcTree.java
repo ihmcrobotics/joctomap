@@ -48,14 +48,20 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    private final OccupancyParameters occupancyParameters = new OccupancyParameters();
    private final NormalEstimationParameters normalEstimationParameters = new NormalEstimationParameters();
    private OcTreeBoundingBoxInterface boundingBox = null;
-   /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   /**
+    * Minimum range for how long individual beams are inserted (default -1: complete beam) when
+    * inserting a ray or point cloud
+    */
    private double minInsertRange = -1.0;
-   /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   /**
+    * Maximum range for how long individual beams are inserted (default -1: complete beam) when
+    * inserting a ray or point cloud
+    */
    private double maxInsertRange = -1.0;
    /**
-    * Specifies the maximum number of hits for the nodes.
-    * This parameters changes how new hit updates are taken into account when updating nodes.
-    * A lower number implies a quicker updates of new hit locations.
+    * Specifies the maximum number of hits for the nodes. This parameters changes how new hit updates
+    * are taken into account when updating nodes. A lower number implies a quicker updates of new hit
+    * locations.
     */
    private long nodeMaximumNumberOfHits = Long.MAX_VALUE;
 
@@ -72,7 +78,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    {
       super(resolution);
    }
-   
+
    public NormalOcTree(double resolution, int depth)
    {
       super(resolution, depth);
@@ -104,7 +110,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       insertScanCollection(scanCollection, insertMiss, null, null);
    }
 
-   public void insertScanCollection(ScanCollection scanCollection, boolean insertMiss, Set<NormalOcTreeNode> updatedLeavesToPack, Set<OcTreeKey> deletedLeavesToPack)
+   public void insertScanCollection(ScanCollection scanCollection, boolean insertMiss, Set<NormalOcTreeNode> updatedLeavesToPack,
+                                    Set<OcTreeKey> deletedLeavesToPack)
    {
       if (reportTime)
       {
@@ -116,7 +123,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
       if (reportTime)
       {
-         System.out.println(name + ": ScanCollection integration took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime()) + " sec. (number of points: " + scanCollection.getNumberOfPoints() + ").");
+         System.out.println(name + ": ScanCollection integration took: " + JOctoMapTools.nanoSecondsToSeconds(stopWatch.getNanoTime())
+               + " sec. (number of points: " + scanCollection.getNumberOfPoints() + ").");
       }
    }
 
@@ -181,27 +189,26 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       missUpdateRule.setDeletedLeavesToUpdate(deletedLeavesToPack);
 
       Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap = new HashMap<>();
-      this.forEach(node -> keyToNodeMap.put(node.getKeyCopy(), node));
+      forEach(node -> keyToNodeMap.put(node.getKeyCopy(), node));
       Stream<? extends Point3DReadOnly> pointCloudStream = insertMissesInParallel ? pointCloud.parallelStream() : pointCloud.stream();
 
       List<List<Pair<OcTreeKey, Float>>> keysAndMissUpdates;
-      keysAndMissUpdates = pointCloudStream.map(scanPoint -> insertMissRay(sensorOrigin, scanPoint, occupiedCells, keyToNodeMap))
-                                           .filter(list -> list != null)
+      keysAndMissUpdates = pointCloudStream.map(scanPoint -> insertMissRay(sensorOrigin, scanPoint, occupiedCells, keyToNodeMap)).filter(list -> list != null)
                                            .collect(Collectors.toList());
 
       for (List<Pair<OcTreeKey, Float>> list : keysAndMissUpdates)
       {
          // This has to be sequential as the octree is modified
-         list.stream()
-             .forEach(keyAndMissUpdate ->
-             {
-                missUpdateRule.setUpdateLogOdds(keyAndMissUpdate.getValue());
-                updateNodeInternal(keyAndMissUpdate.getKey(), missUpdateRule, missUpdateRule);
-             });
+         list.stream().forEach(keyAndMissUpdate ->
+         {
+            missUpdateRule.setUpdateLogOdds(keyAndMissUpdate.getValue());
+            updateNodeInternal(keyAndMissUpdate.getKey(), missUpdateRule, missUpdateRule);
+         });
       }
    }
 
-   private List<Pair<OcTreeKey, Float>> insertMissRay(Point3DReadOnly sensorOrigin, Point3DReadOnly scanPoint, Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
+   private List<Pair<OcTreeKey, Float>> insertMissRay(Point3DReadOnly sensorOrigin, Point3DReadOnly scanPoint, Set<OcTreeKey> occupiedCells,
+                                                      Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
    {
       Vector3D direction = new Vector3D(scanPoint);
       direction.sub(sensorOrigin);
@@ -233,7 +240,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       return keysAndMissUpdates;
    }
 
-   private Pair<OcTreeKey, Float> doRayActionOnFreeCell(Point3DReadOnly rayOrigin, Point3DReadOnly rayEnd, Vector3DReadOnly rayDirection, OcTreeKeyReadOnly key, Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
+   private Pair<OcTreeKey, Float> doRayActionOnFreeCell(Point3DReadOnly rayOrigin, Point3DReadOnly rayEnd, Vector3DReadOnly rayDirection, OcTreeKeyReadOnly key,
+                                                        Set<OcTreeKey> occupiedCells, Map<OcTreeKey, NormalOcTreeNode> keyToNodeMap)
    {
       if (occupiedCells.contains(key))
          return null;
@@ -262,7 +270,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public void updateNormals(NormalEstimationParameters normalEstimationParameters)
    {
       List<NormalOcTreeNode> leafNodes = new ArrayList<>();
-      this.forEach(leafNodes::add);
+      forEach(leafNodes::add);
       updateNodesNormals(leafNodes, normalEstimationParameters);
    }
 
@@ -294,7 +302,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    public void clearNormals()
    {
       List<NormalOcTreeNode> leafNodes = new ArrayList<>();
-      this.forEach(leafNodes::add);
+      forEach(leafNodes::add);
       leafNodes.stream().forEach(NormalOcTreeNode::resetNormal);
    }
 
@@ -325,6 +333,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    /**
     * When set to true, the computation time for updating the octree is printed out in the console.
+    *
     * @param enable whether to report computation time or not.
     */
    public void enableReportTime(boolean enable)
@@ -333,22 +342,25 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    }
 
    /**
-    * When updated with a hit location, each node is computing the average of where it has been hit over time.
-    * The average is computed by keeping track of how many times a node has been hit.
-    * By limiting the number of hits, the user has access on the weight that a new hit represents.
-    * A low value will correspond to maintaining quick updates over time, while a high value will reduce the update over time.
+    * When updated with a hit location, each node is computing the average of where it has been hit
+    * over time. The average is computed by keeping track of how many times a node has been hit. By
+    * limiting the number of hits, the user has access on the weight that a new hit represents. A low
+    * value will correspond to maintaining quick updates over time, while a high value will reduce the
+    * update over time.
+    *
     * @param maximumNumberOfHits
     */
    public void setNodeMaximumNumberOfHits(long maximumNumberOfHits)
    {
       if (maximumNumberOfHits <= 0)
          throw new RuntimeException("Unexpected value for maximumNumberOfHits. Expected a value in [1, Long.MAX_VALUE], but was: " + maximumNumberOfHits);
-      this.nodeMaximumNumberOfHits = maximumNumberOfHits;
+      nodeMaximumNumberOfHits = maximumNumberOfHits;
    }
 
    /**
-    * Changes how the normals for each occupied is evaluated, either in parallel or sequential.
-    * The parallel computation offers quicker updates at the cost of an increased CPU usage.
+    * Changes how the normals for each occupied is evaluated, either in parallel or sequential. The
+    * parallel computation offers quicker updates at the cost of an increased CPU usage.
+    *
     * @param enable whether to compute the normals in parallel or sequential.
     */
    public void enableParallelComputationForNormals(boolean enable)
@@ -357,9 +369,10 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    }
 
    /**
-    * When updating the occupancy of the octree, most of the time is spent updating the misses.
-    * Even if expensive, miss updates are useful to make the octree to a changing environment.
-    * The parallel computation offers quicker updates at the cost of an increased CPU usage.
+    * When updating the occupancy of the octree, most of the time is spent updating the misses. Even if
+    * expensive, miss updates are useful to make the octree to a changing environment. The parallel
+    * computation offers quicker updates at the cost of an increased CPU usage.
+    *
     * @param enable whether to insert the misses in parallel or sequential.
     */
    public void enableParallelInsertionOfMisses(boolean enable)
@@ -369,6 +382,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    /**
     * Set a custom updater to compute the probability of a miss when a node is traversed by a ray.
+    *
     * @param rayMissProbabilityUpdater the custom update to use.
     */
    public void setCustomRayMissProbabilityUpdater(RayMissProbabilityUpdater rayMissProbabilityUpdater)
@@ -378,7 +392,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void disableCustomRayMissProbabilityUpdater()
    {
-      this.rayMissProbabilityUpdater = null;
+      rayMissProbabilityUpdater = null;
    }
 
    public void disableBoundingBox()
@@ -387,8 +401,8 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    }
 
    /**
-    * Bounding box to use for the next updates on this OcTree.
-    * If null, no limit will be applied.
+    * Bounding box to use for the next updates on this OcTree. If null, no limit will be applied.
+    *
     * @param boundingBox
     */
    public void setBoundingBox(OcTreeBoundingBoxInterface boundingBox)
@@ -424,7 +438,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void setOccupancyParameters(OccupancyParameters parameters)
    {
-      this.occupancyParameters.set(parameters);
+      occupancyParameters.set(parameters);
    }
 
    public OccupancyParametersReadOnly getOccupancyParameters()
@@ -434,7 +448,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
 
    public void setNormalEstimationParameters(NormalEstimationParameters parameters)
    {
-      this.normalEstimationParameters.set(parameters);
+      normalEstimationParameters.set(parameters);
    }
 
    public NormalEstimationParameters getNormalEstimationParameters()
@@ -442,19 +456,28 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       return normalEstimationParameters;
    }
 
-   /** Minimum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   /**
+    * Minimum range for how long individual beams are inserted (default -1: complete beam) when
+    * inserting a ray or point cloud
+    */
    public void setMinimumInsertRange(double minRange)
    {
       minInsertRange = minRange;
    }
 
-   /** Maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   /**
+    * Maximum range for how long individual beams are inserted (default -1: complete beam) when
+    * inserting a ray or point cloud
+    */
    public void setMaximumInsertRange(double maxRange)
    {
       maxInsertRange = maxRange;
    }
 
-   /** Minimum and maximum range for how long individual beams are inserted (default -1: complete beam) when inserting a ray or point cloud */
+   /**
+    * Minimum and maximum range for how long individual beams are inserted (default -1: complete beam)
+    * when inserting a ray or point cloud
+    */
    public void setBoundsInsertRange(double minRange, double maxRange)
    {
       setMinimumInsertRange(minRange);
@@ -487,24 +510,26 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
    }
 
    /**
-    * Provides a flexible API for computing a custom update for nodes traversed by rays.
-    * Useful to reduce "self-destruction" of the octree when scanning surfaces at a shallow angle.
-    * The normal contained in each node combined with the ray properties can be used to refine the probability of a miss.
+    * Provides a flexible API for computing a custom update for nodes traversed by rays. Useful to
+    * reduce "self-destruction" of the octree when scanning surfaces at a shallow angle. The normal
+    * contained in each node combined with the ray properties can be used to refine the probability of
+    * a miss.
     */
    public interface RayMissProbabilityUpdater
    {
       /**
-       * Compute a custom miss probability update when a ray goes through a node.
-       * The default implementation returns the miss probability from the occupancy parameters.
-       * 
-       * @param rayOrigin the origin of the ray.
-       * @param rayEnd the hit location of the ray.
+       * Compute a custom miss probability update when a ray goes through a node. The default
+       * implementation returns the miss probability from the occupancy parameters.
+       *
+       * @param rayOrigin    the origin of the ray.
+       * @param rayEnd       the hit location of the ray.
        * @param rayDirection the direction of the ray.
-       * @param node the current node the ray is going through.
-       * @param parameters the current occupancy parameters used by this octree.
+       * @param node         the current node the ray is going through.
+       * @param parameters   the current occupancy parameters used by this octree.
        * @return the custom miss probability update.
        */
-      public default double computeRayMissProbability(Point3DReadOnly rayOrigin, Point3DReadOnly rayEnd, Vector3DReadOnly rayDirection, NormalOcTreeNode node, OccupancyParameters parameters)
+      public default double computeRayMissProbability(Point3DReadOnly rayOrigin, Point3DReadOnly rayEnd, Vector3DReadOnly rayDirection, NormalOcTreeNode node,
+                                                      OccupancyParameters parameters)
       {
          return parameters.getMissProbability();
       }

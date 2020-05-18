@@ -1,10 +1,10 @@
 package us.ihmc.jOctoMap.tools;
 
-import static us.ihmc.robotics.Assert.*;
-
 import static us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools.coordinateToKey;
 import static us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools.keyToCoordinate;
 import static us.ihmc.jOctoMap.tools.OcTreeKeyTools.adjustKeyAtDepth;
+import static us.ihmc.robotics.Assert.assertEquals;
+import static us.ihmc.robotics.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -145,7 +145,8 @@ public class OcTreeKeyConversionToolsTest
       testKeyToCoordRecursive(rootKey, rootCoordinate, 0, resolution, treeDepth, random, 3);
    }
 
-   private void testKeyToCoordRecursive(OcTreeKey parentKey, Point3D parentCoordinate, int parentDepth, double resolution, int treeDepth, Random random, int numberOfChildrenToTest)
+   private void testKeyToCoordRecursive(OcTreeKey parentKey, Point3D parentCoordinate, int parentDepth, double resolution, int treeDepth, Random random,
+                                        int numberOfChildrenToTest)
    {
       if (parentDepth == treeDepth)
          return;
@@ -155,7 +156,7 @@ public class OcTreeKeyConversionToolsTest
       for (int childIndex = 0; childIndex < 8; childIndex++)
          childIndices.add(childIndex);
 
-      while(childIndices.size() > (8 - numberOfChildrenToTest))
+      while (childIndices.size() > (8 - numberOfChildrenToTest))
       {
          int childIndex = childIndices.remove(random.nextInt(childIndices.size()));
          int childDepth = parentDepth + 1;
@@ -175,7 +176,7 @@ public class OcTreeKeyConversionToolsTest
       Vector3D offsetVector = new Vector3D();
       double computeNodeSize = OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
       double offset = computeNodeSize / 2.0;
-      
+
       offsetVector.setX(offsetVector.getX() + ((childIndex & 1) != 0 ? offset : -offset));
       offsetVector.setY(offsetVector.getY() + ((childIndex & 2) != 0 ? offset : -offset));
       offsetVector.setZ(offsetVector.getZ() + ((childIndex & 4) != 0 ? offset : -offset));

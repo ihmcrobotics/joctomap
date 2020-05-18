@@ -1,6 +1,6 @@
 package us.ihmc.jOctoMap.tools;
 
-import static us.ihmc.robotics.Assert.*;
+import static us.ihmc.robotics.Assert.assertEquals;
 
 import java.util.Random;
 
@@ -10,7 +10,6 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.node.OccupancyOcTreeNode;
 import us.ihmc.jOctoMap.ocTree.OccupancyOcTree;
-import us.ihmc.jOctoMap.tools.OcTreeKeyConversionTools;
 
 public class OcTreeSearchToolsTest
 {

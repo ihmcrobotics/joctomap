@@ -26,18 +26,20 @@ public abstract class OcTreeRayTools
    public static final int maxRaySize = 100000;
 
    /**
-    * Helper for insertPointCloud(). Computes all octree nodes affected by the point cloud
-    * integration at once. Here, occupied nodes have a preference over free
-    * ones. This function first discretizes the scan with the octree grid, which results
-    * in fewer raycasts (=speedup) but a slightly different result than computeUpdate().
-    * @param origin origin of the sensor for ray casting
-    * @param pointCloud point cloud measurement to be integrated
-    * @param freeCells keys of nodes to be cleared
+    * Helper for insertPointCloud(). Computes all octree nodes affected by the point cloud integration
+    * at once. Here, occupied nodes have a preference over free ones. This function first discretizes
+    * the scan with the octree grid, which results in fewer raycasts (=speedup) but a slightly
+    * different result than computeUpdate().
+    *
+    * @param origin        origin of the sensor for ray casting
+    * @param pointCloud    point cloud measurement to be integrated
+    * @param freeCells     keys of nodes to be cleared
     * @param occupiedCells keys of nodes to be marked occupied
-    * @param maxRange maximum range for raycasting (-1: unlimited)
+    * @param maxRange      maximum range for raycasting (-1: unlimited)
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> void computeDiscreteUpdate(Point3DReadOnly origin, PointCloud pointCloud, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells,
-         OcTreeBoundingBoxInterface boundingBox, double minRange, double maxRange, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeDiscreteUpdate(Point3DReadOnly origin, PointCloud pointCloud, OcTreeKeySet freeCells,
+                                                                                    OcTreeKeySet occupiedCells, OcTreeBoundingBoxInterface boundingBox,
+                                                                                    double minRange, double maxRange, double resolution, int treeDepth)
    {
       PointCloud discretePC = new PointCloud();
       OcTreeKeySet endpoints = new OcTreeKeySet();
@@ -53,17 +55,18 @@ public abstract class OcTreeRayTools
    }
 
    /**
-    * Helper for insertPointCloud(). Computes all octree nodes affected by the point cloud
-    * integration at once. Here, occupied nodes have a preference over free
-    * ones.
-    * @param origin origin of the sensor for ray casting
-    * @param pointCloud point cloud measurement to be integrated
-    * @param freeCells keys of nodes to be cleared
+    * Helper for insertPointCloud(). Computes all octree nodes affected by the point cloud integration
+    * at once. Here, occupied nodes have a preference over free ones.
+    *
+    * @param origin        origin of the sensor for ray casting
+    * @param pointCloud    point cloud measurement to be integrated
+    * @param freeCells     keys of nodes to be cleared
     * @param occupiedCells keys of nodes to be marked occupied
-    * @param maxRange maximum range for raycasting (-1: unlimited)
+    * @param maxRange      maximum range for raycasting (-1: unlimited)
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> void computeUpdate(Point3DReadOnly origin, PointCloud pointCloud, OcTreeKeySet freeCells, OcTreeKeySet occupiedCells, OcTreeBoundingBoxInterface boundingBox,
-         double minRange, double maxRange, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeUpdate(Point3DReadOnly origin, PointCloud pointCloud, OcTreeKeySet freeCells,
+                                                                            OcTreeKeySet occupiedCells, OcTreeBoundingBoxInterface boundingBox, double minRange,
+                                                                            double maxRange, double resolution, int treeDepth)
    {
       OcTreeKeySet unfilteredFreeCells = new OcTreeKeySet();
       OcTreeKey key = new OcTreeKey();
@@ -83,7 +86,7 @@ public abstract class OcTreeRayTools
          { // no BBX specified
             if (maxRange < 0.0 || length <= maxRange)
             { // is not maxrange meas.
-                 // free cells
+              // free cells
                KeyRay ray = computeRayKeys(origin, point, resolution, treeDepth);
                if (ray != null)
                   unfilteredFreeCells.addAll(ray);
@@ -102,7 +105,7 @@ public abstract class OcTreeRayTools
          }
          else
          { // BBX was set
-              // endpoint in bbx and not maxrange?
+           // endpoint in bbx and not maxrange?
             if (boundingBox.isInBoundingBox(point) && (maxRange < 0.0 || length <= maxRange))
             {
                // occupied endpoint
@@ -136,15 +139,16 @@ public abstract class OcTreeRayTools
    }
 
    /**
-   * Traces a ray from origin to end (excluding), returning an
-   * OcTreeKey of all nodes traversed by the beam. You still need to check
-   * if a node at that coordinate exists (e.g. with search()).
-   *
-   * @param origin start coordinate of ray
-   * @param end end coordinate of ray
-   * @param ray KeyRay structure that holds the keys of all nodes traversed by the ray, excluding "end"
-   * @return Success of operation. Returning false usually means that one of the coordinates is out of the OcTree's range
-   */
+    * Traces a ray from origin to end (excluding), returning an OcTreeKey of all nodes traversed by the
+    * beam. You still need to check if a node at that coordinate exists (e.g. with search()).
+    *
+    * @param origin start coordinate of ray
+    * @param end    end coordinate of ray
+    * @param ray    KeyRay structure that holds the keys of all nodes traversed by the ray, excluding
+    *               "end"
+    * @return Success of operation. Returning false usually means that one of the coordinates is out of
+    *         the OcTree's range
+    */
    public static KeyRay computeRayKeys(Point3DReadOnly origin, Point3DReadOnly end, double resolution, int treeDepth)
    {
       return computeRayKeys(origin, end, null, resolution, treeDepth);
@@ -159,12 +163,11 @@ public abstract class OcTreeRayTools
    }
 
    /**
-    * Traces a ray from origin to end (excluding), returning an
-    * OcTreeKey of all nodes traversed by the beam. You still need to check
-    * if a node at that coordinate exists (e.g. with search()).
+    * Traces a ray from origin to end (excluding), returning an OcTreeKey of all nodes traversed by the
+    * beam. You still need to check if a node at that coordinate exists (e.g. with search()).
     */
-   public static void doActionOnRayKeys(Point3DReadOnly origin, Point3DReadOnly end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule, double resolution,
-         int treeDepth) 
+   public static void doActionOnRayKeys(Point3DReadOnly origin, Point3DReadOnly end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule,
+                                        double resolution, int treeDepth)
    {
       Vector3D direction = new Vector3D();
       direction.sub(end, origin);
@@ -318,12 +321,12 @@ public abstract class OcTreeRayTools
    }
 
    /**
-    * Traces a ray from origin to end (excluding), returning an
-    * OcTreeKey of all nodes traversed by the beam. You still need to check
-    * if a node at that coordinate exists (e.g. with search()).
+    * Traces a ray from origin to end (excluding), returning an OcTreeKey of all nodes traversed by the
+    * beam. You still need to check if a node at that coordinate exists (e.g. with search()).
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> void doActionOnRayKeysUsingRayMarching(NODE root, Point3DReadOnly origin, Point3DReadOnly end, OcTreeBoundingBoxInterface boundingBox, RayActionRule actionRule,
-         double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> void doActionOnRayKeysUsingRayMarching(NODE root, Point3DReadOnly origin, Point3DReadOnly end,
+                                                                                                OcTreeBoundingBoxInterface boundingBox,
+                                                                                                RayActionRule actionRule, double resolution, int treeDepth)
    {
       OcTreeKey keyOrigin = coordinateToKey(origin, resolution, treeDepth);
       OcTreeKey keyEnd = coordinateToKey(end, resolution, treeDepth);
@@ -358,7 +361,7 @@ public abstract class OcTreeRayTools
          if (distanceFromNearestNeighbor < 0.1 * resolution)
          {
             actionRule.doAction(origin, end, direction, currentKey);
-            
+
             Point3D nearestNodeCoordinate = keyToCoordinate(currentKey, resolution, treeDepth);
             double minDistance = 0.1 * resolution;
             distanceFromNearestNeighbor = OcTreeNearestNeighborTools.findNearestNeighbor(root, nearestNodeCoordinate, minDistance, currentKey);
@@ -385,24 +388,25 @@ public abstract class OcTreeRayTools
 
    /**
     * Performs raycasting in 3d, similar to computeRay(). Can be called in parallel e.g. with OpenMP
-    * for a speedup.
-    *
-    * A ray is cast from 'origin' with a given direction, the first non-free
-    * cell is returned in 'end' (as center coordinate). This could also be the 
-    * origin node if it is occupied or unknown. castRay() returns true if an occupied node
-    * was hit by the raycast. If the raycast returns false you can search() the node at 'end' and
-    * see whether it's unknown space.
-    * 
+    * for a speedup. A ray is cast from 'origin' with a given direction, the first non-free cell is
+    * returned in 'end' (as center coordinate). This could also be the origin node if it is occupied or
+    * unknown. castRay() returns true if an occupied node was hit by the raycast. If the raycast
+    * returns false you can search() the node at 'end' and see whether it's unknown space.
     *
     * @param[in] origin starting coordinate of ray
-    * @param[in] direction A vector pointing in the direction of the raycast (NOT a point in space). Does not need to be normalized.
-    * @param[out] endToPack returns the center of the last cell on the ray. If the function returns true, it is occupied.
-    * @param[in] ignoreUnknownCells whether unknown cells are ignored (= treated as free). If false (default), the raycast aborts when an unknown cell is hit and returns false.
+    * @param[in] direction A vector pointing in the direction of the raycast (NOT a point in space).
+    *            Does not need to be normalized.
+    * @param[out] endToPack returns the center of the last cell on the ray. If the function returns
+    *             true, it is occupied.
+    * @param[in] ignoreUnknownCells whether unknown cells are ignored (= treated as free). If false
+    *            (default), the raycast aborts when an unknown cell is hit and returns false.
     * @param[in] maxRange Maximum range after which the raycast is aborted (<= 0: no limit, default)
-    * @return true if an occupied cell was hit, false if the maximum range or octree bounds are reached, or if an unknown node was hit.
+    * @return true if an occupied cell was hit, false if the maximum range or octree bounds are
+    *         reached, or if an unknown node was hit.
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> boolean castRay(NODE root, Point3DReadOnly origin, Vector3DReadOnly direction, Point3DBasics endToPack, boolean ignoreUnknownCells, double maxRange,
-         CollidableRule<NODE> collidableRule, double resolution, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> boolean castRay(NODE root, Point3DReadOnly origin, Vector3DReadOnly direction, Point3DBasics endToPack,
+                                                                         boolean ignoreUnknownCells, double maxRange, CollidableRule<NODE> collidableRule,
+                                                                         double resolution, int treeDepth)
    {
       /// ----------  see OcTreeBase::computeRayKeys  -----------
 
@@ -420,7 +424,7 @@ public abstract class OcTreeRayTools
       {
          if (collidableRule.isCollidable(startingNode)) // isNodeOccupied(startingNode))
          {
-            // Occupied node found at origin 
+            // Occupied node found at origin
             // (need to convert from key, since origin does not need to be a voxel center)
             OcTreeKeyConversionTools.keyToCoordinate(currentKey, endToPack, resolution, treeDepth);
             return true;
@@ -558,17 +562,23 @@ public abstract class OcTreeRayTools
    }
 
    /**
-    * Retrieves the entry point of a ray into a voxel. This is the closest intersection point of the ray
-    * originating from origin and a plane of the axis aligned cube.
-    * 
+    * Retrieves the entry point of a ray into a voxel. This is the closest intersection point of the
+    * ray originating from origin and a plane of the axis aligned cube.
+    *
     * @param[in] origin Starting point of ray
-    * @param[in] direction A vector pointing in the direction of the raycast. Does not need to be normalized.
-    * @param[in] center The center of the voxel where the ray terminated. This is the output of castRay.
+    * @param[in] direction A vector pointing in the direction of the raycast. Does not need to be
+    *            normalized.
+    * @param[in] center The center of the voxel where the ray terminated. This is the output of
+    *            castRay.
     * @param[out] intersectionToPack The entry point of the ray into the voxel, on the voxel surface.
-    * @param[in] delta A small increment to avoid ambiguity of being exactly on a voxel surface. A positive value will get the point out of the hit voxel, while a negative value will get it inside.
-    * @return Whether or not an intesection point has been found. Either, the ray never cross the voxel or the ray is exactly parallel to the only surface it intersect.
+    * @param[in] delta A small increment to avoid ambiguity of being exactly on a voxel surface. A
+    *            positive value will get the point out of the hit voxel, while a negative value will
+    *            get it inside.
+    * @return Whether or not an intesection point has been found. Either, the ray never cross the voxel
+    *         or the ray is exactly parallel to the only surface it intersect.
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> boolean getRayIntersection(Point3DReadOnly origin, Vector3DReadOnly direction, Point3DReadOnly center, Point3DBasics intersectionToPack, double delta, double resolution)
+   public static <NODE extends AbstractOcTreeNode<NODE>> boolean getRayIntersection(Point3DReadOnly origin, Vector3DReadOnly direction, Point3DReadOnly center,
+                                                                                    Point3DBasics intersectionToPack, double delta, double resolution)
    {
       // We only need three normals for the six planes
       Vector3D normalX = new Vector3D(1, 0, 0);

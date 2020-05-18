@@ -24,7 +24,7 @@ public class OcTreeIterable<NODE extends AbstractOcTreeNode<NODE>> implements It
       this.root = root;
       setRule(rule);
    }
-   
+
    public void setMaxDepth(int maxDepth)
    {
       this.maxDepth = maxDepth;

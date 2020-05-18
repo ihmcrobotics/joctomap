@@ -1,6 +1,9 @@
 package us.ihmc.jOctoMap.tools;
 
-import static us.ihmc.robotics.Assert.*;
+import static us.ihmc.robotics.Assert.assertEquals;
+import static us.ihmc.robotics.Assert.assertFalse;
+import static us.ihmc.robotics.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,8 +124,7 @@ public class OcTreeNearestNeighborToolsTest
 
          OcTreeKey foundNearestNeighborKey = new OcTreeKey();
 
-         double result = OcTreeNearestNeighborTools.findNearestNeighbor(ocTree.getRoot(), randomQuery, -1.0, Double.POSITIVE_INFINITY,
-               foundNearestNeighborKey);
+         double result = OcTreeNearestNeighborTools.findNearestNeighbor(ocTree.getRoot(), randomQuery, -1.0, Double.POSITIVE_INFINITY, foundNearestNeighborKey);
 
          assertFalse("iteration: " + i + ". ", Double.isNaN(result));
 
@@ -177,7 +179,11 @@ public class OcTreeNearestNeighborToolsTest
          }
 
          OcTreeKey foundNearestNeighborKey = new OcTreeKey();
-         double result = OcTreeNearestNeighborTools.findNearestNeighbor(ocTree.getRoot(), randomQuery, -1.0, 0.9 * distanceFromQueryToNearestNeighbor, foundNearestNeighborKey);
+         double result = OcTreeNearestNeighborTools.findNearestNeighbor(ocTree.getRoot(),
+                                                                        randomQuery,
+                                                                        -1.0,
+                                                                        0.9 * distanceFromQueryToNearestNeighbor,
+                                                                        foundNearestNeighborKey);
          assertTrue("iteration: " + i + ". ", Double.isNaN(result));
       }
    }

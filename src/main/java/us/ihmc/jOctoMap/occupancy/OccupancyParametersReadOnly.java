@@ -15,10 +15,10 @@ public interface OccupancyParametersReadOnly
    /** @return probability for a "hit" in the sensor model (logodds) */
    float getHitProbabilityLogOdds();
 
-   /** @return probability for a "miss"  in the sensor model (probability) */
+   /** @return probability for a "miss" in the sensor model (probability) */
    double getMissProbability();
 
-   /** @return probability for a "miss"  in the sensor model (logodds) */
+   /** @return probability for a "miss" in the sensor model (logodds) */
    float getMissProbabilityLogOdds();
 
    /** @return minimum probability for occupancy clamping in the sensor model */

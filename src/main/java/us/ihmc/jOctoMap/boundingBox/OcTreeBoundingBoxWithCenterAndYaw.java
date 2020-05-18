@@ -94,12 +94,12 @@ public class OcTreeBoundingBoxWithCenterAndYaw implements OcTreeBoundingBoxInter
    {
       simpleBoundingBox.setMaxX(xMax);
    }
-   
+
    public void setLocalMaxY(double yMax)
    {
       simpleBoundingBox.setMaxY(yMax);
    }
-   
+
    public void setLocalMaxZ(double zMax)
    {
       simpleBoundingBox.setMaxZ(zMax);

@@ -36,7 +36,7 @@ public class OcTreeIteratorFactory
 
    public static <NODE extends AbstractOcTreeNode<NODE>> OcTreeIterable<NODE> createIterable(NODE root, int maxDepth)
    {
-      OcTreeIterable<NODE> ocTreeIterable = new OcTreeIterable<NODE>(root);
+      OcTreeIterable<NODE> ocTreeIterable = new OcTreeIterable<>(root);
       ocTreeIterable.setMaxDepth(maxDepth);
       return ocTreeIterable;
    }
@@ -50,7 +50,7 @@ public class OcTreeIteratorFactory
    {
       return (node, iteratorMaxDepth) -> isLeaf(node, iteratorMaxDepth) && isNodeInsideBoundingBox(boundingBox, node);
    }
-   
+
    public static <NODE extends AbstractOcTreeNode<NODE>> IteratorSelectionRule<NODE> nodesInsideBoundingBoxOnly(OcTreeBoundingBoxInterface boundingBox)
    {
       return (node, iteratorMaxDepth) -> isNodeInsideBoundingBox(boundingBox, node);

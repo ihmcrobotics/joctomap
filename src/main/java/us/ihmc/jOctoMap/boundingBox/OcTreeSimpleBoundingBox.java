@@ -95,14 +95,14 @@ public class OcTreeSimpleBoundingBox implements OcTreeBoundingBoxInterface
       maxCoordinateDirtyBit = false;
       maxKeyDirtyBit = true;
    }
-   
+
    public void setMaxY(double yMax)
    {
       maxCoordinate.setY(yMax);
       maxCoordinateDirtyBit = false;
       maxKeyDirtyBit = true;
    }
-   
+
    public void setMaxZ(double zMax)
    {
       maxCoordinate.setZ(zMax);

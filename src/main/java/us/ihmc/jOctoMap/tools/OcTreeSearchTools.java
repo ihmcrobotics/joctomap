@@ -9,10 +9,11 @@ import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;
 
 public abstract class OcTreeSearchTools
 {
-   /** 
-    *  Search node at specified depth given a 3d point (depth=0: search full tree depth).
-    *  You need to check if the returned node is NULL, since it can be in unknown space.
-    *  @return pointer to node if found, NULL otherwise
+   /**
+    * Search node at specified depth given a 3d point (depth=0: search full tree depth). You need to
+    * check if the returned node is NULL, since it can be in unknown space.
+    *
+    * @return pointer to node if found, NULL otherwise
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, double x, double y, double z, double resolution, int treeDepth)
    {
@@ -34,9 +35,10 @@ public abstract class OcTreeSearchTools
    }
 
    /**
-    *  Search node at specified depth given a 3d point (depth=0: search full tree depth)
-    *  You need to check if the returned node is NULL, since it can be in unknown space.
-    *  @return pointer to node if found, NULL otherwise
+    * Search node at specified depth given a 3d point (depth=0: search full tree depth) You need to
+    * check if the returned node is NULL, since it can be in unknown space.
+    *
+    * @return pointer to node if found, NULL otherwise
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, Point3DReadOnly coord, double resolution, int treeDepth)
    {
@@ -63,9 +65,10 @@ public abstract class OcTreeSearchTools
    }
 
    /**
-    *  Search a node at specified depth given an addressing key (depth=0: search full tree depth)
-    *  You need to check if the returned node is NULL, since it can be in unknown space.
-    *  @return pointer to node if found, NULL otherwise
+    * Search a node at specified depth given an addressing key (depth=0: search full tree depth) You
+    * need to check if the returned node is NULL, since it can be in unknown space.
+    *
+    * @return pointer to node if found, NULL otherwise
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> NODE search(NODE rootNode, OcTreeKeyReadOnly key, int depth, int treeDepth)
    {

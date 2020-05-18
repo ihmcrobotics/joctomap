@@ -1,6 +1,8 @@
 package us.ihmc.jOctoMap.boundingBox;
 
-import static us.ihmc.robotics.Assert.*;
+import static us.ihmc.robotics.Assert.assertNotNull;
+import static us.ihmc.robotics.Assert.assertNull;
+import static us.ihmc.robotics.Assert.assertTrue;
 
 import java.util.Random;
 
@@ -52,8 +54,8 @@ public class OcTreeBoundingBoxWithCenterAndYawTest
    @Test
    public void isKeyInRotatedBoundingBoxTest()
    {
-      //OcTreeKey key = new OcTreeKey(29940, 35596, 34768); //45 degrees yaw 
-      OcTreeKey key = new OcTreeKey(29304, 34768, 34768); //60 degrees yaw 
+      //OcTreeKey key = new OcTreeKey(29940, 35596, 34768); //45 degrees yaw
+      OcTreeKey key = new OcTreeKey(29304, 34768, 34768); //60 degrees yaw
       OcTreeSimpleBoundingBox simpleBoundingBox = new OcTreeSimpleBoundingBox(minKey, maxKey);
       simpleBoundingBox.update(resolution, treeDepth);
 

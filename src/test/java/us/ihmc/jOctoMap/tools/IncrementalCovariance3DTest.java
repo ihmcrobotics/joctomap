@@ -1,6 +1,6 @@
 package us.ihmc.jOctoMap.tools;
 
-import static us.ihmc.robotics.Assert.*;
+import static us.ihmc.robotics.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,12 +9,11 @@ import java.util.Random;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.MatrixFeatures;
-import us.ihmc.robotics.Assert;
 import org.junit.jupiter.api.Test;
 
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
-
+import us.ihmc.robotics.Assert;
 
 public class IncrementalCovariance3DTest
 {
@@ -106,7 +105,8 @@ public class IncrementalCovariance3DTest
    }
 
    /**
-    * Using the actual formula of the covariance matrix, <a href="https://en.wikipedia.org/wiki/Principal_component_analysis"> here</a>.
+    * Using the actual formula of the covariance matrix,
+    * <a href="https://en.wikipedia.org/wiki/Principal_component_analysis"> here</a>.
     */
    private static DenseMatrix64F computeCovarianceMatrix(List<Point3D> dataset, boolean corrected)
    {
@@ -129,11 +129,11 @@ public class IncrementalCovariance3DTest
 
       if (corrected)
       {
-         CommonOps.scale(1.0 / (double) (n - 1.0), covariance);
+         CommonOps.scale(1.0 / (n - 1.0), covariance);
       }
       else
       {
-         CommonOps.scale(1.0 / (double) n, covariance);
+         CommonOps.scale(1.0 / n, covariance);
       }
 
       return covariance;

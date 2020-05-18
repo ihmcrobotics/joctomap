@@ -130,9 +130,9 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    public void negateNormal()
    {
-      normalX = - normalX;
-      normalY = - normalY;
-      normalZ = - normalZ;
+      normalX = -normalX;
+      normalY = -normalY;
+      normalZ = -normalZ;
    }
 
    public void setNormalQuality(float averageDeviation, int consensusSize)
