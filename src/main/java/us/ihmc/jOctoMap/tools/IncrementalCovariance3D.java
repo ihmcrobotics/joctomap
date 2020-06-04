@@ -1,7 +1,7 @@
 package us.ihmc.jOctoMap.tools;
 
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
 
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DBasics;
@@ -36,7 +36,7 @@ public class IncrementalCovariance3D
 {
    private int sampleSize = 0;
    private final Point3D mean = new Point3D();
-   private final DenseMatrix64F secondMoment = new DenseMatrix64F(3, 3);
+   private final DMatrixRMaj secondMoment = new DMatrixRMaj(3, 3);
 
    public IncrementalCovariance3D()
    {
@@ -106,12 +106,12 @@ public class IncrementalCovariance3D
     *
     * @return the 3-by-3 covariance matrix.
     */
-   public DenseMatrix64F getCovariance()
+   public DMatrixRMaj getCovariance()
    {
-      DenseMatrix64F covariance = new DenseMatrix64F(3, 3);
+      DMatrixRMaj covariance = new DMatrixRMaj(3, 3);
       double div = 1.0 / (sampleSize);
       covariance.set(secondMoment);
-      CommonOps.scale(div, covariance);
+      CommonOps_DDRM.scale(div, covariance);
       return covariance;
    }
 
@@ -121,12 +121,12 @@ public class IncrementalCovariance3D
     *
     * @return the 3-by-3 covariance matrix.
     */
-   public DenseMatrix64F getCovarianceCorrected()
+   public DMatrixRMaj getCovarianceCorrected()
    {
-      DenseMatrix64F covariance = new DenseMatrix64F(3, 3);
+      DMatrixRMaj covariance = new DMatrixRMaj(3, 3);
       double div = 1.0 / (sampleSize - 1.0);
       covariance.set(secondMoment);
-      CommonOps.scale(div, covariance);
+      CommonOps_DDRM.scale(div, covariance);
       return covariance;
    }
 

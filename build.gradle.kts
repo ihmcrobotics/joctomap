@@ -15,10 +15,12 @@ ihmc {
 }
 
 mainDependencies {
+   api("org.ejml:ejml-core:0.39")
+   api("org.ejml:ejml-ddense:0.39")
    api("org.apache.commons:commons-math3:3.3")
    api("org.apache.commons:commons-lang3:3.9")
-   api("org.ejml:dense64:0.30")
-   api("us.ihmc:euclid-geometry:0.14.2")
+
+   api("us.ihmc:euclid-geometry:0.14.2-ejml-0.39-beta-1")
 }
 
 testDependencies {
