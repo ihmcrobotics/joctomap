@@ -12,6 +12,7 @@ public class NormalEstimationParameters
    public static final double DEFAULT_MAX_AVERAGE_DEVIATION_RATIO = 0.75;
    public static final int DEFAULT_NUMBER_OF_ITERATIONS = 1;
    public static final boolean DEFAULT_LEAST_SQUARES_ESTIMATION = true;
+   public static final boolean DEFAULT_WEIGHT_BY_NUMBER_OF_HITS = true;
 
    private double searchRadius;
    private double maxDistanceFromPlane;
@@ -21,6 +22,8 @@ public class NormalEstimationParameters
 
    private int numberOfIterations;
    private boolean enableLeastSquaresEstimation;
+
+   private boolean weightByNumberOfHits;
 
    public NormalEstimationParameters()
    {
@@ -40,6 +43,7 @@ public class NormalEstimationParameters
       maxAverageDeviationRatio = DEFAULT_MAX_AVERAGE_DEVIATION_RATIO;
       numberOfIterations = DEFAULT_NUMBER_OF_ITERATIONS;
       enableLeastSquaresEstimation = DEFAULT_LEAST_SQUARES_ESTIMATION;
+      weightByNumberOfHits = DEFAULT_WEIGHT_BY_NUMBER_OF_HITS;
    }
 
    public void set(NormalEstimationParameters other)
@@ -50,6 +54,7 @@ public class NormalEstimationParameters
       maxAverageDeviationRatio = other.maxAverageDeviationRatio;
       numberOfIterations = other.numberOfIterations;
       enableLeastSquaresEstimation = other.enableLeastSquaresEstimation;
+      weightByNumberOfHits = other.weightByNumberOfHits;
    }
 
    public void setSearchRadius(double searchRadius)
@@ -82,6 +87,11 @@ public class NormalEstimationParameters
       this.enableLeastSquaresEstimation = enableLeastSquaresEstimation;
    }
 
+   public void weightByNumberOfHits(boolean weightByNumberOfHits)
+   {
+      this.weightByNumberOfHits = weightByNumberOfHits;
+   }
+
    public double getSearchRadius()
    {
       return searchRadius;
@@ -112,12 +122,17 @@ public class NormalEstimationParameters
       return enableLeastSquaresEstimation;
    }
 
+   public boolean isWeightByNumberOfHits()
+   {
+      return weightByNumberOfHits;
+   }
+
    @Override
    public String toString()
    {
       return "search radius: " + searchRadius + ", max distance from plane: " + maxDistanceFromPlane + ", min consensus ratio: " + minConsensusRatio
             + ", max average deviation ratio: " + maxAverageDeviationRatio + ", number of iterations: " + numberOfIterations + ", least squares estimation: "
-            + enableLeastSquaresEstimation;
+            + enableLeastSquaresEstimation + ", weight by number of hits: " + weightByNumberOfHits;
    }
 
    public static NormalEstimationParameters parse(String parametersAsString)
@@ -131,6 +146,7 @@ public class NormalEstimationParameters
       parameters.setMaxAverageDeviationRatio(ScannerTools.readNextDouble(scanner, parameters.getMaxAverageDeviationRatio()));
       parameters.setNumberOfIterations(ScannerTools.readNextInt(scanner, parameters.getNumberOfIterations()));
       parameters.enableLeastSquaresEstimation(ScannerTools.readNextBoolean(scanner, parameters.isLeastSquaresEstimationEnabled()));
+      parameters.weightByNumberOfHits(ScannerTools.readNextBoolean(scanner, parameters.isWeightByNumberOfHits()));
       scanner.close();
       return parameters;
    }
