@@ -1,6 +1,6 @@
 package us.ihmc.jOctoMap.tools;
 
-import static us.ihmc.jOctoMap.tools.JOctoMapTools.*;
+import static us.ihmc.jOctoMap.tools.JOctoMapTools.square;
 
 import java.util.Random;
 
@@ -11,21 +11,18 @@ import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;
 
 /**
- * This class provides basic operations on {@linkplain OcTreeKey}.
- * 
- * Here are some notes on keys:
- * <li> Index for a node child is in [0, 7]. Three bits can describe this index (2^0, 2^1, and 2^2).
+ * This class provides basic operations on {@linkplain OcTreeKey}. Here are some notes on keys:
+ * <li>Index for a node child is in [0, 7]. Three bits can describe this index (2^0, 2^1, and 2^2).
  * This characteristic is used to figure out where is located the child:
- * 
- *
  */
 public abstract class OcTreeKeyTools
 {
    /**
-    * Computes the 
-    * @param childIndex index of child node (0..7)
+    * Computes the
+    *
+    * @param childIndex      index of child node (0..7)
     * @param centerOffsetKey constant offset of octree keys
-    * @param parentKey current (parent) key
+    * @param parentKey       current (parent) key
     * @return
     */
    public static OcTreeKey computeChildKey(int childIndex, OcTreeKeyReadOnly parentKey, int childDepth, int treeDepth)
@@ -43,12 +40,11 @@ public abstract class OcTreeKeyTools
    }
 
    /**
-    * Computes the key of a child node while traversing the octree, given
-    * child index and current key
+    * Computes the key of a child node while traversing the octree, given child index and current key
     *
-    * @param childIndex index of child node (0..7)
-    * @param parentKey current (parent) key
-    * @param childKeyToPack  computed child key
+    * @param childIndex     index of child node (0..7)
+    * @param parentKey      current (parent) key
+    * @param childKeyToPack computed child key
     */
    public static void computeChildKey(int childIndex, OcTreeKeyReadOnly parentKey, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
    {
@@ -58,7 +54,8 @@ public abstract class OcTreeKeyTools
       computeChildKey(childIndex, k0, k1, k2, childKeyToPack, childDepth, treeDepth);
    }
 
-   public static <NODE extends AbstractOcTreeNode<NODE>> void computeChildKey(int childIndex, NODE parentNode, OcTreeKey childKeyToPack, int childDepth, int treeDepth)
+   public static <NODE extends AbstractOcTreeNode<NODE>> void computeChildKey(int childIndex, NODE parentNode, OcTreeKey childKeyToPack, int childDepth,
+                                                                              int treeDepth)
    {
       int k0 = parentNode.getKey0();
       int k1 = parentNode.getKey1();
@@ -124,10 +121,10 @@ public abstract class OcTreeKeyTools
    }
 
    /**
-    * Adjusts a single key value from the lowest level to correspond to a higher depth (by
-    * shifting the key value)
+    * Adjusts a single key value from the lowest level to correspond to a higher depth (by shifting the
+    * key value)
     *
-    * @param key Input key, at the lowest tree level
+    * @param key   Input key, at the lowest tree level
     * @param depth Target depth level for the new key
     * @return Key for the new depth level
     */
@@ -145,15 +142,16 @@ public abstract class OcTreeKeyTools
       else
       {
          int centerOffsetKey = computeCenterOffsetKey(treeDepth);
-         return adjustToUnsignedNBits(adjustToUnsignedNBits(((key - centerOffsetKey) >> diff) << diff, treeDepth) + (1 << (diff - 1)) + centerOffsetKey, treeDepth);
+         return adjustToUnsignedNBits(adjustToUnsignedNBits(((key - centerOffsetKey) >> diff) << diff, treeDepth) + (1 << (diff - 1)) + centerOffsetKey,
+                                      treeDepth);
       }
    }
 
    /**
-    * Adjusts a 3D key from the lowest level to correspond to a higher depth (by
-    * shifting the key values)
+    * Adjusts a 3D key from the lowest level to correspond to a higher depth (by shifting the key
+    * values)
     *
-    * @param key Input key, at the lowest tree level
+    * @param key   Input key, at the lowest tree level
     * @param depth Target depth level for the new key
     * @return Key for the new depth level
     */
@@ -171,9 +169,10 @@ public abstract class OcTreeKeyTools
    }
 
    /**
-    * Computes the center offset key at depth = 0 and for a given maximum depth (tree depth).
-    * It is the key at the center of the tree: all keys are in [0, 2 * centerOffsetKey - 1].
-    * It is also the key used for the root node key.
+    * Computes the center offset key at depth = 0 and for a given maximum depth (tree depth). It is the
+    * key at the center of the tree: all keys are in [0, 2 * centerOffsetKey - 1]. It is also the key
+    * used for the root node key.
+    *
     * @param treeDepth tree depth.
     * @return the center offset key
     */
@@ -187,6 +186,7 @@ public abstract class OcTreeKeyTools
 
    /**
     * Computes the key of the root node for a given tree depth
+    *
     * @param treeDepth number of levels of the tree.
     * @return root node key.
     */
@@ -198,7 +198,8 @@ public abstract class OcTreeKeyTools
 
    /**
     * Computes the key of the root node for a given tree depth
-    * @param treeDepth number of levels of the tree.
+    *
+    * @param treeDepth     number of levels of the tree.
     * @param rootKeyToPack (output) root node key.
     */
    public static void getRootKey(int treeDepth, OcTreeKey rootKeyToPack)
@@ -209,6 +210,7 @@ public abstract class OcTreeKeyTools
 
    /**
     * Computes the maximum that a key can have at the lowest level for a given tree depth.
+    *
     * @param treeDepth number of levels of the tree.
     * @return the key maximum value at the lowest level.
     */
@@ -219,7 +221,8 @@ public abstract class OcTreeKeyTools
 
    /**
     * Computes the maximum that a key can have at a given depth for a given tree depth.
-    * @param depth level at which the maximum key is to be computed.
+    *
+    * @param depth     level at which the maximum key is to be computed.
     * @param treeDepth number of levels of the tree.
     * @return the key maximum value at the given depth.
     */
@@ -234,7 +237,8 @@ public abstract class OcTreeKeyTools
 
    /**
     * Computes the minimum that a key can have at a given depth for a given tree depth.
-    * @param depth level at which the minimum key is to be computed.
+    *
+    * @param depth     level at which the minimum key is to be computed.
     * @param treeDepth number of levels of the tree.
     * @return the key minimum value at the given depth.
     */
@@ -248,7 +252,8 @@ public abstract class OcTreeKeyTools
 
    /**
     * Computes the key interval between nodes at a given level of a tree.
-    * @param depth level at which the key interval is to be computed.
+    *
+    * @param depth     level at which the key interval is to be computed.
     * @param treeDepth number of levels of the tree.
     * @return the key interval value at the given depth.
     */
@@ -306,7 +311,7 @@ public abstract class OcTreeKeyTools
    }
 
    public static void computeNeighborKeys(OcTreeKeyReadOnly key, int depth, double resolution, int treeDepth, double searchRadius,
-         OcTreeKeyList neighborKeysToPack)
+                                          OcTreeKeyList neighborKeysToPack)
    {
       computeNeighborKeyOffsets(depth, resolution, treeDepth, searchRadius, neighborKeysToPack);
 
@@ -374,7 +379,7 @@ public abstract class OcTreeKeyTools
       else
          return (adjusted + maxValue) % maxValue;
    }
-   
+
    public static void main(String[] args)
    {
       int blop = 0;

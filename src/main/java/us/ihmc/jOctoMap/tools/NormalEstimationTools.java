@@ -8,11 +8,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
-import org.ejml.alg.dense.decomposition.svd.SvdImplicitQrDecompose_D64;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.interfaces.decomposition.SingularValueDecomposition;
-import org.ejml.ops.MatrixFeatures;
-import org.ejml.ops.SingularOps;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.MatrixFeatures_DDRM;
+import org.ejml.dense.row.SingularOps_DDRM;
+import org.ejml.dense.row.decomposition.svd.SvdImplicitQrDecompose_DDRM;
+import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
 
 import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -120,12 +120,8 @@ public abstract class NormalEstimationTools
 
       while (normalCandidate == null && iteration++ < maxNumberOfAttempts)
       {
-         Point3D[] randomHitLocations = random.ints(0, neighbors.size())
-               .distinct()
-               .limit(2)
-               .mapToObj(neighbors::get)
-               .map(NormalOcTreeNode::getHitLocationCopy)
-               .toArray(Point3D[]::new);
+         Point3D[] randomHitLocations = random.ints(0, neighbors.size()).distinct().limit(2).mapToObj(neighbors::get).map(NormalOcTreeNode::getHitLocationCopy)
+                                              .toArray(Point3D[]::new);
 
          normalCandidate = EuclidGeometryTools.normal3DFromThreePoint3Ds(currentNodeHitLocation, randomHitLocations[0], randomHitLocations[1]);
       }
@@ -151,12 +147,12 @@ public abstract class NormalEstimationTools
       if (covarianceCalulator.getSampleSize() <= 2)
          return null;
 
-      SingularValueDecomposition<DenseMatrix64F> svd = new SvdImplicitQrDecompose_D64(true, false, true, false);
+      SingularValueDecomposition_F64<DMatrixRMaj> svd = new SvdImplicitQrDecompose_DDRM(true, false, true, false);
       svd.decompose(covarianceCalulator.getCovariance());
-      DenseMatrix64F v = svd.getV(null, false);
-      if (MatrixFeatures.hasNaN(v))
+      DMatrixRMaj v = svd.getV(null, false);
+      if (MatrixFeatures_DDRM.hasNaN(v))
          return null;
-      SingularOps.descendingOrder(null, false, svd.getW(null), v, false);
+      SingularOps_DDRM.descendingOrder(null, false, svd.getW(null), v, false);
 
       Vector3D refinedNormal = new Vector3D(v.get(0, 2), v.get(1, 2), v.get(2, 2));
       refinedNormal.normalize();

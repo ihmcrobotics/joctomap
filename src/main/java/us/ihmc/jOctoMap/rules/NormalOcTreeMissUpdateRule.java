@@ -18,7 +18,7 @@ public class NormalOcTreeMissUpdateRule implements UpdateRule<NormalOcTreeNode>,
 
    public NormalOcTreeMissUpdateRule(OccupancyParametersReadOnly occupancyParameters)
    {
-      this.parameters = occupancyParameters;
+      parameters = occupancyParameters;
    }
 
    public void setUpdateLogOdds(float updateLogOdds)

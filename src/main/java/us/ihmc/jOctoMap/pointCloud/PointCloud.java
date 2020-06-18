@@ -15,8 +15,7 @@ public class PointCloud implements Iterable<Point3D32>
    protected final List<Point3D32> points = new ArrayList<>();
 
    /**
-    * A collection of 3D coordinates (point3d), which are regarded as endpoints of a
-    * 3D laser scan.
+    * A collection of 3D coordinates (point3d), which are regarded as endpoints of a 3D laser scan.
     */
    public PointCloud()
    {

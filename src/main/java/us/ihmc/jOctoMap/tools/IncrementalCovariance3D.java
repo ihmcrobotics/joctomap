@@ -1,48 +1,50 @@
 package us.ihmc.jOctoMap.tools;
 
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
 
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DBasics;
 
 /**
- * This class provides a storeless computation for a 3D covariance matrix.
- * Implementation from the algorithm described on Wikipedia:
- * <a href="https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance"> Algorithms for calculating variance </a>.
+ * This class provides a storeless computation for a 3D covariance matrix. Implementation from the
+ * algorithm described on Wikipedia:
+ * <a href="https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance"> Algorithms for
+ * calculating variance </a>.
  * <p>
- * It seems that there is a debate on whether this should be named the covariance or variance matrix, see
- * <a href="https://en.wikipedia.org/wiki/Covariance_matrix"> Covariance matrix </a>
+ * It seems that there is a debate on whether this should be named the covariance or variance
+ * matrix, see <a href="https://en.wikipedia.org/wiki/Covariance_matrix"> Covariance matrix </a>
  * <p>
  * This class is a tool to compute the two following versions of the covariance matrix:
  * <ul>
- *   <li> Standard Covariance matrix: CoVar(X) = Y<sup>T</sup> * Y / n
- *   <li> Covariance matrix with <a href="https://en.wikipedia.org/wiki/Bessel%27s_correction"> Bessel's Correction </a>: CoVar(X) = Y<sup>T</sup> * Y / (n-1)
- *   <li>Where:
- *   <ul>
- *     <li> Y = X - <b>1</b> mean(X)
- *     <li> n is the size of the dataset
- *     <li> X represents the n-by-3 dataset
- *     <li> <b>1</b> is a n-by-1 vector filled with 1.
- *     <li> mean(X) is the 1-by-3 average vector of the dataset X.
- *   </ul>
+ * <li>Standard Covariance matrix: CoVar(X) = Y<sup>T</sup> * Y / n
+ * <li>Covariance matrix with <a href="https://en.wikipedia.org/wiki/Bessel%27s_correction">
+ * Bessel's Correction </a>: CoVar(X) = Y<sup>T</sup> * Y / (n-1)
+ * <li>Where:
+ * <ul>
+ * <li>Y = X - <b>1</b> mean(X)
+ * <li>n is the size of the dataset
+ * <li>X represents the n-by-3 dataset
+ * <li><b>1</b> is a n-by-1 vector filled with 1.
+ * <li>mean(X) is the 1-by-3 average vector of the dataset X.
  * </ul>
- * @author Sylvain
+ * </ul>
  *
+ * @author Sylvain
  */
 public class IncrementalCovariance3D
 {
    private int sampleSize = 0;
    private final Point3D mean = new Point3D();
-   private final DenseMatrix64F secondMoment = new DenseMatrix64F(3, 3);
+   private final DMatrixRMaj secondMoment = new DMatrixRMaj(3, 3);
 
    public IncrementalCovariance3D()
    {
    }
 
    /**
-    * Clear the current data.
-    * If the mean of the next dataset is somewhat known, it is preferable to use {@link #clearAndSetPredictedMean(Tuple3d)}.
+    * Clear the current data. If the mean of the next dataset is somewhat known, it is preferable to
+    * use {@link #clearAndSetPredictedMean(Tuple3d)}.
     */
    public void clear()
    {
@@ -53,6 +55,7 @@ public class IncrementalCovariance3D
 
    /**
     * Inserts a new data point (x, y, z) and updates the covariance matrix.
+    *
     * @param x the x-coordinate of the new data point.
     * @param y the y-coordinate of the new data point.
     * @param z the z-coordinate of the new data point.
@@ -90,6 +93,7 @@ public class IncrementalCovariance3D
 
    /**
     * Get the the average of the current dataset.
+    *
     * @param meanToPack
     */
    public void getMean(Tuple3DBasics meanToPack)
@@ -99,27 +103,30 @@ public class IncrementalCovariance3D
 
    /**
     * Get the covariance matrix corresponding to the dataset added beforehand.
+    *
     * @return the 3-by-3 covariance matrix.
     */
-   public DenseMatrix64F getCovariance()
+   public DMatrixRMaj getCovariance()
    {
-      DenseMatrix64F covariance = new DenseMatrix64F(3, 3);
-      double div = 1.0 / (double) (sampleSize);
+      DMatrixRMaj covariance = new DMatrixRMaj(3, 3);
+      double div = 1.0 / (sampleSize);
       covariance.set(secondMoment);
-      CommonOps.scale(div, covariance);
+      CommonOps_DDRM.scale(div, covariance);
       return covariance;
    }
 
    /**
-    * Get the covariance matrix corresponding to the dataset added beforehand using <a href="https://en.wikipedia.org/wiki/Bessel%27s_correction"> Bessel's Correction </a>.
+    * Get the covariance matrix corresponding to the dataset added beforehand using
+    * <a href="https://en.wikipedia.org/wiki/Bessel%27s_correction"> Bessel's Correction </a>.
+    *
     * @return the 3-by-3 covariance matrix.
     */
-   public DenseMatrix64F getCovarianceCorrected()
+   public DMatrixRMaj getCovarianceCorrected()
    {
-      DenseMatrix64F covariance = new DenseMatrix64F(3, 3);
-      double div = 1.0 / (double) (sampleSize - 1.0);
+      DMatrixRMaj covariance = new DMatrixRMaj(3, 3);
+      double div = 1.0 / (sampleSize - 1.0);
       covariance.set(secondMoment);
-      CommonOps.scale(div, covariance);
+      CommonOps_DDRM.scale(div, covariance);
       return covariance;
    }
 

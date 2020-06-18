@@ -23,7 +23,7 @@ public class NodeBuilder<NODE>
    public NODE createNode()
    {
       NODE newNode = null;
-      
+
       try
       {
          newNode = emptyConstructor.newInstance();
@@ -31,7 +31,8 @@ public class NodeBuilder<NODE>
       catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
       {
          e.printStackTrace();
-         throw new RuntimeException("Something went wrong the empty constructor implemented in the node class: " + emptyConstructor.getDeclaringClass().getSimpleName());
+         throw new RuntimeException("Something went wrong the empty constructor implemented in the node class: "
+               + emptyConstructor.getDeclaringClass().getSimpleName());
       }
 
       return newNode;

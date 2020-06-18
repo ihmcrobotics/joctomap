@@ -1,6 +1,8 @@
 package us.ihmc.jOctoMap.tools;
 
-import static us.ihmc.robotics.Assert.*;
+import static us.ihmc.robotics.Assert.assertNotNull;
+import static us.ihmc.robotics.Assert.assertNull;
+import static us.ihmc.robotics.Assert.assertTrue;
 
 import java.util.Random;
 
@@ -452,7 +454,7 @@ public class JOctoMapGeometryToolsTest
       private final Point3D maxZminXY;
 
       public BoxCorners(Point3D maxXYZ, Point3D maxXYminZ, Point3D maxXminYZ, Point3D maxXZminY, Point3D maxYZminX, Point3D maxYminXZ, Point3D minXYZ,
-            Point3D maxZminXY)
+                        Point3D maxZminXY)
       {
          this.maxXYZ = maxXYZ;
          this.maxXYminZ = maxXYminZ;

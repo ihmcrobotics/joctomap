@@ -91,7 +91,7 @@ public class OcTreeKey implements OcTreeKeyReadOnly
    @Override
    public int hashCode()
    {
-      // a simple hashing function 
+      // a simple hashing function
       // explicit casts to size_t to operate on the complete range
       // constanst will be promoted according to C++ standard
       return (int) (k[0] + 1447L * k[1] + 345637L * k[2]);

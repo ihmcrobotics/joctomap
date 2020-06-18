@@ -47,8 +47,7 @@ public abstract class PointCloudTools
          return new PointCloud(input);
 
       List<? extends Point3DReadOnly> pointsInside = input.parallelStream()
-                                                          .collect(Collectors.groupingBy(point -> isInsideBounds(point, lowerBound, upperBound)))
-                                                          .get(true);
+                                                          .collect(Collectors.groupingBy(point -> isInsideBounds(point, lowerBound, upperBound))).get(true);
       return new PointCloud(pointsInside);
    }
 
@@ -61,7 +60,7 @@ public abstract class PointCloudTools
          return new PointCloud(input);
 
       float minimumDistanceSquared = sphereRadius * sphereRadius;
-      
+
       List<? extends Point3DReadOnly> pointsOutsideSphere = input.parallelStream()
                                                                  .collect(Collectors.groupingBy(point -> point.distanceSquared(sphereCenter) > minimumDistanceSquared))
                                                                  .get(true);

@@ -52,13 +52,13 @@ public abstract class JOctoMapRandomTools
 
       return new Point3D(x, y, z);
    }
-   
+
    public static Vector3D generateRandomVector3D(Random random, double maxAbsoluteX, double maxAbsoluteY, double maxAbsoluteZ)
    {
       double x = generateRandomDouble(random, -maxAbsoluteX, maxAbsoluteX);
       double y = generateRandomDouble(random, -maxAbsoluteY, maxAbsoluteY);
       double z = generateRandomDouble(random, -maxAbsoluteZ, maxAbsoluteZ);
-      
+
       return new Vector3D(x, y, z);
    }
 
@@ -72,8 +72,8 @@ public abstract class JOctoMapRandomTools
 
    public static Vector3D generateRandomOrthogonalVector3D(Random random, Vector3DReadOnly vectorToBeOrthogonalTo, boolean normalize)
    {
-      Vector3D v1 = new Vector3D(vectorToBeOrthogonalTo.getY(), - vectorToBeOrthogonalTo.getX(), 0.0);
-      Vector3D v2 = new Vector3D(- vectorToBeOrthogonalTo.getZ(), 0.0, vectorToBeOrthogonalTo.getX());
+      Vector3D v1 = new Vector3D(vectorToBeOrthogonalTo.getY(), -vectorToBeOrthogonalTo.getX(), 0.0);
+      Vector3D v2 = new Vector3D(-vectorToBeOrthogonalTo.getZ(), 0.0, vectorToBeOrthogonalTo.getX());
 
       Vector3D randomPerpendicular = new Vector3D();
       double a = JOctoMapRandomTools.generateRandomDouble(random, 1.0);
@@ -114,8 +114,8 @@ public abstract class JOctoMapRandomTools
       return pointCloud;
    }
 
-   public static ScanCollection generateRandomSweepCollection(Random random, float xRange, float yRange, float zRange, Point3DReadOnly sensorOrigin, int sweepSize,
-         int pointCloudSize)
+   public static ScanCollection generateRandomSweepCollection(Random random, float xRange, float yRange, float zRange, Point3DReadOnly sensorOrigin,
+                                                              int sweepSize, int pointCloudSize)
    {
       ScanCollection sweepCollection = new ScanCollection();
 
@@ -124,15 +124,16 @@ public abstract class JOctoMapRandomTools
       return sweepCollection;
    }
 
-   public static ScanCollection createSingleSweepInPlane(Random random, double sensorDistanceFromPlane, Point3DReadOnly center, Vector3DBasics normal, double length, double width, int numberOfPoints)
+   public static ScanCollection createSingleSweepInPlane(Random random, double sensorDistanceFromPlane, Point3DReadOnly center, Vector3DBasics normal,
+                                                         double length, double width, int numberOfPoints)
    {
       ScanCollection sweepCollection = new ScanCollection();
       normal.normalize();
-   
+
       RotationMatrix orientation = new RotationMatrix(EuclidGeometryTools.axisAngleFromZUpToVector3D(normal));
-   
+
       PointCloud pointCloud = new PointCloud();
-   
+
       for (int i = 0; i < numberOfPoints; i++)
       {
          Point3D pointInPlane = generateRandomPoint3D(random, length, width, 0.0);
@@ -141,12 +142,12 @@ public abstract class JOctoMapRandomTools
          pointInWorld.add(center);
          pointCloud.add(pointInWorld);
       }
-   
+
       Point3D sensorOrigin = new Point3D();
       sensorOrigin.scaleAdd(sensorDistanceFromPlane, normal, center);
-   
+
       sweepCollection.addScan(pointCloud, sensorOrigin);
-      
+
       return sweepCollection;
    }
 }

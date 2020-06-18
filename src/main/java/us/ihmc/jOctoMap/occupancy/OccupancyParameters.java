@@ -1,6 +1,7 @@
 package us.ihmc.jOctoMap.occupancy;
 
-import static us.ihmc.jOctoMap.tools.JOctoMapTools.*;
+import static us.ihmc.jOctoMap.tools.JOctoMapTools.logodds;
+import static us.ihmc.jOctoMap.tools.JOctoMapTools.probability;
 
 import java.util.Scanner;
 
@@ -8,11 +9,11 @@ import us.ihmc.jOctoMap.tools.ScannerTools;
 
 public class OccupancyParameters implements OccupancyParametersReadOnly
 {
-   public static final double DEFAULT_OCCUPANCY_THRESHOLD = 0.5;  // = 0.0 in logodds
-   public static final double DEFAULT_HIT_UPDATE = 0.7;           // = 0.85 in logodds
-   public static final double DEFAULT_MISS_UPDATE = 0.4;          // = -0.4 in logodds
-   public static final double DEFAULT_MIN_PROBABILITY = 0.1192;   // = -2 in log odds
-   public static final double DEFAULT_MAX_PROBABILITY = 0.971;    // = 3.5 in log odds
+   public static final double DEFAULT_OCCUPANCY_THRESHOLD = 0.5; // = 0.0 in logodds
+   public static final double DEFAULT_HIT_UPDATE = 0.7; // = 0.85 in logodds
+   public static final double DEFAULT_MISS_UPDATE = 0.4; // = -0.4 in logodds
+   public static final double DEFAULT_MIN_PROBABILITY = 0.1192; // = -2 in log odds
+   public static final double DEFAULT_MAX_PROBABILITY = 0.971; // = 3.5 in log odds
 
    private float minOccupancyLogOdds;
    private float maxOccupancyLogOdds;
@@ -52,6 +53,7 @@ public class OccupancyParameters implements OccupancyParametersReadOnly
 
    /**
     * Sets the threshold for occupancy (sensor model)
+    *
     * @param probability
     */
    public void setOccupancyThreshold(double probability)
@@ -61,6 +63,7 @@ public class OccupancyParameters implements OccupancyParametersReadOnly
 
    /**
     * Sets the probability for a "hit" (will be converted to logodds) - sensor model
+    *
     * @param probability
     */
    public void setHitProbabilityUpdate(double probability)
@@ -72,6 +75,7 @@ public class OccupancyParameters implements OccupancyParametersReadOnly
 
    /**
     * Sets the probability for a "miss" (will be converted to logodds) - sensor model
+    *
     * @param probability
     */
    public void setMissProbabilityUpdate(double probability)
@@ -83,6 +87,7 @@ public class OccupancyParameters implements OccupancyParametersReadOnly
 
    /**
     * Sets the minimum probability for occupancy clamping (sensor model)
+    *
     * @param minimumProbability
     */
    public void setMinProbability(double minimumProbability)
@@ -92,6 +97,7 @@ public class OccupancyParameters implements OccupancyParametersReadOnly
 
    /**
     * Sets the maximum probability for occupancy clamping (sensor model)
+    *
     * @param maximumProbability
     */
    public void setMaxProbability(double maximumProbability)
@@ -179,9 +185,8 @@ public class OccupancyParameters implements OccupancyParametersReadOnly
    @Override
    public String toString()
    {
-      return "min occupancy probability: " + getMinProbability() + ", max occupancy probability: " + getMaxProbability()
-            + ", hit update probability: " + getHitProbability() + ", miss update probability: " + getMissProbability()
-            + ", occupancy threshold probability: " + getOccupancyThreshold();
+      return "min occupancy probability: " + getMinProbability() + ", max occupancy probability: " + getMaxProbability() + ", hit update probability: "
+            + getHitProbability() + ", miss update probability: " + getMissProbability() + ", occupancy threshold probability: " + getOccupancyThreshold();
    }
 
    public static OccupancyParameters parse(String parametersAsString)

@@ -10,7 +10,8 @@ import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;
 /**
  * Class providing providing tools to perform radius and nearest neighbor searches.
  * <p>
- * The algorithms were adapted to OctoMap from: Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
+ * The algorithms were adapted to OctoMap from: Fast radius neighbor search with an Octree:
+ * <a href="https://github.com/jbehley/octree"> GitHub repo</a>,
  * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
  */
 public abstract class OcTreeNearestNeighborTools
@@ -28,16 +29,16 @@ public abstract class OcTreeNearestNeighborTools
    /**
     * Search the nodes contained in the search sphere S(q, r).
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
-    * 
-    * @param rootNode root node of the tree to be searched.
-    * @param queryNode node to use as the center q of the search sphere.
-    * @param radius search sphere radius.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    *
+    * @param rootNode   root node of the tree to be searched.
+    * @param queryNode  node to use as the center q of the search sphere.
+    * @param radius     search sphere radius.
     * @param actionRule action to perform when a node contained in S(q, r) is found.
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE rootNode, NODE queryNode, double radius,
-         NeighborActionRule<NODE> actionRule)
+                                                                                  NeighborActionRule<NODE> actionRule)
    {
       double radiusSquared = radius * radius;
       findRadiusNeighbors(rootNode, queryNode.getX(), queryNode.getY(), queryNode.getZ(), radius, radiusSquared, actionRule);
@@ -46,16 +47,16 @@ public abstract class OcTreeNearestNeighborTools
    /**
     * Search the nodes contained in the search sphere S(q, r).
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
-    * 
-    * @param rootNode root node of the tree to be searched.
-    * @param query coordinates of the query q.
-    * @param radius search sphere radius.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    *
+    * @param rootNode   root node of the tree to be searched.
+    * @param query      coordinates of the query q.
+    * @param radius     search sphere radius.
     * @param actionRule action to perform when a node contained in S(q, r) is found.
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE rootNode, Point3DReadOnly query, double radius,
-         NeighborActionRule<NODE> actionRule)
+                                                                                  NeighborActionRule<NODE> actionRule)
    {
       findRadiusNeighbors(rootNode, query.getX(), query.getY(), query.getZ(), radius, actionRule);
    }
@@ -63,25 +64,25 @@ public abstract class OcTreeNearestNeighborTools
    /**
     * Search the nodes contained in the search sphere S(q, r).
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
-    * 
-    * @param rootNode root node of the tree to be searched.
-    * @param x x-coordinate of the query q.
-    * @param y y-coordinate of the query q.
-    * @param z z-coordinate of the query q.
-    * @param radius search sphere radius.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    *
+    * @param rootNode   root node of the tree to be searched.
+    * @param x          x-coordinate of the query q.
+    * @param y          y-coordinate of the query q.
+    * @param z          z-coordinate of the query q.
+    * @param radius     search sphere radius.
     * @param actionRule action to perform when a node contained in S(q, r) is found.
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE rootNode, double x, double y, double z, double radius,
-         NeighborActionRule<NODE> actionRule)
+                                                                                  NeighborActionRule<NODE> actionRule)
    {
       double radiusSquared = radius * radius;
       findRadiusNeighbors(rootNode, x, y, z, radius, radiusSquared, actionRule);
    }
 
    private static <NODE extends AbstractOcTreeNode<NODE>> void findRadiusNeighbors(NODE node, double x, double y, double z, double radius, double radiusSquared,
-         NeighborActionRule<NODE> actionRule)
+                                                                                   NeighborActionRule<NODE> actionRule)
    {
       double xNode = node.getX();
       double yNode = node.getY();
@@ -125,13 +126,14 @@ public abstract class OcTreeNearestNeighborTools
    /**
     * Find the nearest neighbor to the given query (x, y, z).
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
-    * 
-    * @param rootNode root node of the tree to be searched.
-    * @param query coordinates of the query.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    *
+    * @param rootNode                 root node of the tree to be searched.
+    * @param query                    coordinates of the query.
     * @param nearestNeighborKeyToPack result of the search.
-    * @return if the search succeeds: the distance between the query and the nearest neighbor, {@value Double#NaN} otherwise.
+    * @return if the search succeeds: the distance between the query and the nearest neighbor,
+    *         {@value Double#NaN} otherwise.
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3DReadOnly query, OcTreeKey nearestNeighborKeyToPack)
    {
@@ -141,16 +143,18 @@ public abstract class OcTreeNearestNeighborTools
    /**
     * Find the nearest neighbor to the given query (x, y, z).
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
-    * 
-    * @param rootNode root node of the tree the nearest neighbor is to be searched.
-    * @param query coordinates of the query.
-    * @param minDistance filter out nodes that are closer  than the given distance.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    *
+    * @param rootNode                 root node of the tree the nearest neighbor is to be searched.
+    * @param query                    coordinates of the query.
+    * @param minDistance              filter out nodes that are closer than the given distance.
     * @param nearestNeighborKeyToPack result of the search.
-    * @return if the search succeeds: the distance between the query and the nearest neighbor, {@value Double#NaN} otherwise.
+    * @return if the search succeeds: the distance between the query and the nearest neighbor,
+    *         {@value Double#NaN} otherwise.
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3DReadOnly query, double minDistance, OcTreeKey nearestNeighborKeyToPack)
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3DReadOnly query, double minDistance,
+                                                                                    OcTreeKey nearestNeighborKeyToPack)
    {
       return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, Double.POSITIVE_INFINITY, nearestNeighborKeyToPack);
    }
@@ -158,17 +162,19 @@ public abstract class OcTreeNearestNeighborTools
    /**
     * Find the nearest neighbor to the given query (x, y, z).
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
-    * 
-    * @param rootNode root node of the tree to be searched.
-    * @param query coordinates of the query.
-    * @param minDistance filter out nodes that are closer  than the given distance.
-    * @param maxDistance filter out nodes that are farther than the given distance.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    *
+    * @param rootNode                 root node of the tree to be searched.
+    * @param query                    coordinates of the query.
+    * @param minDistance              filter out nodes that are closer than the given distance.
+    * @param maxDistance              filter out nodes that are farther than the given distance.
     * @param nearestNeighborKeyToPack result of the search.
-    * @return if the search succeeds: the distance between the query and the nearest neighbor, {@value Double#NaN} otherwise.
+    * @return if the search succeeds: the distance between the query and the nearest neighbor,
+    *         {@value Double#NaN} otherwise.
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3DReadOnly query, double minDistance, double maxDistance, OcTreeKey nearestNeighborKeyToPack)
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, Point3DReadOnly query, double minDistance,
+                                                                                    double maxDistance, OcTreeKey nearestNeighborKeyToPack)
    {
       return findNearestNeighbor(rootNode, query.getX(), query.getY(), query.getZ(), minDistance, maxDistance, nearestNeighborKeyToPack);
    }
@@ -176,19 +182,21 @@ public abstract class OcTreeNearestNeighborTools
    /**
     * Find the nearest neighbor to the given query (x, y, z).
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
-    * 
-    * @param rootNode root node of the tree to be searched.
-    * @param x x-coordinate of the query.
-    * @param y y-coordinate of the query.
-    * @param z z-coordinate of the query.
-    * @param minDistance filter out nodes that are closer  than the given distance.
-    * @param maxDistance filter out nodes that are farther than the given distance.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    *
+    * @param rootNode                 root node of the tree to be searched.
+    * @param x                        x-coordinate of the query.
+    * @param y                        y-coordinate of the query.
+    * @param z                        z-coordinate of the query.
+    * @param minDistance              filter out nodes that are closer than the given distance.
+    * @param maxDistance              filter out nodes that are farther than the given distance.
     * @param nearestNeighborKeyToPack result of the search.
-    * @return if the search succeeds: the distance between the query and the nearest neighbor, {@value Double#NaN} otherwise.
+    * @return if the search succeeds: the distance between the query and the nearest neighbor,
+    *         {@value Double#NaN} otherwise.
     */
-   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, double x, double y, double z, double minDistance, double maxDistance, OcTreeKey nearestNeighborKeyToPack)
+   public static <NODE extends AbstractOcTreeNode<NODE>> double findNearestNeighbor(NODE rootNode, double x, double y, double z, double minDistance,
+                                                                                    double maxDistance, OcTreeKey nearestNeighborKeyToPack)
    {
       MutableDouble result = new MutableDouble(maxDistance);
 
@@ -204,12 +212,14 @@ public abstract class OcTreeNearestNeighborTools
    /**
     * Nearest neighbor queries. Using minDistance >= 0, we explicitly disallow self-matches.
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
-    * @return true, if search finished, otherwise false. Does not specify whether the search succeeded or not.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    *
+    * @return true, if search finished, otherwise false. Does not specify whether the search succeeded
+    *         or not.
     **/
    private static <NODE extends AbstractOcTreeNode<NODE>> boolean findNearestNeighbor(NODE node, double x, double y, double z, double minDistance,
-         MutableDouble maxDistance, OcTreeKey nearestNeighborKey)
+                                                                                      MutableDouble maxDistance, OcTreeKey nearestNeighborKey)
    {
       double xNode = node.getX();
       double yNode = node.getY();
@@ -298,25 +308,25 @@ public abstract class OcTreeNearestNeighborTools
       }
    }
 
-   /** Test if search ball S(q,r) overlaps with node.
+   /**
+    * Test if search ball S(q,r) overlaps with node.
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
-    * 
-    * @param x coordinate of the query point q
-    * @param y coordinate of the query point q
-    * @param z coordinate of the query point q
-    * @param radius  radius r
-    * @param squareRadius  "squared" radius r
-    * @param key address of the node
-    * @param depth current depth in the tree
-    * @param resolution resolution of the tree
-    * @param treeDepth maximum depth of the tree
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
     *
+    * @param x            coordinate of the query point q
+    * @param y            coordinate of the query point q
+    * @param z            coordinate of the query point q
+    * @param radius       radius r
+    * @param squareRadius "squared" radius r
+    * @param key          address of the node
+    * @param depth        current depth in the tree
+    * @param resolution   resolution of the tree
+    * @param treeDepth    maximum depth of the tree
     * @return true, if search ball overlaps with node, false otherwise.
     */
    public static boolean overlaps(double x, double y, double z, double radius, double squareRadius, OcTreeKeyReadOnly key, int depth, double resolution,
-         int treeDepth)
+                                  int treeDepth)
    {
       double xNode = OcTreeKeyConversionTools.keyToCoordinate(key.getKey(0), depth, resolution, treeDepth);
       double yNode = OcTreeKeyConversionTools.keyToCoordinate(key.getKey(1), depth, resolution, treeDepth);
@@ -325,27 +335,27 @@ public abstract class OcTreeNearestNeighborTools
       return overlaps(x, y, z, radius, squareRadius, xNode, yNode, zNode, depth, resolution, treeDepth);
    }
 
-   /** Test if search ball S(q,r) overlaps with node.
+   /**
+    * Test if search ball S(q,r) overlaps with node.
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
-    * 
-    * @param x coordinate of the query point q
-    * @param y coordinate of the query point q
-    * @param z coordinate of the query point q
-    * @param radius  radius r
-    * @param squareRadius  "squared" radius r
-    * @param xNode x coordinate of the node
-    * @param yNode y coordinate of the node
-    * @param zNode z coordinate of the node
-    * @param depth current depth in the tree
-    * @param resolution resolution of the tree
-    * @param treeDepth maximum depth of the tree
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
     *
+    * @param x            coordinate of the query point q
+    * @param y            coordinate of the query point q
+    * @param z            coordinate of the query point q
+    * @param radius       radius r
+    * @param squareRadius "squared" radius r
+    * @param xNode        x coordinate of the node
+    * @param yNode        y coordinate of the node
+    * @param zNode        z coordinate of the node
+    * @param depth        current depth in the tree
+    * @param resolution   resolution of the tree
+    * @param treeDepth    maximum depth of the tree
     * @return true, if search ball overlaps with node, false otherwise.
     */
    public static boolean overlaps(double x, double y, double z, double radius, double squareRadius, double xNode, double yNode, double zNode, int depth,
-         double resolution, int treeDepth)
+                                  double resolution, int treeDepth)
    {
       // we exploit the symmetry to reduce the test to testing if its inside the Minkowski sum around the positive quadrant.
       double dx = Math.abs(x - xNode);
@@ -354,7 +364,7 @@ public abstract class OcTreeNearestNeighborTools
 
       double halfNodeSize = 0.5 * OcTreeKeyConversionTools.computeNodeSize(depth, resolution, treeDepth);
 
-      // (1) Checking the line region 
+      // (1) Checking the line region
       double maxDist = radius + halfNodeSize;
 
       // a. completely outside, since q' is outside the relevant area.
@@ -373,18 +383,18 @@ public abstract class OcTreeNearestNeighborTools
       return (dx * dx + dy * dy + dz * dz) < squareRadius;
    }
 
-   /** Test if search ball S(q,r) overlaps with node.
+   /**
+    * Test if search ball S(q,r) overlaps with node.
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
-    * 
-    * @param node node that possibly overlaps with the search ball
-    * @param x coordinate of the query point q
-    * @param y coordinate of the query point q
-    * @param z coordinate of the query point q
-    * @param radius  radius r
-    * @param squareRadius  "squared" radius r
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
     *
+    * @param node         node that possibly overlaps with the search ball
+    * @param x            coordinate of the query point q
+    * @param y            coordinate of the query point q
+    * @param z            coordinate of the query point q
+    * @param radius       radius r
+    * @param squareRadius "squared" radius r
     * @return true, if search ball overlaps with node, false otherwise.
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> boolean overlaps(NODE node, double x, double y, double z, double radius, double squareRadius)
@@ -396,7 +406,7 @@ public abstract class OcTreeNearestNeighborTools
 
       double halfNodeSize = 0.5 * node.getSize();
 
-      // (1) Checking the line region 
+      // (1) Checking the line region
       double maxDist = radius + halfNodeSize;
 
       // a. completely outside, since q' is outside the relevant area.
@@ -415,22 +425,22 @@ public abstract class OcTreeNearestNeighborTools
       return (dx * dx + dy * dy + dz * dz) < squareRadius;
    }
 
-   /** Test if search ball S(q,r) contains node
+   /**
+    * Test if search ball S(q,r) contains node
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
     *
-    * @param x coordinate of the query point q
-    * @param y coordinate of the query point q
-    * @param z coordinate of the query point q
+    * @param x            coordinate of the query point q
+    * @param y            coordinate of the query point q
+    * @param z            coordinate of the query point q
     * @param squareRadius "squared" radius r
-    * @param xNode x coordinate of the node
-    * @param yNode y coordinate of the node
-    * @param zNode z coordinate of the node
-    * @param depth current depth in the tree
-    * @param resolution resolution of the tree
-    * @param treeDepth maximum depth of the tree
-    *
+    * @param xNode        x coordinate of the node
+    * @param yNode        y coordinate of the node
+    * @param zNode        z coordinate of the node
+    * @param depth        current depth in the tree
+    * @param resolution   resolution of the tree
+    * @param treeDepth    maximum depth of the tree
     * @return true, if search ball overlaps with node, false otherwise.
     */
    public static boolean contains(double x, double y, double z, double squareRadius, OcTreeKeyReadOnly key, int depth, double resolution, int treeDepth)
@@ -442,24 +452,24 @@ public abstract class OcTreeNearestNeighborTools
       return contains(x, y, z, squareRadius, xNode, yNode, zNode, depth, resolution, treeDepth);
    }
 
-   /** Test if search ball S(q,r) contains node
+   /**
+    * Test if search ball S(q,r) contains node
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
     *
-    * @param x coordinate of the query point q
-    * @param y coordinate of the query point q
-    * @param z coordinate of the query point q
+    * @param x            coordinate of the query point q
+    * @param y            coordinate of the query point q
+    * @param z            coordinate of the query point q
     * @param squareRadius "squared" radius r
-    * @param key address of the node
-    * @param depth current depth in the tree
-    * @param resolution resolution of the tree
-    * @param treeDepth maximum depth of the tree
-    *
+    * @param key          address of the node
+    * @param depth        current depth in the tree
+    * @param resolution   resolution of the tree
+    * @param treeDepth    maximum depth of the tree
     * @return true, if search ball overlaps with node, false otherwise.
     */
    public static boolean contains(double x, double y, double z, double squareRadius, double xNode, double yNode, double zNode, int depth, double resolution,
-         int treeDepth)
+                                  int treeDepth)
    {
       // we exploit the symmetry to reduce the test to test whether the farthest corner is inside the search ball.
       x = Math.abs(x - xNode);
@@ -476,17 +486,17 @@ public abstract class OcTreeNearestNeighborTools
       return (x * x + y * y + z * z) < squareRadius;
    }
 
-   /** Test if search ball S(q,r) contains node
+   /**
+    * Test if search ball S(q,r) contains node
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
     *
-    * @param x coordinate of the query point q
-    * @param y coordinate of the query point q
-    * @param z coordinate of the query point q
+    * @param x            coordinate of the query point q
+    * @param y            coordinate of the query point q
+    * @param z            coordinate of the query point q
     * @param squareRadius "squared" radius r
-    * @param key address of the node
-    *
+    * @param key          address of the node
     * @return true, if search ball overlaps with node, false otherwise.
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> boolean contains(NODE node, double squareRadius, double x, double y, double z)
@@ -506,20 +516,20 @@ public abstract class OcTreeNearestNeighborTools
       return (x * x + y * y + z * z) < squareRadius;
    }
 
-   /** Test if search ball S(q,r) is completely inside node.
+   /**
+    * Test if search ball S(q,r) is completely inside node.
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
     *
-    * @param x coordinate of the query point q
-    * @param y coordinate of the query point q
-    * @param z coordinate of the query point q
-    * @param radius  radius r
-    * @param key address of the node
-    * @param depth current depth in the tree
+    * @param x          coordinate of the query point q
+    * @param y          coordinate of the query point q
+    * @param z          coordinate of the query point q
+    * @param radius     radius r
+    * @param key        address of the node
+    * @param depth      current depth in the tree
     * @param resolution resolution of the tree
-    * @param treeDepth maximum depth of the tree
-    *
+    * @param treeDepth  maximum depth of the tree
     * @return true, if search ball is completely inside the node, false otherwise.
     */
    public static boolean inside(double x, double y, double z, double radius, OcTreeKeyReadOnly key, int depth, double resolution, int treeDepth)
@@ -531,26 +541,26 @@ public abstract class OcTreeNearestNeighborTools
       return inside(x, y, z, radius, xNode, yNode, zNode, depth, resolution, treeDepth);
    }
 
-   /** Test if search ball S(q,r) is completely inside node.
+   /**
+    * Test if search ball S(q,r) is completely inside node.
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
     *
-    * @param x coordinate of the query point q
-    * @param y coordinate of the query point q
-    * @param z coordinate of the query point q
-    * @param radius  radius r
-    * @param xNode x coordinate of the node
-    * @param yNode y coordinate of the node
-    * @param zNode z coordinate of the node
-    * @param depth current depth in the tree
+    * @param x          coordinate of the query point q
+    * @param y          coordinate of the query point q
+    * @param z          coordinate of the query point q
+    * @param radius     radius r
+    * @param xNode      x coordinate of the node
+    * @param yNode      y coordinate of the node
+    * @param zNode      z coordinate of the node
+    * @param depth      current depth in the tree
     * @param resolution resolution of the tree
-    * @param treeDepth maximum depth of the tree
-    *
+    * @param treeDepth  maximum depth of the tree
     * @return true, if search ball is completely inside the node, false otherwise.
     */
    public static boolean inside(double x, double y, double z, double radius, double xNode, double yNode, double zNode, int depth, double resolution,
-         int treeDepth)
+                                int treeDepth)
    {
       // we exploit the symmetry to reduce the test to test
       // whether the farthest corner is inside the search ball.
@@ -574,17 +584,17 @@ public abstract class OcTreeNearestNeighborTools
       return true;
    }
 
-   /** Test if search ball S(q,r) is completely inside node.
+   /**
+    * Test if search ball S(q,r) is completely inside node.
     * <p>
-    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree"> GitHub repo</a>, 
-    * <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
+    * From Fast radius neighbor search with an Octree: <a href="https://github.com/jbehley/octree">
+    * GitHub repo</a>, <a href="http://jbehley.github.io/papers/behley2015icra.pdf"> ICRA Paper </a>.
     *
-    * @param x coordinate of the query point q
-    * @param y coordinate of the query point q
-    * @param z coordinate of the query point q
-    * @param radius  radius r
-    * @param key address of the node
-    *
+    * @param x      coordinate of the query point q
+    * @param y      coordinate of the query point q
+    * @param z      coordinate of the query point q
+    * @param radius radius r
+    * @param key    address of the node
     * @return true, if search ball is completely inside the node, false otherwise.
     */
    public static <NODE extends AbstractOcTreeNode<NODE>> boolean inside(NODE node, double x, double y, double z, double radius)

@@ -9,10 +9,10 @@ public class JOctoMapGeometryTools
 {
    /**
     * Finds the intersections of infinite-length ray with an axis-aligned box.
-    * 
-    * @param min the min 3D coordinates of the box.
-    * @param max the max 3D coordinates of the box.
-    * @param rayOrigin point from where the ray starts.
+    *
+    * @param min          the min 3D coordinates of the box.
+    * @param max          the max 3D coordinates of the box.
+    * @param rayOrigin    point from where the ray starts.
     * @param rayDirection direction the ray is going the rayOrigin.
     * @return the found intersection(s) or null if the ray does not intersect the box.
     */
@@ -23,15 +23,16 @@ public class JOctoMapGeometryTools
 
    /**
     * Finds the intersections of a finite-length ray with an axis-aligned box.
-    * 
-    * @param min the min 3D coordinates of the box.
-    * @param max the max 3D coordinates of the box.
-    * @param rayOrigin point from where the ray starts.
+    *
+    * @param min          the min 3D coordinates of the box.
+    * @param max          the max 3D coordinates of the box.
+    * @param rayOrigin    point from where the ray starts.
     * @param rayDirection direction the ray is going the rayOrigin.
     * @param maxRayLength intersections beyond the max ray length are ignored.
     * @return the found intersection(s) or null if the ray does not intersect the box.
     */
-   public static RayBoxIntersectionResult rayBoxIntersection(Point3DReadOnly min, Point3DReadOnly max, Point3DReadOnly rayOrigin, Vector3DReadOnly rayDirection, double maxRayLength)
+   public static RayBoxIntersectionResult rayBoxIntersection(Point3DReadOnly min, Point3DReadOnly max, Point3DReadOnly rayOrigin, Vector3DReadOnly rayDirection,
+                                                             double maxRayLength)
    {
       double lengthSquared = rayDirection.lengthSquared();
       if (lengthSquared < 1.0e-7)

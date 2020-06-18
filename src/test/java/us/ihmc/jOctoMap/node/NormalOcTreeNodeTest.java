@@ -1,6 +1,6 @@
 package us.ihmc.jOctoMap.node;
 
-import static us.ihmc.robotics.Assert.*;
+import static us.ihmc.robotics.Assert.assertEquals;
 
 import java.util.Random;
 
@@ -8,7 +8,6 @@ import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.junit.jupiter.api.Test;
 
 import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.jOctoMap.node.NormalOcTreeNode;
 import us.ihmc.jOctoMap.tools.JOctoMapRandomTools;
 
 public class NormalOcTreeNodeTest

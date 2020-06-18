@@ -4,15 +4,14 @@ import us.ihmc.jOctoMap.node.baseImplementation.AbstractOcTreeNode;
 
 /**
  * This tool class has to live in this package to be able to do operation on node's children field.
- * @author Sylvain
  *
+ * @author Sylvain
  */
 public abstract class OcTreeNodeTools
 {
-   /** 
-    * Safe test if node has a child at index childIdx.
-    * First tests if there are any children. Replaces node->childExists(...)
-    * \return true if the child at childIdx exists
+   /**
+    * Safe test if node has a child at index childIdx. First tests if there are any children. Replaces
+    * node->childExists(...) \return true if the child at childIdx exists
     */
    public final static boolean nodeChildExists(AbstractOcTreeNode<?> node, int childIndex)
    {
@@ -27,8 +26,9 @@ public abstract class OcTreeNodeTools
    }
 
    /**
-    *  A node is collapsible if all children exist, don't have children of their own
-    * and have the same occupancy value
+    * A node is collapsible if all children exist, don't have children of their own and have the same
+    * occupancy value
+    *
     * @param node
     * @return
     */
@@ -38,15 +38,15 @@ public abstract class OcTreeNodeTools
       // their own and have the same occupancy probability
       if (!node.hasArrayForChildren())
          return false;
-   
+
       NODE firstChild = node.getChild(0);
       if (firstChild == null || firstChild.hasAtLeastOneChild())
          return false;
-   
+
       for (int i = 1; i < 8; i++)
       {
          NODE currentChild = node.getChild(i);
-   
+
          if (currentChild == null || currentChild.hasAtLeastOneChild() || !currentChild.epsilonEquals(firstChild, epsilon))
             return false;
       }
@@ -57,10 +57,10 @@ public abstract class OcTreeNodeTools
    {
       if (parent == null)
          throw new RuntimeException("The given parent node is null");
-   
+
       if (!parent.hasAtLeastOneChild()) // this is a leaf -> terminate
          return 1;
-   
+
       int sumOfLeafChildren = 0;
       for (int i = 0; i < 8; ++i)
       {

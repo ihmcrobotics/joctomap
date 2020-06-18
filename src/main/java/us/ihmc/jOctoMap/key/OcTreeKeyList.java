@@ -56,8 +56,8 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Sets the size of the list to 0, but does not change its capacity. This method is meant
-    * to recycle a list without allocating new backing arrays.
+    * Sets the size of the list to 0, but does not change its capacity. This method is meant to recycle
+    * a list without allocating new backing arrays.
     */
    @Override
    public void clear()
@@ -67,6 +67,7 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
 
    /**
     * Add a new element at the end of this list.
+    *
     * @return the new element.
     */
    public OcTreeKey add()
@@ -100,14 +101,13 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Inserts a new element at the specified position in this
-    * list. Shifts the element currently at that position (if any) and
-    * any subsequent elements to the right (adds one to their indices).
+    * Inserts a new element at the specified position in this list. Shifts the element currently at
+    * that position (if any) and any subsequent elements to the right (adds one to their indices).
     *
     * @param index index at which the new element is to be inserted
     * @return the new inserted element
     * @throws IndexOutOfBoundsException if the index is out of range
-    *         (<tt>index &lt; 0 || index &gt;= size()</tt>)
+    *                                   (<tt>index &lt; 0 || index &gt;= size()</tt>)
     */
    public OcTreeKeyReadOnly insertAtIndex(int index)
    {
@@ -126,10 +126,10 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    /**
     * Returns the element at the specified position in this list.
     *
-    * @param  index index of the element to return
+    * @param index index of the element to return
     * @return the element at the specified position in this list
     * @throws IndexOutOfBoundsException if the index is out of range
-     *         (<tt>index &lt; 0 || index &gt;= size()</tt>)
+    *                                   (<tt>index &lt; 0 || index &gt;= size()</tt>)
     */
    @Override
    public OcTreeKey get(int i)
@@ -139,8 +139,8 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Returns the first element of this list.  
-    * If the list is empty, it returns {@code null}.
+    * Returns the first element of this list. If the list is empty, it returns {@code null}.
+    *
     * @return the last element of this list
     */
    @Override
@@ -153,8 +153,8 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Returns the last element of this list.
-    * If the list is empty, it returns {@code null}.
+    * Returns the last element of this list. If the list is empty, it returns {@code null}.
+    *
     * @return the last element of this list
     */
    @Override
@@ -167,11 +167,10 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Returns the element at the specified position in this list.
-    * The list will grow if the given index is greater or equal to
-    * the size this list.
+    * Returns the element at the specified position in this list. The list will grow if the given index
+    * is greater or equal to the size this list.
     *
-    * @param  index index of the element to return
+    * @param index index of the element to return
     * @return the element at the specified position in this list
     * @throws IndexOutOfBoundsException if the index is negative (<tt>index &lt; 0</tt>)
     */
@@ -209,9 +208,10 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Removes the element at the specified position in this list.
-    * This method is faster than {@link #remove(int)} but the ith element is swapped with the last element changing the ordering of the list.
-    * 
+    * Removes the element at the specified position in this list. This method is faster than
+    * {@link #remove(int)} but the ith element is swapped with the last element changing the ordering
+    * of the list.
+    *
     * @param index the index of the element to be removed
     */
    public void fastRemove(int index)
@@ -226,10 +226,10 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Removes the first occurrence of the specified element from this list,
-    * if it is present.  If the list does not contain the element, it is
-    * unchanged.
-    * This method is faster than {@link #remove(Object)} but the found element is swapped with the last element changing the ordering of the list.
+    * Removes the first occurrence of the specified element from this list, if it is present. If the
+    * list does not contain the element, it is unchanged. This method is faster than
+    * {@link #remove(Object)} but the found element is swapped with the last element changing the
+    * ordering of the list.
     *
     * @param keyToRemove element to be removed from this list, if present
     * @return <tt>true</tt> if this list contained the specified element
@@ -254,10 +254,11 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
 
    /**
     * Swap two objects of this list.
+    *
     * @param i index of the first object to swap
     * @param j index of the second object to swap
     * @throws IndexOutOfBoundsException if either of the indices is out of range
-    *         (<tt>i &lt; 0 || i &gt;= size() || j &lt; 0 || j &gt;= size()</tt>)
+    *                                   (<tt>i &lt; 0 || i &gt;= size() || j &lt; 0 || j &gt;= size()</tt>)
     */
    public void swap(int i, int j)
    {
@@ -283,15 +284,14 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Removes the element at the specified position in this list.
-    * Shifts any subsequent elements to the left (subtracts one from their
-    * indices).
-    * 
+    * Removes the element at the specified position in this list. Shifts any subsequent elements to the
+    * left (subtracts one from their indices).
+    *
     * @param index the index of the element to be removed
     * @return null.
     */
    @Override
-   public OcTreeKey remove(int i)  
+   public OcTreeKey remove(int i)
    {
       if (i == size - 1)
       {
@@ -314,9 +314,8 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Removes the first occurrence of the specified element from this list,
-    * if it is present.  If the list does not contain the element, it is
-    * unchanged.
+    * Removes the first occurrence of the specified element from this list, if it is present. If the
+    * list does not contain the element, it is unchanged.
     *
     * @param object element to be removed from this list, if present
     * @return <tt>true</tt> if this list contained the specified element
@@ -360,10 +359,9 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Checks if the given index is in range.  If not, throws an appropriate
-    * runtime exception.  This method does *not* check if the index is
-    * negative: It is always used immediately prior to an array access,
-    * which throws an ArrayIndexOutOfBoundsException if index is negative.
+    * Checks if the given index is in range. If not, throws an appropriate runtime exception. This
+    * method does *not* check if the index is negative: It is always used immediately prior to an array
+    * access, which throws an ArrayIndexOutOfBoundsException if index is negative.
     */
    protected void rangeCheck(int index)
    {
@@ -385,8 +383,6 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
          throw new IndexOutOfBoundsException("Index cannot be negative: " + index);
    }
 
-   
-
    /**
     * Returns <tt>true</tt> if this list contains the specified element.
     *
@@ -400,8 +396,8 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Returns the index of the first occurrence of the specified element
-    * in this list, or -1 if this list does not contain the element.
+    * Returns the index of the first occurrence of the specified element in this list, or -1 if this
+    * list does not contain the element.
     */
    @Override
    public int indexOf(Object object)
@@ -418,8 +414,8 @@ public class OcTreeKeyList implements List<OcTreeKey>, OcTreeKeyListReadOnly
    }
 
    /**
-    * Returns the index of the last occurrence of the specified element
-    * in this list, or -1 if this list does not contain the element.
+    * Returns the index of the last occurrence of the specified element in this list, or -1 if this
+    * list does not contain the element.
     */
    @Override
    public int lastIndexOf(Object object)

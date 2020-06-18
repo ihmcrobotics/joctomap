@@ -26,7 +26,7 @@ public abstract class JOctoMapTools
 
    public static double nanoSecondsToSeconds(long timeInNanoSeconds)
    {
-      return ((double) timeInNanoSeconds) / 1e9;
+      return (timeInNanoSeconds) / 1e9;
    }
 
    public static double square(double x)

@@ -5,7 +5,10 @@ import us.ihmc.jOctoMap.occupancy.OccupancyParametersReadOnly;
 
 public abstract class OccupancyTools
 {
-   /** @return logOddsToClip clipped to be inside [{@link #minOccupancyLogOdds}, {@link #maxOccupancyLogOdds}]. */
+   /**
+    * @return logOddsToClip clipped to be inside [{@link #minOccupancyLogOdds},
+    *         {@link #maxOccupancyLogOdds}].
+    */
    public static float clipLogOddsToMinMax(OccupancyParametersReadOnly parameters, float logOddsToClip)
    {
       if (logOddsToClip < parameters.getMinLogOdds())
@@ -18,6 +21,7 @@ public abstract class OccupancyTools
 
    /**
     * Queries whether a node is occupied according to the tree's parameter for "occupancyThreshold"
+    *
     * @param occupancyNode
     * @return
     */
@@ -28,6 +32,7 @@ public abstract class OccupancyTools
 
    /**
     * Queries whether a node is at the clamping limit according to the tree's parameter
+    *
     * @param occupancyNode
     */
    public static <NODE extends AbstractOccupancyOcTreeNode<NODE>> boolean isNodeAtOccupancyLimit(OccupancyParametersReadOnly parameters, NODE occupancyNode)
@@ -37,16 +42,20 @@ public abstract class OccupancyTools
 
    /**
     * Update logodds value of node by adding to the current value.
+    *
     * @param occupancyNode
     * @param update
     */
-   public static <NODE extends AbstractOccupancyOcTreeNode<NODE>> void updateNodeLogOdds(OccupancyParametersReadOnly parameters, NODE occupancyNode, float update)
+   public static <NODE extends AbstractOccupancyOcTreeNode<NODE>> void updateNodeLogOdds(OccupancyParametersReadOnly parameters, NODE occupancyNode,
+                                                                                         float update)
    {
       occupancyNode.setLogOdds(OccupancyTools.clipLogOddsToMinMax(parameters, occupancyNode.getLogOdds() + update));
    }
 
    /**
-    * Converts the node to the maximum likelihood occupancy value according to the tree's parameter for min/max "occupancy"
+    * Converts the node to the maximum likelihood occupancy value according to the tree's parameter for
+    * min/max "occupancy"
+    *
     * @param occupancyNode
     */
    public static <NODE extends AbstractOccupancyOcTreeNode<NODE>> void nodeToMaxLikelihood(OccupancyParametersReadOnly parameters, NODE occupancyNode)

@@ -1,6 +1,7 @@
 package us.ihmc.jOctoMap.tools;
 
-import static us.ihmc.robotics.Assert.*;
+import static us.ihmc.robotics.Assert.assertEquals;
+import static us.ihmc.robotics.Assert.assertFalse;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -9,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import us.ihmc.jOctoMap.key.OcTreeKey;
 import us.ihmc.jOctoMap.key.OcTreeKeySet;
-import us.ihmc.jOctoMap.tools.OcTreeKeyTools;
 
 public class OcTreeKeyToolsTest
 {
@@ -34,10 +34,10 @@ public class OcTreeKeyToolsTest
          assertEquals(expected, actual);
       }
    }
-   
+
    @Test
    public void testMinimumKey() throws Exception
-   {   
+   {
       for (int treeDepth = 0; treeDepth <= 16; treeDepth++)
       {
          for (int depth = 0; depth <= treeDepth; depth++)
@@ -47,8 +47,9 @@ public class OcTreeKeyToolsTest
             assertEquals(expected, actual);
 
             // Original computation
-            int treeMaximumValue = 1 << (treeDepth-1);
-            if (treeMaximumValue < 0) treeMaximumValue = 0;
+            int treeMaximumValue = 1 << (treeDepth - 1);
+            if (treeMaximumValue < 0)
+               treeMaximumValue = 0;
             expected = treeMaximumValue >> depth;
             assertEquals(expected, actual);
          }
@@ -74,7 +75,7 @@ public class OcTreeKeyToolsTest
       for (int childIndex = 0; childIndex < 8; childIndex++)
          childIndices.add(childIndex);
 
-      while(childIndices.size() > (8 - numberOfChildrenToTest))
+      while (childIndices.size() > (8 - numberOfChildrenToTest))
       {
          int childIndex = childIndices.remove(random.nextInt(childIndices.size()));
          int childDepth = parentDepth + 1;
