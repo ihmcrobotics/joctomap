@@ -12,7 +12,10 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 
 public class PointCloud implements Iterable<Point3D32>
 {
+   public static final long UNDEFINED_TIMESTAMP = -1L;
+
    protected final List<Point3D32> points = new ArrayList<>();
+   protected long timestamp = UNDEFINED_TIMESTAMP;
 
    /**
     * A collection of 3D coordinates (point3d), which are regarded as endpoints of a 3D laser scan.
@@ -53,6 +56,12 @@ public class PointCloud implements Iterable<Point3D32>
       {
          points.clear();
       }
+      timestamp = UNDEFINED_TIMESTAMP;
+   }
+
+   public void setTimestamp(long timestamp)
+   {
+      this.timestamp = timestamp;
    }
 
    public void add(double x, double y, double z)
@@ -130,6 +139,11 @@ public class PointCloud implements Iterable<Point3D32>
          else if (z > upperBoundToPack.getZ())
             upperBoundToPack.setZ(z);
       }
+   }
+
+   public long getTimestamp()
+   {
+      return timestamp;
    }
 
    public Point3DReadOnly getLast()
