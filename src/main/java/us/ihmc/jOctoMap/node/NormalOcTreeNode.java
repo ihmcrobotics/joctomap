@@ -9,6 +9,7 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DBasics;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.jOctoMap.node.baseImplementation.AbstractOccupancyOcTreeNode;
+import us.ihmc.jOctoMap.pointCloud.PointCloud;
 
 public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNode>
 {
@@ -20,6 +21,12 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    private float hitLocationX = Float.NaN;
    private float hitLocationY = Float.NaN;
    private float hitLocationZ = Float.NaN;
+
+   /**
+    * Timestamp recorded when this node was last hit. Can be used to identify node that have not been
+    * hit for a long time and potentially prune them.
+    */
+   private long lastHitTimestamp = PointCloud.UNDEFINED_TIMESTAMP;
 
    private long numberOfHits;
 
@@ -71,6 +78,7 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       hitLocationY = Float.NaN;
       hitLocationZ = Float.NaN;
       numberOfHits = 0;
+      lastHitTimestamp = PointCloud.UNDEFINED_TIMESTAMP;
    }
 
    public void updateNormalChildren()
@@ -183,28 +191,23 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
 
    public void updateHitLocation(Point3DReadOnly centerUpdate, long updateWeight, long maximumNumberOfHits)
    {
+      updateHitLocation(centerUpdate, updateWeight, maximumNumberOfHits, PointCloud.UNDEFINED_TIMESTAMP);
+   }
+
+   public void updateHitLocation(Point3DReadOnly centerUpdate, long updateWeight, long maximumNumberOfHits, long currentTimestamp)
+   {
       float xUpdate = (float) centerUpdate.getX();
       float yUpdate = (float) centerUpdate.getY();
       float zUpdate = (float) centerUpdate.getZ();
-      updateHitLocation(xUpdate, yUpdate, zUpdate, updateWeight, maximumNumberOfHits);
+      updateHitLocation(xUpdate, yUpdate, zUpdate, updateWeight, maximumNumberOfHits, currentTimestamp);
    }
 
    public void updateHitLocation(float xUpdate, float yUpdate, float zUpdate)
    {
-      updateHitLocation(xUpdate, yUpdate, zUpdate, 1);
+      updateHitLocation(xUpdate, yUpdate, zUpdate, 1L, Long.MAX_VALUE, PointCloud.UNDEFINED_TIMESTAMP);
    }
 
-   public void updateHitLocation(NormalOcTreeNode otherNode)
-   {
-      updateHitLocation(otherNode.hitLocationX, otherNode.hitLocationY, otherNode.hitLocationZ, otherNode.numberOfHits);
-   }
-
-   private void updateHitLocation(float xUpdate, float yUpdate, float zUpdate, long updateWeight)
-   {
-      updateHitLocation(xUpdate, yUpdate, zUpdate, updateWeight, Long.MAX_VALUE);
-   }
-
-   private void updateHitLocation(float xUpdate, float yUpdate, float zUpdate, long updateWeight, long maximumNumberOfHits)
+   private void updateHitLocation(float xUpdate, float yUpdate, float zUpdate, long updateWeight, long maximumNumberOfHits, long currentTimestamp)
    {
       if (numberOfHits == 0)
       {
@@ -219,6 +222,9 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
       hitLocationX += (xUpdate - hitLocationX) * nInv;
       hitLocationY += (yUpdate - hitLocationY) * nInv;
       hitLocationZ += (zUpdate - hitLocationZ) * nInv;
+      // In case the new timestamp is either undefined or older we don't update it.
+      if (currentTimestamp != PointCloud.UNDEFINED_TIMESTAMP && currentTimestamp > lastHitTimestamp)
+         lastHitTimestamp = currentTimestamp;
    }
 
    public void updateHitLocationChildren()
@@ -291,6 +297,16 @@ public class NormalOcTreeNode extends AbstractOccupancyOcTreeNode<NormalOcTreeNo
    public double getNormalZ()
    {
       return normalZ;
+   }
+
+   public boolean isLastHitTimestampDefined()
+   {
+      return lastHitTimestamp != PointCloud.UNDEFINED_TIMESTAMP;
+   }
+
+   public long getLastHitTimestamp()
+   {
+      return lastHitTimestamp;
    }
 
    @Override
