@@ -6,6 +6,7 @@ import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 import us.ihmc.jOctoMap.key.OcTreeKeyReadOnly;
 import us.ihmc.jOctoMap.node.NormalOcTreeNode;
 import us.ihmc.jOctoMap.occupancy.OccupancyParametersReadOnly;
+import us.ihmc.jOctoMap.pointCloud.PointCloud;
 import us.ihmc.jOctoMap.rules.interfaces.UpdateRule;
 import us.ihmc.jOctoMap.tools.OccupancyTools;
 
@@ -17,6 +18,8 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
    private final Point3D sensorLocation = new Point3D();
    private final Vector3D initialGuessNormal = new Vector3D();
    private final Vector3D nodeNormal = new Vector3D();
+
+   private long currentTimestamp = PointCloud.UNDEFINED_TIMESTAMP;
 
    private float updateLogOdds = Float.NaN;
    private final OccupancyParametersReadOnly parameters;
@@ -48,12 +51,22 @@ public class NormalOcTreeHitUpdateRule implements UpdateRule<NormalOcTreeNode>
       this.maximumNumberOfHits = maximumNumberOfHits;
    }
 
+   public void clearCurrentTimestamp()
+   {
+      currentTimestamp = PointCloud.UNDEFINED_TIMESTAMP;
+   }
+
+   public void setCurrentTimestamp(long currentTimestamp)
+   {
+      this.currentTimestamp = currentTimestamp;
+   }
+
    @Override
    public void updateLeaf(NormalOcTreeNode leafToUpdate, OcTreeKeyReadOnly leafKey, boolean nodeJustCreated)
    {
       OccupancyTools.updateNodeLogOdds(parameters, leafToUpdate, updateLogOdds);
 
-      leafToUpdate.updateHitLocation(hitLocation, updateWeight, maximumNumberOfHits);
+      leafToUpdate.updateHitLocation(hitLocation, updateWeight, maximumNumberOfHits, currentTimestamp);
 
       if (!leafToUpdate.isNormalSet())
       {

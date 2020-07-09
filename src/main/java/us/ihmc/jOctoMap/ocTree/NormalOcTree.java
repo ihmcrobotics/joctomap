@@ -155,6 +155,7 @@ public class NormalOcTree extends AbstractOcTreeBase<NormalOcTreeNode>
       Point3D point = new Point3D();
       Point3DReadOnly sensorOrigin = scan.getSensorOrigin();
       PointCloud pointCloud = scan.getPointCloud();
+      hitUpdateRule.setCurrentTimestamp(pointCloud.getTimestamp());
 
       for (int i = pointCloud.getNumberOfPoints() - 1; i >= 0; i--)
       {

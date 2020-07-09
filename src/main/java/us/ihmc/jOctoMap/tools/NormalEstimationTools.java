@@ -47,13 +47,22 @@ public abstract class NormalEstimationTools
          return;
 
       double maxDistanceFromPlane = parameters.getMaxDistanceFromPlane();
+      boolean weightByNumberOfHits = parameters.isWeightByNumberOfHits();
       Vector3D currentNormal = currentNode.getNormalCopy();
       Point3D currentNodeHitLocation = currentNode.getHitLocationCopy();
+      int numberOfHitsAtCurrentPoint = (int) Math.floor(currentNode.getNumberOfHits()); // FIXME when variance calculator is improved, use the float
 
       // Need to be recomputed as the neighbors may have changed
       MutableInt currentConsensus = new MutableInt();
       MutableDouble currentVariance = new MutableDouble();
-      computeNormalConsensusAndVariance(currentNodeHitLocation, currentNormal, neighbors, maxDistanceFromPlane, currentVariance, currentConsensus);
+      computeNormalConsensusAndVariance(currentNodeHitLocation,
+                                        currentNormal,
+                                        numberOfHitsAtCurrentPoint,
+                                        neighbors,
+                                        maxDistanceFromPlane,
+                                        weightByNumberOfHits,
+                                        currentVariance,
+                                        currentConsensus);
 
       for (int iteration = 0; iteration < parameters.getNumberOfIterations(); iteration++)
       {
@@ -70,7 +79,14 @@ public abstract class NormalEstimationTools
 
          MutableInt candidateConsensus = new MutableInt();
          MutableDouble candidateVariance = new MutableDouble();
-         computeNormalConsensusAndVariance(currentNodeHitLocation, candidateNormal, neighbors, maxDistanceFromPlane, candidateVariance, candidateConsensus);
+         computeNormalConsensusAndVariance(currentNodeHitLocation,
+                                           candidateNormal,
+                                           numberOfHitsAtCurrentPoint,
+                                           neighbors,
+                                           maxDistanceFromPlane,
+                                           weightByNumberOfHits,
+                                           candidateVariance,
+                                           candidateConsensus);
 
          peekBestNormal(currentNode, currentNormal, currentVariance, currentConsensus, candidateNormal, candidateVariance, candidateConsensus, parameters);
       }
@@ -131,7 +147,7 @@ public abstract class NormalEstimationTools
    private static Vector3D refineNormalWithLeastSquares(Point3DReadOnly pointOnPlane, Vector3DReadOnly ransacNormal, double maxDistanceFromPlane,
                                                         List<NormalOcTreeNode> neighbors)
    {
-      IncrementalCovariance3D covarianceCalulator = new IncrementalCovariance3D();
+      IncrementalCovariance3D covarianceCalculator = new IncrementalCovariance3D();
 
       Vector3D toNeighborHitLocation = new Vector3D();
 
@@ -141,14 +157,14 @@ public abstract class NormalEstimationTools
          toNeighborHitLocation.sub(pointOnPlane);
          double distanceFromPlane = Math.abs(ransacNormal.dot(toNeighborHitLocation));
          if (distanceFromPlane <= maxDistanceFromPlane)
-            covarianceCalulator.addDataPoint(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
+            covarianceCalculator.addDataPoint(neighbor.getHitLocationX(), neighbor.getHitLocationY(), neighbor.getHitLocationZ());
       }
 
-      if (covarianceCalulator.getSampleSize() <= 2)
+      if (covarianceCalculator.getSampleSize() <= 2)
          return null;
 
       SingularValueDecomposition_F64<DMatrixRMaj> svd = new SvdImplicitQrDecompose_DDRM(true, false, true, false);
-      svd.decompose(covarianceCalulator.getCovariance());
+      svd.decompose(covarianceCalculator.getCovariance());
       DMatrixRMaj v = svd.getV(null, false);
       if (MatrixFeatures_DDRM.hasNaN(v))
          return null;
@@ -178,13 +194,22 @@ public abstract class NormalEstimationTools
       return neighbors;
    }
 
-   private static void computeNormalConsensusAndVariance(Point3DReadOnly pointOnPlane, Vector3DReadOnly planeNormal, Iterable<NormalOcTreeNode> neighbors,
-                                                         double maxDistanceFromPlane, MutableDouble varianceToPack, MutableInt consensusToPack)
+   private static void computeNormalConsensusAndVariance(Point3DReadOnly pointOnPlane,
+                                                         Vector3DReadOnly planeNormal,
+                                                         int hitsAtCurrentPoint,
+                                                         Iterable<NormalOcTreeNode> neighbors,
+                                                         double maxDistanceFromPlane,
+                                                         boolean weightByNumberOfHits,
+                                                         MutableDouble varianceToPack,
+                                                         MutableInt consensusToPack)
    {
       Variance variance = new Variance();
       consensusToPack.setValue(0);
 
       Vector3D toNeighborHitLocation = new Vector3D();
+
+      for (int i = 0; weightByNumberOfHits && i < hitsAtCurrentPoint; i++)
+         variance.increment(0.0);
 
       for (NormalOcTreeNode neighbor : neighbors)
       {
@@ -193,8 +218,11 @@ public abstract class NormalEstimationTools
          double distanceFromPlane = Math.abs(planeNormal.dot(toNeighborHitLocation));
          if (distanceFromPlane <= maxDistanceFromPlane)
          {
-            variance.increment(distanceFromPlane);
-            consensusToPack.increment();
+            // FIXME when the variance calculator is improved, using the float directly
+            int weight = weightByNumberOfHits ? (int) Math.floor(neighbor.getNumberOfHits()) : 1;
+            for (int i = 0; i < weight; i++)
+               variance.increment(distanceFromPlane);
+            consensusToPack.add(weight);
          }
       }
 
