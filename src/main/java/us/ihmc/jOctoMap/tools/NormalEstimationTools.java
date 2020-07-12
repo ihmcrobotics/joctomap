@@ -7,7 +7,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.apache.commons.math3.stat.descriptive.moment.Variance;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.MatrixFeatures_DDRM;
 import org.ejml.dense.row.SingularOps_DDRM;
@@ -203,13 +202,13 @@ public abstract class NormalEstimationTools
                                                          MutableDouble varianceToPack,
                                                          MutableInt consensusToPack)
    {
-      Variance variance = new Variance();
+      IncrementalVariance variance = new IncrementalVariance();
       consensusToPack.setValue(0);
 
       Vector3D toNeighborHitLocation = new Vector3D();
 
-      for (int i = 0; weightByNumberOfHits && i < hitsAtCurrentPoint; i++)
-         variance.increment(0.0);
+      if (weightByNumberOfHits)
+         variance.set(0.0, 0.0, hitsAtCurrentPoint);
 
       for (NormalOcTreeNode neighbor : neighbors)
       {
@@ -218,17 +217,22 @@ public abstract class NormalEstimationTools
          double distanceFromPlane = Math.abs(planeNormal.dot(toNeighborHitLocation));
          if (distanceFromPlane <= maxDistanceFromPlane)
          {
-            // FIXME when the variance calculator is improved, using the float directly
-            int weight = weightByNumberOfHits ? (int) Math.floor(neighbor.getNumberOfHits()) : 1;
-            for (int i = 0; i < weight; i++)
+            if (weightByNumberOfHits)
+            {
+               variance.increment(distanceFromPlane, neighbor.getNumberOfHits());
+               consensusToPack.add(neighbor.getNumberOfHits());
+            }
+            else
+            {
                variance.increment(distanceFromPlane);
-            consensusToPack.add(weight);
+               consensusToPack.increment();
+            }
          }
       }
 
       if (consensusToPack.intValue() == 0)
          varianceToPack.setValue(Double.POSITIVE_INFINITY);
       else
-         varianceToPack.setValue(variance.getResult());
+         varianceToPack.setValue(variance.getVariance());
    }
 }
