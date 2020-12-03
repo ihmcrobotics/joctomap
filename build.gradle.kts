@@ -1,12 +1,12 @@
 plugins {
-   id("us.ihmc.ihmc-build") version "0.20.1"
-   id("us.ihmc.ihmc-ci") version "5.3"
-   id("us.ihmc.ihmc-cd") version "1.8"
+   id("us.ihmc.ihmc-build")
+   id("us.ihmc.ihmc-ci") version "7.4"
+   id("us.ihmc.ihmc-cd") version "1.17"
 }
 
 ihmc {
    group = "us.ihmc"
-   version = "1.11.0"
+   version = "1.12.0"
    openSource = true
    maintainer = "Sylvain Bertrand"
    
@@ -18,9 +18,9 @@ mainDependencies {
    api("org.ejml:ejml-core:0.39")
    api("org.ejml:ejml-ddense:0.39")
    api("org.apache.commons:commons-math3:3.3")
-   api("org.apache.commons:commons-lang3:3.9")
+   api("org.apache.commons:commons-lang3:3.11")
 
-   api("us.ihmc:euclid-geometry:0.15.0")
+   api("us.ihmc:euclid-geometry:0.15.2")
 }
 
 testDependencies {
