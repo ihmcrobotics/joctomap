@@ -79,5 +79,5 @@
 **/Temporary Items
 **/.apdisk
 **/generatedTestSuites/*TestSuite.java
-
 !**/gradle-wrapper.jar
+**/rebel.xml
