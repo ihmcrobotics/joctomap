@@ -6,7 +6,7 @@ plugins {
 
 ihmc {
    group = "us.ihmc"
-   version = "1.12.0"
+   version = "1.12.1"
    openSource = true
    maintainer = "Sylvain Bertrand"
    
