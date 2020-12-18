@@ -6,7 +6,7 @@ plugins {
 
 ihmc {
    group = "us.ihmc"
-   version = "1.12.0"
+   version = "1.12.1"
    openSource = true
    maintainer = "Sylvain Bertrand"
    
@@ -20,7 +20,7 @@ mainDependencies {
    api("org.apache.commons:commons-math3:3.3")
    api("org.apache.commons:commons-lang3:3.11")
 
-   api("us.ihmc:euclid-geometry:0.15.2")
+   api("us.ihmc:euclid-geometry:0.16.0")
 }
 
 testDependencies {
