@@ -18,7 +18,7 @@ mainDependencies {
    api("org.ejml:ejml-core:0.39")
    api("org.ejml:ejml-ddense:0.39")
    api("org.apache.commons:commons-math3:3.3")
-   api("org.apache.commons:commons-lang3:3.11")
+   api("org.apache.commons:commons-lang3:3.12.0")
 
    api("us.ihmc:euclid-geometry:0.17.0")
 }
