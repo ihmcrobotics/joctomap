@@ -20,7 +20,7 @@ mainDependencies {
    api("org.apache.commons:commons-math3:3.6.1")
    api("org.apache.commons:commons-lang3:3.12.0")
 
-   api("us.ihmc:euclid-geometry:0.18.1")
+   api("us.ihmc:euclid-geometry:0.19.0")
 }
 
 testDependencies {
